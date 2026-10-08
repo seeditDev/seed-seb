@@ -1,0 +1,629 @@
+{
+  "id": "first-bad-version",
+  "questionId": "first-bad-version",
+  "slug": "first-bad-version",
+  "title": "First Bad Version",
+  "difficulty": "Easy",
+  "category": "Binary search",
+  "patterns": [
+    "binary search"
+  ],
+  "lists": [
+    "grind-75"
+  ],
+  "hints": [
+    "good versions and bad versions each form one unbroken block, with all the bad ones after all the good ones - that's a sorted boolean condition",
+    "checking versions one at a time from the start wastes checks - what if you jumped to the middle first",
+    "if the middle version is bad, the first bad version is at mid or somewhere earlier; if it's good, the first bad version is somewhere later",
+    "binary search on [1, n]: on each check, shrink the range toward the boundary between good and bad, and return that boundary once left and right meet"
+  ],
+  "commonMistakes": [
+    "checking every version sequentially instead of binary searching, which defeats the point of minimizing checks",
+    "off-by-one when narrowing the range, e.g. setting right = mid - 1 when mid was already found bad (losing a potential answer)",
+    "not handling n = 1 or bad = 1 correctly if the loop assumes a range of at least two versions"
+  ],
+  "content": {
+    "problemStatement": "You have `n` versions of a product, numbered 1 to n, released in order.\nAt some point a bug was introduced, so every version from a certain\nversion onward is bad, and every version before it is good. You're given\n`n` and the first bad version directly as `bad`, standing in for a\nversion check you'd normally call one version at a time.\n\n**Find and return the first bad version, using as few version checks as possible.**\n",
+    "constraints": [
+      "1 <= bad <= n <= 2^31 - 1",
+      "every version >= bad is bad, every version < bad is good"
+    ],
+    "notes": [
+      "the very first version is already bad",
+      "only the very last version is bad",
+      "n = 1 (single version)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 5, bad = 4",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "versions 1-3 are good, versions 4-5 are bad, so the first bad one is 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 1, bad = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the only version is already bad"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 10, bad = 10",
+        "output": "10",
+        "expectedOutput": "10",
+        "explanation": "only the very last version is bad"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[5,4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[1,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[10,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[10,10]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[100,55]",
+        "output": "55",
+        "expectedOutput": "55",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[2,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[2,2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[3,2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[20,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[20,20]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[20,10]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[1000,500]",
+        "output": "500",
+        "expectedOutput": "500",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[1000,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[1000,1000]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[50,25]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[7,7]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[7,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[100,99]",
+        "output": "99",
+        "expectedOutput": "99",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[100,2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[15,8]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 5, bad = 4",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "versions 1-3 are good, versions 4-5 are bad, so the first bad one is 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 1, bad = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the only version is already bad"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 10, bad = 10",
+      "output": "10",
+      "expectedOutput": "10",
+      "explanation": "only the very last version is bad"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 5, bad = 4",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "versions 1-3 are good, versions 4-5 are bad, so the first bad one is 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 1, bad = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the only version is already bad"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 10, bad = 10",
+      "output": "10",
+      "expectedOutput": "10",
+      "explanation": "only the very last version is bad"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[5,4]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[1,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[10,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[10,10]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[100,55]",
+      "output": "55",
+      "expectedOutput": "55",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[2,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[2,2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[3,2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[20,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[20,20]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[20,10]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[1000,500]",
+      "output": "500",
+      "expectedOutput": "500",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[1000,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[1000,1000]",
+      "output": "1000",
+      "expectedOutput": "1000",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[50,25]",
+      "output": "25",
+      "expectedOutput": "25",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[7,7]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[7,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[100,99]",
+      "output": "99",
+      "expectedOutput": "99",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[100,2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[15,8]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 5, bad = 4",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "versions 1-3 are good, versions 4-5 are bad, so the first bad one is 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 1, bad = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the only version is already bad"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 10, bad = 10",
+        "output": "10",
+        "expectedOutput": "10",
+        "explanation": "only the very last version is bad"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[5,4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[1,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[10,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[10,10]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[100,55]",
+        "output": "55",
+        "expectedOutput": "55",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[2,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[2,2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[3,2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[20,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[20,20]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[20,10]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[1000,500]",
+        "output": "500",
+        "expectedOutput": "500",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[1000,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[1000,1000]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[50,25]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[7,7]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[7,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[100,99]",
+        "output": "99",
+        "expectedOutput": "99",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[100,2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[15,8]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def firstBadVersion(self, n, bad):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int firstBadVersion(int n, int bad) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int firstBadVersion(int n, int bad) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun firstBadVersion(n: Int, bad: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    firstBadVersion(n, bad) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def firstBadVersion(self, n, bad):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int firstBadVersion(int n, int bad) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int firstBadVersion(int n, int bad) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun firstBadVersion(n: Int, bad: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    firstBadVersion(n, bad) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def firstBadVersion(self, n, bad):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int firstBadVersion(int n, int bad) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int firstBadVersion(int n, int bad) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun firstBadVersion(n: Int, bad: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    firstBadVersion(n, bad) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def firstBadVersion(self, n, bad):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int firstBadVersion(int n, int bad) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int firstBadVersion(int n, int bad) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun firstBadVersion(n: Int, bad: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    firstBadVersion(n, bad) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(log n)",
+      "space": "O(1)",
+      "pattern": "binary search over version numbers using the good/bad check as the comparison"
+    },
+    "bruteForce": {
+      "approach": "check versions 1, 2, 3, ... in order (candidate >= bad) until the first bad one is found",
+      "time": "O(n)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "binary search over version numbers using the good/bad check as the comparison",
+    "time": "O(log n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "good versions and bad versions each form one unbroken block, with all the bad ones after all the good ones - that's a sorted boolean condition",
+      "checking versions one at a time from the start wastes checks - what if you jumped to the middle first",
+      "if the middle version is bad, the first bad version is at mid or somewhere earlier; if it's good, the first bad version is somewhere later",
+      "binary search on [1, n]: on each check, shrink the range toward the boundary between good and bad, and return that boundary once left and right meet"
+    ]
+  },
+  "bruteForce": {
+    "approach": "check versions 1, 2, 3, ... in order (candidate >= bad) until the first bad one is found",
+    "time": "O(n)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

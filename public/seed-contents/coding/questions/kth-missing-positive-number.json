@@ -1,0 +1,629 @@
+{
+  "id": "kth-missing-positive-number",
+  "questionId": "kth-missing-positive-number",
+  "slug": "kth-missing-positive-number",
+  "title": "Kth Missing Positive Number",
+  "difficulty": "Medium",
+  "category": "Cyclic sort",
+  "patterns": [
+    "cyclic sort",
+    "array",
+    "binary search"
+  ],
+  "lists": [],
+  "hints": [
+    "if the array had no gaps at all, arr[i] would always equal i+1 (1-indexed position). the actual gap between arr[i] and its 'expected' value i+1 tells you exactly how many positives are missing up through that point",
+    "define missing(i) = arr[i] - (i + 1). this count only increases or stays the same as i grows, since the array is strictly increasing - that monotonic property means you can binary search it",
+    "binary search for the smallest index i where missing(i) >= k. everything before that index has fewer than k missing numbers before it",
+    "once you find that boundary index i, the answer is k plus however many numbers from arr you've passed: specifically, answer = k + i, using the number of missing values already accounted for below arr[i-1] to place k precisely in the gap"
+  ],
+  "commonMistakes": [
+    "off-by-one errors in the missing(i) = arr[i] - (i+1) formula when using 0-indexed vs 1-indexed reasoning",
+    "using a linear scan when the array can be large enough that binary search is expected",
+    "forgetting the case where k is smaller than the first gap, i.e. the answer lies before arr[0]"
+  ],
+  "content": {
+    "problemStatement": "You're given a strictly increasing array of positive integers and an\ninteger `k`. Consider the sequence of all positive integers that are\nNOT in the array.\n\n**Return the `k`th number in that sequence.**\n",
+    "constraints": [
+      "arr is strictly increasing and contains positive integers",
+      "1 <= k <= 10^8"
+    ],
+    "notes": [
+      "k is smaller than arr[0], so the answer is simply k",
+      "arr starts at 1 and has no gaps for a long stretch",
+      "arr has only one element"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "arr = [2, 3, 4, 7, 11], k = 5",
+        "output": "9",
+        "expectedOutput": "9",
+        "explanation": "missing positives in order are 1, 5, 6, 8, 9, 10, ... the 5th one is 9"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "arr = [1, 2, 3, 4], k = 2",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "missing positives in order are 5, 6, 7, ... the 2nd one is 6"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "arr = [5, 6, 7], k = 3",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "missing positives in order are 1, 2, 3, 4, 8, ... the 3rd one is 3"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[2,3,4,7,11],5]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4],2]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[5,6,7],3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[2],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1],2]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[3],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3],1]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4],5]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,4,5],3]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[10,11,12],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[10,11,12],5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],5]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,4,5,7,8,10,11,13,14,16,17,19,20,22,23,25,26,28,29,31,32,34,35,37,38,40],7]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],100]",
+        "output": "110",
+        "expectedOutput": "110",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[100000000],100000000]",
+        "output": "100000001",
+        "expectedOutput": "100000001",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[50],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,4,5,10,11],4]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],1]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[2,4,6,8,10,12,14,16,18,20],10]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "arr = [2, 3, 4, 7, 11], k = 5",
+      "output": "9",
+      "expectedOutput": "9",
+      "explanation": "missing positives in order are 1, 5, 6, 8, 9, 10, ... the 5th one is 9"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "arr = [1, 2, 3, 4], k = 2",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "missing positives in order are 5, 6, 7, ... the 2nd one is 6"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "arr = [5, 6, 7], k = 3",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "missing positives in order are 1, 2, 3, 4, 8, ... the 3rd one is 3"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "arr = [2, 3, 4, 7, 11], k = 5",
+      "output": "9",
+      "expectedOutput": "9",
+      "explanation": "missing positives in order are 1, 5, 6, 8, 9, 10, ... the 5th one is 9"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "arr = [1, 2, 3, 4], k = 2",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "missing positives in order are 5, 6, 7, ... the 2nd one is 6"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "arr = [5, 6, 7], k = 3",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "missing positives in order are 1, 2, 3, 4, 8, ... the 3rd one is 3"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[2,3,4,7,11],5]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3,4],2]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[5,6,7],3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[2],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1],1]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1],2]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[3],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3],1]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4],5]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,4,5],3]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[10,11,12],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[10,11,12],5]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],5]",
+      "output": "25",
+      "expectedOutput": "25",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,4,5,7,8,10,11,13,14,16,17,19,20,22,23,25,26,28,29,31,32,34,35,37,38,40],7]",
+      "output": "21",
+      "expectedOutput": "21",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],100]",
+      "output": "110",
+      "expectedOutput": "110",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[100000000],100000000]",
+      "output": "100000001",
+      "expectedOutput": "100000001",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[50],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[3,4,5,10,11],4]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],1]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[2,4,6,8,10,12,14,16,18,20],10]",
+      "output": "19",
+      "expectedOutput": "19",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "arr = [2, 3, 4, 7, 11], k = 5",
+        "output": "9",
+        "expectedOutput": "9",
+        "explanation": "missing positives in order are 1, 5, 6, 8, 9, 10, ... the 5th one is 9"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "arr = [1, 2, 3, 4], k = 2",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "missing positives in order are 5, 6, 7, ... the 2nd one is 6"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "arr = [5, 6, 7], k = 3",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "missing positives in order are 1, 2, 3, 4, 8, ... the 3rd one is 3"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[2,3,4,7,11],5]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4],2]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[5,6,7],3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[2],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1],2]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[3],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3],1]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4],5]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,4,5],3]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[10,11,12],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[10,11,12],5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],5]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,4,5,7,8,10,11,13,14,16,17,19,20,22,23,25,26,28,29,31,32,34,35,37,38,40],7]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],100]",
+        "output": "110",
+        "expectedOutput": "110",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[100000000],100000000]",
+        "output": "100000001",
+        "expectedOutput": "100000001",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[50],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,4,5,10,11],4]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],1]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[2,4,6,8,10,12,14,16,18,20],10]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findKthPositive(self, arr, k):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findKthPositive(vector<int>& arr, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findKthPositive(int[] arr, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findKthPositive(arr: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findKthPositive(arr, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findKthPositive(self, arr, k):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findKthPositive(vector<int>& arr, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findKthPositive(int[] arr, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findKthPositive(arr: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findKthPositive(arr, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findKthPositive(self, arr, k):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findKthPositive(vector<int>& arr, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findKthPositive(int[] arr, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findKthPositive(arr: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findKthPositive(arr, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findKthPositive(self, arr, k):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findKthPositive(vector<int>& arr, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findKthPositive(int[] arr, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findKthPositive(arr: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findKthPositive(arr, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(log n)",
+      "space": "O(1)",
+      "pattern": "index-based counting: at index i (0-indexed), the number of missing positives before arr[i] is arr[i] - (i + 1), since arr[i] would equal i+1 if nothing were missing; binary search this monotonic quantity for the first index where it reaches k"
+    },
+    "bruteForce": {
+      "approach": "walk through positive integers 1, 2, 3, ... one at a time, checking membership in arr (or advancing a pointer through arr), counting missing ones until you reach the kth",
+      "time": "O(n + arr[-1]) in the worst case",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "index-based counting: at index i (0-indexed), the number of missing positives before arr[i] is arr[i] - (i + 1), since arr[i] would equal i+1 if nothing were missing; binary search this monotonic quantity for the first index where it reaches k",
+    "time": "O(log n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "if the array had no gaps at all, arr[i] would always equal i+1 (1-indexed position). the actual gap between arr[i] and its 'expected' value i+1 tells you exactly how many positives are missing up through that point",
+      "define missing(i) = arr[i] - (i + 1). this count only increases or stays the same as i grows, since the array is strictly increasing - that monotonic property means you can binary search it",
+      "binary search for the smallest index i where missing(i) >= k. everything before that index has fewer than k missing numbers before it",
+      "once you find that boundary index i, the answer is k plus however many numbers from arr you've passed: specifically, answer = k + i, using the number of missing values already accounted for below arr[i-1] to place k precisely in the gap"
+    ]
+  },
+  "bruteForce": {
+    "approach": "walk through positive integers 1, 2, 3, ... one at a time, checking membership in arr (or advancing a pointer through arr), counting missing ones until you reach the kth",
+    "time": "O(n + arr[-1]) in the worst case",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

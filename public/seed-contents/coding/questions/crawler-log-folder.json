@@ -1,0 +1,628 @@
+{
+  "id": "crawler-log-folder",
+  "questionId": "crawler-log-folder",
+  "slug": "crawler-log-folder",
+  "title": "Crawler Log Folder",
+  "difficulty": "Easy",
+  "category": "Stack",
+  "patterns": [
+    "stack"
+  ],
+  "lists": [],
+  "hints": [
+    "you're asked for depth at the end, not the actual folder path - do you need to remember folder names at all, or just how many levels deep you are?",
+    "\"../\" decreases depth by one but never below zero, \"./\" does nothing, and anything else increases depth by one",
+    "split logs on spaces and walk through the tokens, updating a single depth counter",
+    "the answer is just the final depth counter value"
+  ],
+  "commonMistakes": [
+    "letting depth go negative when \"../\" is used at the main folder instead of clamping at zero",
+    "building a full explicit stack of folder names when a simple integer counter suffices (not wrong, just unnecessary overhead)",
+    "mis-splitting the logs string, e.g. not handling the trailing slash correctly when tokenizing"
+  ],
+  "content": {
+    "problemStatement": "A file system crawler starts in the main folder and processes a\nspace-delimited sequence of navigation operations, `logs`. Each token is\none of: \"../\" (move to the parent folder, or stay in the main folder if\nalready there), \"./\" (stay in the current folder, no effect), or any\nother token (move into a subfolder with that name, creating a deeper\nlevel).\n\n**After processing every operation in order, return the minimum number of \"../\" operations needed to get back to the main folder.**\n\nThat minimum is simply how many levels deep the crawler ended up.\n",
+    "constraints": [
+      "1 <= number of tokens in logs <= 1000",
+      "1 <= each token's length <= 10",
+      "each token is \"../\", \"./\", or lowercase letters/digits naming a subfolder"
+    ],
+    "notes": [
+      "logs that try to go above the main folder with extra \"../\" tokens",
+      "logs made entirely of \"./\" (depth never changes)",
+      "a single subfolder move with no other operations"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "logs = \"d1/ d2/ ../ ../ d21/ ./ d3/\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "depth 0 -> d1/ depth1 -> d2/ depth2 -> ../ depth1 -> ../ depth0 -> d21/ depth1 -> ./ depth1 (no change) -> d3/ depth2"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "logs = \"d1/ ../ ../ ../\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "depth 0 -> d1/ depth1 -> ../ depth0 -> ../ depth0 (already at main, no-op) -> ../ depth0 (still no-op)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "logs = \"d1/ d2/ d3/ ../ d31/\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "depth 0 -> 1 -> 2 -> 3 -> ../ depth2 -> d31/ depth3"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"d1/ d2/ ../ ../ d21/ ./ d3/\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"d1/ ../ ../ ../\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"d1/ d2/ d3/ ../ d31/\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"./ ./ ./\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a/\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"../\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a/ b/ c/ d/\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"a/ ../ ../ ../ ../\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"a/ b/ ../ c/ ../ ../ d/\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"x/ ./ y/ ./ ../ z/\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"../ ../ ../ a/ ../\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"a/ a/ a/ a/ a/ ../ ../ ../ ../ ../\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"./ ../ ./ ../\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"level1/ level2/ level3/ level4/ ../ ../ ../ ../ level5/\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"a/ b/ ../ ../ a/ b/ ../ ../ a/ b/\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"deep1/ deep2/ deep3/ deep4/ deep5/ deep6/ deep7/ ../ ../ ../\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"single/\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"../ a/ ../ b/ c/ ../ d/ e/ ../ ../ f/\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"a/ ../ b/ ../ c/ ../ d/\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"p/ q/ r/ s/ t/ ../ ../ ../ ../ ../ ../\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "logs = \"d1/ d2/ ../ ../ d21/ ./ d3/\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "depth 0 -> d1/ depth1 -> d2/ depth2 -> ../ depth1 -> ../ depth0 -> d21/ depth1 -> ./ depth1 (no change) -> d3/ depth2"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "logs = \"d1/ ../ ../ ../\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "depth 0 -> d1/ depth1 -> ../ depth0 -> ../ depth0 (already at main, no-op) -> ../ depth0 (still no-op)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "logs = \"d1/ d2/ d3/ ../ d31/\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "depth 0 -> 1 -> 2 -> 3 -> ../ depth2 -> d31/ depth3"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "logs = \"d1/ d2/ ../ ../ d21/ ./ d3/\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "depth 0 -> d1/ depth1 -> d2/ depth2 -> ../ depth1 -> ../ depth0 -> d21/ depth1 -> ./ depth1 (no change) -> d3/ depth2"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "logs = \"d1/ ../ ../ ../\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "depth 0 -> d1/ depth1 -> ../ depth0 -> ../ depth0 (already at main, no-op) -> ../ depth0 (still no-op)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "logs = \"d1/ d2/ d3/ ../ d31/\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "depth 0 -> 1 -> 2 -> 3 -> ../ depth2 -> d31/ depth3"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"d1/ d2/ ../ ../ d21/ ./ d3/\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"d1/ ../ ../ ../\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"d1/ d2/ d3/ ../ d31/\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"./ ./ ./\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"a/\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"../\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"a/ b/ c/ d/\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"a/ ../ ../ ../ ../\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"a/ b/ ../ c/ ../ ../ d/\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"x/ ./ y/ ./ ../ z/\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"../ ../ ../ a/ ../\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"a/ a/ a/ a/ a/ ../ ../ ../ ../ ../\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"./ ../ ./ ../\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"level1/ level2/ level3/ level4/ ../ ../ ../ ../ level5/\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"a/ b/ ../ ../ a/ b/ ../ ../ a/ b/\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"deep1/ deep2/ deep3/ deep4/ deep5/ deep6/ deep7/ ../ ../ ../\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"single/\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"../ a/ ../ b/ c/ ../ d/ e/ ../ ../ f/\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"a/ ../ b/ ../ c/ ../ d/\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"p/ q/ r/ s/ t/ ../ ../ ../ ../ ../ ../\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "logs = \"d1/ d2/ ../ ../ d21/ ./ d3/\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "depth 0 -> d1/ depth1 -> d2/ depth2 -> ../ depth1 -> ../ depth0 -> d21/ depth1 -> ./ depth1 (no change) -> d3/ depth2"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "logs = \"d1/ ../ ../ ../\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "depth 0 -> d1/ depth1 -> ../ depth0 -> ../ depth0 (already at main, no-op) -> ../ depth0 (still no-op)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "logs = \"d1/ d2/ d3/ ../ d31/\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "depth 0 -> 1 -> 2 -> 3 -> ../ depth2 -> d31/ depth3"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"d1/ d2/ ../ ../ d21/ ./ d3/\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"d1/ ../ ../ ../\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"d1/ d2/ d3/ ../ d31/\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"./ ./ ./\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a/\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"../\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a/ b/ c/ d/\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"a/ ../ ../ ../ ../\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"a/ b/ ../ c/ ../ ../ d/\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"x/ ./ y/ ./ ../ z/\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"../ ../ ../ a/ ../\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"a/ a/ a/ a/ a/ ../ ../ ../ ../ ../\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"./ ../ ./ ../\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"level1/ level2/ level3/ level4/ ../ ../ ../ ../ level5/\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"a/ b/ ../ ../ a/ b/ ../ ../ a/ b/\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"deep1/ deep2/ deep3/ deep4/ deep5/ deep6/ deep7/ ../ ../ ../\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"single/\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"../ a/ ../ b/ c/ ../ d/ e/ ../ ../ f/\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"a/ ../ b/ ../ c/ ../ d/\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"p/ q/ r/ s/ t/ ../ ../ ../ ../ ../ ../\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minOperations(self, logs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minOperations(string logs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minOperations(String logs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minOperations(logs: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minOperations(logs) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minOperations(self, logs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minOperations(string logs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minOperations(String logs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minOperations(logs: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minOperations(logs) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minOperations(self, logs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minOperations(string logs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minOperations(String logs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minOperations(logs: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minOperations(logs) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minOperations(self, logs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minOperations(string logs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minOperations(String logs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minOperations(logs: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minOperations(logs) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra if you only track a depth counter instead of actual folder names",
+      "pattern": "stack (or a simple depth counter, since folder names themselves never need to be recalled)"
+    },
+    "bruteForce": {
+      "approach": "maintain an explicit list acting as a stack of folder names, pushing on a move-in token and popping (if non-empty) on '../'; the final depth is the size of the list",
+      "time": "O(n) where n is the total length of the logs string",
+      "space": "O(n) for the stack of folder names in the worst case"
+    }
+  },
+  "optimal": {
+    "pattern": "stack (or a simple depth counter, since folder names themselves never need to be recalled)",
+    "time": "O(n)",
+    "space": "O(1) extra if you only track a depth counter instead of actual folder names",
+    "hint_ladder": [
+      "you're asked for depth at the end, not the actual folder path - do you need to remember folder names at all, or just how many levels deep you are?",
+      "\"../\" decreases depth by one but never below zero, \"./\" does nothing, and anything else increases depth by one",
+      "split logs on spaces and walk through the tokens, updating a single depth counter",
+      "the answer is just the final depth counter value"
+    ]
+  },
+  "bruteForce": {
+    "approach": "maintain an explicit list acting as a stack of folder names, pushing on a move-in token and popping (if non-empty) on '../'; the final depth is the size of the list",
+    "time": "O(n) where n is the total length of the logs string",
+    "space": "O(n) for the stack of folder names in the worst case"
+  },
+  "isIndex0": true,
+  "level": null
+}

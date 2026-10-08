@@ -1,0 +1,628 @@
+{
+  "id": "combination-sum-iii",
+  "questionId": "combination-sum-iii",
+  "slug": "combination-sum-iii",
+  "title": "Combination Sum III",
+  "difficulty": "Medium",
+  "category": "Backtracking",
+  "patterns": [
+    "backtracking"
+  ],
+  "lists": [],
+  "hints": [
+    "this is Combinations (choose k of {1..9}) with an extra running-sum constraint bolted on",
+    "recurse with (start digit, numbers still needed, sum still needed); try each digit from start to 9",
+    "after picking a digit, recurse with start = digit + 1 (each digit used at most once) and both counters decremented accordingly",
+    "record the combination when numbers-still-needed hits 0 and sum-still-needed is exactly 0 at the same time - and prune early by stopping a branch as soon as the running sum exceeds n or the remaining digits available (9 - start + 1) can't possibly fill the remaining count"
+  ],
+  "commonMistakes": [
+    "checking only the sum condition without also checking the count is exactly k, which can under- or over-count",
+    "not pruning when the running sum already exceeds n, wasting time exploring hopeless branches",
+    "allowing digits outside 1-9 or reusing a digit within the same combination"
+  ],
+  "content": {
+    "problemStatement": "You're given two integers, `k` and `n`.\n\n**Return every combination of `k` distinct numbers, each chosen from 1 to 9, that adds up to `n`.**\n\nEach combination uses each number at most once, and no two combinations in the result contain the same set of numbers.\n",
+    "constraints": [
+      "1 <= k <= 9",
+      "1 <= n <= 60",
+      "each number from 1 to 9 is used at most once per combination"
+    ],
+    "notes": [
+      "n too small for any valid combination of k distinct digits (answer is empty)",
+      "k = 9 (only one possible combination: all digits 1-9, if n matches their sum)",
+      "k = 1 (each valid single digit equal to n)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "k = 3, n = 7",
+        "output": "[[1, 2, 4]]",
+        "expectedOutput": "[[1, 2, 4]]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "k = 3, n = 9",
+        "output": "[[1, 2, 6], [1, 3, 5], [2, 3, 4]]",
+        "expectedOutput": "[[1, 2, 6], [1, 3, 5], [2, 3, 4]]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "k = 4, n = 1",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "the 4 smallest distinct digits already sum to at least 1+2+3+4 = 10"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[3,7]",
+        "output": "[[1,2,4]]",
+        "expectedOutput": "[[1,2,4]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,9]",
+        "output": "[[1,2,6],[1,3,5],[2,3,4]]",
+        "expectedOutput": "[[1,2,6],[1,3,5],[2,3,4]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[4,1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[1,5]",
+        "output": "[[5]]",
+        "expectedOutput": "[[5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[2,3]",
+        "output": "[[1,2]]",
+        "expectedOutput": "[[1,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[2,17]",
+        "output": "[[8,9]]",
+        "expectedOutput": "[[8,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[9,45]",
+        "output": "[[1,2,3,4,5,6,7,8,9]]",
+        "expectedOutput": "[[1,2,3,4,5,6,7,8,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[2,4]",
+        "output": "[[1,3]]",
+        "expectedOutput": "[[1,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[5,25]",
+        "output": "[[1,2,5,8,9],[1,2,6,7,9],[1,3,4,8,9],[1,3,5,7,9],[1,3,6,7,8],[1,4,5,6,9],[1,4,5,7,8],[2,3,4,7,9],[2,3,5,6,9],[2,3,5,7,8],[2,4,5,6,8],[3,4,5,6,7]]",
+        "expectedOutput": "[[1,2,5,8,9],[1,2,6,7,9],[1,3,4,8,9],[1,3,5,7,9],[1,3,6,7,8],[1,4,5,6,9],[1,4,5,7,8],[2,3,4,7,9],[2,3,5,6,9],[2,3,5,7,8],[2,4,5,6,8],[3,4,5,6,7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[1,1]",
+        "output": "[[1]]",
+        "expectedOutput": "[[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[1,9]",
+        "output": "[[9]]",
+        "expectedOutput": "[[9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[3,24]",
+        "output": "[[7,8,9]]",
+        "expectedOutput": "[[7,8,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[6,30]",
+        "output": "[[1,2,3,7,8,9],[1,2,4,6,8,9],[1,2,5,6,7,9],[1,3,4,5,8,9],[1,3,4,6,7,9],[1,3,5,6,7,8],[2,3,4,5,7,9],[2,3,4,6,7,8]]",
+        "expectedOutput": "[[1,2,3,7,8,9],[1,2,4,6,8,9],[1,2,5,6,7,9],[1,3,4,5,8,9],[1,3,4,6,7,9],[1,3,5,6,7,8],[2,3,4,5,7,9],[2,3,4,6,7,8]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[4,20]",
+        "output": "[[1,2,8,9],[1,3,7,9],[1,4,6,9],[1,4,7,8],[1,5,6,8],[2,3,6,9],[2,3,7,8],[2,4,5,9],[2,4,6,8],[2,5,6,7],[3,4,5,8],[3,4,6,7]]",
+        "expectedOutput": "[[1,2,8,9],[1,3,7,9],[1,4,6,9],[1,4,7,8],[1,5,6,8],[2,3,6,9],[2,3,7,8],[2,4,5,9],[2,4,6,8],[2,5,6,7],[3,4,5,8],[3,4,6,7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[7,35]",
+        "output": "[[1,2,3,5,7,8,9],[1,2,4,5,6,8,9],[1,3,4,5,6,7,9],[2,3,4,5,6,7,8]]",
+        "expectedOutput": "[[1,2,3,5,7,8,9],[1,2,4,5,6,8,9],[1,3,4,5,6,7,9],[2,3,4,5,6,7,8]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[8,40]",
+        "output": "[[1,2,3,4,6,7,8,9]]",
+        "expectedOutput": "[[1,2,3,4,6,7,8,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[2,16]",
+        "output": "[[7,9]]",
+        "expectedOutput": "[[7,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[3,6]",
+        "output": "[[1,2,3]]",
+        "expectedOutput": "[[1,2,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[5,35]",
+        "output": "[[5,6,7,8,9]]",
+        "expectedOutput": "[[5,6,7,8,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[9,1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "k = 3, n = 7",
+      "output": "[[1, 2, 4]]",
+      "expectedOutput": "[[1, 2, 4]]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "k = 3, n = 9",
+      "output": "[[1, 2, 6], [1, 3, 5], [2, 3, 4]]",
+      "expectedOutput": "[[1, 2, 6], [1, 3, 5], [2, 3, 4]]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "k = 4, n = 1",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "the 4 smallest distinct digits already sum to at least 1+2+3+4 = 10"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "k = 3, n = 7",
+      "output": "[[1, 2, 4]]",
+      "expectedOutput": "[[1, 2, 4]]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "k = 3, n = 9",
+      "output": "[[1, 2, 6], [1, 3, 5], [2, 3, 4]]",
+      "expectedOutput": "[[1, 2, 6], [1, 3, 5], [2, 3, 4]]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "k = 4, n = 1",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "the 4 smallest distinct digits already sum to at least 1+2+3+4 = 10"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[3,7]",
+      "output": "[[1,2,4]]",
+      "expectedOutput": "[[1,2,4]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[3,9]",
+      "output": "[[1,2,6],[1,3,5],[2,3,4]]",
+      "expectedOutput": "[[1,2,6],[1,3,5],[2,3,4]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[4,1]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[1,5]",
+      "output": "[[5]]",
+      "expectedOutput": "[[5]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[2,3]",
+      "output": "[[1,2]]",
+      "expectedOutput": "[[1,2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[2,17]",
+      "output": "[[8,9]]",
+      "expectedOutput": "[[8,9]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[9,45]",
+      "output": "[[1,2,3,4,5,6,7,8,9]]",
+      "expectedOutput": "[[1,2,3,4,5,6,7,8,9]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[2,4]",
+      "output": "[[1,3]]",
+      "expectedOutput": "[[1,3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[5,25]",
+      "output": "[[1,2,5,8,9],[1,2,6,7,9],[1,3,4,8,9],[1,3,5,7,9],[1,3,6,7,8],[1,4,5,6,9],[1,4,5,7,8],[2,3,4,7,9],[2,3,5,6,9],[2,3,5,7,8],[2,4,5,6,8],[3,4,5,6,7]]",
+      "expectedOutput": "[[1,2,5,8,9],[1,2,6,7,9],[1,3,4,8,9],[1,3,5,7,9],[1,3,6,7,8],[1,4,5,6,9],[1,4,5,7,8],[2,3,4,7,9],[2,3,5,6,9],[2,3,5,7,8],[2,4,5,6,8],[3,4,5,6,7]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[1,1]",
+      "output": "[[1]]",
+      "expectedOutput": "[[1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[1,9]",
+      "output": "[[9]]",
+      "expectedOutput": "[[9]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[3,24]",
+      "output": "[[7,8,9]]",
+      "expectedOutput": "[[7,8,9]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[6,30]",
+      "output": "[[1,2,3,7,8,9],[1,2,4,6,8,9],[1,2,5,6,7,9],[1,3,4,5,8,9],[1,3,4,6,7,9],[1,3,5,6,7,8],[2,3,4,5,7,9],[2,3,4,6,7,8]]",
+      "expectedOutput": "[[1,2,3,7,8,9],[1,2,4,6,8,9],[1,2,5,6,7,9],[1,3,4,5,8,9],[1,3,4,6,7,9],[1,3,5,6,7,8],[2,3,4,5,7,9],[2,3,4,6,7,8]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[4,20]",
+      "output": "[[1,2,8,9],[1,3,7,9],[1,4,6,9],[1,4,7,8],[1,5,6,8],[2,3,6,9],[2,3,7,8],[2,4,5,9],[2,4,6,8],[2,5,6,7],[3,4,5,8],[3,4,6,7]]",
+      "expectedOutput": "[[1,2,8,9],[1,3,7,9],[1,4,6,9],[1,4,7,8],[1,5,6,8],[2,3,6,9],[2,3,7,8],[2,4,5,9],[2,4,6,8],[2,5,6,7],[3,4,5,8],[3,4,6,7]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[7,35]",
+      "output": "[[1,2,3,5,7,8,9],[1,2,4,5,6,8,9],[1,3,4,5,6,7,9],[2,3,4,5,6,7,8]]",
+      "expectedOutput": "[[1,2,3,5,7,8,9],[1,2,4,5,6,8,9],[1,3,4,5,6,7,9],[2,3,4,5,6,7,8]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[8,40]",
+      "output": "[[1,2,3,4,6,7,8,9]]",
+      "expectedOutput": "[[1,2,3,4,6,7,8,9]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[2,16]",
+      "output": "[[7,9]]",
+      "expectedOutput": "[[7,9]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[3,6]",
+      "output": "[[1,2,3]]",
+      "expectedOutput": "[[1,2,3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[5,35]",
+      "output": "[[5,6,7,8,9]]",
+      "expectedOutput": "[[5,6,7,8,9]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[9,1]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "k = 3, n = 7",
+        "output": "[[1, 2, 4]]",
+        "expectedOutput": "[[1, 2, 4]]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "k = 3, n = 9",
+        "output": "[[1, 2, 6], [1, 3, 5], [2, 3, 4]]",
+        "expectedOutput": "[[1, 2, 6], [1, 3, 5], [2, 3, 4]]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "k = 4, n = 1",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "the 4 smallest distinct digits already sum to at least 1+2+3+4 = 10"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[3,7]",
+        "output": "[[1,2,4]]",
+        "expectedOutput": "[[1,2,4]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,9]",
+        "output": "[[1,2,6],[1,3,5],[2,3,4]]",
+        "expectedOutput": "[[1,2,6],[1,3,5],[2,3,4]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[4,1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[1,5]",
+        "output": "[[5]]",
+        "expectedOutput": "[[5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[2,3]",
+        "output": "[[1,2]]",
+        "expectedOutput": "[[1,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[2,17]",
+        "output": "[[8,9]]",
+        "expectedOutput": "[[8,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[9,45]",
+        "output": "[[1,2,3,4,5,6,7,8,9]]",
+        "expectedOutput": "[[1,2,3,4,5,6,7,8,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[2,4]",
+        "output": "[[1,3]]",
+        "expectedOutput": "[[1,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[5,25]",
+        "output": "[[1,2,5,8,9],[1,2,6,7,9],[1,3,4,8,9],[1,3,5,7,9],[1,3,6,7,8],[1,4,5,6,9],[1,4,5,7,8],[2,3,4,7,9],[2,3,5,6,9],[2,3,5,7,8],[2,4,5,6,8],[3,4,5,6,7]]",
+        "expectedOutput": "[[1,2,5,8,9],[1,2,6,7,9],[1,3,4,8,9],[1,3,5,7,9],[1,3,6,7,8],[1,4,5,6,9],[1,4,5,7,8],[2,3,4,7,9],[2,3,5,6,9],[2,3,5,7,8],[2,4,5,6,8],[3,4,5,6,7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[1,1]",
+        "output": "[[1]]",
+        "expectedOutput": "[[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[1,9]",
+        "output": "[[9]]",
+        "expectedOutput": "[[9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[3,24]",
+        "output": "[[7,8,9]]",
+        "expectedOutput": "[[7,8,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[6,30]",
+        "output": "[[1,2,3,7,8,9],[1,2,4,6,8,9],[1,2,5,6,7,9],[1,3,4,5,8,9],[1,3,4,6,7,9],[1,3,5,6,7,8],[2,3,4,5,7,9],[2,3,4,6,7,8]]",
+        "expectedOutput": "[[1,2,3,7,8,9],[1,2,4,6,8,9],[1,2,5,6,7,9],[1,3,4,5,8,9],[1,3,4,6,7,9],[1,3,5,6,7,8],[2,3,4,5,7,9],[2,3,4,6,7,8]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[4,20]",
+        "output": "[[1,2,8,9],[1,3,7,9],[1,4,6,9],[1,4,7,8],[1,5,6,8],[2,3,6,9],[2,3,7,8],[2,4,5,9],[2,4,6,8],[2,5,6,7],[3,4,5,8],[3,4,6,7]]",
+        "expectedOutput": "[[1,2,8,9],[1,3,7,9],[1,4,6,9],[1,4,7,8],[1,5,6,8],[2,3,6,9],[2,3,7,8],[2,4,5,9],[2,4,6,8],[2,5,6,7],[3,4,5,8],[3,4,6,7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[7,35]",
+        "output": "[[1,2,3,5,7,8,9],[1,2,4,5,6,8,9],[1,3,4,5,6,7,9],[2,3,4,5,6,7,8]]",
+        "expectedOutput": "[[1,2,3,5,7,8,9],[1,2,4,5,6,8,9],[1,3,4,5,6,7,9],[2,3,4,5,6,7,8]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[8,40]",
+        "output": "[[1,2,3,4,6,7,8,9]]",
+        "expectedOutput": "[[1,2,3,4,6,7,8,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[2,16]",
+        "output": "[[7,9]]",
+        "expectedOutput": "[[7,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[3,6]",
+        "output": "[[1,2,3]]",
+        "expectedOutput": "[[1,2,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[5,35]",
+        "output": "[[5,6,7,8,9]]",
+        "expectedOutput": "[[5,6,7,8,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[9,1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def combinationSum3(self, k, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> combinationSum3(int k, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] combinationSum3(int k, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun combinationSum3(k: Int, n: Int): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    combinationSum3(k, n) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def combinationSum3(self, k, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> combinationSum3(int k, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] combinationSum3(int k, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun combinationSum3(k: Int, n: Int): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    combinationSum3(k, n) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def combinationSum3(self, k, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> combinationSum3(int k, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] combinationSum3(int k, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun combinationSum3(k: Int, n: Int): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    combinationSum3(k, n) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def combinationSum3(self, k, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> combinationSum3(int k, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] combinationSum3(int k, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun combinationSum3(k: Int, n: Int): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    combinationSum3(k, n) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(C(9, k) * k) in the worst case, with much of the tree pruned in practice",
+      "space": "O(k) recursion depth, excluding output",
+      "pattern": "backtracking with a start digit, tracking remaining count and remaining sum, pruning early"
+    },
+    "bruteForce": {
+      "approach": "check every combination of k digits out of the 9 available (C(9, k) of them) and keep the ones summing to n",
+      "time": "O(C(9, k) * k)",
+      "space": "O(k) extra beyond the output"
+    }
+  },
+  "optimal": {
+    "pattern": "backtracking with a start digit, tracking remaining count and remaining sum, pruning early",
+    "time": "O(C(9, k) * k) in the worst case, with much of the tree pruned in practice",
+    "space": "O(k) recursion depth, excluding output",
+    "hint_ladder": [
+      "this is Combinations (choose k of {1..9}) with an extra running-sum constraint bolted on",
+      "recurse with (start digit, numbers still needed, sum still needed); try each digit from start to 9",
+      "after picking a digit, recurse with start = digit + 1 (each digit used at most once) and both counters decremented accordingly",
+      "record the combination when numbers-still-needed hits 0 and sum-still-needed is exactly 0 at the same time - and prune early by stopping a branch as soon as the running sum exceeds n or the remaining digits available (9 - start + 1) can't possibly fill the remaining count"
+    ]
+  },
+  "bruteForce": {
+    "approach": "check every combination of k digits out of the 9 available (C(9, k) of them) and keep the ones summing to n",
+    "time": "O(C(9, k) * k)",
+    "space": "O(k) extra beyond the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,632 @@
+{
+  "id": "min-stack-sequence",
+  "questionId": "min-stack-sequence",
+  "slug": "min-stack-sequence",
+  "title": "Min Stack Operation Sequence",
+  "difficulty": "Medium",
+  "category": "Stack",
+  "patterns": [
+    "stack",
+    "design"
+  ],
+  "lists": [
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "getMin needs to be fast every time, not just scan-the-stack fast - what if you tracked the running minimum alongside every push?",
+    "keep a second stack that mirrors the first: each time you push a value, also push the minimum-so-far (min of the new value and whatever was the previous minimum) onto this second stack",
+    "when you pop from the main stack, pop from the min-tracking stack too, so it always reflects the minimum of exactly what's currently on the main stack",
+    "getMin then just peeks the top of the min-tracking stack, no scanning needed"
+  ],
+  "commonMistakes": [
+    "tracking a single running minimum variable instead of a stack of minimums, which breaks once you pop past the value that was the minimum",
+    "not keeping the min-tracking stack in lockstep with every push and pop on the main stack",
+    "parsing 'push_-2' incorrectly by splitting on every underscore or dash instead of just the first underscore"
+  ],
+  "content": {
+    "problemStatement": "You're given a space-delimited sequence of `ops` to run against a stack\nthat also supports finding its current minimum. Each token is one of:\n\n- `\"push_<value>\"` - push the integer value onto the stack\n- `\"pop\"` - remove the top element\n- `\"top\"` - peek at the top element (no return value needed)\n- `\"getMin\"` - report the current minimum value in the stack\n\n**Simulate the operations in order on an initially empty stack, and return a list containing the result of every \"getMin\" operation, in the order they occurred.**\n\nYou can assume `\"pop\"`, `\"top\"`, and `\"getMin\"` are never called on an\nempty stack.\n",
+    "constraints": [
+      "1 <= number of operations <= 3 * 10^4",
+      "-2^31 <= pushed value <= 2^31 - 1",
+      "pop, top, and getMin are never called on an empty stack"
+    ],
+    "notes": [
+      "the current minimum is pushed multiple times, then popped once (minimum should not disappear early)",
+      "getMin called immediately after the very first push",
+      "a long run of pushes with a strictly decreasing sequence of minimums"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"push_-2 push_0 push_-3 getMin pop getMin\"",
+        "output": "[-3, -2]",
+        "expectedOutput": "[-3, -2]",
+        "explanation": "stack becomes [-2,0,-3], getMin reports -3; pop removes -3 -> [-2,0]; getMin reports -2"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"push_5 push_3 getMin push_1 getMin pop getMin\"",
+        "output": "[3, 1, 3]",
+        "expectedOutput": "[3, 1, 3]",
+        "explanation": "[5,3] getMin=3; push 1 -> [5,3,1] getMin=1; pop removes 1 -> [5,3] getMin=3"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"push_1 push_1 push_1 getMin pop getMin\"",
+        "output": "[1, 1]",
+        "expectedOutput": "[1, 1]",
+        "explanation": "duplicate minimums must still be tracked correctly after a pop"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"push_-2 push_0 push_-3 getMin pop getMin\"]",
+        "output": "[-3,-2]",
+        "expectedOutput": "[-3,-2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"push_5 push_3 getMin push_1 getMin pop getMin\"]",
+        "output": "[3,1,3]",
+        "expectedOutput": "[3,1,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"push_1 push_1 push_1 getMin pop getMin\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"push_7 getMin\"]",
+        "output": "[7]",
+        "expectedOutput": "[7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"push_0 getMin\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"push_3 push_2 push_1 getMin getMin getMin\"]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"push_5 push_5 push_5 getMin pop getMin pop getMin\"]",
+        "output": "[5,5,5]",
+        "expectedOutput": "[5,5,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"push_-1 push_-2 push_-3 getMin pop getMin pop getMin\"]",
+        "output": "[-3,-2,-1]",
+        "expectedOutput": "[-3,-2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"push_10 top getMin push_5 top getMin pop top getMin\"]",
+        "output": "[10,5,10]",
+        "expectedOutput": "[10,5,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"push_1 push_2 push_3 pop pop getMin\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"push_-5 push_10 push_-3 push_8 getMin pop getMin pop pop getMin\"]",
+        "output": "[-5,-5,-5]",
+        "expectedOutput": "[-5,-5,-5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"push_2147483647 getMin push_-2147483648 getMin\"]",
+        "output": "[2147483647,-2147483648]",
+        "expectedOutput": "[2147483647,-2147483648]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"push_4 push_2 push_6 push_1 getMin pop getMin pop getMin pop getMin\"]",
+        "output": "[1,2,2,4]",
+        "expectedOutput": "[1,2,2,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"push_5 push_4 push_3 push_2 push_1 getMin pop getMin pop getMin pop getMin pop getMin\"]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"push_1 push_1 getMin pop getMin pop\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"push_100 push_50 push_50 getMin pop getMin pop getMin\"]",
+        "output": "[50,50,100]",
+        "expectedOutput": "[50,50,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"push_3 getMin push_1 getMin push_-1 getMin push_5 getMin pop pop getMin\"]",
+        "output": "[3,1,-1,-1,1]",
+        "expectedOutput": "[3,1,-1,-1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"push_9 push_8 push_7 getMin pop getMin pop getMin pop\"]",
+        "output": "[7,8,9]",
+        "expectedOutput": "[7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"push_0 push_0 push_0 getMin pop getMin pop getMin\"]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"push_2 push_-2 getMin push_2 getMin pop getMin pop getMin\"]",
+        "output": "[-2,-2,-2,2]",
+        "expectedOutput": "[-2,-2,-2,2]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"push_-2 push_0 push_-3 getMin pop getMin\"",
+      "output": "[-3, -2]",
+      "expectedOutput": "[-3, -2]",
+      "explanation": "stack becomes [-2,0,-3], getMin reports -3; pop removes -3 -> [-2,0]; getMin reports -2"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"push_5 push_3 getMin push_1 getMin pop getMin\"",
+      "output": "[3, 1, 3]",
+      "expectedOutput": "[3, 1, 3]",
+      "explanation": "[5,3] getMin=3; push 1 -> [5,3,1] getMin=1; pop removes 1 -> [5,3] getMin=3"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"push_1 push_1 push_1 getMin pop getMin\"",
+      "output": "[1, 1]",
+      "expectedOutput": "[1, 1]",
+      "explanation": "duplicate minimums must still be tracked correctly after a pop"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"push_-2 push_0 push_-3 getMin pop getMin\"",
+      "output": "[-3, -2]",
+      "expectedOutput": "[-3, -2]",
+      "explanation": "stack becomes [-2,0,-3], getMin reports -3; pop removes -3 -> [-2,0]; getMin reports -2"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"push_5 push_3 getMin push_1 getMin pop getMin\"",
+      "output": "[3, 1, 3]",
+      "expectedOutput": "[3, 1, 3]",
+      "explanation": "[5,3] getMin=3; push 1 -> [5,3,1] getMin=1; pop removes 1 -> [5,3] getMin=3"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"push_1 push_1 push_1 getMin pop getMin\"",
+      "output": "[1, 1]",
+      "expectedOutput": "[1, 1]",
+      "explanation": "duplicate minimums must still be tracked correctly after a pop"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"push_-2 push_0 push_-3 getMin pop getMin\"]",
+      "output": "[-3,-2]",
+      "expectedOutput": "[-3,-2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"push_5 push_3 getMin push_1 getMin pop getMin\"]",
+      "output": "[3,1,3]",
+      "expectedOutput": "[3,1,3]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"push_1 push_1 push_1 getMin pop getMin\"]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"push_7 getMin\"]",
+      "output": "[7]",
+      "expectedOutput": "[7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"push_0 getMin\"]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"push_3 push_2 push_1 getMin getMin getMin\"]",
+      "output": "[1,1,1]",
+      "expectedOutput": "[1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"push_5 push_5 push_5 getMin pop getMin pop getMin\"]",
+      "output": "[5,5,5]",
+      "expectedOutput": "[5,5,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"push_-1 push_-2 push_-3 getMin pop getMin pop getMin\"]",
+      "output": "[-3,-2,-1]",
+      "expectedOutput": "[-3,-2,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"push_10 top getMin push_5 top getMin pop top getMin\"]",
+      "output": "[10,5,10]",
+      "expectedOutput": "[10,5,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"push_1 push_2 push_3 pop pop getMin\"]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"push_-5 push_10 push_-3 push_8 getMin pop getMin pop pop getMin\"]",
+      "output": "[-5,-5,-5]",
+      "expectedOutput": "[-5,-5,-5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"push_2147483647 getMin push_-2147483648 getMin\"]",
+      "output": "[2147483647,-2147483648]",
+      "expectedOutput": "[2147483647,-2147483648]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"push_4 push_2 push_6 push_1 getMin pop getMin pop getMin pop getMin\"]",
+      "output": "[1,2,2,4]",
+      "expectedOutput": "[1,2,2,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"push_5 push_4 push_3 push_2 push_1 getMin pop getMin pop getMin pop getMin pop getMin\"]",
+      "output": "[1,2,3,4,5]",
+      "expectedOutput": "[1,2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"push_1 push_1 getMin pop getMin pop\"]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"push_100 push_50 push_50 getMin pop getMin pop getMin\"]",
+      "output": "[50,50,100]",
+      "expectedOutput": "[50,50,100]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"push_3 getMin push_1 getMin push_-1 getMin push_5 getMin pop pop getMin\"]",
+      "output": "[3,1,-1,-1,1]",
+      "expectedOutput": "[3,1,-1,-1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"push_9 push_8 push_7 getMin pop getMin pop getMin pop\"]",
+      "output": "[7,8,9]",
+      "expectedOutput": "[7,8,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"push_0 push_0 push_0 getMin pop getMin pop getMin\"]",
+      "output": "[0,0,0]",
+      "expectedOutput": "[0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"push_2 push_-2 getMin push_2 getMin pop getMin pop getMin\"]",
+      "output": "[-2,-2,-2,2]",
+      "expectedOutput": "[-2,-2,-2,2]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"push_-2 push_0 push_-3 getMin pop getMin\"",
+        "output": "[-3, -2]",
+        "expectedOutput": "[-3, -2]",
+        "explanation": "stack becomes [-2,0,-3], getMin reports -3; pop removes -3 -> [-2,0]; getMin reports -2"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"push_5 push_3 getMin push_1 getMin pop getMin\"",
+        "output": "[3, 1, 3]",
+        "expectedOutput": "[3, 1, 3]",
+        "explanation": "[5,3] getMin=3; push 1 -> [5,3,1] getMin=1; pop removes 1 -> [5,3] getMin=3"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"push_1 push_1 push_1 getMin pop getMin\"",
+        "output": "[1, 1]",
+        "expectedOutput": "[1, 1]",
+        "explanation": "duplicate minimums must still be tracked correctly after a pop"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"push_-2 push_0 push_-3 getMin pop getMin\"]",
+        "output": "[-3,-2]",
+        "expectedOutput": "[-3,-2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"push_5 push_3 getMin push_1 getMin pop getMin\"]",
+        "output": "[3,1,3]",
+        "expectedOutput": "[3,1,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"push_1 push_1 push_1 getMin pop getMin\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"push_7 getMin\"]",
+        "output": "[7]",
+        "expectedOutput": "[7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"push_0 getMin\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"push_3 push_2 push_1 getMin getMin getMin\"]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"push_5 push_5 push_5 getMin pop getMin pop getMin\"]",
+        "output": "[5,5,5]",
+        "expectedOutput": "[5,5,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"push_-1 push_-2 push_-3 getMin pop getMin pop getMin\"]",
+        "output": "[-3,-2,-1]",
+        "expectedOutput": "[-3,-2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"push_10 top getMin push_5 top getMin pop top getMin\"]",
+        "output": "[10,5,10]",
+        "expectedOutput": "[10,5,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"push_1 push_2 push_3 pop pop getMin\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"push_-5 push_10 push_-3 push_8 getMin pop getMin pop pop getMin\"]",
+        "output": "[-5,-5,-5]",
+        "expectedOutput": "[-5,-5,-5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"push_2147483647 getMin push_-2147483648 getMin\"]",
+        "output": "[2147483647,-2147483648]",
+        "expectedOutput": "[2147483647,-2147483648]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"push_4 push_2 push_6 push_1 getMin pop getMin pop getMin pop getMin\"]",
+        "output": "[1,2,2,4]",
+        "expectedOutput": "[1,2,2,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"push_5 push_4 push_3 push_2 push_1 getMin pop getMin pop getMin pop getMin pop getMin\"]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"push_1 push_1 getMin pop getMin pop\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"push_100 push_50 push_50 getMin pop getMin pop getMin\"]",
+        "output": "[50,50,100]",
+        "expectedOutput": "[50,50,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"push_3 getMin push_1 getMin push_-1 getMin push_5 getMin pop pop getMin\"]",
+        "output": "[3,1,-1,-1,1]",
+        "expectedOutput": "[3,1,-1,-1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"push_9 push_8 push_7 getMin pop getMin pop getMin pop\"]",
+        "output": "[7,8,9]",
+        "expectedOutput": "[7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"push_0 push_0 push_0 getMin pop getMin pop getMin\"]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"push_2 push_-2 getMin push_2 getMin pop getMin pop getMin\"]",
+        "output": "[-2,-2,-2,2]",
+        "expectedOutput": "[-2,-2,-2,2]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minStackResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> minStackResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] minStackResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minStackResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minStackResults(ops) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minStackResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> minStackResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] minStackResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minStackResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minStackResults(ops) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minStackResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> minStackResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] minStackResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minStackResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minStackResults(ops) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minStackResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> minStackResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] minStackResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minStackResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minStackResults(ops) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(1) per operation",
+      "space": "O(n)",
+      "pattern": "stack augmented with a parallel min-tracking stack"
+    },
+    "bruteForce": {
+      "approach": "use a plain stack for values, and for every getMin call scan the entire stack to find the minimum",
+      "time": "O(n) per getMin call, O(n^2) overall in the worst case",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "stack augmented with a parallel min-tracking stack",
+    "time": "O(1) per operation",
+    "space": "O(n)",
+    "hint_ladder": [
+      "getMin needs to be fast every time, not just scan-the-stack fast - what if you tracked the running minimum alongside every push?",
+      "keep a second stack that mirrors the first: each time you push a value, also push the minimum-so-far (min of the new value and whatever was the previous minimum) onto this second stack",
+      "when you pop from the main stack, pop from the min-tracking stack too, so it always reflects the minimum of exactly what's currently on the main stack",
+      "getMin then just peeks the top of the min-tracking stack, no scanning needed"
+    ]
+  },
+  "bruteForce": {
+    "approach": "use a plain stack for values, and for every getMin call scan the entire stack to find the minimum",
+    "time": "O(n) per getMin call, O(n^2) overall in the worst case",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

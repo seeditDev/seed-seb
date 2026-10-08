@@ -1,0 +1,599 @@
+{
+  "id": "container-with-most-water",
+  "questionId": "container-with-most-water",
+  "slug": "container-with-most-water",
+  "title": "Container With Most Water",
+  "difficulty": "Medium",
+  "category": "Two pointers",
+  "patterns": [
+    "two pointers"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "starting with the widest possible container (both ends), what determines how much water it holds? the shorter of the two lines.",
+    "if you move the pointer at the TALLER line inward, can the area ever improve? think about what happens to both width and the limiting height.",
+    "moving the shorter line's pointer inward is the only move that could possibly find something better, since width can only shrink",
+    "track the max area seen as you move the shorter pointer inward each step, until the pointers meet"
+  ],
+  "commonMistakes": [
+    "moving both pointers every step instead of only the one at the shorter line",
+    "forgetting that area uses the min of the two heights, not the max or the sum",
+    "off-by-one on the width calculation (j - i, not j - i + 1, since width is the gap between lines)"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of heights, `height`, one per vertical line, all\nstanding on the x-axis. Any two lines, together with the x-axis, form a\ncontainer.\n\n**Find the two lines that hold the most water, and return how much that container can hold.**\n",
+    "constraints": [
+      "2 <= height.length <= 10^5",
+      "0 <= height[i] <= 10^4"
+    ],
+    "notes": [
+      "only two lines in the array",
+      "heights that increase, decrease, or are all equal",
+      "the tallest lines are right next to each other (small width, but tall)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "height = [1, 8, 6, 2, 5, 4, 8, 3, 7]",
+        "output": "49",
+        "expectedOutput": "49",
+        "explanation": "the lines at index 1 (height 8) and index 8 (height 7) are 7 apart, holding min(8,7) * 7 = 49"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "height = [1, 1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,8,6,2,5,4,8,3,7]]",
+        "output": "49",
+        "expectedOutput": "49",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[4,3,2,1,4]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,4,3,2,1,5]]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,3,2,5,25,24,5]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[0,2,0,4,0,6,0,8,0,10]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[76,8,49,48,76,59,67,32,70,1,87,92,14,87,68,96,34,98,82,43]]",
+        "output": "1368",
+        "expectedOutput": "1368",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[7,18,27,10,29,0,46,46,16,32,48,11,32,6,40,19,40,32,38,12,9,23,48,10,34,49,33,0,38,20,31,1,7,23,19]]",
+        "output": "874",
+        "expectedOutput": "874",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[100,1,1,1,1,1,1,1,1,100]]",
+        "output": "900",
+        "expectedOutput": "900",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,3,4,5,18,17,6]]",
+        "output": "17",
+        "expectedOutput": "17",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,4,3]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[6,4,3,1,2,3,6,1,5]]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,9,3,4,7,2,12,6]]",
+        "output": "45",
+        "expectedOutput": "45",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "height = [1, 8, 6, 2, 5, 4, 8, 3, 7]",
+      "output": "49",
+      "expectedOutput": "49",
+      "explanation": "the lines at index 1 (height 8) and index 8 (height 7) are 7 apart, holding min(8,7) * 7 = 49"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "height = [1, 1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "height = [1, 8, 6, 2, 5, 4, 8, 3, 7]",
+      "output": "49",
+      "expectedOutput": "49",
+      "explanation": "the lines at index 1 (height 8) and index 8 (height 7) are 7 apart, holding min(8,7) * 7 = 49"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "height = [1, 1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,8,6,2,5,4,8,3,7]]",
+      "output": "49",
+      "expectedOutput": "49",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[4,3,2,1,4]]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[0,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[5,4,3,2,1,5]]",
+      "output": "25",
+      "expectedOutput": "25",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,3,2,5,25,24,5]]",
+      "output": "24",
+      "expectedOutput": "24",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[0,2,0,4,0,6,0,8,0,10]]",
+      "output": "24",
+      "expectedOutput": "24",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+      "output": "100",
+      "expectedOutput": "100",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+      "output": "100",
+      "expectedOutput": "100",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[76,8,49,48,76,59,67,32,70,1,87,92,14,87,68,96,34,98,82,43]]",
+      "output": "1368",
+      "expectedOutput": "1368",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[7,18,27,10,29,0,46,46,16,32,48,11,32,6,40,19,40,32,38,12,9,23,48,10,34,49,33,0,38,20,31,1,7,23,19]]",
+      "output": "874",
+      "expectedOutput": "874",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[100,1,1,1,1,1,1,1,1,100]]",
+      "output": "900",
+      "expectedOutput": "900",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[2,3,4,5,18,17,6]]",
+      "output": "17",
+      "expectedOutput": "17",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,4,3]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[6,4,3,1,2,3,6,1,5]]",
+      "output": "40",
+      "expectedOutput": "40",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[3,9,3,4,7,2,12,6]]",
+      "output": "45",
+      "expectedOutput": "45",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "height = [1, 8, 6, 2, 5, 4, 8, 3, 7]",
+        "output": "49",
+        "expectedOutput": "49",
+        "explanation": "the lines at index 1 (height 8) and index 8 (height 7) are 7 apart, holding min(8,7) * 7 = 49"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "height = [1, 1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,8,6,2,5,4,8,3,7]]",
+        "output": "49",
+        "expectedOutput": "49",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[4,3,2,1,4]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,4,3,2,1,5]]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,3,2,5,25,24,5]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[0,2,0,4,0,6,0,8,0,10]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[76,8,49,48,76,59,67,32,70,1,87,92,14,87,68,96,34,98,82,43]]",
+        "output": "1368",
+        "expectedOutput": "1368",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[7,18,27,10,29,0,46,46,16,32,48,11,32,6,40,19,40,32,38,12,9,23,48,10,34,49,33,0,38,20,31,1,7,23,19]]",
+        "output": "874",
+        "expectedOutput": "874",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[100,1,1,1,1,1,1,1,1,100]]",
+        "output": "900",
+        "expectedOutput": "900",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,3,4,5,18,17,6]]",
+        "output": "17",
+        "expectedOutput": "17",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,4,3]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[6,4,3,1,2,3,6,1,5]]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,9,3,4,7,2,12,6]]",
+        "output": "45",
+        "expectedOutput": "45",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def maxArea(self, height):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxArea(vector<int>& height) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxArea(int[] height) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxArea(height: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxArea(height) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def maxArea(self, height):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxArea(vector<int>& height) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxArea(int[] height) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxArea(height: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxArea(height) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def maxArea(self, height):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxArea(vector<int>& height) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxArea(int[] height) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxArea(height: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxArea(height) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def maxArea(self, height):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxArea(vector<int>& height) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxArea(int[] height) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxArea(height: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxArea(height) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "two pointers starting at both ends, always move the shorter side inward"
+    },
+    "bruteForce": {
+      "approach": "check every pair of lines (i, j), compute min(height[i], height[j]) * (j - i), track the max",
+      "time": "O(n^2)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "two pointers starting at both ends, always move the shorter side inward",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "starting with the widest possible container (both ends), what determines how much water it holds? the shorter of the two lines.",
+      "if you move the pointer at the TALLER line inward, can the area ever improve? think about what happens to both width and the limiting height.",
+      "moving the shorter line's pointer inward is the only move that could possibly find something better, since width can only shrink",
+      "track the max area seen as you move the shorter pointer inward each step, until the pointers meet"
+    ]
+  },
+  "bruteForce": {
+    "approach": "check every pair of lines (i, j), compute min(height[i], height[j]) * (j - i), track the max",
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

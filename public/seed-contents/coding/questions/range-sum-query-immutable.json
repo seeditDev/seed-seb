@@ -1,0 +1,597 @@
+{
+  "id": "range-sum-query-immutable",
+  "questionId": "range-sum-query-immutable",
+  "slug": "range-sum-query-immutable",
+  "title": "Range Sum Query - Immutable",
+  "difficulty": "Easy",
+  "category": "Prefix sum",
+  "patterns": [
+    "prefix sum"
+  ],
+  "lists": [],
+  "hints": [
+    "if the same array is queried many times, is there a way to avoid rescanning the range from scratch on every query?",
+    "build a prefix sum array where prefix[i] holds the sum of nums[0..i-1]",
+    "the sum of nums[left..right] inclusive is then prefix[right+1] - prefix[left]",
+    "compute the prefix array once up front, then each query becomes a single subtraction"
+  ],
+  "commonMistakes": [
+    "off-by-one when building the prefix array or when subtracting for an inclusive range",
+    "recomputing the prefix sum for every query instead of once up front",
+    "not handling left = 0 correctly (should just be prefix[right+1])"
+  ],
+  "content": {
+    "problemStatement": "You're given a fixed array of integers and a batch of range queries.\nEach query is a pair [left, right] (inclusive, 0-indexed).\n\n**For every query, compute the sum of the elements in that range, and return all the answers in the same order as the queries.**\n\nThe array never changes between queries, so precompute whatever helps answer many queries quickly.\n",
+    "constraints": [
+      "1 <= nums.length <= 10^4",
+      "-10^5 <= nums[i] <= 10^5",
+      "0 <= left <= right < nums.length",
+      "0 <= queries.length <= 10^4"
+    ],
+    "notes": [
+      "a query where left equals right (a single element)",
+      "a query covering the entire array",
+      "no queries at all"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [-2, 0, 3, -5, 2, -1], queries = [[0, 2], [2, 5], [0, 5]]",
+        "output": "[1, -1, -3]",
+        "expectedOutput": "[1, -1, -3]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3], queries = [[0, 0], [1, 2]]",
+        "output": "[1, 5]",
+        "expectedOutput": "[1, 5]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[-2,0,3,-5,2,-1],[[0,2],[2,5],[0,5]]]",
+        "output": "[1,-1,-3]",
+        "expectedOutput": "[1,-1,-3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3],[[0,0],[1,2]]]",
+        "output": "[1,5]",
+        "expectedOutput": "[1,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[4,4,4],[[0,2]]]",
+        "output": "[12]",
+        "expectedOutput": "[12]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5],[[0,0]]]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4,5],[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5],[[0,4]]]",
+        "output": "[15]",
+        "expectedOutput": "[15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-1,-2,-3],[[0,0],[1,1],[2,2],[0,2]]]",
+        "output": "[-1,-2,-3,-6]",
+        "expectedOutput": "[-1,-2,-3,-6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,0,0,0],[[0,3],[1,2]]]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-3,-7,-3,5,-4,0,-4,5,9,9,-10,5,10,1,10],[[0,14],[2,7],[5,5],[0,0],[10,14]]]",
+        "output": "[23,-1,0,-3,16]",
+        "expectedOutput": "[23,-1,0,-3,16]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,-1,1,-1,1,-1],[[0,5],[1,4],[2,3]]]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[100,-50,25,-75,10],[[0,1],[1,2],[2,3],[3,4],[0,4]]]",
+        "output": "[50,-25,-50,-65,10]",
+        "expectedOutput": "[50,-25,-50,-65,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],[[0,19],[5,10],[15,19],[0,0],[19,19]]]",
+        "output": "[210,51,90,1,20]",
+        "expectedOutput": "[210,51,90,1,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-5,10,-15,20,-25],[[0,4],[1,3],[2,2]]]",
+        "output": "[-15,15,-15]",
+        "expectedOutput": "[-15,15,-15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[7],[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[3,3,3,3,3,3,3,3],[[0,7],[2,5],[3,3]]]",
+        "output": "[24,12,3]",
+        "expectedOutput": "[24,12,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-15,-13,4,-8,10,-9,7,20,1,-15,5,9,5,-15,-10,-10,-12,-19,-11,17],[[0,19],[1,18],[9,10]]]",
+        "output": "[-59,-61,-10]",
+        "expectedOutput": "[-59,-61,-10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3],[[0,2],[0,1],[1,2],[0,0],[2,2]]]",
+        "output": "[6,3,5,1,3]",
+        "expectedOutput": "[6,3,5,1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-10,-20,-30,-40],[[0,3],[1,2]]]",
+        "output": "[-100,-50]",
+        "expectedOutput": "[-100,-50]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0],[[0,0]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[5,-5,5,-5,5,-5,5,-5],[[0,7],[0,3],[4,7]]]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [-2, 0, 3, -5, 2, -1], queries = [[0, 2], [2, 5], [0, 5]]",
+      "output": "[1, -1, -3]",
+      "expectedOutput": "[1, -1, -3]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3], queries = [[0, 0], [1, 2]]",
+      "output": "[1, 5]",
+      "expectedOutput": "[1, 5]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [-2, 0, 3, -5, 2, -1], queries = [[0, 2], [2, 5], [0, 5]]",
+      "output": "[1, -1, -3]",
+      "expectedOutput": "[1, -1, -3]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3], queries = [[0, 0], [1, 2]]",
+      "output": "[1, 5]",
+      "expectedOutput": "[1, 5]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[-2,0,3,-5,2,-1],[[0,2],[2,5],[0,5]]]",
+      "output": "[1,-1,-3]",
+      "expectedOutput": "[1,-1,-3]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3],[[0,0],[1,2]]]",
+      "output": "[1,5]",
+      "expectedOutput": "[1,5]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[4,4,4],[[0,2]]]",
+      "output": "[12]",
+      "expectedOutput": "[12]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[5],[[0,0]]]",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,2,3,4,5],[]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,3,4,5],[[0,4]]]",
+      "output": "[15]",
+      "expectedOutput": "[15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[-1,-2,-3],[[0,0],[1,1],[2,2],[0,2]]]",
+      "output": "[-1,-2,-3,-6]",
+      "expectedOutput": "[-1,-2,-3,-6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[0,0,0,0],[[0,3],[1,2]]]",
+      "output": "[0,0]",
+      "expectedOutput": "[0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-3,-7,-3,5,-4,0,-4,5,9,9,-10,5,10,1,10],[[0,14],[2,7],[5,5],[0,0],[10,14]]]",
+      "output": "[23,-1,0,-3,16]",
+      "expectedOutput": "[23,-1,0,-3,16]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,-1,1,-1,1,-1],[[0,5],[1,4],[2,3]]]",
+      "output": "[0,0,0]",
+      "expectedOutput": "[0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[100,-50,25,-75,10],[[0,1],[1,2],[2,3],[3,4],[0,4]]]",
+      "output": "[50,-25,-50,-65,10]",
+      "expectedOutput": "[50,-25,-50,-65,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],[[0,19],[5,10],[15,19],[0,0],[19,19]]]",
+      "output": "[210,51,90,1,20]",
+      "expectedOutput": "[210,51,90,1,20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[-5,10,-15,20,-25],[[0,4],[1,3],[2,2]]]",
+      "output": "[-15,15,-15]",
+      "expectedOutput": "[-15,15,-15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[7],[]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[3,3,3,3,3,3,3,3],[[0,7],[2,5],[3,3]]]",
+      "output": "[24,12,3]",
+      "expectedOutput": "[24,12,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[-15,-13,4,-8,10,-9,7,20,1,-15,5,9,5,-15,-10,-10,-12,-19,-11,17],[[0,19],[1,18],[9,10]]]",
+      "output": "[-59,-61,-10]",
+      "expectedOutput": "[-59,-61,-10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,3],[[0,2],[0,1],[1,2],[0,0],[2,2]]]",
+      "output": "[6,3,5,1,3]",
+      "expectedOutput": "[6,3,5,1,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[-10,-20,-30,-40],[[0,3],[1,2]]]",
+      "output": "[-100,-50]",
+      "expectedOutput": "[-100,-50]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[0],[[0,0]]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[5,-5,5,-5,5,-5,5,-5],[[0,7],[0,3],[4,7]]]",
+      "output": "[0,0,0]",
+      "expectedOutput": "[0,0,0]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [-2, 0, 3, -5, 2, -1], queries = [[0, 2], [2, 5], [0, 5]]",
+        "output": "[1, -1, -3]",
+        "expectedOutput": "[1, -1, -3]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3], queries = [[0, 0], [1, 2]]",
+        "output": "[1, 5]",
+        "expectedOutput": "[1, 5]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[-2,0,3,-5,2,-1],[[0,2],[2,5],[0,5]]]",
+        "output": "[1,-1,-3]",
+        "expectedOutput": "[1,-1,-3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3],[[0,0],[1,2]]]",
+        "output": "[1,5]",
+        "expectedOutput": "[1,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[4,4,4],[[0,2]]]",
+        "output": "[12]",
+        "expectedOutput": "[12]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5],[[0,0]]]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4,5],[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5],[[0,4]]]",
+        "output": "[15]",
+        "expectedOutput": "[15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-1,-2,-3],[[0,0],[1,1],[2,2],[0,2]]]",
+        "output": "[-1,-2,-3,-6]",
+        "expectedOutput": "[-1,-2,-3,-6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,0,0,0],[[0,3],[1,2]]]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-3,-7,-3,5,-4,0,-4,5,9,9,-10,5,10,1,10],[[0,14],[2,7],[5,5],[0,0],[10,14]]]",
+        "output": "[23,-1,0,-3,16]",
+        "expectedOutput": "[23,-1,0,-3,16]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,-1,1,-1,1,-1],[[0,5],[1,4],[2,3]]]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[100,-50,25,-75,10],[[0,1],[1,2],[2,3],[3,4],[0,4]]]",
+        "output": "[50,-25,-50,-65,10]",
+        "expectedOutput": "[50,-25,-50,-65,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],[[0,19],[5,10],[15,19],[0,0],[19,19]]]",
+        "output": "[210,51,90,1,20]",
+        "expectedOutput": "[210,51,90,1,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-5,10,-15,20,-25],[[0,4],[1,3],[2,2]]]",
+        "output": "[-15,15,-15]",
+        "expectedOutput": "[-15,15,-15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[7],[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[3,3,3,3,3,3,3,3],[[0,7],[2,5],[3,3]]]",
+        "output": "[24,12,3]",
+        "expectedOutput": "[24,12,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-15,-13,4,-8,10,-9,7,20,1,-15,5,9,5,-15,-10,-10,-12,-19,-11,17],[[0,19],[1,18],[9,10]]]",
+        "output": "[-59,-61,-10]",
+        "expectedOutput": "[-59,-61,-10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3],[[0,2],[0,1],[1,2],[0,0],[2,2]]]",
+        "output": "[6,3,5,1,3]",
+        "expectedOutput": "[6,3,5,1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-10,-20,-30,-40],[[0,3],[1,2]]]",
+        "output": "[-100,-50]",
+        "expectedOutput": "[-100,-50]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0],[[0,0]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[5,-5,5,-5,5,-5,5,-5],[[0,7],[0,3],[4,7]]]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def sumRanges(self, nums, queries):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> sumRanges(vector<int>& nums, vector<vector<int>>& queries) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] sumRanges(int[] nums, int[][] queries) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sumRanges(nums: IntArray, queries: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sumRanges(nums, queries) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def sumRanges(self, nums, queries):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> sumRanges(vector<int>& nums, vector<vector<int>>& queries) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] sumRanges(int[] nums, int[][] queries) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sumRanges(nums: IntArray, queries: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sumRanges(nums, queries) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def sumRanges(self, nums, queries):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> sumRanges(vector<int>& nums, vector<vector<int>>& queries) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] sumRanges(int[] nums, int[][] queries) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sumRanges(nums: IntArray, queries: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sumRanges(nums, queries) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def sumRanges(self, nums, queries):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> sumRanges(vector<int>& nums, vector<vector<int>>& queries) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] sumRanges(int[] nums, int[][] queries) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sumRanges(nums: IntArray, queries: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sumRanges(nums, queries) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n + q)",
+      "space": "O(n) for the prefix array",
+      "pattern": "prefix sum - precompute cumulative sums once, then answer each query in O(1) as a subtraction"
+    },
+    "bruteForce": {
+      "approach": "for each query, sum the elements between left and right directly by looping over that range",
+      "time": "O(n * q) across q queries",
+      "space": "O(1) extra beyond the output"
+    }
+  },
+  "optimal": {
+    "pattern": "prefix sum - precompute cumulative sums once, then answer each query in O(1) as a subtraction",
+    "time": "O(n + q)",
+    "space": "O(n) for the prefix array",
+    "hint_ladder": [
+      "if the same array is queried many times, is there a way to avoid rescanning the range from scratch on every query?",
+      "build a prefix sum array where prefix[i] holds the sum of nums[0..i-1]",
+      "the sum of nums[left..right] inclusive is then prefix[right+1] - prefix[left]",
+      "compute the prefix array once up front, then each query becomes a single subtraction"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each query, sum the elements between left and right directly by looping over that range",
+    "time": "O(n * q) across q queries",
+    "space": "O(1) extra beyond the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

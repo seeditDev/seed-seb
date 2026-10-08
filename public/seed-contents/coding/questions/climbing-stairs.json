@@ -1,0 +1,599 @@
+{
+  "id": "climbing-stairs",
+  "questionId": "climbing-stairs",
+  "slug": "climbing-stairs",
+  "title": "Climbing Stairs",
+  "difficulty": "Easy",
+  "category": "Dp 1d",
+  "patterns": [
+    "dynamic programming",
+    "fibonacci"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "draw out ways(5) - does it call ways(3) more than once? what's being recomputed?",
+    "what if you stored the answer to each subproblem the first time you computed it?",
+    "you only ever need the previous two results to compute the next one - do you need to store all of them?",
+    "iterate up from 1 and 2, keeping just prev and prev2, updating them each step"
+  ],
+  "commonMistakes": [
+    "off-by-one on base cases (ways(1) vs ways(0))",
+    "not recognizing the recurrence is identical to Fibonacci and re-deriving it from scratch inefficiently",
+    "memoizing recursively but still paying O(n) stack depth when O(1) space was achievable"
+  ],
+  "content": {
+    "problemStatement": "You're climbing a staircase with `n` steps. On each move you can climb either 1 step or 2 steps.\n\n**Return the number of distinct sequences of moves that get you from the bottom to the top.**\n",
+    "constraints": [
+      "1 <= n <= 45"
+    ],
+    "notes": [
+      "n = 1 (1 way)",
+      "n = 2 (2 ways)",
+      "larger n where naive recursion becomes very slow"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 2",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the sequences are [1 step, 1 step] and [2 steps]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 3",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "the sequences are [1,1,1], [1,2], and [2,1]"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[5]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[4]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[6]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[7]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[8]",
+        "output": "34",
+        "expectedOutput": "34",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[10]",
+        "output": "89",
+        "expectedOutput": "89",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[12]",
+        "output": "233",
+        "expectedOutput": "233",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[15]",
+        "output": "987",
+        "expectedOutput": "987",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[18]",
+        "output": "4181",
+        "expectedOutput": "4181",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[20]",
+        "output": "10946",
+        "expectedOutput": "10946",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[25]",
+        "output": "121393",
+        "expectedOutput": "121393",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[30]",
+        "output": "1346269",
+        "expectedOutput": "1346269",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[35]",
+        "output": "14930352",
+        "expectedOutput": "14930352",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[38]",
+        "output": "63245986",
+        "expectedOutput": "63245986",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[40]",
+        "output": "165580141",
+        "expectedOutput": "165580141",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[44]",
+        "output": "1134903170",
+        "expectedOutput": "1134903170",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[45]",
+        "output": "1836311903",
+        "expectedOutput": "1836311903",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 2",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the sequences are [1 step, 1 step] and [2 steps]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 3",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "the sequences are [1,1,1], [1,2], and [2,1]"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 2",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the sequences are [1 step, 1 step] and [2 steps]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 3",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "the sequences are [1,1,1], [1,2], and [2,1]"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[5]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[4]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[6]",
+      "output": "13",
+      "expectedOutput": "13",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[7]",
+      "output": "21",
+      "expectedOutput": "21",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[8]",
+      "output": "34",
+      "expectedOutput": "34",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[10]",
+      "output": "89",
+      "expectedOutput": "89",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[12]",
+      "output": "233",
+      "expectedOutput": "233",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[15]",
+      "output": "987",
+      "expectedOutput": "987",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[18]",
+      "output": "4181",
+      "expectedOutput": "4181",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[20]",
+      "output": "10946",
+      "expectedOutput": "10946",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[25]",
+      "output": "121393",
+      "expectedOutput": "121393",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[30]",
+      "output": "1346269",
+      "expectedOutput": "1346269",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[35]",
+      "output": "14930352",
+      "expectedOutput": "14930352",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[38]",
+      "output": "63245986",
+      "expectedOutput": "63245986",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[40]",
+      "output": "165580141",
+      "expectedOutput": "165580141",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[44]",
+      "output": "1134903170",
+      "expectedOutput": "1134903170",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[45]",
+      "output": "1836311903",
+      "expectedOutput": "1836311903",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 2",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the sequences are [1 step, 1 step] and [2 steps]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 3",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "the sequences are [1,1,1], [1,2], and [2,1]"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[5]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[4]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[6]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[7]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[8]",
+        "output": "34",
+        "expectedOutput": "34",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[10]",
+        "output": "89",
+        "expectedOutput": "89",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[12]",
+        "output": "233",
+        "expectedOutput": "233",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[15]",
+        "output": "987",
+        "expectedOutput": "987",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[18]",
+        "output": "4181",
+        "expectedOutput": "4181",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[20]",
+        "output": "10946",
+        "expectedOutput": "10946",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[25]",
+        "output": "121393",
+        "expectedOutput": "121393",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[30]",
+        "output": "1346269",
+        "expectedOutput": "1346269",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[35]",
+        "output": "14930352",
+        "expectedOutput": "14930352",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[38]",
+        "output": "63245986",
+        "expectedOutput": "63245986",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[40]",
+        "output": "165580141",
+        "expectedOutput": "165580141",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[44]",
+        "output": "1134903170",
+        "expectedOutput": "1134903170",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[45]",
+        "output": "1836311903",
+        "expectedOutput": "1836311903",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def climbStairs(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int climbStairs(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int climbStairs(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun climbStairs(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    climbStairs(n) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def climbStairs(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int climbStairs(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int climbStairs(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun climbStairs(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    climbStairs(n) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def climbStairs(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int climbStairs(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int climbStairs(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun climbStairs(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    climbStairs(n) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def climbStairs(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int climbStairs(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int climbStairs(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun climbStairs(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    climbStairs(n) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) if only the last two values are kept, O(n) if a full array is memoized",
+      "pattern": "dynamic programming (bottom-up, O(1) space) - same recurrence as Fibonacci"
+    },
+    "bruteForce": {
+      "approach": "plain recursion: ways(n) = ways(n-1) + ways(n-2), with base cases at n=1 and n=2",
+      "time": "O(2^n) - exponential, recomputes the same subproblems repeatedly",
+      "space": "O(n) recursion stack"
+    }
+  },
+  "optimal": {
+    "pattern": "dynamic programming (bottom-up, O(1) space) - same recurrence as Fibonacci",
+    "time": "O(n)",
+    "space": "O(1) if only the last two values are kept, O(n) if a full array is memoized",
+    "hint_ladder": [
+      "draw out ways(5) - does it call ways(3) more than once? what's being recomputed?",
+      "what if you stored the answer to each subproblem the first time you computed it?",
+      "you only ever need the previous two results to compute the next one - do you need to store all of them?",
+      "iterate up from 1 and 2, keeping just prev and prev2, updating them each step"
+    ]
+  },
+  "bruteForce": {
+    "approach": "plain recursion: ways(n) = ways(n-1) + ways(n-2), with base cases at n=1 and n=2",
+    "time": "O(2^n) - exponential, recomputes the same subproblems repeatedly",
+    "space": "O(n) recursion stack"
+  },
+  "isIndex0": true,
+  "level": null
+}

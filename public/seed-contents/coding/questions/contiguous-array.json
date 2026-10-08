@@ -1,0 +1,649 @@
+{
+  "id": "contiguous-array",
+  "questionId": "contiguous-array",
+  "slug": "contiguous-array",
+  "title": "Contiguous Array",
+  "difficulty": "Medium",
+  "category": "Prefix sum",
+  "patterns": [
+    "prefix sum",
+    "hash map"
+  ],
+  "lists": [],
+  "hints": [
+    "if you relabel every 0 as -1, a subarray with equal 0s and 1s becomes a subarray that sums to exactly 0 - which earlier idea does that resemble?",
+    "a running sum returning to the same value twice means the elements between those two points summed to zero",
+    "keep a hash map from running-sum-value to the FIRST index where that sum occurred (seed it with sum 0 at index -1)",
+    "at each index, if the current running sum has been seen before, the subarray between that earlier index and now is balanced - track the longest such gap"
+  ],
+  "commonMistakes": [
+    "storing every occurrence of a sum instead of only the first (later occurrences give shorter subarrays)",
+    "forgetting to seed the map with sum 0 at index -1, which misses subarrays balanced from the very start",
+    "not relabeling 0 as -1 and instead trying to track counts of 0s and 1s separately, which is much messier"
+  ],
+  "content": {
+    "problemStatement": "You're given a binary array `nums`, containing only 0s and 1s.\n\n**Return the length of the longest contiguous subarray of `nums` that contains an equal number of 0s and 1s.**\n",
+    "constraints": [
+      "1 <= nums.length <= 10^5",
+      "nums[i] is either 0 or 1"
+    ],
+    "notes": [
+      "no balanced subarray longer than 0 exists",
+      "the entire array is already balanced",
+      "the array has a single element (never balanced)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [0, 1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 1, 0]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [0, 0, 1, 0, 0, 0, 1, 1]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[0,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,1,0]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[0,0,1,0,0,0,1,1]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,0,1,0,1,0]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,1,1,0,1,1,0,0]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,0]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,1,0,1,0,0]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,0,0,1,0,1,1,0,0,0,1]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,0,1,1,0,0,1,1,0,1,0,1,1,0,0,1,0,0,1,1]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,1,1,0,0,0,1,1,1,0,0,0]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0,1,0,1,1,0,0,1,1,1,0,0,0,1,1,0,1,0,0,1,0,1,1,0]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,0,0,1,1,0,1,0,1,0,0,1,1,1,0,0,1,0,1,0,1,0,1,0,0,1,0,1,1,0]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [0, 1]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 1, 0]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [0, 0, 1, 0, 0, 0, 1, 1]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [0, 1]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 1, 0]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [0, 0, 1, 0, 0, 0, 1, 1]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[0,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0,1,0]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[0,0,1,0,0,0,1,1]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[0,0,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,1,1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[0,0,0,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,0,1,0,1,0]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[0,1,1,0,1,1,0,0]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,0]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,1,0,1,0,0]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,1,0,0,1,0,1,1,0,0,0,1]]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1]]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0]]",
+      "output": "30",
+      "expectedOutput": "30",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[0,0,1,1,0,0,1,1,0,1,0,1,1,0,0,1,0,0,1,1]]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,1,1,0,0,0,1,1,1,0,0,0]]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[0,1,0,1,1,0,0,1,1,1,0,0,0,1,1,0,1,0,0,1,0,1,1,0]]",
+      "output": "24",
+      "expectedOutput": "24",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[1,0,0,1,1,0,1,0,1,0,0,1,1,1,0,0,1,0,1,0,1,0,1,0,0,1,0,1,1,0]]",
+      "output": "30",
+      "expectedOutput": "30",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [0, 1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 1, 0]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [0, 0, 1, 0, 0, 0, 1, 1]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[0,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,1,0]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[0,0,1,0,0,0,1,1]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,0,1,0,1,0]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,1,1,0,1,1,0,0]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,0]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,1,0,1,0,0]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,0,0,1,0,1,1,0,0,0,1]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,0,1,1,0,0,1,1,0,1,0,1,1,0,0,1,0,0,1,1]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,1,1,0,0,0,1,1,1,0,0,0]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0,1,0,1,1,0,0,1,1,1,0,0,0,1,1,0,1,0,0,1,0,1,1,0]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,0,0,1,1,0,1,0,1,0,0,1,1,1,0,0,1,0,1,0,1,0,1,0,0,1,0,1,1,0]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findMaxLength(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMaxLength(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findMaxLength(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMaxLength(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMaxLength(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findMaxLength(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMaxLength(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findMaxLength(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMaxLength(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMaxLength(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findMaxLength(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMaxLength(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findMaxLength(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMaxLength(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMaxLength(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findMaxLength(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMaxLength(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findMaxLength(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMaxLength(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMaxLength(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n)",
+      "pattern": "treat 0 as -1 and 1 as +1, then a balanced subarray is one whose prefix sum returns to a value seen before - track first occurrence of each running sum in a hash map"
+    },
+    "bruteForce": {
+      "approach": "check every subarray, counting 0s and 1s inside it, and track the longest one where the counts match",
+      "time": "O(n^2)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "treat 0 as -1 and 1 as +1, then a balanced subarray is one whose prefix sum returns to a value seen before - track first occurrence of each running sum in a hash map",
+    "time": "O(n)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "if you relabel every 0 as -1, a subarray with equal 0s and 1s becomes a subarray that sums to exactly 0 - which earlier idea does that resemble?",
+      "a running sum returning to the same value twice means the elements between those two points summed to zero",
+      "keep a hash map from running-sum-value to the FIRST index where that sum occurred (seed it with sum 0 at index -1)",
+      "at each index, if the current running sum has been seen before, the subarray between that earlier index and now is balanced - track the longest such gap"
+    ]
+  },
+  "bruteForce": {
+    "approach": "check every subarray, counting 0s and 1s inside it, and track the longest one where the counts match",
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

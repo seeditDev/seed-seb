@@ -1,0 +1,696 @@
+{
+  "id": "find-the-index-of-the-first-occurrence-in-a-string",
+  "questionId": "find-the-index-of-the-first-occurrence-in-a-string",
+  "slug": "find-the-index-of-the-first-occurrence-in-a-string",
+  "title": "Find the Index of the First Occurrence in a String",
+  "difficulty": "Easy",
+  "category": "Two pointers",
+  "patterns": [
+    "string",
+    "two pointers"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "an occurrence at index i means haystack[i:i+len(needle)] equals needle exactly - how many starting positions i are worth checking?",
+    "you only need to try i from 0 up to len(haystack) - len(needle), since needle can't fit past that",
+    "for each i, compare characters one at a time and bail out early the moment one doesn't match, rather than building the whole substring first",
+    "don't forget the needle-is-empty edge case up front, it should short-circuit to 0 before any comparison loop runs"
+  ],
+  "commonMistakes": [
+    "forgetting the empty needle case and returning -1 or crashing instead of 0",
+    "iterating i all the way to len(haystack) - 1 instead of stopping at len(haystack) - len(needle), causing out-of-bounds substring comparisons",
+    "returning the last matching index instead of the first one found",
+    "using string slicing to build a new substring every iteration, which works but silently costs an extra O(m) per comparison instead of comparing in place"
+  ],
+  "content": {
+    "problemStatement": "You're given two strings, `haystack` and `needle`.\n\n**Find the index of the first occurrence of `needle` inside `haystack`, and return that index, or -1 if `needle` does not appear anywhere.**\n\nIf `needle` is empty, return 0, since an empty string is considered to occur at position 0.\n",
+    "constraints": [
+      "1 <= length of haystack <= 10^4",
+      "0 <= length of needle <= 10^4",
+      "haystack and needle consist of lowercase English characters only"
+    ],
+    "notes": [
+      "needle is the empty string (should return 0)",
+      "needle is longer than haystack (should return -1)",
+      "needle equals haystack exactly (should return 0)",
+      "needle appears more than once, only the first index should be returned"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "haystack = \"sadbutsad\", needle = \"sad\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "\"sad\" first appears starting at index 0"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "haystack = \"leetcode\", needle = \"leeto\"",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "\"leeto\" never appears as a contiguous substring of \"leetcode\""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "haystack = \"hello\", needle = \"ll\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"sadbutsad\",\"sad\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"leetcode\",\"leeto\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"hello\",\"ll\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a\",\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"abc\",\"abcd\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"mississippi\",\"issip\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"mississippi\",\"a\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"aaaaa\",\"bba\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaa\",\"aaa\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aaa\",\"a\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abababab\",\"ab\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abababab\",\"bab\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abababab\",\"abababab\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abababab\",\"ababababa\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"xyz\",\"xyz\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abcabcabc\",\"cab\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"abcdefg\",\"g\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcdefg\",\"a\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"aabaaabaaac\",\"aabaaac\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"thisisatest\",\"isa\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"repeated\",\"eat\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[\"abc\",\"b\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "haystack = \"sadbutsad\", needle = \"sad\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "\"sad\" first appears starting at index 0"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "haystack = \"leetcode\", needle = \"leeto\"",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "\"leeto\" never appears as a contiguous substring of \"leetcode\""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "haystack = \"hello\", needle = \"ll\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "haystack = \"sadbutsad\", needle = \"sad\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "\"sad\" first appears starting at index 0"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "haystack = \"leetcode\", needle = \"leeto\"",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "\"leeto\" never appears as a contiguous substring of \"leetcode\""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "haystack = \"hello\", needle = \"ll\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"sadbutsad\",\"sad\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"leetcode\",\"leeto\"]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"hello\",\"ll\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"a\",\"\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"\",\"\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"abc\",\"abcd\"]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"mississippi\",\"issip\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"mississippi\",\"a\"]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"aaaaa\",\"bba\"]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"aaa\",\"aaa\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"aaa\",\"a\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"abababab\",\"ab\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"abababab\",\"bab\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"abababab\",\"abababab\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"abababab\",\"ababababa\"]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"xyz\",\"xyz\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"abcabcabc\",\"cab\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"abcdefg\",\"g\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"abcdefg\",\"a\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"aabaaabaaac\",\"aabaaac\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"thisisatest\",\"isa\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[\"repeated\",\"eat\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_23",
+      "input": "[\"abc\",\"b\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "haystack = \"sadbutsad\", needle = \"sad\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "\"sad\" first appears starting at index 0"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "haystack = \"leetcode\", needle = \"leeto\"",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "\"leeto\" never appears as a contiguous substring of \"leetcode\""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "haystack = \"hello\", needle = \"ll\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"sadbutsad\",\"sad\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"leetcode\",\"leeto\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"hello\",\"ll\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a\",\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"abc\",\"abcd\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"mississippi\",\"issip\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"mississippi\",\"a\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"aaaaa\",\"bba\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaa\",\"aaa\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aaa\",\"a\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abababab\",\"ab\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abababab\",\"bab\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abababab\",\"abababab\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abababab\",\"ababababa\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"xyz\",\"xyz\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abcabcabc\",\"cab\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"abcdefg\",\"g\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcdefg\",\"a\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"aabaaabaaac\",\"aabaaac\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"thisisatest\",\"isa\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"repeated\",\"eat\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[\"abc\",\"b\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def strStr(self, haystack, needle):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int strStr(string haystack, string needle) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int strStr(String haystack, String needle) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun strStr(haystack: String, needle: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    strStr(haystack, needle) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def strStr(self, haystack, needle):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int strStr(string haystack, string needle) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int strStr(String haystack, String needle) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun strStr(haystack: String, needle: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    strStr(haystack, needle) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def strStr(self, haystack, needle):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int strStr(string haystack, string needle) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int strStr(String haystack, String needle) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun strStr(haystack: String, needle: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    strStr(haystack, needle) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def strStr(self, haystack, needle):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int strStr(string haystack, string needle) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int strStr(String haystack, String needle) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun strStr(haystack: String, needle: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    strStr(haystack, needle) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n * m) worst case for the simple sliding approach, O(n + m) if you implement KMP",
+      "space": "O(1) for sliding window, O(m) for KMP's failure table",
+      "pattern": "two pointers with a sliding comparison window (or use a language built-in substring search, which typically implements a faster algorithm like KMP internally)"
+    },
+    "bruteForce": {
+      "approach": "for every starting index i in haystack, compare the substring of length len(needle) starting at i against needle character by character",
+      "time": "O(n * m) where n is haystack length and m is needle length",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "two pointers with a sliding comparison window (or use a language built-in substring search, which typically implements a faster algorithm like KMP internally)",
+    "time": "O(n * m) worst case for the simple sliding approach, O(n + m) if you implement KMP",
+    "space": "O(1) for sliding window, O(m) for KMP's failure table",
+    "hint_ladder": [
+      "an occurrence at index i means haystack[i:i+len(needle)] equals needle exactly - how many starting positions i are worth checking?",
+      "you only need to try i from 0 up to len(haystack) - len(needle), since needle can't fit past that",
+      "for each i, compare characters one at a time and bail out early the moment one doesn't match, rather than building the whole substring first",
+      "don't forget the needle-is-empty edge case up front, it should short-circuit to 0 before any comparison loop runs"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every starting index i in haystack, compare the substring of length len(needle) starting at i against needle character by character",
+    "time": "O(n * m) where n is haystack length and m is needle length",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

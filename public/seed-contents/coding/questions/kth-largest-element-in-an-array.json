@@ -1,0 +1,632 @@
+{
+  "id": "kth-largest-element-in-an-array",
+  "questionId": "kth-largest-element-in-an-array",
+  "slug": "kth-largest-element-in-an-array",
+  "title": "Kth Largest Element in an Array",
+  "difficulty": "Easy",
+  "category": "Heap",
+  "patterns": [
+    "heap",
+    "top k",
+    "min-heap"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "you don't need the whole array sorted, you only need to know the kth largest value - can you avoid fully sorting?",
+    "what if you kept a running collection of only the k largest values seen so far?",
+    "a min-heap of size k lets you cheaply discard anything smaller than the current smallest of your top-k candidates",
+    "push every number onto a min-heap; whenever the heap grows past size k, pop the smallest. after processing everything, the heap's smallest remaining value is the kth largest"
+  ],
+  "commonMistakes": [
+    "using a max-heap of the whole array and popping k times, which works but is less efficient than a bounded min-heap of size k",
+    "off-by-one: confusing the kth largest with the kth smallest, or with index k instead of k - 1 after sorting",
+    "not handling duplicate values correctly by accidentally deduplicating before counting"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of integers and a number `k`, counting from the\nlargest (so k = 1 means the single largest value, k = 2 means the\nsecond largest, and so on).\n\n**Find the `k`th largest value in the list.**\n\nDuplicate values count separately, so if the list is [5, 5, 3] then the\n1st largest is 5 and the 2nd largest is also 5.\n",
+    "constraints": [
+      "1 <= k <= nums.length <= 10^5",
+      "-10^6 <= nums[i] <= 10^6"
+    ],
+    "notes": [
+      "k equals the length of the array (the smallest value overall)",
+      "k = 1 (the maximum value)",
+      "all values in the array are identical",
+      "single-element array"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 2, 1, 5, 6, 4], k = 2",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "sorted descending the list is [6, 5, 4, 3, 2, 1], so the 2nd largest is 5"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [3, 2, 3, 1, 2, 4, 5, 5, 6], k = 4",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "sorted descending: [6, 5, 5, 4, 3, 3, 2, 2, 1], the 4th value is 4"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1], k = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[3,2,1,5,6,4],2]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[3,2,3,1,2,4,5,5,6],4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[7,10,4,3,20,15],3]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5,5,5,5],3]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-1,-2,-3,-4],1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,-2,-3,-4],4]",
+        "output": "-4",
+        "expectedOutput": "-4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[3,3,3,1,1,2],5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],10]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1],1]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,0,0,1],2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[100,-100,50,-50,0],3]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[2,1],2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1000000,-1000000,0],2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[9,8,7,6,5,4,3,2,1,0],5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,10],1]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,10],16]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-5,-5,-5,-5],2]",
+        "output": "-5",
+        "expectedOutput": "-5",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[42],1]",
+        "output": "42",
+        "expectedOutput": "42",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 2, 1, 5, 6, 4], k = 2",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "sorted descending the list is [6, 5, 4, 3, 2, 1], so the 2nd largest is 5"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [3, 2, 3, 1, 2, 4, 5, 5, 6], k = 4",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "sorted descending: [6, 5, 5, 4, 3, 3, 2, 2, 1], the 4th value is 4"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1], k = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 2, 1, 5, 6, 4], k = 2",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "sorted descending the list is [6, 5, 4, 3, 2, 1], so the 2nd largest is 5"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [3, 2, 3, 1, 2, 4, 5, 5, 6], k = 4",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "sorted descending: [6, 5, 5, 4, 3, 3, 2, 2, 1], the 4th value is 4"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1], k = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[3,2,1,5,6,4],2]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[3,2,3,1,2,4,5,5,6],4]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[7,10,4,3,20,15],3]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[5,5,5,5],3]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[-1,-2,-3,-4],1]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[-1,-2,-3,-4],4]",
+      "output": "-4",
+      "expectedOutput": "-4",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[3,3,3,1,1,2],5]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],10]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1],1]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[0,0,0,1],2]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[100,-100,50,-50,0],3]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[2,1],2]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1000000,-1000000,0],2]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[9,8,7,6,5,4,3,2,1,0],5]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,10],1]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,10],16]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[-5,-5,-5,-5],2]",
+      "output": "-5",
+      "expectedOutput": "-5",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[42],1]",
+      "output": "42",
+      "expectedOutput": "42",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 2, 1, 5, 6, 4], k = 2",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "sorted descending the list is [6, 5, 4, 3, 2, 1], so the 2nd largest is 5"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [3, 2, 3, 1, 2, 4, 5, 5, 6], k = 4",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "sorted descending: [6, 5, 5, 4, 3, 3, 2, 2, 1], the 4th value is 4"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1], k = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[3,2,1,5,6,4],2]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[3,2,3,1,2,4,5,5,6],4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[7,10,4,3,20,15],3]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5,5,5,5],3]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-1,-2,-3,-4],1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,-2,-3,-4],4]",
+        "output": "-4",
+        "expectedOutput": "-4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[3,3,3,1,1,2],5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],10]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1],1]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,0,0,1],2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[100,-100,50,-50,0],3]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[2,1],2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1000000,-1000000,0],2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[9,8,7,6,5,4,3,2,1,0],5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,10],1]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,10],16]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-5,-5,-5,-5],2]",
+        "output": "-5",
+        "expectedOutput": "-5",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[42],1]",
+        "output": "42",
+        "expectedOutput": "42",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findKthLargest(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findKthLargest(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findKthLargest(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findKthLargest(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findKthLargest(nums, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findKthLargest(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findKthLargest(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findKthLargest(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findKthLargest(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findKthLargest(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findKthLargest(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findKthLargest(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findKthLargest(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findKthLargest(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findKthLargest(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findKthLargest(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findKthLargest(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findKthLargest(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findKthLargest(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findKthLargest(nums, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log k)",
+      "space": "O(k)",
+      "pattern": "min-heap of size k over the largest k values seen so far"
+    },
+    "bruteForce": {
+      "approach": "sort the array descending and read off index k - 1",
+      "time": "O(n log n)",
+      "space": "O(1) extra, or O(n) depending on the sort"
+    }
+  },
+  "optimal": {
+    "pattern": "min-heap of size k over the largest k values seen so far",
+    "time": "O(n log k)",
+    "space": "O(k)",
+    "hint_ladder": [
+      "you don't need the whole array sorted, you only need to know the kth largest value - can you avoid fully sorting?",
+      "what if you kept a running collection of only the k largest values seen so far?",
+      "a min-heap of size k lets you cheaply discard anything smaller than the current smallest of your top-k candidates",
+      "push every number onto a min-heap; whenever the heap grows past size k, pop the smallest. after processing everything, the heap's smallest remaining value is the kth largest"
+    ]
+  },
+  "bruteForce": {
+    "approach": "sort the array descending and read off index k - 1",
+    "time": "O(n log n)",
+    "space": "O(1) extra, or O(n) depending on the sort"
+  },
+  "isIndex0": true,
+  "level": null
+}

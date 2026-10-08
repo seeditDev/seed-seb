@@ -1,0 +1,653 @@
+{
+  "id": "earliest-moment-everyone-friends",
+  "questionId": "earliest-moment-everyone-friends",
+  "slug": "earliest-moment-everyone-friends",
+  "title": "The Earliest Moment When Everyone Becomes Friends",
+  "difficulty": "Medium",
+  "category": "Union find",
+  "patterns": [
+    "union find",
+    "connected components"
+  ],
+  "lists": [],
+  "hints": [
+    "sort the logs by timestamp first, since order matters and the input isn't sorted",
+    "keep a running count of connected components, starting at n",
+    "process logs in chronological order, unioning the two people in each one and decrementing the count only when the union actually merges two different groups",
+    "the moment the count hits 1, that log's timestamp is your answer - stop there and return it",
+    "if you finish every log and the count never reached 1, return -1"
+  ],
+  "commonMistakes": [
+    "processing logs in their given order instead of sorting by timestamp first",
+    "returning the timestamp of the last log processed instead of the first one where the count actually reaches 1",
+    "not short-circuiting as soon as the group becomes fully connected, and instead scanning every remaining log"
+  ],
+  "content": {
+    "problemStatement": "There are `n` people, labeled 0 to n-1, and a list of friendship logs,\nwhere each log is a triple `[timestamp, a, b]` meaning person `a` and\nperson `b` became friends at that timestamp. The logs are not necessarily\ngiven in chronological order.\n\n**Return the earliest timestamp at which every person is connected to every other person through some chain of friendships, or -1 if that never happens.**\n\nFriendship is transitive: a friend of your friend counts as connected too, for the purpose of this problem.\n",
+    "constraints": [
+      "2 <= n <= 100000",
+      "0 <= logs.length <= 100000",
+      "logs are not sorted by timestamp"
+    ],
+    "notes": [
+      "logs given completely out of chronological order",
+      "the group never fully connects even after all logs",
+      "exactly two people with a single log connecting them",
+      "extra logs after the group already became fully connected"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "logs = [[20190101,0,1],[20190104,3,4],[20190107,2,3],[20190211,1,5],[20190224,2,4],[20190301,0,3],[20190312,1,2],[20190322,4,5]], n = 6",
+        "output": "20190301",
+        "expectedOutput": "20190301",
+        "explanation": "processing logs in chronological order, the whole group first becomes fully connected at this timestamp"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "logs = [[1,0,1],[2,2,3]], n = 4",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "people {0,1} and {2,3} never merge into one group"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "logs = [[100,0,1]], n = 2",
+        "output": "100",
+        "expectedOutput": "100",
+        "explanation": "the only two people become friends at timestamp 100"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[20190101,0,1],[20190104,3,4],[20190107,2,3],[20190211,1,5],[20190224,2,4],[20190301,0,3],[20190312,1,2],[20190322,4,5]],6]",
+        "output": "20190301",
+        "expectedOutput": "20190301",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0,2,0],[1,0,1],[3,0,3],[4,1,2],[7,3,1]],4]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[10,0,1],[20,1,2]],3]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,0,1],[2,2,3]],4]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[100,0,1]],2]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[50,0,1],[10,1,2],[30,2,3]],4]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,0,1],[2,1,2],[3,4,5]],6]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,0,1],[2,1,2],[3,2,3],[100,0,3],[200,1,3]],4]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[500,0,1]],2]",
+        "output": "500",
+        "expectedOutput": "500",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[5,1,2],[1,0,1],[9,2,3],[3,3,0],[7,0,2]],4]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[34,12,7],[21,15,6],[38,7,3],[22,6,10],[8,17,19],[16,0,16],[44,8,2],[5,5,17],[19,16,1],[1,11,5],[15,9,0],[39,3,8],[32,14,12],[10,19,9],[27,10,13],[50,18,4],[28,13,14],[20,1,15],[46,2,18]],20]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[11,5,6],[21,10,11],[3,1,2],[35,18,19],[17,8,9],[9,4,5],[23,11,12],[5,2,3],[29,15,16],[53,27,28],[7,3,4],[15,7,8],[1,0,1],[49,25,26],[39,20,21],[25,12,13],[55,28,29],[31,16,17],[37,19,20],[41,21,22],[19,9,10],[13,6,7],[43,22,23],[51,26,27],[27,13,14],[33,17,18],[45,23,24],[47,24,25]],30]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[66,22,12],[14,1,17],[11,17,13],[34,5,22],[3,20,1],[33,11,9],[39,23,14],[41,19,2],[50,22,11],[71,11,5],[1,10,4],[35,2,18],[58,1,23],[6,18,1],[26,15,21],[55,8,15],[4,17,3],[43,24,10],[12,18,3],[48,18,10],[16,18,9],[61,9,20],[37,16,15],[44,15,13],[45,21,2],[74,3,15],[9,6,1],[69,11,0],[29,13,24],[19,21,5],[22,22,2],[15,9,13],[10,2,7],[53,15,18],[64,21,14],[42,16,13],[25,1,19],[13,12,1],[31,14,18],[20,20,6]],25]",
+        "output": "69",
+        "expectedOutput": "69",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[],3]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[40,0,4],[80,0,8],[20,0,2],[10,0,1],[70,0,7],[50,0,5],[90,0,9],[30,0,3],[60,0,6]],10]",
+        "output": "90",
+        "expectedOutput": "90",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,0,1],[2,0,1],[3,1,2],[4,2,3]],4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[300,1,2],[100,0,1],[200,0,2]],3]",
+        "output": "200",
+        "expectedOutput": "200",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[3,2,3],[5,4,5],[4,3,4],[6,5,6],[9,10,11],[10,11,12],[1,0,1],[11,12,13],[8,9,10],[2,1,2],[12,13,14],[1000,7,8],[7,8,9]],15]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[7,0,1],[7,1,2],[7,2,3],[7,3,4]],5]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,0,1],[2,1,2],[3,0,2],[4,2,3],[5,3,4],[6,4,5]],6]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[],4]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "logs = [[20190101,0,1],[20190104,3,4],[20190107,2,3],[20190211,1,5],[20190224,2,4],[20190301,0,3],[20190312,1,2],[20190322,4,5]], n = 6",
+      "output": "20190301",
+      "expectedOutput": "20190301",
+      "explanation": "processing logs in chronological order, the whole group first becomes fully connected at this timestamp"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "logs = [[1,0,1],[2,2,3]], n = 4",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "people {0,1} and {2,3} never merge into one group"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "logs = [[100,0,1]], n = 2",
+      "output": "100",
+      "expectedOutput": "100",
+      "explanation": "the only two people become friends at timestamp 100"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "logs = [[20190101,0,1],[20190104,3,4],[20190107,2,3],[20190211,1,5],[20190224,2,4],[20190301,0,3],[20190312,1,2],[20190322,4,5]], n = 6",
+      "output": "20190301",
+      "expectedOutput": "20190301",
+      "explanation": "processing logs in chronological order, the whole group first becomes fully connected at this timestamp"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "logs = [[1,0,1],[2,2,3]], n = 4",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "people {0,1} and {2,3} never merge into one group"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "logs = [[100,0,1]], n = 2",
+      "output": "100",
+      "expectedOutput": "100",
+      "explanation": "the only two people become friends at timestamp 100"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[20190101,0,1],[20190104,3,4],[20190107,2,3],[20190211,1,5],[20190224,2,4],[20190301,0,3],[20190312,1,2],[20190322,4,5]],6]",
+      "output": "20190301",
+      "expectedOutput": "20190301",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[0,2,0],[1,0,1],[3,0,3],[4,1,2],[7,3,1]],4]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[10,0,1],[20,1,2]],3]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1,0,1],[2,2,3]],4]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[100,0,1]],2]",
+      "output": "100",
+      "expectedOutput": "100",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[50,0,1],[10,1,2],[30,2,3]],4]",
+      "output": "50",
+      "expectedOutput": "50",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1,0,1],[2,1,2],[3,4,5]],6]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,0,1],[2,1,2],[3,2,3],[100,0,3],[200,1,3]],4]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[500,0,1]],2]",
+      "output": "500",
+      "expectedOutput": "500",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[5,1,2],[1,0,1],[9,2,3],[3,3,0],[7,0,2]],4]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[34,12,7],[21,15,6],[38,7,3],[22,6,10],[8,17,19],[16,0,16],[44,8,2],[5,5,17],[19,16,1],[1,11,5],[15,9,0],[39,3,8],[32,14,12],[10,19,9],[27,10,13],[50,18,4],[28,13,14],[20,1,15],[46,2,18]],20]",
+      "output": "50",
+      "expectedOutput": "50",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[11,5,6],[21,10,11],[3,1,2],[35,18,19],[17,8,9],[9,4,5],[23,11,12],[5,2,3],[29,15,16],[53,27,28],[7,3,4],[15,7,8],[1,0,1],[49,25,26],[39,20,21],[25,12,13],[55,28,29],[31,16,17],[37,19,20],[41,21,22],[19,9,10],[13,6,7],[43,22,23],[51,26,27],[27,13,14],[33,17,18],[45,23,24],[47,24,25]],30]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[66,22,12],[14,1,17],[11,17,13],[34,5,22],[3,20,1],[33,11,9],[39,23,14],[41,19,2],[50,22,11],[71,11,5],[1,10,4],[35,2,18],[58,1,23],[6,18,1],[26,15,21],[55,8,15],[4,17,3],[43,24,10],[12,18,3],[48,18,10],[16,18,9],[61,9,20],[37,16,15],[44,15,13],[45,21,2],[74,3,15],[9,6,1],[69,11,0],[29,13,24],[19,21,5],[22,22,2],[15,9,13],[10,2,7],[53,15,18],[64,21,14],[42,16,13],[25,1,19],[13,12,1],[31,14,18],[20,20,6]],25]",
+      "output": "69",
+      "expectedOutput": "69",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[],3]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[40,0,4],[80,0,8],[20,0,2],[10,0,1],[70,0,7],[50,0,5],[90,0,9],[30,0,3],[60,0,6]],10]",
+      "output": "90",
+      "expectedOutput": "90",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[1,0,1],[2,0,1],[3,1,2],[4,2,3]],4]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[300,1,2],[100,0,1],[200,0,2]],3]",
+      "output": "200",
+      "expectedOutput": "200",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[3,2,3],[5,4,5],[4,3,4],[6,5,6],[9,10,11],[10,11,12],[1,0,1],[11,12,13],[8,9,10],[2,1,2],[12,13,14],[1000,7,8],[7,8,9]],15]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[7,0,1],[7,1,2],[7,2,3],[7,3,4]],5]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,0,1],[2,1,2],[3,0,2],[4,2,3],[5,3,4],[6,4,5]],6]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[],4]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "logs = [[20190101,0,1],[20190104,3,4],[20190107,2,3],[20190211,1,5],[20190224,2,4],[20190301,0,3],[20190312,1,2],[20190322,4,5]], n = 6",
+        "output": "20190301",
+        "expectedOutput": "20190301",
+        "explanation": "processing logs in chronological order, the whole group first becomes fully connected at this timestamp"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "logs = [[1,0,1],[2,2,3]], n = 4",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "people {0,1} and {2,3} never merge into one group"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "logs = [[100,0,1]], n = 2",
+        "output": "100",
+        "expectedOutput": "100",
+        "explanation": "the only two people become friends at timestamp 100"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[20190101,0,1],[20190104,3,4],[20190107,2,3],[20190211,1,5],[20190224,2,4],[20190301,0,3],[20190312,1,2],[20190322,4,5]],6]",
+        "output": "20190301",
+        "expectedOutput": "20190301",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0,2,0],[1,0,1],[3,0,3],[4,1,2],[7,3,1]],4]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[10,0,1],[20,1,2]],3]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,0,1],[2,2,3]],4]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[100,0,1]],2]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[50,0,1],[10,1,2],[30,2,3]],4]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,0,1],[2,1,2],[3,4,5]],6]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,0,1],[2,1,2],[3,2,3],[100,0,3],[200,1,3]],4]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[500,0,1]],2]",
+        "output": "500",
+        "expectedOutput": "500",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[5,1,2],[1,0,1],[9,2,3],[3,3,0],[7,0,2]],4]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[34,12,7],[21,15,6],[38,7,3],[22,6,10],[8,17,19],[16,0,16],[44,8,2],[5,5,17],[19,16,1],[1,11,5],[15,9,0],[39,3,8],[32,14,12],[10,19,9],[27,10,13],[50,18,4],[28,13,14],[20,1,15],[46,2,18]],20]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[11,5,6],[21,10,11],[3,1,2],[35,18,19],[17,8,9],[9,4,5],[23,11,12],[5,2,3],[29,15,16],[53,27,28],[7,3,4],[15,7,8],[1,0,1],[49,25,26],[39,20,21],[25,12,13],[55,28,29],[31,16,17],[37,19,20],[41,21,22],[19,9,10],[13,6,7],[43,22,23],[51,26,27],[27,13,14],[33,17,18],[45,23,24],[47,24,25]],30]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[66,22,12],[14,1,17],[11,17,13],[34,5,22],[3,20,1],[33,11,9],[39,23,14],[41,19,2],[50,22,11],[71,11,5],[1,10,4],[35,2,18],[58,1,23],[6,18,1],[26,15,21],[55,8,15],[4,17,3],[43,24,10],[12,18,3],[48,18,10],[16,18,9],[61,9,20],[37,16,15],[44,15,13],[45,21,2],[74,3,15],[9,6,1],[69,11,0],[29,13,24],[19,21,5],[22,22,2],[15,9,13],[10,2,7],[53,15,18],[64,21,14],[42,16,13],[25,1,19],[13,12,1],[31,14,18],[20,20,6]],25]",
+        "output": "69",
+        "expectedOutput": "69",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[],3]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[40,0,4],[80,0,8],[20,0,2],[10,0,1],[70,0,7],[50,0,5],[90,0,9],[30,0,3],[60,0,6]],10]",
+        "output": "90",
+        "expectedOutput": "90",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,0,1],[2,0,1],[3,1,2],[4,2,3]],4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[300,1,2],[100,0,1],[200,0,2]],3]",
+        "output": "200",
+        "expectedOutput": "200",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[3,2,3],[5,4,5],[4,3,4],[6,5,6],[9,10,11],[10,11,12],[1,0,1],[11,12,13],[8,9,10],[2,1,2],[12,13,14],[1000,7,8],[7,8,9]],15]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[7,0,1],[7,1,2],[7,2,3],[7,3,4]],5]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,0,1],[2,1,2],[3,0,2],[4,2,3],[5,3,4],[6,4,5]],6]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[],4]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def earliestAcquaintance(self, logs, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int earliestAcquaintance(vector<vector<int>>& logs, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int earliestAcquaintance(int[][] logs, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun earliestAcquaintance(logs: Array<IntArray>, n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    earliestAcquaintance(logs, n) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def earliestAcquaintance(self, logs, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int earliestAcquaintance(vector<vector<int>>& logs, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int earliestAcquaintance(int[][] logs, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun earliestAcquaintance(logs: Array<IntArray>, n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    earliestAcquaintance(logs, n) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def earliestAcquaintance(self, logs, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int earliestAcquaintance(vector<vector<int>>& logs, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int earliestAcquaintance(int[][] logs, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun earliestAcquaintance(logs: Array<IntArray>, n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    earliestAcquaintance(logs, n) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def earliestAcquaintance(self, logs, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int earliestAcquaintance(vector<vector<int>>& logs, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int earliestAcquaintance(int[][] logs, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun earliestAcquaintance(logs: Array<IntArray>, n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    earliestAcquaintance(logs, n) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(L log L)",
+      "space": "O(n)",
+      "pattern": "union find, processing logs sorted by timestamp"
+    },
+    "bruteForce": {
+      "approach": "sort logs by timestamp, then after adding each one rebuild the graph and run BFS/DFS from person 0 to check whether all n people are reachable",
+      "time": "O(L^2)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "union find, processing logs sorted by timestamp",
+    "time": "O(L log L)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "sort the logs by timestamp first, since order matters and the input isn't sorted",
+      "keep a running count of connected components, starting at n",
+      "process logs in chronological order, unioning the two people in each one and decrementing the count only when the union actually merges two different groups",
+      "the moment the count hits 1, that log's timestamp is your answer - stop there and return it",
+      "if you finish every log and the count never reached 1, return -1"
+    ]
+  },
+  "bruteForce": {
+    "approach": "sort logs by timestamp, then after adding each one rebuild the graph and run BFS/DFS from person 0 to check whether all n people are reachable",
+    "time": "O(L^2)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

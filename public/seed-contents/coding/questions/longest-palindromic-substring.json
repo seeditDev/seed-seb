@@ -1,0 +1,655 @@
+{
+  "id": "longest-palindromic-substring",
+  "questionId": "longest-palindromic-substring",
+  "slug": "longest-palindromic-substring",
+  "title": "Longest Palindromic Substring",
+  "difficulty": "Medium",
+  "category": "Two pointers",
+  "patterns": [
+    "two pointers",
+    "strings",
+    "dynamic programming"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "a palindrome is symmetric around some center - what if instead of checking every substring, you tried every possible center and grew outward as long as both sides matched?",
+    "there are 2n-1 possible centers: n single-character centers (odd-length palindromes) and n-1 between-character centers (even-length palindromes)",
+    "for each center, expand left and right pointers outward one step at a time while s[left] == s[right], stopping as soon as they mismatch or go out of bounds",
+    "track the best (longest) palindrome found so far, and only replace it when a strictly longer one is found, which naturally preserves the earliest-starting tie-break"
+  ],
+  "commonMistakes": [
+    "forgetting to check even-length palindromes (centers between two characters), only checking odd-length ones",
+    "replacing the best answer on a tie (equal length) instead of only on strictly longer, which breaks the leftmost tie-break rule",
+    "off-by-one errors when converting the expand-around-center left/right pointers back into a substring"
+  ],
+  "content": {
+    "problemStatement": "You're given a string `s`.\n\n**Find the longest contiguous substring of `s` that reads the same\nforwards and backwards.**\n\nIf more than one substring achieves the maximum length, return the one\nthat starts at the smallest index, so the result is always uniquely\ndetermined.\n",
+    "constraints": [
+      "1 <= s.length <= 1000",
+      "s consists of digits and English letters only",
+      "if multiple longest palindromic substrings exist, return the one starting at the smallest index"
+    ],
+    "notes": [
+      "the entire string itself is a palindrome",
+      "no palindrome longer than a single character exists",
+      "an even-length palindrome (center falls between two characters) versus an odd-length one (center on a single character)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"babad\"",
+        "output": "\"bab\"",
+        "expectedOutput": "\"bab\"",
+        "explanation": "\"aba\" is also a valid palindrome of length 3, but \"bab\" starts earlier (index 0 vs index 1), so it is returned"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"cbbd\"",
+        "output": "\"bb\"",
+        "expectedOutput": "\"bb\"",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"a\"",
+        "output": "\"a\"",
+        "expectedOutput": "\"a\"",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"babad\"]",
+        "output": "bab",
+        "expectedOutput": "bab",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"cbbd\"]",
+        "output": "bb",
+        "expectedOutput": "bb",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"ac\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"racecar\"]",
+        "output": "racecar",
+        "expectedOutput": "racecar",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aaaa\"]",
+        "output": "aaaa",
+        "expectedOutput": "aaaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abcde\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aa\"]",
+        "output": "aa",
+        "expectedOutput": "aa",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"ab\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abacdfgdcaba\"]",
+        "output": "aba",
+        "expectedOutput": "aba",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"forgeeksskeegfor\"]",
+        "output": "geeksskeeg",
+        "expectedOutput": "geeksskeeg",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"noon\"]",
+        "output": "noon",
+        "expectedOutput": "noon",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abccba\"]",
+        "output": "abccba",
+        "expectedOutput": "abccba",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"xaabacxcabaaxy\"]",
+        "output": "xaabacxcabaax",
+        "expectedOutput": "xaabacxcabaax",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"bananas\"]",
+        "output": "anana",
+        "expectedOutput": "anana",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"12321\"]",
+        "output": "12321",
+        "expectedOutput": "12321",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abcba\"]",
+        "output": "abcba",
+        "expectedOutput": "abcba",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"aacabdkacaa\"]",
+        "output": "aca",
+        "expectedOutput": "aca",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"zzzzz\"]",
+        "output": "zzzzz",
+        "expectedOutput": "zzzzz",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"tattarrattat\"]",
+        "output": "tattarrattat",
+        "expectedOutput": "tattarrattat",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"aabbaa\"]",
+        "output": "aabbaa",
+        "expectedOutput": "aabbaa",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"babad\"",
+      "output": "\"bab\"",
+      "expectedOutput": "\"bab\"",
+      "explanation": "\"aba\" is also a valid palindrome of length 3, but \"bab\" starts earlier (index 0 vs index 1), so it is returned"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"cbbd\"",
+      "output": "\"bb\"",
+      "expectedOutput": "\"bb\"",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"a\"",
+      "output": "\"a\"",
+      "expectedOutput": "\"a\"",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"babad\"",
+      "output": "\"bab\"",
+      "expectedOutput": "\"bab\"",
+      "explanation": "\"aba\" is also a valid palindrome of length 3, but \"bab\" starts earlier (index 0 vs index 1), so it is returned"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"cbbd\"",
+      "output": "\"bb\"",
+      "expectedOutput": "\"bb\"",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"a\"",
+      "output": "\"a\"",
+      "expectedOutput": "\"a\"",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"babad\"]",
+      "output": "bab",
+      "expectedOutput": "bab",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"cbbd\"]",
+      "output": "bb",
+      "expectedOutput": "bb",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"a\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"ac\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"racecar\"]",
+      "output": "racecar",
+      "expectedOutput": "racecar",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"aaaa\"]",
+      "output": "aaaa",
+      "expectedOutput": "aaaa",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"abcde\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"aa\"]",
+      "output": "aa",
+      "expectedOutput": "aa",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"ab\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"abacdfgdcaba\"]",
+      "output": "aba",
+      "expectedOutput": "aba",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"forgeeksskeegfor\"]",
+      "output": "geeksskeeg",
+      "expectedOutput": "geeksskeeg",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"noon\"]",
+      "output": "noon",
+      "expectedOutput": "noon",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"abccba\"]",
+      "output": "abccba",
+      "expectedOutput": "abccba",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"xaabacxcabaaxy\"]",
+      "output": "xaabacxcabaax",
+      "expectedOutput": "xaabacxcabaax",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"bananas\"]",
+      "output": "anana",
+      "expectedOutput": "anana",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"12321\"]",
+      "output": "12321",
+      "expectedOutput": "12321",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"abcba\"]",
+      "output": "abcba",
+      "expectedOutput": "abcba",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"aacabdkacaa\"]",
+      "output": "aca",
+      "expectedOutput": "aca",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"zzzzz\"]",
+      "output": "zzzzz",
+      "expectedOutput": "zzzzz",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"tattarrattat\"]",
+      "output": "tattarrattat",
+      "expectedOutput": "tattarrattat",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"aabbaa\"]",
+      "output": "aabbaa",
+      "expectedOutput": "aabbaa",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"babad\"",
+        "output": "\"bab\"",
+        "expectedOutput": "\"bab\"",
+        "explanation": "\"aba\" is also a valid palindrome of length 3, but \"bab\" starts earlier (index 0 vs index 1), so it is returned"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"cbbd\"",
+        "output": "\"bb\"",
+        "expectedOutput": "\"bb\"",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"a\"",
+        "output": "\"a\"",
+        "expectedOutput": "\"a\"",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"babad\"]",
+        "output": "bab",
+        "expectedOutput": "bab",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"cbbd\"]",
+        "output": "bb",
+        "expectedOutput": "bb",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"ac\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"racecar\"]",
+        "output": "racecar",
+        "expectedOutput": "racecar",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aaaa\"]",
+        "output": "aaaa",
+        "expectedOutput": "aaaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abcde\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aa\"]",
+        "output": "aa",
+        "expectedOutput": "aa",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"ab\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abacdfgdcaba\"]",
+        "output": "aba",
+        "expectedOutput": "aba",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"forgeeksskeegfor\"]",
+        "output": "geeksskeeg",
+        "expectedOutput": "geeksskeeg",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"noon\"]",
+        "output": "noon",
+        "expectedOutput": "noon",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abccba\"]",
+        "output": "abccba",
+        "expectedOutput": "abccba",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"xaabacxcabaaxy\"]",
+        "output": "xaabacxcabaax",
+        "expectedOutput": "xaabacxcabaax",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"bananas\"]",
+        "output": "anana",
+        "expectedOutput": "anana",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"12321\"]",
+        "output": "12321",
+        "expectedOutput": "12321",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abcba\"]",
+        "output": "abcba",
+        "expectedOutput": "abcba",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"aacabdkacaa\"]",
+        "output": "aca",
+        "expectedOutput": "aca",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"zzzzz\"]",
+        "output": "zzzzz",
+        "expectedOutput": "zzzzz",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"tattarrattat\"]",
+        "output": "tattarrattat",
+        "expectedOutput": "tattarrattat",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"aabbaa\"]",
+        "output": "aabbaa",
+        "expectedOutput": "aabbaa",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def longestPalindrome(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string longestPalindrome(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String longestPalindrome(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestPalindrome(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestPalindrome(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def longestPalindrome(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string longestPalindrome(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String longestPalindrome(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestPalindrome(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestPalindrome(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def longestPalindrome(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string longestPalindrome(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String longestPalindrome(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestPalindrome(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestPalindrome(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def longestPalindrome(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string longestPalindrome(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String longestPalindrome(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestPalindrome(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestPalindrome(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n^2)",
+      "space": "O(1) extra (ignoring result storage)",
+      "pattern": "expand around center for every possible center"
+    },
+    "bruteForce": {
+      "approach": "check every possible substring (i, j) for being a palindrome, tracking the longest, taking the earliest-starting one on ties",
+      "time": "O(n^3)",
+      "space": "O(1) extra (ignoring result storage)"
+    }
+  },
+  "optimal": {
+    "pattern": "expand around center for every possible center",
+    "time": "O(n^2)",
+    "space": "O(1) extra (ignoring result storage)",
+    "hint_ladder": [
+      "a palindrome is symmetric around some center - what if instead of checking every substring, you tried every possible center and grew outward as long as both sides matched?",
+      "there are 2n-1 possible centers: n single-character centers (odd-length palindromes) and n-1 between-character centers (even-length palindromes)",
+      "for each center, expand left and right pointers outward one step at a time while s[left] == s[right], stopping as soon as they mismatch or go out of bounds",
+      "track the best (longest) palindrome found so far, and only replace it when a strictly longer one is found, which naturally preserves the earliest-starting tie-break"
+    ]
+  },
+  "bruteForce": {
+    "approach": "check every possible substring (i, j) for being a palindrome, tracking the longest, taking the earliest-starting one on ties",
+    "time": "O(n^3)",
+    "space": "O(1) extra (ignoring result storage)"
+  },
+  "isIndex0": true,
+  "level": null
+}

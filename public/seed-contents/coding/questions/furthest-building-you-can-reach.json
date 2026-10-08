@@ -1,0 +1,653 @@
+{
+  "id": "furthest-building-you-can-reach",
+  "questionId": "furthest-building-you-can-reach",
+  "slug": "furthest-building-you-can-reach",
+  "title": "Furthest Building You Can Reach",
+  "difficulty": "Medium",
+  "category": "Heap",
+  "patterns": [
+    "heap",
+    "min-heap",
+    "greedy"
+  ],
+  "lists": [],
+  "hints": [
+    "ladders are strictly better than bricks for expensive climbs since they're free regardless of height difference - you want to save your limited ladders for the biggest climbs you'll ever encounter, but you don't know the future in advance",
+    "greedily assume every climb gets a ladder, then walk it back: keep a min-heap of the climb sizes you've currently assigned a ladder to",
+    "whenever a new climb needs a ladder assignment, tentatively give it one by pushing onto the heap; if that makes the heap exceed your ladder count, evict the smallest climb from the heap (since it least needs a ladder among your assigned climbs) and pay for it with bricks instead",
+    "if paying with bricks makes your brick supply go negative, you can't make that climb at all - the furthest building reached is the one just before that failed climb"
+  ],
+  "commonMistakes": [
+    "assigning ladders to climbs in the order encountered rather than always keeping the ladder set as the largest climbs seen so far",
+    "checking bricks against the wrong climb - it must be the smallest of the currently ladder-assigned climbs that gets evicted to bricks, not the new climb itself",
+    "not treating downhill or equal-height steps as free moves that never touch bricks or ladders"
+  ],
+  "content": {
+    "problemStatement": "You're moving left to right across a row of buildings with given\nheights, starting at building 0. You have a fixed supply of bricks and\na fixed number of ladders. To step from one building to the next:\n\n- if the next building is the same height or shorter, you can walk over for free\n- if the next building is taller, you must climb the height difference, paying with either bricks (cost equals the exact height difference) or a ladder (climbs any height difference for free, but ladders are limited in supply)\n\n**Return the furthest building index you can reach if you spend your bricks and ladders optimally.**\n",
+    "constraints": [
+      "1 <= heights.length <= 100000",
+      "1 <= heights[i] <= 1000000",
+      "0 <= bricks <= 1000000000",
+      "0 <= ladders <= heights.length"
+    ],
+    "notes": [
+      "no bricks and no ladders at all, stuck as soon as any climb is required",
+      "every step downhill or flat, reaching the last building for free",
+      "enough ladders to cover every climb without using any bricks",
+      "single building (already at the furthest point with no moves needed)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "heights = [4, 2, 7, 6, 9, 14, 12], bricks = 5, ladders = 1",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "you can use the ladder on the climb of 5 (building 1 to 2) and bricks on the climb of 3 (building 3 to 4), using all 5 bricks; the next climb of 5 (building 4 to 5) can't be afforded with 0 bricks and no ladders left, so you stop at building 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "heights = [4, 12, 2, 7, 3, 18, 20, 3, 19], bricks = 10, ladders = 2",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": "using ladders on the two largest climbs (15 and 16) and bricks on the smaller ones (8 and 2, totaling 10 bricks) gets you to building 7 for free (downhill), but the climb of 16 to building 8 can't be afforded"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "heights = [14, 3, 19, 3], bricks = 17, ladders = 0",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "with no ladders, the only climb (16, from building 1 to 2) is paid entirely in bricks, leaving 1 brick, and building 3 is downhill and free, so you reach the last building"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[4,2,7,6,9,14,12],5,1]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[4,12,2,7,3,18,20,3,19],10,2]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[14,3,19,3],17,0]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3,4,5],0,0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],0,0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5,5,5,5],0,0]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5,4,3,2,1],0,4]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,5,1,2,3,4,10000],4,1]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[10,1,1,1,1],0,4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,100],0,0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,100],0,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,100,1,100,1,100],0,3]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,3,3,3,3,3],100,100]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],0,3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],100,1000]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[5,1,8,2,9,3,10,4,11,1,12,1,13],5,2]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,1000000],999999,0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,1000000],1000000,0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1000000],0,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,3,6,10,15,21,28,36,45,55],10,2]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,2],1,0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "heights = [4, 2, 7, 6, 9, 14, 12], bricks = 5, ladders = 1",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "you can use the ladder on the climb of 5 (building 1 to 2) and bricks on the climb of 3 (building 3 to 4), using all 5 bricks; the next climb of 5 (building 4 to 5) can't be afforded with 0 bricks and no ladders left, so you stop at building 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "heights = [4, 12, 2, 7, 3, 18, 20, 3, 19], bricks = 10, ladders = 2",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": "using ladders on the two largest climbs (15 and 16) and bricks on the smaller ones (8 and 2, totaling 10 bricks) gets you to building 7 for free (downhill), but the climb of 16 to building 8 can't be afforded"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "heights = [14, 3, 19, 3], bricks = 17, ladders = 0",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "with no ladders, the only climb (16, from building 1 to 2) is paid entirely in bricks, leaving 1 brick, and building 3 is downhill and free, so you reach the last building"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "heights = [4, 2, 7, 6, 9, 14, 12], bricks = 5, ladders = 1",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "you can use the ladder on the climb of 5 (building 1 to 2) and bricks on the climb of 3 (building 3 to 4), using all 5 bricks; the next climb of 5 (building 4 to 5) can't be afforded with 0 bricks and no ladders left, so you stop at building 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "heights = [4, 12, 2, 7, 3, 18, 20, 3, 19], bricks = 10, ladders = 2",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": "using ladders on the two largest climbs (15 and 16) and bricks on the smaller ones (8 and 2, totaling 10 bricks) gets you to building 7 for free (downhill), but the climb of 16 to building 8 can't be afforded"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "heights = [14, 3, 19, 3], bricks = 17, ladders = 0",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "with no ladders, the only climb (16, from building 1 to 2) is paid entirely in bricks, leaving 1 brick, and building 3 is downhill and free, so you reach the last building"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[4,2,7,6,9,14,12],5,1]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[4,12,2,7,3,18,20,3,19],10,2]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[14,3,19,3],17,0]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2,3,4,5],0,0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1],0,0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[5,5,5,5],0,0]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3,4,5,4,3,2,1],0,4]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,5,1,2,3,4,10000],4,1]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[10,1,1,1,1],0,4]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,100],0,0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,100],0,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,100,1,100,1,100],0,3]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[3,3,3,3,3,3],100,100]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],0,3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],100,1000]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[5,1,8,2,9,3,10,4,11,1,12,1,13],5,2]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,1000000],999999,0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,1000000],1000000,0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,1000000],0,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,3,6,10,15,21,28,36,45,55],10,2]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[1,2],1,0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "heights = [4, 2, 7, 6, 9, 14, 12], bricks = 5, ladders = 1",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "you can use the ladder on the climb of 5 (building 1 to 2) and bricks on the climb of 3 (building 3 to 4), using all 5 bricks; the next climb of 5 (building 4 to 5) can't be afforded with 0 bricks and no ladders left, so you stop at building 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "heights = [4, 12, 2, 7, 3, 18, 20, 3, 19], bricks = 10, ladders = 2",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": "using ladders on the two largest climbs (15 and 16) and bricks on the smaller ones (8 and 2, totaling 10 bricks) gets you to building 7 for free (downhill), but the climb of 16 to building 8 can't be afforded"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "heights = [14, 3, 19, 3], bricks = 17, ladders = 0",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "with no ladders, the only climb (16, from building 1 to 2) is paid entirely in bricks, leaving 1 brick, and building 3 is downhill and free, so you reach the last building"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[4,2,7,6,9,14,12],5,1]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[4,12,2,7,3,18,20,3,19],10,2]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[14,3,19,3],17,0]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3,4,5],0,0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],0,0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5,5,5,5],0,0]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5,4,3,2,1],0,4]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,5,1,2,3,4,10000],4,1]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[10,1,1,1,1],0,4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,100],0,0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,100],0,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,100,1,100,1,100],0,3]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,3,3,3,3,3],100,100]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],0,3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],100,1000]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[5,1,8,2,9,3,10,4,11,1,12,1,13],5,2]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,1000000],999999,0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,1000000],1000000,0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1000000],0,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,3,6,10,15,21,28,36,45,55],10,2]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,2],1,0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def furthestBuilding(self, heights, bricks, ladders):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int furthestBuilding(vector<int>& heights, int bricks, int ladders) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int furthestBuilding(int[] heights, int bricks, int ladders) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun furthestBuilding(heights: IntArray, bricks: Int, ladders: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    furthestBuilding(heights, bricks, ladders) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def furthestBuilding(self, heights, bricks, ladders):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int furthestBuilding(vector<int>& heights, int bricks, int ladders) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int furthestBuilding(int[] heights, int bricks, int ladders) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun furthestBuilding(heights: IntArray, bricks: Int, ladders: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    furthestBuilding(heights, bricks, ladders) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def furthestBuilding(self, heights, bricks, ladders):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int furthestBuilding(vector<int>& heights, int bricks, int ladders) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int furthestBuilding(int[] heights, int bricks, int ladders) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun furthestBuilding(heights: IntArray, bricks: Int, ladders: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    furthestBuilding(heights, bricks, ladders) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def furthestBuilding(self, heights, bricks, ladders):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int furthestBuilding(vector<int>& heights, int bricks, int ladders) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int furthestBuilding(int[] heights, int bricks, int ladders) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun furthestBuilding(heights: IntArray, bricks: Int, ladders: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    furthestBuilding(heights, bricks, ladders) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log ladders)",
+      "space": "O(ladders)",
+      "pattern": "min-heap tracking the smallest climb currently assigned to a ladder, swapped out for bricks when a bigger climb appears"
+    },
+    "bruteForce": {
+      "approach": "try every possible subset assignment of which climbs get a ladder versus bricks and check feasibility, or greedily assign ladders to whichever climb looks biggest at that moment without ever revisiting the choice",
+      "time": "exponential for exhaustive search, or incorrect for naive greedy without revision",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "min-heap tracking the smallest climb currently assigned to a ladder, swapped out for bricks when a bigger climb appears",
+    "time": "O(n log ladders)",
+    "space": "O(ladders)",
+    "hint_ladder": [
+      "ladders are strictly better than bricks for expensive climbs since they're free regardless of height difference - you want to save your limited ladders for the biggest climbs you'll ever encounter, but you don't know the future in advance",
+      "greedily assume every climb gets a ladder, then walk it back: keep a min-heap of the climb sizes you've currently assigned a ladder to",
+      "whenever a new climb needs a ladder assignment, tentatively give it one by pushing onto the heap; if that makes the heap exceed your ladder count, evict the smallest climb from the heap (since it least needs a ladder among your assigned climbs) and pay for it with bricks instead",
+      "if paying with bricks makes your brick supply go negative, you can't make that climb at all - the furthest building reached is the one just before that failed climb"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every possible subset assignment of which climbs get a ladder versus bricks and check feasibility, or greedily assign ladders to whichever climb looks biggest at that moment without ever revisiting the choice",
+    "time": "exponential for exhaustive search, or incorrect for naive greedy without revision",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

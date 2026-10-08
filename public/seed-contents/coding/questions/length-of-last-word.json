@@ -1,0 +1,652 @@
+{
+  "id": "length-of-last-word",
+  "questionId": "length-of-last-word",
+  "slug": "length-of-last-word",
+  "title": "Length of Last Word",
+  "difficulty": "Easy",
+  "category": "Two pointers",
+  "patterns": [
+    "strings",
+    "two pointers"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "you only care about the last word - do you really need to process the whole string from the front?",
+    "start scanning from the end of the string instead",
+    "first skip over any trailing spaces to find the last non-space character, then keep moving left while characters are non-space to find where the last word starts",
+    "the length is just the distance between where the word ends and where it starts, no splitting or extra storage needed"
+  ],
+  "commonMistakes": [
+    "not skipping trailing spaces before starting to measure the last word",
+    "using a language's split-on-space function without handling multiple consecutive spaces, producing empty string entries",
+    "off-by-one errors when computing the length from start and end indices"
+  ],
+  "content": {
+    "problemStatement": "You're given a string made up of words separated by one or more spaces,\nand possibly with leading or trailing spaces too. A \"word\" is a maximal\nrun of non-space characters.\n\n**Return the length of the last word in the string.**\n\nThe string always contains at least one non-space character, so there\nis always a last word to find.\n",
+    "constraints": [
+      "1 <= s.length <= 10^4",
+      "s consists of English letters and spaces only",
+      "there is at least one word in s"
+    ],
+    "notes": [
+      "trailing spaces after the last word",
+      "a single word with no spaces at all",
+      "multiple consecutive spaces between the second-to-last and last word"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"Hello World\"",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "the last word is \"World\", which has 5 characters"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"   fly me   to   the moon  \"",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "trailing spaces are ignored; the last word is \"moon\""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"luffy is still joyboy\"",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "the last word is \"joyboy\""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"Hello World\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"   fly me   to   the moon  \"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"luffy is still joyboy\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"   a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a   \"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"single\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"  hi  \"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"one two three\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"  double  spaced  words  \"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"x y z\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"day\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"   leading spaces only matter for the first word\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"trailing spaces matter not   \"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"a b\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"ab cd ef gh\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"hello\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"   z   \"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"this is a test string with many words here\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"Programming\"]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"a  b  c  d\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"Hello World\"",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "the last word is \"World\", which has 5 characters"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"   fly me   to   the moon  \"",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "trailing spaces are ignored; the last word is \"moon\""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"luffy is still joyboy\"",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "the last word is \"joyboy\""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"Hello World\"",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "the last word is \"World\", which has 5 characters"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"   fly me   to   the moon  \"",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "trailing spaces are ignored; the last word is \"moon\""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"luffy is still joyboy\"",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "the last word is \"joyboy\""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"Hello World\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"   fly me   to   the moon  \"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"luffy is still joyboy\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"a\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"   a\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a   \"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"single\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"  hi  \"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"one two three\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"  double  spaced  words  \"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"x y z\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"day\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"   leading spaces only matter for the first word\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"trailing spaces matter not   \"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"a b\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"ab cd ef gh\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"hello\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"   z   \"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"this is a test string with many words here\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"Programming\"]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"a  b  c  d\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"Hello World\"",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "the last word is \"World\", which has 5 characters"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"   fly me   to   the moon  \"",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "trailing spaces are ignored; the last word is \"moon\""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"luffy is still joyboy\"",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "the last word is \"joyboy\""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"Hello World\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"   fly me   to   the moon  \"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"luffy is still joyboy\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"   a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a   \"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"single\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"  hi  \"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"one two three\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"  double  spaced  words  \"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"x y z\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"day\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"   leading spaces only matter for the first word\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"trailing spaces matter not   \"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"a b\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"ab cd ef gh\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"hello\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"   z   \"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"this is a test string with many words here\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"Programming\"]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"a  b  c  d\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def lengthOfLastWord(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lengthOfLastWord(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lengthOfLastWord(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lengthOfLastWord(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lengthOfLastWord(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def lengthOfLastWord(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lengthOfLastWord(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lengthOfLastWord(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lengthOfLastWord(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lengthOfLastWord(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def lengthOfLastWord(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lengthOfLastWord(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lengthOfLastWord(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lengthOfLastWord(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lengthOfLastWord(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def lengthOfLastWord(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lengthOfLastWord(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lengthOfLastWord(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lengthOfLastWord(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lengthOfLastWord(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) (ignoring the language's own string handling)",
+      "pattern": "reverse scan with two pointers, skipping trailing spaces first"
+    },
+    "bruteForce": {
+      "approach": "split the string on whitespace into a list of words and take the length of the last element",
+      "time": "O(n)",
+      "space": "O(n) for the split list"
+    }
+  },
+  "optimal": {
+    "pattern": "reverse scan with two pointers, skipping trailing spaces first",
+    "time": "O(n)",
+    "space": "O(1) (ignoring the language's own string handling)",
+    "hint_ladder": [
+      "you only care about the last word - do you really need to process the whole string from the front?",
+      "start scanning from the end of the string instead",
+      "first skip over any trailing spaces to find the last non-space character, then keep moving left while characters are non-space to find where the last word starts",
+      "the length is just the distance between where the word ends and where it starts, no splitting or extra storage needed"
+    ]
+  },
+  "bruteForce": {
+    "approach": "split the string on whitespace into a list of words and take the length of the last element",
+    "time": "O(n)",
+    "space": "O(n) for the split list"
+  },
+  "isIndex0": true,
+  "level": null
+}

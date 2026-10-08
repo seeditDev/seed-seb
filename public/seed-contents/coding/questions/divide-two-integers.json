@@ -1,0 +1,649 @@
+{
+  "id": "divide-two-integers",
+  "questionId": "divide-two-integers",
+  "slug": "divide-two-integers",
+  "title": "Divide Two Integers",
+  "difficulty": "Hard",
+  "category": "Bit manipulation",
+  "patterns": [
+    "bit manipulation"
+  ],
+  "lists": [],
+  "hints": [
+    "repeated single subtraction is too slow when the quotient is large - instead of subtracting the divisor once at a time, can you subtract a much bigger multiple of it at once?",
+    "any number can be built from powers of two - so the quotient can be built by testing, from the highest bit down, whether that power-of-two multiple of the divisor still fits within what's left of the dividend",
+    "work with absolute values throughout (track the sign of the answer separately), then for each bit position from high to low, check if (divisor << bit) fits in the remaining dividend - if it does, subtract it out and add (1 << bit) to the quotient",
+    "handle sign separately (result is negative if dividend and divisor have different signs), and handle the one overflow case explicitly: dividend = -2^31 and divisor = -1 would produce 2^31 which doesn't fit, so clamp it to 2^31 - 1"
+  ],
+  "commonMistakes": [
+    "using actual division or multiplication anywhere (even indirectly, like a language's built-in pow) when the problem explicitly disallows those operators",
+    "forgetting to special-case dividend = INT_MIN, divisor = -1, which is the one input that overflows a 32-bit signed result",
+    "truncating toward negative infinity (floor division) instead of toward zero for negative results, which gives an off-by-one wrong answer"
+  ],
+  "content": {
+    "problemStatement": "You're given two integers, `dividend` and `divisor`.\n\n**Divide them without using multiplication, division, or the mod operator, and return the quotient truncated toward zero**, so the fractional part is discarded, not rounded.\n\nIf the mathematical result would overflow a signed 32-bit integer, clamp it to the nearest 32-bit signed boundary (2^31 - 1 or -2^31).\n",
+    "constraints": [
+      "divisor is never 0",
+      "-2^31 <= dividend, divisor <= 2^31 - 1",
+      "clamp the result to [-2^31, 2^31 - 1] if it would overflow"
+    ],
+    "notes": [
+      "dividend is 0",
+      "dividend and divisor have different signs (result should truncate toward zero, not floor)",
+      "the overflow case: dividend = INT_MIN divided by -1"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "dividend = 10, divisor = 3",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "10 / 3 = 3.33, truncated toward zero is 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "dividend = 7, divisor = -3",
+        "output": "-2",
+        "expectedOutput": "-2",
+        "explanation": "7 / -3 = -2.33, truncated toward zero is -2"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "dividend = -2147483648, divisor = -1",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "explanation": "the true quotient 2147483648 overflows a 32-bit signed int, so it's clamped to 2147483647"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[10,3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[7,-3]",
+        "output": "-2",
+        "expectedOutput": "-2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[0,5]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[-2147483648,-1]",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[-2147483648,1]",
+        "output": "-2147483648",
+        "expectedOutput": "-2147483648",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[1,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[-1,1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[1,-1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[-1,-1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[2147483647,1]",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[2147483647,2]",
+        "output": "1073741823",
+        "expectedOutput": "1073741823",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[-2147483648,2]",
+        "output": "-1073741824",
+        "expectedOutput": "-1073741824",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[-2147483648,2147483647]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[100,7]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[-100,7]",
+        "output": "-14",
+        "expectedOutput": "-14",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[7,3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[-7,-3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[0,-5]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[2147483647,-1]",
+        "output": "-2147483647",
+        "expectedOutput": "-2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[1,2147483647]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[1000,-3]",
+        "output": "-333",
+        "expectedOutput": "-333",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "dividend = 10, divisor = 3",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "10 / 3 = 3.33, truncated toward zero is 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "dividend = 7, divisor = -3",
+      "output": "-2",
+      "expectedOutput": "-2",
+      "explanation": "7 / -3 = -2.33, truncated toward zero is -2"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "dividend = -2147483648, divisor = -1",
+      "output": "2147483647",
+      "expectedOutput": "2147483647",
+      "explanation": "the true quotient 2147483648 overflows a 32-bit signed int, so it's clamped to 2147483647"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "dividend = 10, divisor = 3",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "10 / 3 = 3.33, truncated toward zero is 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "dividend = 7, divisor = -3",
+      "output": "-2",
+      "expectedOutput": "-2",
+      "explanation": "7 / -3 = -2.33, truncated toward zero is -2"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "dividend = -2147483648, divisor = -1",
+      "output": "2147483647",
+      "expectedOutput": "2147483647",
+      "explanation": "the true quotient 2147483648 overflows a 32-bit signed int, so it's clamped to 2147483647"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[10,3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[7,-3]",
+      "output": "-2",
+      "expectedOutput": "-2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[0,5]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[-2147483648,-1]",
+      "output": "2147483647",
+      "expectedOutput": "2147483647",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[-2147483648,1]",
+      "output": "-2147483648",
+      "expectedOutput": "-2147483648",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[1,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[-1,1]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[1,-1]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[-1,-1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[2147483647,1]",
+      "output": "2147483647",
+      "expectedOutput": "2147483647",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[2147483647,2]",
+      "output": "1073741823",
+      "expectedOutput": "1073741823",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[-2147483648,2]",
+      "output": "-1073741824",
+      "expectedOutput": "-1073741824",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[-2147483648,2147483647]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[100,7]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[-100,7]",
+      "output": "-14",
+      "expectedOutput": "-14",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[7,3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[-7,-3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[0,-5]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[2147483647,-1]",
+      "output": "-2147483647",
+      "expectedOutput": "-2147483647",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[1,2147483647]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[1000,-3]",
+      "output": "-333",
+      "expectedOutput": "-333",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "dividend = 10, divisor = 3",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "10 / 3 = 3.33, truncated toward zero is 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "dividend = 7, divisor = -3",
+        "output": "-2",
+        "expectedOutput": "-2",
+        "explanation": "7 / -3 = -2.33, truncated toward zero is -2"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "dividend = -2147483648, divisor = -1",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "explanation": "the true quotient 2147483648 overflows a 32-bit signed int, so it's clamped to 2147483647"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[10,3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[7,-3]",
+        "output": "-2",
+        "expectedOutput": "-2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[0,5]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[-2147483648,-1]",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[-2147483648,1]",
+        "output": "-2147483648",
+        "expectedOutput": "-2147483648",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[1,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[-1,1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[1,-1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[-1,-1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[2147483647,1]",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[2147483647,2]",
+        "output": "1073741823",
+        "expectedOutput": "1073741823",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[-2147483648,2]",
+        "output": "-1073741824",
+        "expectedOutput": "-1073741824",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[-2147483648,2147483647]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[100,7]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[-100,7]",
+        "output": "-14",
+        "expectedOutput": "-14",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[7,3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[-7,-3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[0,-5]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[2147483647,-1]",
+        "output": "-2147483647",
+        "expectedOutput": "-2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[1,2147483647]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[1000,-3]",
+        "output": "-333",
+        "expectedOutput": "-333",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def divide(self, dividend, divisor):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int divide(int dividend, int divisor) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int divide(int dividend, int divisor) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun divide(dividend: Int, divisor: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    divide(dividend, divisor) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def divide(self, dividend, divisor):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int divide(int dividend, int divisor) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int divide(int dividend, int divisor) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun divide(dividend: Int, divisor: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    divide(dividend, divisor) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def divide(self, dividend, divisor):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int divide(int dividend, int divisor) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int divide(int dividend, int divisor) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun divide(dividend: Int, divisor: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    divide(dividend, divisor) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def divide(self, dividend, divisor):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int divide(int dividend, int divisor) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int divide(int dividend, int divisor) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun divide(dividend: Int, divisor: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    divide(dividend, divisor) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(log^2 n) or O(32) per outer step, effectively O(log n) overall",
+      "space": "O(1)",
+      "pattern": "bit manipulation (shift-and-subtract, doubling the divisor with left shifts each round)"
+    },
+    "bruteForce": {
+      "approach": "repeatedly subtract the divisor from the dividend, counting how many subtractions it takes until what's left is smaller than the divisor",
+      "time": "O(dividend / divisor) - can be extremely slow, e.g. dividing INT_MAX by 1 takes about 2 billion subtractions",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "bit manipulation (shift-and-subtract, doubling the divisor with left shifts each round)",
+    "time": "O(log^2 n) or O(32) per outer step, effectively O(log n) overall",
+    "space": "O(1)",
+    "hint_ladder": [
+      "repeated single subtraction is too slow when the quotient is large - instead of subtracting the divisor once at a time, can you subtract a much bigger multiple of it at once?",
+      "any number can be built from powers of two - so the quotient can be built by testing, from the highest bit down, whether that power-of-two multiple of the divisor still fits within what's left of the dividend",
+      "work with absolute values throughout (track the sign of the answer separately), then for each bit position from high to low, check if (divisor << bit) fits in the remaining dividend - if it does, subtract it out and add (1 << bit) to the quotient",
+      "handle sign separately (result is negative if dividend and divisor have different signs), and handle the one overflow case explicitly: dividend = -2^31 and divisor = -1 would produce 2^31 which doesn't fit, so clamp it to 2^31 - 1"
+    ]
+  },
+  "bruteForce": {
+    "approach": "repeatedly subtract the divisor from the dividend, counting how many subtractions it takes until what's left is smaller than the divisor",
+    "time": "O(dividend / divisor) - can be extremely slow, e.g. dividing INT_MAX by 1 takes about 2 billion subtractions",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

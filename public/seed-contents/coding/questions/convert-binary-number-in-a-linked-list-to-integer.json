@@ -1,0 +1,629 @@
+{
+  "id": "convert-binary-number-in-a-linked-list-to-integer",
+  "questionId": "convert-binary-number-in-a-linked-list-to-integer",
+  "slug": "convert-binary-number-in-a-linked-list-to-integer",
+  "title": "Convert Binary Number in a Linked List to Integer",
+  "difficulty": "Easy",
+  "category": "Linked list",
+  "patterns": [
+    "linked list",
+    "bit manipulation"
+  ],
+  "lists": [],
+  "hints": [
+    "what's the relationship between a binary digit's position and its contribution to the decimal value?",
+    "if you already have the decimal value of everything before the current bit, how does seeing one more bit update that value?",
+    "each new bit doubles the running value (shifts everything one place left) and then adds the new bit",
+    "start result = 0, and for each value in nums do result = result * 2 + value"
+  ],
+  "commonMistakes": [
+    "processing the bits in the wrong order (least significant first instead of most significant first)",
+    "using string concatenation and parseInt without handling potential overflow-style thinking, or overcomplicating with pow()",
+    "off-by-one in exponent calculation when computing powers of two directly instead of using the running-total trick"
+  ],
+  "content": {
+    "problemStatement": "A singly linked list is given to you as an array `nums`, where `nums[i]` is\nthe value of the i-th node in order. Every node's value is either 0 or\n1, and read from head to tail the nodes spell out a binary number, most\nsignificant bit first.\n\n**Return the decimal value of that binary number.**\n",
+    "constraints": [
+      "1 <= nums.length <= 30",
+      "every value in nums is 0 or 1",
+      "the list represents a number without leading-zero ambiguity issues (leading zeros are simply worth 0)"
+    ],
+    "notes": [
+      "a single-node list of 0",
+      "a single-node list of 1",
+      "leading zeros, e.g. [0, 1, 1]"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 0, 1]",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "binary 101 is decimal 5"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 1, 1, 1, 1]",
+        "output": "31",
+        "expectedOutput": "31",
+        "explanation": "binary 11111 is decimal 31"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,0,1]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,1,1,1,1]]",
+        "output": "31",
+        "expectedOutput": "31",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0,1,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,0,0,1]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "1023",
+        "expectedOutput": "1023",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,0,0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,1,0,1,0,1,0,1,1,0,1,0,1,0,1]]",
+        "output": "27349",
+        "expectedOutput": "27349",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,0,0,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,0]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "1073741823",
+        "expectedOutput": "1073741823",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,0,0,0,0,0,0,0,0,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,0,1,0,1,0,1,0,1,0]]",
+        "output": "682",
+        "expectedOutput": "682",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,1,0,1,0,1,0,1,0,1]]",
+        "output": "341",
+        "expectedOutput": "341",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]",
+        "output": "16384",
+        "expectedOutput": "16384",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 0, 1]",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "binary 101 is decimal 5"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 1, 1, 1, 1]",
+      "output": "31",
+      "expectedOutput": "31",
+      "explanation": "binary 11111 is decimal 31"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 0, 1]",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "binary 101 is decimal 5"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 1, 1, 1, 1]",
+      "output": "31",
+      "expectedOutput": "31",
+      "explanation": "binary 11111 is decimal 31"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,0,1]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,1,1,1,1]]",
+      "output": "31",
+      "expectedOutput": "31",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[0,1,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,0,0,1]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+      "output": "1023",
+      "expectedOutput": "1023",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[0,0,0,0,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,1,0,1,0,1,0,1,1,0,1,0,1,0,1]]",
+      "output": "27349",
+      "expectedOutput": "27349",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[0,0,0,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,0]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[0,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+      "output": "1073741823",
+      "expectedOutput": "1073741823",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[0,0,0,0,0,0,0,0,0,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,0,1,0,1,0,1,0,1,0]]",
+      "output": "682",
+      "expectedOutput": "682",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[0,1,0,1,0,1,0,1,0,1]]",
+      "output": "341",
+      "expectedOutput": "341",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]",
+      "output": "16384",
+      "expectedOutput": "16384",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 0, 1]",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "binary 101 is decimal 5"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 1, 1, 1, 1]",
+        "output": "31",
+        "expectedOutput": "31",
+        "explanation": "binary 11111 is decimal 31"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,0,1]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,1,1,1,1]]",
+        "output": "31",
+        "expectedOutput": "31",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0,1,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,0,0,1]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "1023",
+        "expectedOutput": "1023",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,0,0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,1,0,1,0,1,0,1,1,0,1,0,1,0,1]]",
+        "output": "27349",
+        "expectedOutput": "27349",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,0,0,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,0]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "1073741823",
+        "expectedOutput": "1073741823",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,0,0,0,0,0,0,0,0,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,0,1,0,1,0,1,0,1,0]]",
+        "output": "682",
+        "expectedOutput": "682",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,1,0,1,0,1,0,1,0,1]]",
+        "output": "341",
+        "expectedOutput": "341",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]",
+        "output": "16384",
+        "expectedOutput": "16384",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def getDecimalValue(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int getDecimalValue(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int getDecimalValue(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun getDecimalValue(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    getDecimalValue(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def getDecimalValue(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int getDecimalValue(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int getDecimalValue(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun getDecimalValue(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    getDecimalValue(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def getDecimalValue(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int getDecimalValue(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int getDecimalValue(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun getDecimalValue(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    getDecimalValue(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def getDecimalValue(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int getDecimalValue(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int getDecimalValue(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun getDecimalValue(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    getDecimalValue(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra besides the output",
+      "pattern": "running total - for each bit, shift the accumulated value left and add the new bit"
+    },
+    "bruteForce": {
+      "approach": "convert each bit to a character, join into a binary string, and parse it as base-2",
+      "time": "O(n)",
+      "space": "O(n) for the intermediate string"
+    }
+  },
+  "optimal": {
+    "pattern": "running total - for each bit, shift the accumulated value left and add the new bit",
+    "time": "O(n)",
+    "space": "O(1) extra besides the output",
+    "hint_ladder": [
+      "what's the relationship between a binary digit's position and its contribution to the decimal value?",
+      "if you already have the decimal value of everything before the current bit, how does seeing one more bit update that value?",
+      "each new bit doubles the running value (shifts everything one place left) and then adds the new bit",
+      "start result = 0, and for each value in nums do result = result * 2 + value"
+    ]
+  },
+  "bruteForce": {
+    "approach": "convert each bit to a character, join into a binary string, and parse it as base-2",
+    "time": "O(n)",
+    "space": "O(n) for the intermediate string"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,699 @@
+{
+  "id": "maximum-sum-circular-subarray",
+  "questionId": "maximum-sum-circular-subarray",
+  "slug": "maximum-sum-circular-subarray",
+  "title": "Maximum Sum Circular Subarray",
+  "difficulty": "Medium",
+  "category": "Greedy",
+  "patterns": [
+    "kadane's algorithm",
+    "prefix sum",
+    "greedy"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "split into two cases: either the best subarray doesn't wrap around (ordinary max subarray, solvable with Kadane's algorithm), or it does wrap around",
+    "a wrapping subarray is everything except some non-wrapping subarray in the middle - so the best wrapping sum is (total sum of the array) minus (the minimum sum non-wrapping subarray)",
+    "you can find the minimum subarray sum with a mirrored version of Kadane's algorithm (tracking running minimum instead of running maximum)",
+    "the answer is the max of (best ordinary subarray, total - minimum subarray) - except if every element is negative, the 'total minus minimum' case would incorrectly produce an empty subarray (sum 0), so in that case just return the best ordinary (non-wrapping) answer",
+    "detect the all-negative edge case by checking if the maximum non-wrapping subarray sum is itself negative - if so, skip the wraparound case entirely"
+  ],
+  "commonMistakes": [
+    "not special-casing all-negative arrays, which causes the 'total minus min-subarray' formula to effectively select an empty subarray and return 0 instead of the correct negative answer",
+    "computing total sum minus the minimum subarray sum but forgetting the minimum subarray must also be non-empty and strictly a proper subset for wraparound to make sense",
+    "confusing the sign or direction of the min-subarray Kadane's pass, tracking running maximum instead of running minimum",
+    "assuming the wraparound case always beats the non-wraparound case, when for arrays without any useful wraparound the ordinary Kadane's result is larger or equal"
+  ],
+  "content": {
+    "problemStatement": "You're given a circular array of integers `nums`, meaning the array wraps\naround: the element after the last one is the first one again. A\nsubarray is a contiguous run of elements, and in a circular array a\ncontiguous run is allowed to wrap past the end back to the beginning.\n\n**Find the maximum possible sum of a non-empty subarray, considering both ordinary (non-wrapping) subarrays and wrapping ones.**\n",
+    "constraints": [
+      "1 <= length of nums <= 3 * 10^4",
+      "-3 * 10^4 <= nums[i] <= 3 * 10^4",
+      "the subarray must be non-empty"
+    ],
+    "notes": [
+      "all elements are negative (the answer is the single largest element, not an empty sum of 0)",
+      "all elements are positive (the whole array wrapped or not gives the same maximum, the full sum)",
+      "a single element array",
+      "the best subarray happens to wrap all the way around, leaving nothing unselected"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, -2, 3, -2]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "the best subarray is just [3], no wraparound helps here"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [5, -3, 5]",
+        "output": "10",
+        "expectedOutput": "10",
+        "explanation": "wrapping around to take [5, 5] (the last and first elements) beats any non-wrapping subarray"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [-3, -2, -3]",
+        "output": "-2",
+        "expectedOutput": "-2",
+        "explanation": "every element is negative, so the best you can do is the single largest element"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,-2,3,-2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[5,-3,5]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[-3,-2,-3]]",
+        "output": "-2",
+        "expectedOutput": "-2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[3,-1,2,-1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[3,-2,2,-3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-2,-1,-3]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-5]]",
+        "output": "-5",
+        "expectedOutput": "-5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,1,1,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-1,-1,-1,-1]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,-1,2,-1,2]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[8,-8,9,-9,10,-11,12]]",
+        "output": "22",
+        "expectedOutput": "22",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[10,-3,-4,7,6,5,-4,-1]]",
+        "output": "23",
+        "expectedOutput": "23",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-2,4,-5,4,-5,9,4]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,-1,1,-1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-1,2,-1,2,-1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[100,-1,-1,-1,100]]",
+        "output": "200",
+        "expectedOutput": "200",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-5,4,-3,4,-5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[6,-3,-2,-3,6]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[-1,-2,-3,-4]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[1,2,3,4,5]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[[4,-1,-1,-1,4]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, -2, 3, -2]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "the best subarray is just [3], no wraparound helps here"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [5, -3, 5]",
+      "output": "10",
+      "expectedOutput": "10",
+      "explanation": "wrapping around to take [5, 5] (the last and first elements) beats any non-wrapping subarray"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [-3, -2, -3]",
+      "output": "-2",
+      "expectedOutput": "-2",
+      "explanation": "every element is negative, so the best you can do is the single largest element"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, -2, 3, -2]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "the best subarray is just [3], no wraparound helps here"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [5, -3, 5]",
+      "output": "10",
+      "expectedOutput": "10",
+      "explanation": "wrapping around to take [5, 5] (the last and first elements) beats any non-wrapping subarray"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [-3, -2, -3]",
+      "output": "-2",
+      "expectedOutput": "-2",
+      "explanation": "every element is negative, so the best you can do is the single largest element"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,-2,3,-2]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[5,-3,5]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[-3,-2,-3]]",
+      "output": "-2",
+      "expectedOutput": "-2",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[3,-1,2,-1]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[3,-2,2,-3]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[-2,-1,-3]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[5]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[-5]]",
+      "output": "-5",
+      "expectedOutput": "-5",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,1,1,1]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[-1,-1,-1,-1]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[2,-1,2,-1,2]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[8,-8,9,-9,10,-11,12]]",
+      "output": "22",
+      "expectedOutput": "22",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[10,-3,-4,7,6,5,-4,-1]]",
+      "output": "23",
+      "expectedOutput": "23",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-2,4,-5,4,-5,9,4]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[0,0,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,-1,1,-1,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[-1,2,-1,2,-1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[100,-1,-1,-1,100]]",
+      "output": "200",
+      "expectedOutput": "200",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[-5,4,-3,4,-5]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[6,-3,-2,-3,6]]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[-1,-2,-3,-4]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[[1,2,3,4,5]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_23",
+      "input": "[[4,-1,-1,-1,4]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, -2, 3, -2]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "the best subarray is just [3], no wraparound helps here"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [5, -3, 5]",
+        "output": "10",
+        "expectedOutput": "10",
+        "explanation": "wrapping around to take [5, 5] (the last and first elements) beats any non-wrapping subarray"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [-3, -2, -3]",
+        "output": "-2",
+        "expectedOutput": "-2",
+        "explanation": "every element is negative, so the best you can do is the single largest element"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,-2,3,-2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[5,-3,5]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[-3,-2,-3]]",
+        "output": "-2",
+        "expectedOutput": "-2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[3,-1,2,-1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[3,-2,2,-3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-2,-1,-3]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-5]]",
+        "output": "-5",
+        "expectedOutput": "-5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,1,1,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-1,-1,-1,-1]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,-1,2,-1,2]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[8,-8,9,-9,10,-11,12]]",
+        "output": "22",
+        "expectedOutput": "22",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[10,-3,-4,7,6,5,-4,-1]]",
+        "output": "23",
+        "expectedOutput": "23",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-2,4,-5,4,-5,9,4]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,-1,1,-1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-1,2,-1,2,-1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[100,-1,-1,-1,100]]",
+        "output": "200",
+        "expectedOutput": "200",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-5,4,-3,4,-5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[6,-3,-2,-3,6]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[-1,-2,-3,-4]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[1,2,3,4,5]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[[4,-1,-1,-1,4]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def maxSubarraySumCircular(self, nums):\n",
+    "cpp": "#include <vector>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxSubarraySumCircular(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxSubarraySumCircular(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxSubarraySumCircular(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxSubarraySumCircular(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def maxSubarraySumCircular(self, nums):\n",
+    "cpp": "#include <vector>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxSubarraySumCircular(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxSubarraySumCircular(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxSubarraySumCircular(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxSubarraySumCircular(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def maxSubarraySumCircular(self, nums):\n",
+    "cpp": "#include <vector>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxSubarraySumCircular(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxSubarraySumCircular(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxSubarraySumCircular(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxSubarraySumCircular(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def maxSubarraySumCircular(self, nums):\n",
+    "cpp": "#include <vector>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxSubarraySumCircular(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxSubarraySumCircular(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxSubarraySumCircular(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxSubarraySumCircular(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "run Kadane's algorithm twice: once for the ordinary maximum subarray sum, and once for the minimum subarray sum. the best wrapping sum equals total sum minus the minimum subarray sum. take the max of the two, but special-case all-negative arrays"
+    },
+    "bruteForce": {
+      "approach": "try every possible pair of start and end indices, including wrapping windows (window length from 1 to n), summing each and tracking the max",
+      "time": "O(n^2)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "run Kadane's algorithm twice: once for the ordinary maximum subarray sum, and once for the minimum subarray sum. the best wrapping sum equals total sum minus the minimum subarray sum. take the max of the two, but special-case all-negative arrays",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "split into two cases: either the best subarray doesn't wrap around (ordinary max subarray, solvable with Kadane's algorithm), or it does wrap around",
+      "a wrapping subarray is everything except some non-wrapping subarray in the middle - so the best wrapping sum is (total sum of the array) minus (the minimum sum non-wrapping subarray)",
+      "you can find the minimum subarray sum with a mirrored version of Kadane's algorithm (tracking running minimum instead of running maximum)",
+      "the answer is the max of (best ordinary subarray, total - minimum subarray) - except if every element is negative, the 'total minus minimum' case would incorrectly produce an empty subarray (sum 0), so in that case just return the best ordinary (non-wrapping) answer",
+      "detect the all-negative edge case by checking if the maximum non-wrapping subarray sum is itself negative - if so, skip the wraparound case entirely"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every possible pair of start and end indices, including wrapping windows (window length from 1 to n), summing each and tracking the max",
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

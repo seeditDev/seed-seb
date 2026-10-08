@@ -1,0 +1,673 @@
+{
+  "id": "count-complete-tree-nodes",
+  "questionId": "count-complete-tree-nodes",
+  "slug": "count-complete-tree-nodes",
+  "title": "Count Complete Tree Nodes",
+  "difficulty": "Medium",
+  "category": "Tree bfs",
+  "patterns": [
+    "tree bfs",
+    "binary search"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "since every level except possibly the last is guaranteed completely full, do you actually need to visit every single node to count the full levels?",
+    "first, find the tree's height by walking straight down the leftmost spine (always going to index 2*i+1) until you fall off the array or hit a sentinel - counting how many full levels there are",
+    "all levels above the last are full, so their total node count is a closed-form sum you can compute directly from the height, without a full traversal",
+    "for the last, possibly partial level, you only need to figure out how many of its positions are actually filled - you can binary search along that level's leftmost-to-rightmost span, checking whether a given position's array index is in bounds and non-sentinel, rather than checking every position one by one"
+  ],
+  "commonMistakes": [
+    "just doing a full O(n) traversal, which is always correct but misses the point of exploiting the complete-tree structure",
+    "using the array's raw length as the node count instead of correctly stopping at the last real (non-sentinel, in-bounds) node - complete trees are packed left, but trailing sentinel/unused capacity may still appear in the array",
+    "miscomputing the closed-form count for the full upper levels, e.g. off-by-one errors in 2^height - 1"
+  ],
+  "content": {
+    "problemStatement": "A binary tree is given as a plain integer array named `tree`, using a\ncomplete-binary-tree (heap) index layout:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array bounds **and** its value isn't the sentinel `-101`\n- `-101` means \"no node here\" - real node values always fall between -100 and 100, so -101 can never be a genuine value\n\nFor example, `[1, 2, 3, -101, 4]` encodes this tree:\n\n```\n      1\n     / \\\n    2   3\n     \\\n      4\n```\n\nNode 2 has no left child (sentinel) but does have a right child, 4.\n\nThe input is guaranteed to describe a complete binary tree: every level is\ncompletely full except possibly the last one, and any real nodes on that\nlast level are packed as far to the left as possible with no gaps.\n\n**Return the total number of real nodes in the tree.**\n\nA plain traversal that visits every node is always correct here, but because the tree is complete, you can do meaningfully better than counting every node one by one.\n",
+    "constraints": [
+      "1 <= tree.length <= 2000",
+      "-100 <= tree[i] <= 100 for every real node value",
+      "tree[i] == -101 marks a missing node and never appears as a real value"
+    ],
+    "notes": [
+      "a single-node tree",
+      "a perfectly full tree (every level completely filled)",
+      "a tree with exactly one node on the last, partially filled level"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, 4, 5, 6]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "level 0 has 1 node, level 1 has 2, and the last level has 3 nodes packed to the left - 1+2+3 = 6"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, 4, 5, 6, 7]",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": "a perfectly full 3-level tree has 2^3 - 1 = 7 nodes"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "a single node is a complete tree of one node"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5,6]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3,4]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[7]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13]]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "31",
+        "expectedOutput": "31",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, 4, 5, 6]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "level 0 has 1 node, level 1 has 2, and the last level has 3 nodes packed to the left - 1+2+3 = 6"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, 4, 5, 6, 7]",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": "a perfectly full 3-level tree has 2^3 - 1 = 7 nodes"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "a single node is a complete tree of one node"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, 4, 5, 6]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "level 0 has 1 node, level 1 has 2, and the last level has 3 nodes packed to the left - 1+2+3 = 6"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, 4, 5, 6, 7]",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": "a perfectly full 3-level tree has 2^3 - 1 = 7 nodes"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "a single node is a complete tree of one node"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,4,5,6]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3,4,5,6,7]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2,3,4]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[7]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3,4]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4,5]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3,4,5,6]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5,6,7]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12]]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13]]",
+      "output": "13",
+      "expectedOutput": "13",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14]]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]]",
+      "output": "21",
+      "expectedOutput": "21",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[[-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+      "output": "31",
+      "expectedOutput": "31",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, 4, 5, 6]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "level 0 has 1 node, level 1 has 2, and the last level has 3 nodes packed to the left - 1+2+3 = 6"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, 4, 5, 6, 7]",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": "a perfectly full 3-level tree has 2^3 - 1 = 7 nodes"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "a single node is a complete tree of one node"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5,6]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3,4]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[7]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13]]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "31",
+        "expectedOutput": "31",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def countNodes(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countNodes(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countNodes(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countNodes(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countNodes(tree) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def countNodes(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countNodes(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countNodes(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countNodes(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countNodes(tree) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def countNodes(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countNodes(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countNodes(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countNodes(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countNodes(tree) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def countNodes(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countNodes(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countNodes(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countNodes(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countNodes(tree) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O((log n)^2) - roughly log n levels, each needing an O(log n) probe to check whether a given position on the last level is filled",
+      "space": "O(1) beyond the BFS/probing itself",
+      "pattern": "BFS to first find the tree's height (how many full levels down the leftmost chain), then use that height to compute the count of all levels above the last in O(1), needing only a bounded scan for the last, possibly partial level"
+    },
+    "bruteForce": {
+      "approach": "a plain BFS or DFS that visits every real node and increments a counter",
+      "time": "O(n)",
+      "space": "O(n) for the queue, or O(h) for DFS recursion"
+    }
+  },
+  "optimal": {
+    "pattern": "BFS to first find the tree's height (how many full levels down the leftmost chain), then use that height to compute the count of all levels above the last in O(1), needing only a bounded scan for the last, possibly partial level",
+    "time": "O((log n)^2) - roughly log n levels, each needing an O(log n) probe to check whether a given position on the last level is filled",
+    "space": "O(1) beyond the BFS/probing itself",
+    "hint_ladder": [
+      "since every level except possibly the last is guaranteed completely full, do you actually need to visit every single node to count the full levels?",
+      "first, find the tree's height by walking straight down the leftmost spine (always going to index 2*i+1) until you fall off the array or hit a sentinel - counting how many full levels there are",
+      "all levels above the last are full, so their total node count is a closed-form sum you can compute directly from the height, without a full traversal",
+      "for the last, possibly partial level, you only need to figure out how many of its positions are actually filled - you can binary search along that level's leftmost-to-rightmost span, checking whether a given position's array index is in bounds and non-sentinel, rather than checking every position one by one"
+    ]
+  },
+  "bruteForce": {
+    "approach": "a plain BFS or DFS that visits every real node and increments a counter",
+    "time": "O(n)",
+    "space": "O(n) for the queue, or O(h) for DFS recursion"
+  },
+  "isIndex0": true,
+  "level": null
+}

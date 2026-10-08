@@ -1,0 +1,636 @@
+{
+  "id": "merge-intervals",
+  "questionId": "merge-intervals",
+  "slug": "merge-intervals",
+  "title": "Merge Intervals",
+  "difficulty": "Medium",
+  "category": "Merge intervals",
+  "patterns": [
+    "merge intervals",
+    "sorting"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "if the intervals were already sorted by start time, could an interval possibly overlap one that's far away in the list?",
+    "sort the intervals by start time first - this guarantees any overlap involves adjacent intervals in the sorted order",
+    "sweep through the sorted list, keeping a 'current merged interval'. compare each next interval's start to the current merged interval's end",
+    "if the next interval's start is less than or equal to the current end, extend the current merged interval's end to the max of the two ends; otherwise close off the current merged interval and start a new one"
+  ],
+  "commonMistakes": [
+    "forgetting to sort the input first, which breaks the adjacency assumption the sweep relies on",
+    "using strict less-than instead of less-than-or-equal when comparing start to end, missing merges for touching intervals like [1,4] and [4,5]",
+    "taking the new interval's end directly instead of max(currentEnd, newEnd), which drops coverage when a later interval is fully contained in the current one"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of `intervals`, each represented as `[start, end]`.\n\n**Merge all overlapping intervals and return a list of the non-overlapping intervals that cover exactly the same total range as the input.**\n",
+    "constraints": [
+      "0 <= intervals.length <= 10^4",
+      "intervals[i].length == 2",
+      "0 <= start <= end <= 10^4"
+    ],
+    "notes": [
+      "empty list of intervals",
+      "a single interval",
+      "all intervals overlap into one merged interval",
+      "no intervals overlap at all",
+      "intervals that only touch at an endpoint",
+      "input given out of sorted order"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "intervals = [[1,3],[2,6],[8,10],[15,18]]",
+        "output": "[[1,6],[8,10],[15,18]]",
+        "expectedOutput": "[[1,6],[8,10],[15,18]]",
+        "explanation": "[1,3] and [2,6] overlap and merge into [1,6]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "intervals = [[1,4],[4,5]]",
+        "output": "[[1,5]]",
+        "expectedOutput": "[[1,5]]",
+        "explanation": "intervals that touch at an endpoint still merge"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "intervals = [[1,4],[0,4]]",
+        "output": "[[0,4]]",
+        "expectedOutput": "[[0,4]]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,3],[2,6],[8,10],[15,18]]]",
+        "output": "[[1,6],[8,10],[15,18]]",
+        "expectedOutput": "[[1,6],[8,10],[15,18]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,4],[4,5]]]",
+        "output": "[[1,5]]",
+        "expectedOutput": "[[1,5]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,4],[0,4]]]",
+        "output": "[[0,4]]",
+        "expectedOutput": "[[0,4]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,4],[2,3]]]",
+        "output": "[[1,4]]",
+        "expectedOutput": "[[1,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1]]]",
+        "output": "[[1,1]]",
+        "expectedOutput": "[[1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[5,10],[1,3]]]",
+        "output": "[[1,3],[5,10]]",
+        "expectedOutput": "[[1,3],[5,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,4],[2,3],[3,5],[6,7]]]",
+        "output": "[[1,5],[6,7]]",
+        "expectedOutput": "[[1,5],[6,7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,10],[2,3],[4,5],[6,7],[11,15]]]",
+        "output": "[[1,10],[11,15]]",
+        "expectedOutput": "[[1,10],[11,15]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[49,54],[7,11],[27,29],[29,29],[46,50],[32,34],[32,33],[55,59],[53,61],[38,41],[9,14],[48,50],[34,42],[58,58],[38,43]]]",
+        "output": "[[7,14],[27,29],[32,43],[46,61]]",
+        "expectedOutput": "[[7,14],[27,29],[32,43],[46,61]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,2],[2,3],[3,4],[4,5],[5,6]]]",
+        "output": "[[1,6]]",
+        "expectedOutput": "[[1,6]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[10,20],[1,5],[15,25],[30,40],[35,45]]]",
+        "output": "[[1,5],[10,25],[30,45]]",
+        "expectedOutput": "[[1,5],[10,25],[30,45]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,3],[3,5],[5,7],[7,9]]]",
+        "output": "[[1,9]]",
+        "expectedOutput": "[[1,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,100],[2,3],[4,5],[50,60]]]",
+        "output": "[[1,100]]",
+        "expectedOutput": "[[1,100]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29],[30,32],[33,35],[36,38],[39,41],[42,44],[45,47],[48,50],[51,53],[54,56],[57,59]]]",
+        "output": "[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29],[30,32],[33,35],[36,38],[39,41],[42,44],[45,47],[48,50],[51,53],[54,56],[57,59]]",
+        "expectedOutput": "[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29],[30,32],[33,35],[36,38],[39,41],[42,44],[45,47],[48,50],[51,53],[54,56],[57,59]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,0],[0,0],[0,1]]]",
+        "output": "[[0,1]]",
+        "expectedOutput": "[[0,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[5,5]]]",
+        "output": "[[5,5]]",
+        "expectedOutput": "[[5,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,4],[0,0]]]",
+        "output": "[[0,0],[1,4]]",
+        "expectedOutput": "[[0,0],[1,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[3,5],[29,36],[35,39],[43,58],[57,68],[61,68],[65,80],[108,114],[115,117],[135,148],[157,164],[173,173],[204,215],[224,238],[250,250],[281,286],[290,292],[301,308],[301,308],[365,374]]]",
+        "output": "[[3,5],[29,39],[43,80],[108,114],[115,117],[135,148],[157,164],[173,173],[204,215],[224,238],[250,250],[281,286],[290,292],[301,308],[365,374]]",
+        "expectedOutput": "[[3,5],[29,39],[43,80],[108,114],[115,117],[135,148],[157,164],[173,173],[204,215],[224,238],[250,250],[281,286],[290,292],[301,308],[365,374]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,4],[4,5],[5,6],[6,7],[7,8]]]",
+        "output": "[[1,8]]",
+        "expectedOutput": "[[1,8]]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "intervals = [[1,3],[2,6],[8,10],[15,18]]",
+      "output": "[[1,6],[8,10],[15,18]]",
+      "expectedOutput": "[[1,6],[8,10],[15,18]]",
+      "explanation": "[1,3] and [2,6] overlap and merge into [1,6]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "intervals = [[1,4],[4,5]]",
+      "output": "[[1,5]]",
+      "expectedOutput": "[[1,5]]",
+      "explanation": "intervals that touch at an endpoint still merge"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "intervals = [[1,4],[0,4]]",
+      "output": "[[0,4]]",
+      "expectedOutput": "[[0,4]]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "intervals = [[1,3],[2,6],[8,10],[15,18]]",
+      "output": "[[1,6],[8,10],[15,18]]",
+      "expectedOutput": "[[1,6],[8,10],[15,18]]",
+      "explanation": "[1,3] and [2,6] overlap and merge into [1,6]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "intervals = [[1,4],[4,5]]",
+      "output": "[[1,5]]",
+      "expectedOutput": "[[1,5]]",
+      "explanation": "intervals that touch at an endpoint still merge"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "intervals = [[1,4],[0,4]]",
+      "output": "[[0,4]]",
+      "expectedOutput": "[[0,4]]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,3],[2,6],[8,10],[15,18]]]",
+      "output": "[[1,6],[8,10],[15,18]]",
+      "expectedOutput": "[[1,6],[8,10],[15,18]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,4],[4,5]]]",
+      "output": "[[1,5]]",
+      "expectedOutput": "[[1,5]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1,4],[0,4]]]",
+      "output": "[[0,4]]",
+      "expectedOutput": "[[0,4]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,4],[2,3]]]",
+      "output": "[[1,4]]",
+      "expectedOutput": "[[1,4]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,1]]]",
+      "output": "[[1,1]]",
+      "expectedOutput": "[[1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[5,10],[1,3]]]",
+      "output": "[[1,3],[5,10]]",
+      "expectedOutput": "[[1,3],[5,10]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,4],[2,3],[3,5],[6,7]]]",
+      "output": "[[1,5],[6,7]]",
+      "expectedOutput": "[[1,5],[6,7]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1,10],[2,3],[4,5],[6,7],[11,15]]]",
+      "output": "[[1,10],[11,15]]",
+      "expectedOutput": "[[1,10],[11,15]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[49,54],[7,11],[27,29],[29,29],[46,50],[32,34],[32,33],[55,59],[53,61],[38,41],[9,14],[48,50],[34,42],[58,58],[38,43]]]",
+      "output": "[[7,14],[27,29],[32,43],[46,61]]",
+      "expectedOutput": "[[7,14],[27,29],[32,43],[46,61]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[1,2],[2,3],[3,4],[4,5],[5,6]]]",
+      "output": "[[1,6]]",
+      "expectedOutput": "[[1,6]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[10,20],[1,5],[15,25],[30,40],[35,45]]]",
+      "output": "[[1,5],[10,25],[30,45]]",
+      "expectedOutput": "[[1,5],[10,25],[30,45]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1,3],[3,5],[5,7],[7,9]]]",
+      "output": "[[1,9]]",
+      "expectedOutput": "[[1,9]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,100],[2,3],[4,5],[50,60]]]",
+      "output": "[[1,100]]",
+      "expectedOutput": "[[1,100]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29],[30,32],[33,35],[36,38],[39,41],[42,44],[45,47],[48,50],[51,53],[54,56],[57,59]]]",
+      "output": "[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29],[30,32],[33,35],[36,38],[39,41],[42,44],[45,47],[48,50],[51,53],[54,56],[57,59]]",
+      "expectedOutput": "[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29],[30,32],[33,35],[36,38],[39,41],[42,44],[45,47],[48,50],[51,53],[54,56],[57,59]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[0,0],[0,0],[0,1]]]",
+      "output": "[[0,1]]",
+      "expectedOutput": "[[0,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[5,5]]]",
+      "output": "[[5,5]]",
+      "expectedOutput": "[[5,5]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1,4],[0,0]]]",
+      "output": "[[0,0],[1,4]]",
+      "expectedOutput": "[[0,0],[1,4]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[3,5],[29,36],[35,39],[43,58],[57,68],[61,68],[65,80],[108,114],[115,117],[135,148],[157,164],[173,173],[204,215],[224,238],[250,250],[281,286],[290,292],[301,308],[301,308],[365,374]]]",
+      "output": "[[3,5],[29,39],[43,80],[108,114],[115,117],[135,148],[157,164],[173,173],[204,215],[224,238],[250,250],[281,286],[290,292],[301,308],[365,374]]",
+      "expectedOutput": "[[3,5],[29,39],[43,80],[108,114],[115,117],[135,148],[157,164],[173,173],[204,215],[224,238],[250,250],[281,286],[290,292],[301,308],[365,374]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,4],[4,5],[5,6],[6,7],[7,8]]]",
+      "output": "[[1,8]]",
+      "expectedOutput": "[[1,8]]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "intervals = [[1,3],[2,6],[8,10],[15,18]]",
+        "output": "[[1,6],[8,10],[15,18]]",
+        "expectedOutput": "[[1,6],[8,10],[15,18]]",
+        "explanation": "[1,3] and [2,6] overlap and merge into [1,6]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "intervals = [[1,4],[4,5]]",
+        "output": "[[1,5]]",
+        "expectedOutput": "[[1,5]]",
+        "explanation": "intervals that touch at an endpoint still merge"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "intervals = [[1,4],[0,4]]",
+        "output": "[[0,4]]",
+        "expectedOutput": "[[0,4]]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,3],[2,6],[8,10],[15,18]]]",
+        "output": "[[1,6],[8,10],[15,18]]",
+        "expectedOutput": "[[1,6],[8,10],[15,18]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,4],[4,5]]]",
+        "output": "[[1,5]]",
+        "expectedOutput": "[[1,5]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,4],[0,4]]]",
+        "output": "[[0,4]]",
+        "expectedOutput": "[[0,4]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,4],[2,3]]]",
+        "output": "[[1,4]]",
+        "expectedOutput": "[[1,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1]]]",
+        "output": "[[1,1]]",
+        "expectedOutput": "[[1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[5,10],[1,3]]]",
+        "output": "[[1,3],[5,10]]",
+        "expectedOutput": "[[1,3],[5,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,4],[2,3],[3,5],[6,7]]]",
+        "output": "[[1,5],[6,7]]",
+        "expectedOutput": "[[1,5],[6,7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,10],[2,3],[4,5],[6,7],[11,15]]]",
+        "output": "[[1,10],[11,15]]",
+        "expectedOutput": "[[1,10],[11,15]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[49,54],[7,11],[27,29],[29,29],[46,50],[32,34],[32,33],[55,59],[53,61],[38,41],[9,14],[48,50],[34,42],[58,58],[38,43]]]",
+        "output": "[[7,14],[27,29],[32,43],[46,61]]",
+        "expectedOutput": "[[7,14],[27,29],[32,43],[46,61]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,2],[2,3],[3,4],[4,5],[5,6]]]",
+        "output": "[[1,6]]",
+        "expectedOutput": "[[1,6]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[10,20],[1,5],[15,25],[30,40],[35,45]]]",
+        "output": "[[1,5],[10,25],[30,45]]",
+        "expectedOutput": "[[1,5],[10,25],[30,45]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,3],[3,5],[5,7],[7,9]]]",
+        "output": "[[1,9]]",
+        "expectedOutput": "[[1,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,100],[2,3],[4,5],[50,60]]]",
+        "output": "[[1,100]]",
+        "expectedOutput": "[[1,100]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29],[30,32],[33,35],[36,38],[39,41],[42,44],[45,47],[48,50],[51,53],[54,56],[57,59]]]",
+        "output": "[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29],[30,32],[33,35],[36,38],[39,41],[42,44],[45,47],[48,50],[51,53],[54,56],[57,59]]",
+        "expectedOutput": "[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29],[30,32],[33,35],[36,38],[39,41],[42,44],[45,47],[48,50],[51,53],[54,56],[57,59]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,0],[0,0],[0,1]]]",
+        "output": "[[0,1]]",
+        "expectedOutput": "[[0,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[5,5]]]",
+        "output": "[[5,5]]",
+        "expectedOutput": "[[5,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,4],[0,0]]]",
+        "output": "[[0,0],[1,4]]",
+        "expectedOutput": "[[0,0],[1,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[3,5],[29,36],[35,39],[43,58],[57,68],[61,68],[65,80],[108,114],[115,117],[135,148],[157,164],[173,173],[204,215],[224,238],[250,250],[281,286],[290,292],[301,308],[301,308],[365,374]]]",
+        "output": "[[3,5],[29,39],[43,80],[108,114],[115,117],[135,148],[157,164],[173,173],[204,215],[224,238],[250,250],[281,286],[290,292],[301,308],[365,374]]",
+        "expectedOutput": "[[3,5],[29,39],[43,80],[108,114],[115,117],[135,148],[157,164],[173,173],[204,215],[224,238],[250,250],[281,286],[290,292],[301,308],[365,374]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,4],[4,5],[5,6],[6,7],[7,8]]]",
+        "output": "[[1,8]]",
+        "expectedOutput": "[[1,8]]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def mergeIntervals(self, intervals):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> mergeIntervals(vector<vector<int>>& intervals) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] mergeIntervals(int[][] intervals) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun mergeIntervals(intervals: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    mergeIntervals(intervals) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def mergeIntervals(self, intervals):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> mergeIntervals(vector<vector<int>>& intervals) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] mergeIntervals(int[][] intervals) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun mergeIntervals(intervals: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    mergeIntervals(intervals) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def mergeIntervals(self, intervals):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> mergeIntervals(vector<vector<int>>& intervals) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] mergeIntervals(int[][] intervals) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun mergeIntervals(intervals: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    mergeIntervals(intervals) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def mergeIntervals(self, intervals):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> mergeIntervals(vector<vector<int>>& intervals) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] mergeIntervals(int[][] intervals) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun mergeIntervals(intervals: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    mergeIntervals(intervals) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log n)",
+      "space": "O(n) for the output (or O(log n) to O(n) for the sort)",
+      "pattern": "sort by start time, then sweep and merge in one pass"
+    },
+    "bruteForce": {
+      "approach": "repeatedly scan all pairs of intervals, merging any pair that overlaps, until a full pass finds no more merges",
+      "time": "O(n^3) in the worst case",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "sort by start time, then sweep and merge in one pass",
+    "time": "O(n log n)",
+    "space": "O(n) for the output (or O(log n) to O(n) for the sort)",
+    "hint_ladder": [
+      "if the intervals were already sorted by start time, could an interval possibly overlap one that's far away in the list?",
+      "sort the intervals by start time first - this guarantees any overlap involves adjacent intervals in the sorted order",
+      "sweep through the sorted list, keeping a 'current merged interval'. compare each next interval's start to the current merged interval's end",
+      "if the next interval's start is less than or equal to the current end, extend the current merged interval's end to the max of the two ends; otherwise close off the current merged interval and start a new one"
+    ]
+  },
+  "bruteForce": {
+    "approach": "repeatedly scan all pairs of intervals, merging any pair that overlaps, until a full pass finds no more merges",
+    "time": "O(n^3) in the worst case",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,633 @@
+{
+  "id": "number-of-connected-components",
+  "questionId": "number-of-connected-components",
+  "slug": "number-of-connected-components",
+  "title": "Number of Connected Components",
+  "difficulty": "Easy",
+  "category": "Graphs",
+  "patterns": [
+    "graph dfs/bfs",
+    "connectivity"
+  ],
+  "lists": [
+    "blind-75"
+  ],
+  "hints": [
+    "build an adjacency list from the edges first",
+    "loop over every node from 0 to n-1; whenever you find one that hasn't been visited yet, that's the start of a brand new component",
+    "run DFS or BFS from that node to mark every node in its component as visited",
+    "count how many times you had to start a fresh traversal"
+  ],
+  "commonMistakes": [
+    "forgetting nodes with no edges still count as their own component",
+    "only adding edges in one direction since the graph is undirected",
+    "not iterating over all n nodes, missing isolated ones that never appear in the edge list"
+  ],
+  "content": {
+    "problemStatement": "You're given an undirected graph with n nodes labeled 0 to n-1, described by a list of `edges` where each edge is `[u, v]`.\n\n**Return the number of separate connected components in the graph.**\n",
+    "constraints": [
+      "1 <= n <= 2000",
+      "0 <= edges.length <= n * (n - 1) / 2",
+      "0 <= edges[i][0], edges[i][1] < n",
+      "there are no self-loops or repeated edges"
+    ],
+    "notes": [
+      "no edges at all",
+      "single node graph",
+      "graph that is fully connected in one component",
+      "graph with several isolated nodes mixed with connected clusters"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 5, edges = [[0,1],[1,2],[3,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "nodes 0,1,2 form one component and nodes 3,4 form another"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 5, edges = [[0,1],[1,2],[2,3],[3,4]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "all five nodes form a single chain, one component"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 4, edges = []",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "with no edges every node is its own component"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[5,[[0,1],[1,2],[3,4]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[5,[[0,1],[1,2],[2,3],[3,4]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[4,[]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[1,[]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,[]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[6,[]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[8,[[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[2,3],[2,4],[2,5],[2,6],[2,7],[3,4],[3,5],[3,6],[3,7],[4,5],[4,6],[4,7],[5,6],[5,7],[6,7]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[8,[[0,1],[2,3],[2,4]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[20,[[0,1],[1,2],[3,4],[5,6],[6,7],[7,8],[9,10],[11,12],[12,13],[13,14]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[15,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[20,[[0,1],[2,3],[4,5],[6,7],[8,9],[10,11],[12,13],[14,15],[16,17],[18,19]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[2,[]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[2,[[0,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[30,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[20,21],[21,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[16,[[1,11],[4,7],[10,5],[12,10],[13,12],[15,14]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[10,[[0,1],[1,2],[2,3],[3,4],[4,0],[5,6],[6,7],[7,8],[8,9],[9,5]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[3,[[0,1],[1,2]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[12,[[0,1],[2,3],[4,5],[6,7],[8,9],[10,11]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[25,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[19,20],[20,21],[21,22],[22,23],[23,24]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[5,[[0,1],[0,2],[0,3],[0,4]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 5, edges = [[0,1],[1,2],[3,4]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "nodes 0,1,2 form one component and nodes 3,4 form another"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 5, edges = [[0,1],[1,2],[2,3],[3,4]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "all five nodes form a single chain, one component"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 4, edges = []",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "with no edges every node is its own component"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 5, edges = [[0,1],[1,2],[3,4]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "nodes 0,1,2 form one component and nodes 3,4 form another"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 5, edges = [[0,1],[1,2],[2,3],[3,4]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "all five nodes form a single chain, one component"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 4, edges = []",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "with no edges every node is its own component"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[5,[[0,1],[1,2],[3,4]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[5,[[0,1],[1,2],[2,3],[3,4]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[4,[]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[1,[]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[1,[]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[6,[]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[8,[[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[2,3],[2,4],[2,5],[2,6],[2,7],[3,4],[3,5],[3,6],[3,7],[4,5],[4,6],[4,7],[5,6],[5,7],[6,7]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[8,[[0,1],[2,3],[2,4]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[20,[[0,1],[1,2],[3,4],[5,6],[6,7],[7,8],[9,10],[11,12],[12,13],[13,14]]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[15,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[20,[[0,1],[2,3],[4,5],[6,7],[8,9],[10,11],[12,13],[14,15],[16,17],[18,19]]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[2,[]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[2,[[0,1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[30,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[20,21],[21,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[16,[[1,11],[4,7],[10,5],[12,10],[13,12],[15,14]]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[10,[[0,1],[1,2],[2,3],[3,4],[4,0],[5,6],[6,7],[7,8],[8,9],[9,5]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[3,[[0,1],[1,2]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[12,[[0,1],[2,3],[4,5],[6,7],[8,9],[10,11]]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[25,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[19,20],[20,21],[21,22],[22,23],[23,24]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[5,[[0,1],[0,2],[0,3],[0,4]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 5, edges = [[0,1],[1,2],[3,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "nodes 0,1,2 form one component and nodes 3,4 form another"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 5, edges = [[0,1],[1,2],[2,3],[3,4]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "all five nodes form a single chain, one component"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 4, edges = []",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "with no edges every node is its own component"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[5,[[0,1],[1,2],[3,4]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[5,[[0,1],[1,2],[2,3],[3,4]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[4,[]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[1,[]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,[]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[6,[]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[8,[[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[2,3],[2,4],[2,5],[2,6],[2,7],[3,4],[3,5],[3,6],[3,7],[4,5],[4,6],[4,7],[5,6],[5,7],[6,7]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[8,[[0,1],[2,3],[2,4]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[20,[[0,1],[1,2],[3,4],[5,6],[6,7],[7,8],[9,10],[11,12],[12,13],[13,14]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[15,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[20,[[0,1],[2,3],[4,5],[6,7],[8,9],[10,11],[12,13],[14,15],[16,17],[18,19]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[2,[]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[2,[[0,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[30,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[20,21],[21,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[16,[[1,11],[4,7],[10,5],[12,10],[13,12],[15,14]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[10,[[0,1],[1,2],[2,3],[3,4],[4,0],[5,6],[6,7],[7,8],[8,9],[9,5]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[3,[[0,1],[1,2]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[12,[[0,1],[2,3],[4,5],[6,7],[8,9],[10,11]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[25,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[19,20],[20,21],[21,22],[22,23],[23,24]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[5,[[0,1],[0,2],[0,3],[0,4]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def countComponents(self, n, edges):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countComponents(int n, vector<vector<int>>& edges) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countComponents(int n, int[][] edges) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countComponents(n: Int, edges: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countComponents(n, edges) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def countComponents(self, n, edges):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countComponents(int n, vector<vector<int>>& edges) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countComponents(int n, int[][] edges) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countComponents(n: Int, edges: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countComponents(n, edges) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def countComponents(self, n, edges):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countComponents(int n, vector<vector<int>>& edges) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countComponents(int n, int[][] edges) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countComponents(n: Int, edges: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countComponents(n, edges) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def countComponents(self, n, edges):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countComponents(int n, vector<vector<int>>& edges) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countComponents(int n, int[][] edges) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countComponents(n: Int, edges: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countComponents(n, edges) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(nodes + edges)",
+      "space": "O(nodes + edges)",
+      "pattern": "graph dfs/bfs, one traversal per unvisited node"
+    },
+    "bruteForce": {
+      "approach": "union-find merging every edge one at a time, works but a traversal is just as simple to reason about here",
+      "time": "O(nodes + edges)",
+      "space": "O(nodes)"
+    }
+  },
+  "optimal": {
+    "pattern": "graph dfs/bfs, one traversal per unvisited node",
+    "time": "O(nodes + edges)",
+    "space": "O(nodes + edges)",
+    "hint_ladder": [
+      "build an adjacency list from the edges first",
+      "loop over every node from 0 to n-1; whenever you find one that hasn't been visited yet, that's the start of a brand new component",
+      "run DFS or BFS from that node to mark every node in its component as visited",
+      "count how many times you had to start a fresh traversal"
+    ]
+  },
+  "bruteForce": {
+    "approach": "union-find merging every edge one at a time, works but a traversal is just as simple to reason about here",
+    "time": "O(nodes + edges)",
+    "space": "O(nodes)"
+  },
+  "isIndex0": true,
+  "level": null
+}

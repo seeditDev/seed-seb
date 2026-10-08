@@ -1,0 +1,653 @@
+{
+  "id": "longest-palindrome",
+  "questionId": "longest-palindrome",
+  "slug": "longest-palindrome",
+  "title": "Longest Palindrome",
+  "difficulty": "Easy",
+  "category": "Hash map",
+  "patterns": [
+    "hash map",
+    "greedy",
+    "strings"
+  ],
+  "lists": [
+    "grind-75"
+  ],
+  "hints": [
+    "a palindrome is built from pairs of matching letters mirrored around a center, plus optionally one unpaired letter exactly in the middle - so what actually matters about each letter's count in s?",
+    "count how many times each letter appears in s",
+    "for a letter appearing k times, you can use floor(k/2)*2 of them as mirrored pairs; every letter contributes its even part to the total length",
+    "if any letter has a leftover odd count (even just one letter with count 1), you can place exactly one such leftover letter in the very center, adding 1 more to the total (but only once, not once per odd-count letter)"
+  ],
+  "commonMistakes": [
+    "adding 1 to the answer once per letter that has an odd count, instead of at most once total",
+    "treating the problem as case-insensitive and merging counts for 'a' and 'A'",
+    "trying to find a palindromic substring within s instead of a palindrome built by rearranging its letters"
+  ],
+  "content": {
+    "problemStatement": "You're given a string of letters, treated as a bag of characters rather\nthan a fixed sequence: you may rearrange the letters however you like,\nand you don't have to use all of them.\n\n**Using some or all of the letters in the string, return the length of\nthe longest palindrome you can build.**\n\nThis is not about finding a palindromic substring inside `s`, it's\nabout what palindrome you could construct from its letters. The\ncomparison is case-sensitive, so 'a' and 'A' are different letters.\n",
+    "constraints": [
+      "1 <= s.length <= 2000",
+      "s consists of lowercase and/or uppercase English letters only",
+      "letter comparison is case-sensitive ('a' != 'A')"
+    ],
+    "notes": [
+      "every letter appears an even number of times (all letters get used)",
+      "every letter appears exactly once (only one letter can be the center)",
+      "a mix of same letter in different cases, e.g. 'Aa', which do not pair with each other"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"abccccdd\"",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": "one longest palindrome buildable is \"dccaccd\", length 7 (the second 'd' or extra letters are left unused)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"a\"",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "a single letter is trivially a palindrome of length 1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"bb\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "both letters match, so the whole string is used as \"bb\""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"abccccdd\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"bb\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"ccc\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"Aa\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aaAA\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abcabc\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aabbcc\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"aaaabbbb\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"z\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"abcdefg\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"aabbccddeeffg\"]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"AaBbCc\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"tattarrattat\"]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"banana\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aaaaaaaa\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"ab\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"aabbccc\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"xxyyzzz\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"OoOo\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"aabbccddeeff\"]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"abccccdd\"",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": "one longest palindrome buildable is \"dccaccd\", length 7 (the second 'd' or extra letters are left unused)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"a\"",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "a single letter is trivially a palindrome of length 1"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"bb\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "both letters match, so the whole string is used as \"bb\""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"abccccdd\"",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": "one longest palindrome buildable is \"dccaccd\", length 7 (the second 'd' or extra letters are left unused)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"a\"",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "a single letter is trivially a palindrome of length 1"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"bb\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "both letters match, so the whole string is used as \"bb\""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"abccccdd\"]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"a\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"bb\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"ccc\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"Aa\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"aaAA\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"abcabc\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"aabbcc\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"aaaabbbb\"]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"z\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"abcdefg\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"aabbccddeeffg\"]",
+      "output": "13",
+      "expectedOutput": "13",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"AaBbCc\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"tattarrattat\"]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"banana\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"aaaaaaaa\"]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"ab\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"aabbccc\"]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"xxyyzzz\"]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"OoOo\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"aabbccddeeff\"]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"abccccdd\"",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": "one longest palindrome buildable is \"dccaccd\", length 7 (the second 'd' or extra letters are left unused)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"a\"",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "a single letter is trivially a palindrome of length 1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"bb\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "both letters match, so the whole string is used as \"bb\""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"abccccdd\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"bb\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"ccc\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"Aa\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aaAA\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abcabc\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aabbcc\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"aaaabbbb\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"z\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"abcdefg\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"aabbccddeeffg\"]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"AaBbCc\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"tattarrattat\"]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"banana\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aaaaaaaa\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"ab\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"aabbccc\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"xxyyzzz\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"OoOo\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"aabbccddeeff\"]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def longestPalindrome(self, s):\n",
+    "cpp": "#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestPalindrome(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestPalindrome(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestPalindrome(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestPalindrome(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def longestPalindrome(self, s):\n",
+    "cpp": "#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestPalindrome(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestPalindrome(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestPalindrome(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestPalindrome(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def longestPalindrome(self, s):\n",
+    "cpp": "#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestPalindrome(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestPalindrome(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestPalindrome(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestPalindrome(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def longestPalindrome(self, s):\n",
+    "cpp": "#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestPalindrome(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestPalindrome(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestPalindrome(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestPalindrome(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) (at most 52 distinct letters)",
+      "pattern": "hash map / array frequency count, greedy pairing"
+    },
+    "bruteForce": {
+      "approach": "generate all reorderings of subsets of s and check which is the longest palindrome (astronomically slow, not really viable even conceptually beyond tiny inputs)",
+      "time": "exponential",
+      "space": "exponential"
+    }
+  },
+  "optimal": {
+    "pattern": "hash map / array frequency count, greedy pairing",
+    "time": "O(n)",
+    "space": "O(1) (at most 52 distinct letters)",
+    "hint_ladder": [
+      "a palindrome is built from pairs of matching letters mirrored around a center, plus optionally one unpaired letter exactly in the middle - so what actually matters about each letter's count in s?",
+      "count how many times each letter appears in s",
+      "for a letter appearing k times, you can use floor(k/2)*2 of them as mirrored pairs; every letter contributes its even part to the total length",
+      "if any letter has a leftover odd count (even just one letter with count 1), you can place exactly one such leftover letter in the very center, adding 1 more to the total (but only once, not once per odd-count letter)"
+    ]
+  },
+  "bruteForce": {
+    "approach": "generate all reorderings of subsets of s and check which is the longest palindrome (astronomically slow, not really viable even conceptually beyond tiny inputs)",
+    "time": "exponential",
+    "space": "exponential"
+  },
+  "isIndex0": true,
+  "level": null
+}

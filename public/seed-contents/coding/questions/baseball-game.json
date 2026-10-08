@@ -1,0 +1,629 @@
+{
+  "id": "baseball-game",
+  "questionId": "baseball-game",
+  "slug": "baseball-game",
+  "title": "Baseball Game",
+  "difficulty": "Easy",
+  "category": "Stack",
+  "patterns": [
+    "stack"
+  ],
+  "lists": [],
+  "hints": [
+    "every operation depends only on the most recently recorded scores - what data structure tracks 'the last few things that happened' naturally?",
+    "split ops on spaces first, then process each token in order using a stack of recorded scores",
+    "for \"+\" you need the top two stack values without removing them permanently (push their sum); for \"D\" you need just the top value doubled; for \"C\" you pop and discard",
+    "at the end, sum whatever remains on the stack"
+  ],
+  "commonMistakes": [
+    "forgetting that \"C\" removes the score permanently rather than just marking it invalid, which changes what \"+\" and \"D\" see afterward",
+    "off-by-one errors reading the top two elements for \"+\" (using the wrong two, or popping when you shouldn't)",
+    "not parsing negative integer tokens correctly (treating the leading '-' as an unknown operator)"
+  ],
+  "content": {
+    "problemStatement": "You're keeping score for an unusual baseball game. You're given a space-delimited sequence of operation tokens, each one of:\n\n- an integer - record a new score of that many points\n- \"+\" - record a new score equal to the sum of the previous two scores\n- \"D\" - record a new score equal to double the previous score\n- \"C\" - invalidate and remove the most recently recorded score, as if it never happened\n\n**Process the tokens in order and return the sum of all scores remaining at the end.**\n",
+    "constraints": [
+      "1 <= number of tokens in ops <= 1000",
+      "-3 * 10^4 <= each integer token's value <= 3 * 10^4",
+      "the answer and every intermediate sum fit in a 32-bit signed integer",
+      "there are always enough prior scores available for every \"+\", \"D\", or \"C\" token"
+    ],
+    "notes": [
+      "a single integer token with no operations",
+      "\"C\" immediately after a \"D\" or \"+\" (cancels the computed score, not an original one)",
+      "negative integer scores"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"5 2 C D +\"",
+        "output": "30",
+        "expectedOutput": "30",
+        "explanation": "record 5, record 2, cancel the 2 (scores: [5]), double the last (D -> 10, scores: [5,10]), sum of last two (+ -> 15, scores: [5,10,15]); total = 5+10+15 = 30"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"5 -2 4 C D 9 + +\"",
+        "output": "27",
+        "expectedOutput": "27",
+        "explanation": "scores build to [5,-2,4], C removes 4 -> [5,-2], D doubles -2 -> [5,-2,-4], 9 -> [5,-2,-4,9], + sums last two (-4+9=5) -> [5,-2,-4,9,5], + again (9+5=14) -> [5,-2,-4,9,5,14]; total = 5-2-4+9+5+14 = 27"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"1\"",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"5 2 C D +\"]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"5 -2 4 C D 9 + +\"]",
+        "output": "27",
+        "expectedOutput": "27",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"1\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"1 C\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"10\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"-5\"]",
+        "output": "-5",
+        "expectedOutput": "-5",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"3 D\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"3 D D\"]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"5 D C\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"1 2 +\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"1 2 + C\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"1 2 + +\"]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"5 -2 C D\"]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"-3 -3 +\"]",
+        "output": "-12",
+        "expectedOutput": "-12",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"7 C\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"7 7 D C +\"]",
+        "output": "28",
+        "expectedOutput": "28",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"1 D D D D\"]",
+        "output": "31",
+        "expectedOutput": "31",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"10 D C D C D\"]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"1 2 3 + + D +\"]",
+        "output": "59",
+        "expectedOutput": "59",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"20 -10 D +\"]",
+        "output": "-40",
+        "expectedOutput": "-40",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"5 2 C D +\"",
+      "output": "30",
+      "expectedOutput": "30",
+      "explanation": "record 5, record 2, cancel the 2 (scores: [5]), double the last (D -> 10, scores: [5,10]), sum of last two (+ -> 15, scores: [5,10,15]); total = 5+10+15 = 30"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"5 -2 4 C D 9 + +\"",
+      "output": "27",
+      "expectedOutput": "27",
+      "explanation": "scores build to [5,-2,4], C removes 4 -> [5,-2], D doubles -2 -> [5,-2,-4], 9 -> [5,-2,-4,9], + sums last two (-4+9=5) -> [5,-2,-4,9,5], + again (9+5=14) -> [5,-2,-4,9,5,14]; total = 5-2-4+9+5+14 = 27"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"1\"",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"5 2 C D +\"",
+      "output": "30",
+      "expectedOutput": "30",
+      "explanation": "record 5, record 2, cancel the 2 (scores: [5]), double the last (D -> 10, scores: [5,10]), sum of last two (+ -> 15, scores: [5,10,15]); total = 5+10+15 = 30"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"5 -2 4 C D 9 + +\"",
+      "output": "27",
+      "expectedOutput": "27",
+      "explanation": "scores build to [5,-2,4], C removes 4 -> [5,-2], D doubles -2 -> [5,-2,-4], 9 -> [5,-2,-4,9], + sums last two (-4+9=5) -> [5,-2,-4,9,5], + again (9+5=14) -> [5,-2,-4,9,5,14]; total = 5-2-4+9+5+14 = 27"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"1\"",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"5 2 C D +\"]",
+      "output": "30",
+      "expectedOutput": "30",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"5 -2 4 C D 9 + +\"]",
+      "output": "27",
+      "expectedOutput": "27",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"1\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"1 C\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"10\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"-5\"]",
+      "output": "-5",
+      "expectedOutput": "-5",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"3 D\"]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"3 D D\"]",
+      "output": "21",
+      "expectedOutput": "21",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"5 D C\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"1 2 +\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"1 2 + C\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"1 2 + +\"]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"5 -2 C D\"]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"-3 -3 +\"]",
+      "output": "-12",
+      "expectedOutput": "-12",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"7 C\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"7 7 D C +\"]",
+      "output": "28",
+      "expectedOutput": "28",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"1 D D D D\"]",
+      "output": "31",
+      "expectedOutput": "31",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"10 D C D C D\"]",
+      "output": "30",
+      "expectedOutput": "30",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"1 2 3 + + D +\"]",
+      "output": "59",
+      "expectedOutput": "59",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"20 -10 D +\"]",
+      "output": "-40",
+      "expectedOutput": "-40",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"5 2 C D +\"",
+        "output": "30",
+        "expectedOutput": "30",
+        "explanation": "record 5, record 2, cancel the 2 (scores: [5]), double the last (D -> 10, scores: [5,10]), sum of last two (+ -> 15, scores: [5,10,15]); total = 5+10+15 = 30"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"5 -2 4 C D 9 + +\"",
+        "output": "27",
+        "expectedOutput": "27",
+        "explanation": "scores build to [5,-2,4], C removes 4 -> [5,-2], D doubles -2 -> [5,-2,-4], 9 -> [5,-2,-4,9], + sums last two (-4+9=5) -> [5,-2,-4,9,5], + again (9+5=14) -> [5,-2,-4,9,5,14]; total = 5-2-4+9+5+14 = 27"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"1\"",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"5 2 C D +\"]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"5 -2 4 C D 9 + +\"]",
+        "output": "27",
+        "expectedOutput": "27",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"1\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"1 C\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"10\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"-5\"]",
+        "output": "-5",
+        "expectedOutput": "-5",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"3 D\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"3 D D\"]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"5 D C\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"1 2 +\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"1 2 + C\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"1 2 + +\"]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"5 -2 C D\"]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"-3 -3 +\"]",
+        "output": "-12",
+        "expectedOutput": "-12",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"7 C\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"7 7 D C +\"]",
+        "output": "28",
+        "expectedOutput": "28",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"1 D D D D\"]",
+        "output": "31",
+        "expectedOutput": "31",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"10 D C D C D\"]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"1 2 3 + + D +\"]",
+        "output": "59",
+        "expectedOutput": "59",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"20 -10 D +\"]",
+        "output": "-40",
+        "expectedOutput": "-40",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def calPoints(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    int calPoints(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int calPoints(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun calPoints(ops: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    calPoints(ops) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def calPoints(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    int calPoints(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int calPoints(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun calPoints(ops: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    calPoints(ops) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def calPoints(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    int calPoints(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int calPoints(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun calPoints(ops: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    calPoints(ops) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def calPoints(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    int calPoints(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int calPoints(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun calPoints(ops: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    calPoints(ops) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n)",
+      "pattern": "stack (simulate scoring history)"
+    },
+    "bruteForce": {
+      "approach": "same as the optimal approach, since a stack is already the natural and simplest way to model this - simulate directly with a list used as a stack",
+      "time": "O(n)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "stack (simulate scoring history)",
+    "time": "O(n)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "every operation depends only on the most recently recorded scores - what data structure tracks 'the last few things that happened' naturally?",
+      "split ops on spaces first, then process each token in order using a stack of recorded scores",
+      "for \"+\" you need the top two stack values without removing them permanently (push their sum); for \"D\" you need just the top value doubled; for \"C\" you pop and discard",
+      "at the end, sum whatever remains on the stack"
+    ]
+  },
+  "bruteForce": {
+    "approach": "same as the optimal approach, since a stack is already the natural and simplest way to model this - simulate directly with a list used as a stack",
+    "time": "O(n)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

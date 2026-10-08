@@ -1,0 +1,601 @@
+{
+  "id": "partition-labels",
+  "questionId": "partition-labels",
+  "slug": "partition-labels",
+  "title": "Partition Labels",
+  "difficulty": "Medium",
+  "category": "Greedy",
+  "patterns": [
+    "greedy",
+    "single pass",
+    "string"
+  ],
+  "lists": [],
+  "hints": [
+    "if the current part must contain some letter's first occurrence, what's the earliest point it's safe to close that part?",
+    "precompute, for every letter, the index of its last occurrence in the string",
+    "scan left to right, keeping a running 'end' equal to the max last-occurrence among all letters seen in the current part so far",
+    "when your scan position reaches that running 'end', no letter seen so far can appear again later, so the part is safe to close here",
+    "why is closing the part at the earliest such point always optimal, never too early? because closing any sooner would still leave one of the part's letters occurring later, splitting that letter across two parts, which is disallowed"
+  ],
+  "commonMistakes": [
+    "closing a part as soon as you've seen every distinct letter once, without checking whether any of those letters recur further ahead",
+    "using the first occurrence of a letter instead of the last occurrence when computing how far the current part must extend",
+    "resetting the running 'end' tracker when starting a new part instead of computing it fresh from the new part's own letters"
+  ],
+  "content": {
+    "problemStatement": "You're given a string `s` of lowercase letters.\n\n**Split `s` into as many contiguous parts as possible so that every letter appears in at most one part, and return the lengths of these parts, in order, as an array.**\n\nEach letter's every occurrence must stay within a single part.\n",
+    "constraints": [
+      "1 <= s.length",
+      "s consists only of lowercase English letters",
+      "the returned lengths must sum to s.length"
+    ],
+    "notes": [
+      "every character is the same letter (one part covering the whole string)",
+      "every character is distinct (each part has length 1)",
+      "a single character string",
+      "the last letter's only occurrence is at the very end of the string"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"abac\"",
+        "output": "[3, 1]",
+        "expectedOutput": "[3, 1]",
+        "explanation": "'a' occurs at index 0 and 2, so the first part must extend at least to index 2, giving the part \"aba\" (length 3), leaving \"c\" (length 1) as the second part"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"eeeeeeee\"",
+        "output": "[8]",
+        "expectedOutput": "[8]",
+        "explanation": "every character is the same letter, so the whole string is one part"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"abac\"]",
+        "output": "[3,1]",
+        "expectedOutput": "[3,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"eeeeeeee\"]",
+        "output": "[8]",
+        "expectedOutput": "[8]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"ababcbacadefegdehijhklij\"]",
+        "output": "[9,7,8]",
+        "expectedOutput": "[9,7,8]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"ab\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aaaa\"]",
+        "output": "[4]",
+        "expectedOutput": "[4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abcabc\"]",
+        "output": "[6]",
+        "expectedOutput": "[6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"abcdefghijklmnopqrstuvwxyz\"]",
+        "output": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"caedbdedda\"]",
+        "output": "[1,9]",
+        "expectedOutput": "[1,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aab\"]",
+        "output": "[2,1]",
+        "expectedOutput": "[2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"idgbddfgheiicgaeacdfcbcjbebbfa\"]",
+        "output": "[30]",
+        "expectedOutput": "[30]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"ccbcdaeceeaeacccdbaaaeadd\"]",
+        "output": "[25]",
+        "expectedOutput": "[25]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"z\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"aabb\"]",
+        "output": "[2,2]",
+        "expectedOutput": "[2,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abab\"]",
+        "output": "[4]",
+        "expectedOutput": "[4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"abcba\"]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"qwertyqwerty\"]",
+        "output": "[12]",
+        "expectedOutput": "[12]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"xyzzyx\"]",
+        "output": "[6]",
+        "expectedOutput": "[6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"baababaaabaaabbabbaa\"]",
+        "output": "[20]",
+        "expectedOutput": "[20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"abcadefegdehijhklij\"]",
+        "output": "[4,7,8]",
+        "expectedOutput": "[4,7,8]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"abac\"",
+      "output": "[3, 1]",
+      "expectedOutput": "[3, 1]",
+      "explanation": "'a' occurs at index 0 and 2, so the first part must extend at least to index 2, giving the part \"aba\" (length 3), leaving \"c\" (length 1) as the second part"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"eeeeeeee\"",
+      "output": "[8]",
+      "expectedOutput": "[8]",
+      "explanation": "every character is the same letter, so the whole string is one part"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"abac\"",
+      "output": "[3, 1]",
+      "expectedOutput": "[3, 1]",
+      "explanation": "'a' occurs at index 0 and 2, so the first part must extend at least to index 2, giving the part \"aba\" (length 3), leaving \"c\" (length 1) as the second part"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"eeeeeeee\"",
+      "output": "[8]",
+      "expectedOutput": "[8]",
+      "explanation": "every character is the same letter, so the whole string is one part"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"abac\"]",
+      "output": "[3,1]",
+      "expectedOutput": "[3,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"eeeeeeee\"]",
+      "output": "[8]",
+      "expectedOutput": "[8]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"ababcbacadefegdehijhklij\"]",
+      "output": "[9,7,8]",
+      "expectedOutput": "[9,7,8]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"a\"]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"ab\"]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"aaaa\"]",
+      "output": "[4]",
+      "expectedOutput": "[4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"abcabc\"]",
+      "output": "[6]",
+      "expectedOutput": "[6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"abcdefghijklmnopqrstuvwxyz\"]",
+      "output": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+      "expectedOutput": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"caedbdedda\"]",
+      "output": "[1,9]",
+      "expectedOutput": "[1,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"aab\"]",
+      "output": "[2,1]",
+      "expectedOutput": "[2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"idgbddfgheiicgaeacdfcbcjbebbfa\"]",
+      "output": "[30]",
+      "expectedOutput": "[30]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"ccbcdaeceeaeacccdbaaaeadd\"]",
+      "output": "[25]",
+      "expectedOutput": "[25]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"z\"]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"aabb\"]",
+      "output": "[2,2]",
+      "expectedOutput": "[2,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"abab\"]",
+      "output": "[4]",
+      "expectedOutput": "[4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"abcba\"]",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"qwertyqwerty\"]",
+      "output": "[12]",
+      "expectedOutput": "[12]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"xyzzyx\"]",
+      "output": "[6]",
+      "expectedOutput": "[6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"baababaaabaaabbabbaa\"]",
+      "output": "[20]",
+      "expectedOutput": "[20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"abcadefegdehijhklij\"]",
+      "output": "[4,7,8]",
+      "expectedOutput": "[4,7,8]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"abac\"",
+        "output": "[3, 1]",
+        "expectedOutput": "[3, 1]",
+        "explanation": "'a' occurs at index 0 and 2, so the first part must extend at least to index 2, giving the part \"aba\" (length 3), leaving \"c\" (length 1) as the second part"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"eeeeeeee\"",
+        "output": "[8]",
+        "expectedOutput": "[8]",
+        "explanation": "every character is the same letter, so the whole string is one part"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"abac\"]",
+        "output": "[3,1]",
+        "expectedOutput": "[3,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"eeeeeeee\"]",
+        "output": "[8]",
+        "expectedOutput": "[8]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"ababcbacadefegdehijhklij\"]",
+        "output": "[9,7,8]",
+        "expectedOutput": "[9,7,8]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"ab\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aaaa\"]",
+        "output": "[4]",
+        "expectedOutput": "[4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abcabc\"]",
+        "output": "[6]",
+        "expectedOutput": "[6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"abcdefghijklmnopqrstuvwxyz\"]",
+        "output": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"caedbdedda\"]",
+        "output": "[1,9]",
+        "expectedOutput": "[1,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aab\"]",
+        "output": "[2,1]",
+        "expectedOutput": "[2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"idgbddfgheiicgaeacdfcbcjbebbfa\"]",
+        "output": "[30]",
+        "expectedOutput": "[30]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"ccbcdaeceeaeacccdbaaaeadd\"]",
+        "output": "[25]",
+        "expectedOutput": "[25]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"z\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"aabb\"]",
+        "output": "[2,2]",
+        "expectedOutput": "[2,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abab\"]",
+        "output": "[4]",
+        "expectedOutput": "[4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"abcba\"]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"qwertyqwerty\"]",
+        "output": "[12]",
+        "expectedOutput": "[12]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"xyzzyx\"]",
+        "output": "[6]",
+        "expectedOutput": "[6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"baababaaabaaabbabbaa\"]",
+        "output": "[20]",
+        "expectedOutput": "[20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"abcadefegdehijhklij\"]",
+        "output": "[4,7,8]",
+        "expectedOutput": "[4,7,8]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def partitionLabels(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> partitionLabels(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] partitionLabels(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun partitionLabels(s: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    partitionLabels(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def partitionLabels(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> partitionLabels(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] partitionLabels(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun partitionLabels(s: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    partitionLabels(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def partitionLabels(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> partitionLabels(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] partitionLabels(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun partitionLabels(s: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    partitionLabels(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def partitionLabels(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> partitionLabels(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] partitionLabels(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun partitionLabels(s: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    partitionLabels(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) (fixed alphabet size)",
+      "pattern": "precompute each letter's last occurrence index, then greedily extend the current part's boundary to the farthest last-occurrence seen so far"
+    },
+    "bruteForce": {
+      "approach": "for each possible split point, check whether every letter's occurrences are fully contained on one side, backtracking over all valid partitions to find the one with the most parts",
+      "time": "exponential",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "precompute each letter's last occurrence index, then greedily extend the current part's boundary to the farthest last-occurrence seen so far",
+    "time": "O(n)",
+    "space": "O(1) (fixed alphabet size)",
+    "hint_ladder": [
+      "if the current part must contain some letter's first occurrence, what's the earliest point it's safe to close that part?",
+      "precompute, for every letter, the index of its last occurrence in the string",
+      "scan left to right, keeping a running 'end' equal to the max last-occurrence among all letters seen in the current part so far",
+      "when your scan position reaches that running 'end', no letter seen so far can appear again later, so the part is safe to close here",
+      "why is closing the part at the earliest such point always optimal, never too early? because closing any sooner would still leave one of the part's letters occurring later, splitting that letter across two parts, which is disallowed"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each possible split point, check whether every letter's occurrences are fully contained on one side, backtracking over all valid partitions to find the one with the most parts",
+    "time": "exponential",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

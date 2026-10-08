@@ -1,0 +1,657 @@
+{
+  "id": "lowest-common-ancestor-of-a-binary-search-tree",
+  "questionId": "lowest-common-ancestor-of-a-binary-search-tree",
+  "slug": "lowest-common-ancestor-of-a-binary-search-tree",
+  "title": "Lowest Common Ancestor of a Binary Search Tree",
+  "difficulty": "Medium",
+  "category": "Tree dfs",
+  "patterns": [
+    "tree",
+    "dfs",
+    "recursion",
+    "bst"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75"
+  ],
+  "hints": [
+    "in a general tree finding the LCA needs exploring both subtrees, but this tree is a BST - what extra information does that give you about where p and q must live relative to the current node's value?",
+    "if both p and q are less than the current node's value, where must their LCA be? what if both are greater?",
+    "if p and q fall on different sides of the current node (or one of them equals the current node's value), can the search go any further down?",
+    "starting at the root, if both p and q are less than tree[i], move to 2*i+1; if both are greater, move to 2*i+2; otherwise tree[i] is the answer"
+  ],
+  "commonMistakes": [
+    "using a general-tree LCA algorithm (exploring both children and combining results) instead of exploiting the BST property, which is unnecessary extra work",
+    "using non-strict comparisons in a way that fails to stop at the current node when p or q equals it",
+    "forgetting that a node counts as its own ancestor, so if p is on the path to q, p itself is the answer"
+  ],
+  "content": {
+    "problemStatement": "Binary trees are encoded as flat arrays using complete-binary-tree (heap)\nindexing:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array bounds **and** its value isn't the sentinel `-101`\n- `-101` means \"no node there\"\n\nThe given tree is guaranteed to be a valid binary search tree with all\ndistinct values, and you're given two values `p` and `q`, both\nguaranteed to exist somewhere in the tree. For example, `[6, 2, 8, 0, 4,\n7, 9, -101, -101, 3, 5]` encodes this tree:\n\n```\n            6\n          /   \\\n         2     8\n        / \\   / \\\n       0   4 7   9\n          / \\\n         3   5\n```\n\nHere, the lowest common ancestor of `p = 3` and `q = 5` is `4` (their\ndirect parent), while the lowest common ancestor of `p = 2` and `q = 8`\nis the root, `6`.\n\n**Return the value of the lowest common ancestor of `p` and `q`: the deepest node that has both somewhere in its subtree.**\n\nA node counts as its own ancestor, so if `p` is an ancestor of `q`, the\nanswer is `p` itself.\n",
+    "constraints": [
+      "2 <= number of real nodes <= 10^4",
+      "-100 <= tree[i] <= 100 for every real node",
+      "all real node values in the tree are unique",
+      "p != q, and both p and q are values that exist in the tree",
+      "the sentinel value -101 marks a missing node and never appears as a real value"
+    ],
+    "notes": [
+      "p is a direct ancestor of q (or vice versa), where the answer is p (or q) itself",
+      "p and q are the two children of the root, where the answer is the root",
+      "a tree that is just two nodes"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [6, 2, 8, 0, 4, 7, 9, -101, -101, 3, 5], p = 2, q = 8",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "2 is in the left subtree of 6 and 8 is in the right subtree of 6, so 6 is the deepest node containing both"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [6, 2, 8, 0, 4, 7, 9, -101, -101, 3, 5], p = 2, q = 4",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "4 is inside 2's own subtree (2's right child), so 2 is an ancestor of itself and of 4 - the lowest common ancestor is 2"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [6, 2, 8, 0, 4, 7, 9, -101, -101, 3, 5], p = 3, q = 5",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "3 and 5 are 4's left and right children respectively, so 4 is their lowest common ancestor"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[6,2,8,0,4,7,9,-101,-101,3,5],2,8]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[6,2,8,0,4,7,9,-101,-101,3,5],2,4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[6,2,8,0,4,7,9,-101,-101,3,5],0,5]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[6,2,8,0,4,7,9,-101,-101,3,5],7,9]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],1,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],-33,47]",
+        "output": "-22",
+        "expectedOutput": "-22",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],19,-61]",
+        "output": "-22",
+        "expectedOutput": "-22",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],-89,70]",
+        "output": "-22",
+        "expectedOutput": "-22",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],23,70]",
+        "output": "47",
+        "expectedOutput": "47",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],-89,-15]",
+        "output": "-22",
+        "expectedOutput": "-22",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],-22,-33]",
+        "output": "-22",
+        "expectedOutput": "-22",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-27,-78,-15,-92,-70,-101,-101,-101,-79,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],-61,-55]",
+        "output": "-61",
+        "expectedOutput": "-61",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-27,-78,-15,-92,-70,-101,-101,-101,-79,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],-70,-55]",
+        "output": "-70",
+        "expectedOutput": "-70",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-27,-78,-15,-92,-70,-101,-101,-101,-79,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],-61,-78]",
+        "output": "-78",
+        "expectedOutput": "-78",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-27,-78,-15,-92,-70,-101,-101,-101,-79,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],-41,-78]",
+        "output": "-78",
+        "expectedOutput": "-78",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[21,-69],21,-69]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[6,-27,31,-44,-14,13,35,-82,-43,-101,-101,11,17,-101,41,-101,-50,-101,-33,-101,-101,-101,-101,-101,-101,-101,19,-101,-101,-101,63,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,21,-101,-101,-101,-101,-101,-101,43,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,59],31,11]",
+        "output": "31",
+        "expectedOutput": "31",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[6,-27,31,-44,-14,13,35,-82,-43,-101,-101,11,17,-101,41,-101,-50,-101,-33,-101,-101,-101,-101,-101,-101,-101,19,-101,-101,-101,63,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,21,-101,-101,-101,-101,-101,-101,43,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,59],-33,-82]",
+        "output": "-44",
+        "expectedOutput": "-44",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[6,-27,31,-44,-14,13,35,-82,-43,-101,-101,11,17,-101,41,-101,-50,-101,-33,-101,-101,-101,-101,-101,-101,-101,19,-101,-101,-101,63,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,21,-101,-101,-101,-101,-101,-101,43,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,59],19,11]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[6,-27,31,-44,-14,13,35,-82,-43,-101,-101,11,17,-101,41,-101,-50,-101,-33,-101,-101,-101,-101,-101,-101,-101,19,-101,-101,-101,63,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,21,-101,-101,-101,-101,-101,-101,43,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,59],-43,43]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[-70,-101,-25,-101,-101,-66,79,-101,-101,-101,-101,-101,-101,17,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-18],-70,79]",
+        "output": "-70",
+        "expectedOutput": "-70",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [6, 2, 8, 0, 4, 7, 9, -101, -101, 3, 5], p = 2, q = 8",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "2 is in the left subtree of 6 and 8 is in the right subtree of 6, so 6 is the deepest node containing both"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [6, 2, 8, 0, 4, 7, 9, -101, -101, 3, 5], p = 2, q = 4",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "4 is inside 2's own subtree (2's right child), so 2 is an ancestor of itself and of 4 - the lowest common ancestor is 2"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [6, 2, 8, 0, 4, 7, 9, -101, -101, 3, 5], p = 3, q = 5",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "3 and 5 are 4's left and right children respectively, so 4 is their lowest common ancestor"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [6, 2, 8, 0, 4, 7, 9, -101, -101, 3, 5], p = 2, q = 8",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "2 is in the left subtree of 6 and 8 is in the right subtree of 6, so 6 is the deepest node containing both"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [6, 2, 8, 0, 4, 7, 9, -101, -101, 3, 5], p = 2, q = 4",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "4 is inside 2's own subtree (2's right child), so 2 is an ancestor of itself and of 4 - the lowest common ancestor is 2"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [6, 2, 8, 0, 4, 7, 9, -101, -101, 3, 5], p = 3, q = 5",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "3 and 5 are 4's left and right children respectively, so 4 is their lowest common ancestor"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[6,2,8,0,4,7,9,-101,-101,3,5],2,8]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[6,2,8,0,4,7,9,-101,-101,3,5],2,4]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[6,2,8,0,4,7,9,-101,-101,3,5],0,5]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[6,2,8,0,4,7,9,-101,-101,3,5],7,9]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1],1,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],-33,47]",
+      "output": "-22",
+      "expectedOutput": "-22",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],19,-61]",
+      "output": "-22",
+      "expectedOutput": "-22",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],-89,70]",
+      "output": "-22",
+      "expectedOutput": "-22",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],23,70]",
+      "output": "47",
+      "expectedOutput": "47",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],-89,-15]",
+      "output": "-22",
+      "expectedOutput": "-22",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],-22,-33]",
+      "output": "-22",
+      "expectedOutput": "-22",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[-27,-78,-15,-92,-70,-101,-101,-101,-79,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],-61,-55]",
+      "output": "-61",
+      "expectedOutput": "-61",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[-27,-78,-15,-92,-70,-101,-101,-101,-79,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],-70,-55]",
+      "output": "-70",
+      "expectedOutput": "-70",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-27,-78,-15,-92,-70,-101,-101,-101,-79,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],-61,-78]",
+      "output": "-78",
+      "expectedOutput": "-78",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-27,-78,-15,-92,-70,-101,-101,-101,-79,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],-41,-78]",
+      "output": "-78",
+      "expectedOutput": "-78",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[21,-69],21,-69]",
+      "output": "21",
+      "expectedOutput": "21",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[6,-27,31,-44,-14,13,35,-82,-43,-101,-101,11,17,-101,41,-101,-50,-101,-33,-101,-101,-101,-101,-101,-101,-101,19,-101,-101,-101,63,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,21,-101,-101,-101,-101,-101,-101,43,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,59],31,11]",
+      "output": "31",
+      "expectedOutput": "31",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[6,-27,31,-44,-14,13,35,-82,-43,-101,-101,11,17,-101,41,-101,-50,-101,-33,-101,-101,-101,-101,-101,-101,-101,19,-101,-101,-101,63,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,21,-101,-101,-101,-101,-101,-101,43,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,59],-33,-82]",
+      "output": "-44",
+      "expectedOutput": "-44",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[6,-27,31,-44,-14,13,35,-82,-43,-101,-101,11,17,-101,41,-101,-50,-101,-33,-101,-101,-101,-101,-101,-101,-101,19,-101,-101,-101,63,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,21,-101,-101,-101,-101,-101,-101,43,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,59],19,11]",
+      "output": "13",
+      "expectedOutput": "13",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[6,-27,31,-44,-14,13,35,-82,-43,-101,-101,11,17,-101,41,-101,-50,-101,-33,-101,-101,-101,-101,-101,-101,-101,19,-101,-101,-101,63,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,21,-101,-101,-101,-101,-101,-101,43,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,59],-43,43]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[-70,-101,-25,-101,-101,-66,79,-101,-101,-101,-101,-101,-101,17,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-18],-70,79]",
+      "output": "-70",
+      "expectedOutput": "-70",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [6, 2, 8, 0, 4, 7, 9, -101, -101, 3, 5], p = 2, q = 8",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "2 is in the left subtree of 6 and 8 is in the right subtree of 6, so 6 is the deepest node containing both"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [6, 2, 8, 0, 4, 7, 9, -101, -101, 3, 5], p = 2, q = 4",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "4 is inside 2's own subtree (2's right child), so 2 is an ancestor of itself and of 4 - the lowest common ancestor is 2"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [6, 2, 8, 0, 4, 7, 9, -101, -101, 3, 5], p = 3, q = 5",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "3 and 5 are 4's left and right children respectively, so 4 is their lowest common ancestor"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[6,2,8,0,4,7,9,-101,-101,3,5],2,8]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[6,2,8,0,4,7,9,-101,-101,3,5],2,4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[6,2,8,0,4,7,9,-101,-101,3,5],0,5]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[6,2,8,0,4,7,9,-101,-101,3,5],7,9]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],1,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],-33,47]",
+        "output": "-22",
+        "expectedOutput": "-22",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],19,-61]",
+        "output": "-22",
+        "expectedOutput": "-22",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],-89,70]",
+        "output": "-22",
+        "expectedOutput": "-22",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],23,70]",
+        "output": "47",
+        "expectedOutput": "47",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],-89,-15]",
+        "output": "-22",
+        "expectedOutput": "-22",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],-22,-33]",
+        "output": "-22",
+        "expectedOutput": "-22",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-27,-78,-15,-92,-70,-101,-101,-101,-79,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],-61,-55]",
+        "output": "-61",
+        "expectedOutput": "-61",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-27,-78,-15,-92,-70,-101,-101,-101,-79,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],-70,-55]",
+        "output": "-70",
+        "expectedOutput": "-70",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-27,-78,-15,-92,-70,-101,-101,-101,-79,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],-61,-78]",
+        "output": "-78",
+        "expectedOutput": "-78",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-27,-78,-15,-92,-70,-101,-101,-101,-79,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],-41,-78]",
+        "output": "-78",
+        "expectedOutput": "-78",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[21,-69],21,-69]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[6,-27,31,-44,-14,13,35,-82,-43,-101,-101,11,17,-101,41,-101,-50,-101,-33,-101,-101,-101,-101,-101,-101,-101,19,-101,-101,-101,63,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,21,-101,-101,-101,-101,-101,-101,43,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,59],31,11]",
+        "output": "31",
+        "expectedOutput": "31",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[6,-27,31,-44,-14,13,35,-82,-43,-101,-101,11,17,-101,41,-101,-50,-101,-33,-101,-101,-101,-101,-101,-101,-101,19,-101,-101,-101,63,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,21,-101,-101,-101,-101,-101,-101,43,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,59],-33,-82]",
+        "output": "-44",
+        "expectedOutput": "-44",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[6,-27,31,-44,-14,13,35,-82,-43,-101,-101,11,17,-101,41,-101,-50,-101,-33,-101,-101,-101,-101,-101,-101,-101,19,-101,-101,-101,63,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,21,-101,-101,-101,-101,-101,-101,43,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,59],19,11]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[6,-27,31,-44,-14,13,35,-82,-43,-101,-101,11,17,-101,41,-101,-50,-101,-33,-101,-101,-101,-101,-101,-101,-101,19,-101,-101,-101,63,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,21,-101,-101,-101,-101,-101,-101,43,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,59],-43,43]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[-70,-101,-25,-101,-101,-66,79,-101,-101,-101,-101,-101,-101,17,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-18],-70,79]",
+        "output": "-70",
+        "expectedOutput": "-70",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def lowestCommonAncestor(self, tree, p, q):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lowestCommonAncestor(vector<int>& tree, int p, int q) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lowestCommonAncestor(int[] tree, int p, int q) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lowestCommonAncestor(tree: IntArray, p: Int, q: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lowestCommonAncestor(tree, p, q) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def lowestCommonAncestor(self, tree, p, q):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lowestCommonAncestor(vector<int>& tree, int p, int q) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lowestCommonAncestor(int[] tree, int p, int q) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lowestCommonAncestor(tree: IntArray, p: Int, q: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lowestCommonAncestor(tree, p, q) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def lowestCommonAncestor(self, tree, p, q):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lowestCommonAncestor(vector<int>& tree, int p, int q) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lowestCommonAncestor(int[] tree, int p, int q) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lowestCommonAncestor(tree: IntArray, p: Int, q: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lowestCommonAncestor(tree, p, q) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def lowestCommonAncestor(self, tree, p, q):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lowestCommonAncestor(vector<int>& tree, int p, int q) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lowestCommonAncestor(int[] tree, int p, int q) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lowestCommonAncestor(tree: IntArray, p: Int, q: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lowestCommonAncestor(tree, p, q) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(h), where h is the tree's height (no full traversal needed)",
+      "space": "O(h) recursion stack, or O(1) if done iteratively",
+      "pattern": "use the BST ordering property to steer a single walk from the root, without needing to explore both children"
+    },
+    "bruteForce": {
+      "approach": "find the full root-to-p path and root-to-q path via DFS, then compare them position by position to find the last common node",
+      "time": "O(h) to find each path, O(h) to compare them",
+      "space": "O(h) to store both paths"
+    }
+  },
+  "optimal": {
+    "pattern": "use the BST ordering property to steer a single walk from the root, without needing to explore both children",
+    "time": "O(h), where h is the tree's height (no full traversal needed)",
+    "space": "O(h) recursion stack, or O(1) if done iteratively",
+    "hint_ladder": [
+      "in a general tree finding the LCA needs exploring both subtrees, but this tree is a BST - what extra information does that give you about where p and q must live relative to the current node's value?",
+      "if both p and q are less than the current node's value, where must their LCA be? what if both are greater?",
+      "if p and q fall on different sides of the current node (or one of them equals the current node's value), can the search go any further down?",
+      "starting at the root, if both p and q are less than tree[i], move to 2*i+1; if both are greater, move to 2*i+2; otherwise tree[i] is the answer"
+    ]
+  },
+  "bruteForce": {
+    "approach": "find the full root-to-p path and root-to-q path via DFS, then compare them position by position to find the last common node",
+    "time": "O(h) to find each path, O(h) to compare them",
+    "space": "O(h) to store both paths"
+  },
+  "isIndex0": true,
+  "level": null
+}

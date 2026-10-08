@@ -1,0 +1,659 @@
+{
+  "id": "alien-dictionary",
+  "questionId": "alien-dictionary",
+  "slug": "alien-dictionary",
+  "title": "Alien Dictionary",
+  "difficulty": "Hard",
+  "category": "Topological sort",
+  "patterns": [
+    "topological sort",
+    "graphs",
+    "string"
+  ],
+  "lists": [
+    "blind-75"
+  ],
+  "hints": [
+    "every pair of adjacent words tells you something: find their first differing character position, and that gives you one 'this letter comes before that letter' constraint - this is a graph problem where letters are nodes and constraints are directed edges",
+    "before extracting a constraint from a pair, check the prefix case first: if the earlier word is longer than the later word AND the later word is a prefix of the earlier one, that's an immediate contradiction, return empty string right away",
+    "once you have all the precedence edges, this is a topological sort: repeatedly output a letter that has no remaining unsatisfied prerequisites (indegree 0), then remove it and decrement the indegree of everything it pointed to",
+    "a plain queue gives you a valid topological order, but not necessarily a deterministic one - use a min-heap (priority queue) instead of a queue for the set of currently available (indegree 0) letters, so you always pop the alphabetically smallest one first",
+    "if you finish and haven't placed every distinct letter that appeared in the input, there was a cycle (a genuine contradiction) - return the empty string instead of a partial ordering"
+  ],
+  "commonMistakes": [
+    "only comparing the first character of each adjacent word pair instead of finding the actual first differing character",
+    "forgetting the prefix-contradiction case where a longer word appears immediately before its own prefix, which is invalid in any real dictionary order and yields no output",
+    "using a plain FIFO queue for zero-indegree letters, which produces a valid topological order but not the specific alphabetically tie-broken one the grader expects",
+    "not including letters that appear in the input but never take part in any precedence constraint, forgetting they still belong in the output (typically placed via their own zero-indegree entry)",
+    "double-counting edges when the same letter pair relationship is implied by more than one adjacent word comparison, inflating indegree and causing a false contradiction"
+  ],
+  "content": {
+    "problemStatement": "An alien language uses the same lowercase English letters we do, but in some unknown order. You're given a space-delimited string of words from that language, listed in the order they would appear in a dictionary sorted according to that alien alphabet.\n\n**Determine one valid ordering of the letters that is consistent with the given word list, and return it as a string containing every distinct letter that appears in the words, each exactly once.**\n\nThere may be more than one valid ordering. To make the answer deterministic, whenever more than one letter is available to place next, choose the alphabetically smallest one. If the word list is inconsistent (for example a cycle, or a word listed directly before its own prefix) then no valid ordering exists, and you should return the empty string.\n",
+    "constraints": [
+      "1 <= number of words <= 100",
+      "1 <= length of each word <= 100",
+      "words consist of lowercase English letters only",
+      "words are separated by single spaces"
+    ],
+    "notes": [
+      "a word appears directly before one of its own proper prefixes (always a contradiction, e.g. 'abc' before 'ab')",
+      "the constraints form a cycle (e.g. z before x and also x before z, directly or transitively)",
+      "a single word (no ordering constraints at all, any letters present can be output in the tie-break's alphabetical order)",
+      "multiple letters never appear next to each other in any adjacent pair, leaving their relative order entirely undetermined by constraints, so the alphabetical tie-break decides it"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"wrt wrf er ett rftt\"",
+        "output": "\"wertf\"",
+        "expectedOutput": "\"wertf\"",
+        "explanation": "comparing adjacent words letter by letter at their first difference gives w before e, r before t, e before r, e before t, r before t - the tie-broken topological order combining all of these is w, e, r, t, f"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"z x\"",
+        "output": "\"zx\"",
+        "expectedOutput": "\"zx\"",
+        "explanation": "the only constraint is z before x"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"abc ab\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": "\"abc\" is listed before its own prefix \"ab\", which can never happen in a validly sorted dictionary, so this is a contradiction"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"wrt wrf er ett rftt\"]",
+        "output": "wertf",
+        "expectedOutput": "wertf",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"z x\"]",
+        "output": "zx",
+        "expectedOutput": "zx",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"z x z\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abc ab\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"ab adc\"]",
+        "output": "abcd",
+        "expectedOutput": "abcd",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a b c\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"a a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"ac ab b\"]",
+        "output": "acb",
+        "expectedOutput": "acb",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"z y x\"]",
+        "output": "zyx",
+        "expectedOutput": "zyx",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"abc abd\"]",
+        "output": "abcd",
+        "expectedOutput": "abcd",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abc abd cba\"]",
+        "output": "abcd",
+        "expectedOutput": "abcd",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"xyz xy\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"he hello\"]",
+        "output": "ehlo",
+        "expectedOutput": "ehlo",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"cab cbb\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"bca bcb bcc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"d c b a\"]",
+        "output": "dcba",
+        "expectedOutput": "dcba",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"a ab abc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"wxyz wxyw wxya\"]",
+        "output": "xyzwa",
+        "expectedOutput": "xyzwa",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"aa ab bb ba\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"hello hero\"]",
+        "output": "ehlor",
+        "expectedOutput": "ehlor",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"wrt wrf er ett rftt\"",
+      "output": "\"wertf\"",
+      "expectedOutput": "\"wertf\"",
+      "explanation": "comparing adjacent words letter by letter at their first difference gives w before e, r before t, e before r, e before t, r before t - the tie-broken topological order combining all of these is w, e, r, t, f"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"z x\"",
+      "output": "\"zx\"",
+      "expectedOutput": "\"zx\"",
+      "explanation": "the only constraint is z before x"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"abc ab\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": "\"abc\" is listed before its own prefix \"ab\", which can never happen in a validly sorted dictionary, so this is a contradiction"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"wrt wrf er ett rftt\"",
+      "output": "\"wertf\"",
+      "expectedOutput": "\"wertf\"",
+      "explanation": "comparing adjacent words letter by letter at their first difference gives w before e, r before t, e before r, e before t, r before t - the tie-broken topological order combining all of these is w, e, r, t, f"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"z x\"",
+      "output": "\"zx\"",
+      "expectedOutput": "\"zx\"",
+      "explanation": "the only constraint is z before x"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"abc ab\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": "\"abc\" is listed before its own prefix \"ab\", which can never happen in a validly sorted dictionary, so this is a contradiction"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"wrt wrf er ett rftt\"]",
+      "output": "wertf",
+      "expectedOutput": "wertf",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"z x\"]",
+      "output": "zx",
+      "expectedOutput": "zx",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"z x z\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"abc ab\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"ab adc\"]",
+      "output": "abcd",
+      "expectedOutput": "abcd",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"a b c\"]",
+      "output": "abc",
+      "expectedOutput": "abc",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"a a\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"ac ab b\"]",
+      "output": "acb",
+      "expectedOutput": "acb",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"z y x\"]",
+      "output": "zyx",
+      "expectedOutput": "zyx",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"abc abd\"]",
+      "output": "abcd",
+      "expectedOutput": "abcd",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"abc abd cba\"]",
+      "output": "abcd",
+      "expectedOutput": "abcd",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"xyz xy\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"he hello\"]",
+      "output": "ehlo",
+      "expectedOutput": "ehlo",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"cab cbb\"]",
+      "output": "abc",
+      "expectedOutput": "abc",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"bca bcb bcc\"]",
+      "output": "abc",
+      "expectedOutput": "abc",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"d c b a\"]",
+      "output": "dcba",
+      "expectedOutput": "dcba",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"a ab abc\"]",
+      "output": "abc",
+      "expectedOutput": "abc",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"wxyz wxyw wxya\"]",
+      "output": "xyzwa",
+      "expectedOutput": "xyzwa",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"aa ab bb ba\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"hello hero\"]",
+      "output": "ehlor",
+      "expectedOutput": "ehlor",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"wrt wrf er ett rftt\"",
+        "output": "\"wertf\"",
+        "expectedOutput": "\"wertf\"",
+        "explanation": "comparing adjacent words letter by letter at their first difference gives w before e, r before t, e before r, e before t, r before t - the tie-broken topological order combining all of these is w, e, r, t, f"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"z x\"",
+        "output": "\"zx\"",
+        "expectedOutput": "\"zx\"",
+        "explanation": "the only constraint is z before x"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"abc ab\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": "\"abc\" is listed before its own prefix \"ab\", which can never happen in a validly sorted dictionary, so this is a contradiction"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"wrt wrf er ett rftt\"]",
+        "output": "wertf",
+        "expectedOutput": "wertf",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"z x\"]",
+        "output": "zx",
+        "expectedOutput": "zx",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"z x z\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abc ab\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"ab adc\"]",
+        "output": "abcd",
+        "expectedOutput": "abcd",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a b c\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"a a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"ac ab b\"]",
+        "output": "acb",
+        "expectedOutput": "acb",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"z y x\"]",
+        "output": "zyx",
+        "expectedOutput": "zyx",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"abc abd\"]",
+        "output": "abcd",
+        "expectedOutput": "abcd",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abc abd cba\"]",
+        "output": "abcd",
+        "expectedOutput": "abcd",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"xyz xy\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"he hello\"]",
+        "output": "ehlo",
+        "expectedOutput": "ehlo",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"cab cbb\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"bca bcb bcc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"d c b a\"]",
+        "output": "dcba",
+        "expectedOutput": "dcba",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"a ab abc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"wxyz wxyw wxya\"]",
+        "output": "xyzwa",
+        "expectedOutput": "xyzwa",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"aa ab bb ba\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"hello hero\"]",
+        "output": "ehlor",
+        "expectedOutput": "ehlor",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def alienOrder(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <unordered_set>\n#include <set>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string alienOrder(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String alienOrder(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun alienOrder(words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    alienOrder(words) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def alienOrder(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <unordered_set>\n#include <set>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string alienOrder(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String alienOrder(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun alienOrder(words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    alienOrder(words) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def alienOrder(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <unordered_set>\n#include <set>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string alienOrder(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String alienOrder(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun alienOrder(words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    alienOrder(words) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def alienOrder(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <unordered_set>\n#include <set>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string alienOrder(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String alienOrder(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun alienOrder(words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    alienOrder(words) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(C) to build the graph where C is the total number of characters across all words, plus O(L log L) for the heap-based topological sort where L is the number of distinct letters",
+      "space": "O(L + E) for the graph, where E is the number of precedence edges",
+      "pattern": "topological sort (Kahn's algorithm) over a graph of letter precedence constraints derived from adjacent word comparisons, using a min-heap instead of a plain queue so zero-indegree letters are always processed in alphabetical order for a deterministic result"
+    },
+    "bruteForce": {
+      "approach": "build the directed graph of letter-before-letter constraints from every adjacent word pair, then try generating permutations of the distinct letters and check each one against every constraint until a valid one is found (infeasible for more than a handful of letters, but conceptually simplest)",
+      "time": "O(L!) for permutation generation in the worst case, where L is the number of distinct letters",
+      "space": "O(L)"
+    }
+  },
+  "optimal": {
+    "pattern": "topological sort (Kahn's algorithm) over a graph of letter precedence constraints derived from adjacent word comparisons, using a min-heap instead of a plain queue so zero-indegree letters are always processed in alphabetical order for a deterministic result",
+    "time": "O(C) to build the graph where C is the total number of characters across all words, plus O(L log L) for the heap-based topological sort where L is the number of distinct letters",
+    "space": "O(L + E) for the graph, where E is the number of precedence edges",
+    "hint_ladder": [
+      "every pair of adjacent words tells you something: find their first differing character position, and that gives you one 'this letter comes before that letter' constraint - this is a graph problem where letters are nodes and constraints are directed edges",
+      "before extracting a constraint from a pair, check the prefix case first: if the earlier word is longer than the later word AND the later word is a prefix of the earlier one, that's an immediate contradiction, return empty string right away",
+      "once you have all the precedence edges, this is a topological sort: repeatedly output a letter that has no remaining unsatisfied prerequisites (indegree 0), then remove it and decrement the indegree of everything it pointed to",
+      "a plain queue gives you a valid topological order, but not necessarily a deterministic one - use a min-heap (priority queue) instead of a queue for the set of currently available (indegree 0) letters, so you always pop the alphabetically smallest one first",
+      "if you finish and haven't placed every distinct letter that appeared in the input, there was a cycle (a genuine contradiction) - return the empty string instead of a partial ordering"
+    ]
+  },
+  "bruteForce": {
+    "approach": "build the directed graph of letter-before-letter constraints from every adjacent word pair, then try generating permutations of the distinct letters and check each one against every constraint until a valid one is found (infeasible for more than a handful of letters, but conceptually simplest)",
+    "time": "O(L!) for permutation generation in the worst case, where L is the number of distinct letters",
+    "space": "O(L)"
+  },
+  "isIndex0": true,
+  "level": null
+}

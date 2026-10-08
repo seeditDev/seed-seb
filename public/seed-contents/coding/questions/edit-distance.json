@@ -1,0 +1,633 @@
+{
+  "id": "edit-distance",
+  "questionId": "edit-distance",
+  "slug": "edit-distance",
+  "title": "Edit Distance",
+  "difficulty": "Hard",
+  "category": "Dp 2d",
+  "patterns": [
+    "dynamic programming",
+    "strings"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "define dp[i][j] as the minimum number of operations to convert the first i characters of word1 into the first j characters of word2",
+    "if word1[i-1] == word2[j-1], the last characters already match and cost nothing extra: dp[i][j] = dp[i-1][j-1]",
+    "if they don't match, you must pay for exactly one operation, whichever is cheapest: replace (dp[i-1][j-1]), delete from word1 (dp[i-1][j]), or insert into word1 (dp[i][j-1]), so dp[i][j] = 1 + min of those three",
+    "the base cases are converting an empty prefix: dp[0][j] = j (insert j characters) and dp[i][0] = i (delete i characters)",
+    "fill the table row by row and return dp[m][n]"
+  ],
+  "commonMistakes": [
+    "forgetting the base case rows/columns (converting to/from an empty string costs exactly the length of the other string)",
+    "mixing up which of the three neighbors corresponds to insert versus delete versus replace",
+    "adding 1 even when the characters match, instead of taking dp[i-1][j-1] directly"
+  ],
+  "content": {
+    "problemStatement": "You're given two strings, `word1` and `word2`.\n\n**Find the minimum number of operations required to convert `word1` into `word2`.**\n\nIn a single operation you may insert a character, delete a character, or replace a character.\n",
+    "constraints": [
+      "0 <= word1.length <= 500",
+      "0 <= word2.length <= 500",
+      "word1 and word2 consist of lowercase English letters only"
+    ],
+    "notes": [
+      "one or both strings are empty",
+      "the two strings are already identical (zero operations needed)",
+      "the two strings share no characters at all"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "word1 = \"horse\", word2 = \"ros\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "horse -> rorse (replace h with r) -> rose (delete r) -> ros (delete e)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "word1 = \"intention\", word2 = \"execution\"",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "word1 = \"\", word2 = \"abc\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "Three insertions are needed to build \"abc\" from an empty string."
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"horse\",\"ros\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"intention\",\"execution\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"\",\"abc\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abc\",\"\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"abc\",\"abc\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"\",\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"kitten\",\"sitting\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"a\",\"aaaaaaaaaa\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abcdefgh\",\"abcdefgh\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"eadcecaabe\",\"eaceabdedc\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"abbabbbbbaabb\",\"bbbababbb\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"sunday\",\"saturday\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"xyzxzzyyxxzyzy\",\"zyxxyzxyyzyxxz\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abc\",\"yabd\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"\",\"abcdefghij\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"abcdefghij\",\"\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"ebbceaedabad\",\"abdcecdd\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"zzzzzzzzzz\",\"z\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcxyz\",\"xyzabc\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"programming\",\"algorithm\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "word1 = \"horse\", word2 = \"ros\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "horse -> rorse (replace h with r) -> rose (delete r) -> ros (delete e)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "word1 = \"intention\", word2 = \"execution\"",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "word1 = \"\", word2 = \"abc\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "Three insertions are needed to build \"abc\" from an empty string."
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "word1 = \"horse\", word2 = \"ros\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "horse -> rorse (replace h with r) -> rose (delete r) -> ros (delete e)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "word1 = \"intention\", word2 = \"execution\"",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "word1 = \"\", word2 = \"abc\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "Three insertions are needed to build \"abc\" from an empty string."
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"horse\",\"ros\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"intention\",\"execution\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"\",\"abc\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"abc\",\"\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"abc\",\"abc\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"\",\"\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"kitten\",\"sitting\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"a\",\"aaaaaaaaaa\"]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"abcdefgh\",\"abcdefgh\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"eadcecaabe\",\"eaceabdedc\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"abbabbbbbaabb\",\"bbbababbb\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"sunday\",\"saturday\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"xyzxzzyyxxzyzy\",\"zyxxyzxyyzyxxz\"]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"abc\",\"yabd\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"\",\"abcdefghij\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"abcdefghij\",\"\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"ebbceaedabad\",\"abdcecdd\"]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"zzzzzzzzzz\",\"z\"]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"abcxyz\",\"xyzabc\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"programming\",\"algorithm\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "word1 = \"horse\", word2 = \"ros\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "horse -> rorse (replace h with r) -> rose (delete r) -> ros (delete e)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "word1 = \"intention\", word2 = \"execution\"",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "word1 = \"\", word2 = \"abc\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "Three insertions are needed to build \"abc\" from an empty string."
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"horse\",\"ros\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"intention\",\"execution\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"\",\"abc\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abc\",\"\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"abc\",\"abc\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"\",\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"kitten\",\"sitting\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"a\",\"aaaaaaaaaa\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abcdefgh\",\"abcdefgh\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"eadcecaabe\",\"eaceabdedc\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"abbabbbbbaabb\",\"bbbababbb\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"sunday\",\"saturday\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"xyzxzzyyxxzyzy\",\"zyxxyzxyyzyxxz\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abc\",\"yabd\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"\",\"abcdefghij\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"abcdefghij\",\"\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"ebbceaedabad\",\"abdcecdd\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"zzzzzzzzzz\",\"z\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcxyz\",\"xyzabc\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"programming\",\"algorithm\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minDistance(self, word1, word2):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minDistance(string word1, string word2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minDistance(String word1, String word2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minDistance(word1: String, word2: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minDistance(word1, word2) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minDistance(self, word1, word2):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minDistance(string word1, string word2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minDistance(String word1, String word2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minDistance(word1: String, word2: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minDistance(word1, word2) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minDistance(self, word1, word2):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minDistance(string word1, string word2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minDistance(String word1, String word2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minDistance(word1: String, word2: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minDistance(word1, word2) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minDistance(self, word1, word2):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minDistance(string word1, string word2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minDistance(String word1, String word2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minDistance(word1: String, word2: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minDistance(word1, word2) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(m * n)",
+      "space": "O(m * n), reducible to O(min(m, n))",
+      "pattern": "2D dynamic programming over two string indices"
+    },
+    "bruteForce": {
+      "approach": "recursively try all three operations (insert, delete, replace) at each mismatched position and take the minimum over all resulting paths to convert word1 into word2",
+      "time": "O(3^(m+n))",
+      "space": "O(m + n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "2D dynamic programming over two string indices",
+    "time": "O(m * n)",
+    "space": "O(m * n), reducible to O(min(m, n))",
+    "hint_ladder": [
+      "define dp[i][j] as the minimum number of operations to convert the first i characters of word1 into the first j characters of word2",
+      "if word1[i-1] == word2[j-1], the last characters already match and cost nothing extra: dp[i][j] = dp[i-1][j-1]",
+      "if they don't match, you must pay for exactly one operation, whichever is cheapest: replace (dp[i-1][j-1]), delete from word1 (dp[i-1][j]), or insert into word1 (dp[i][j-1]), so dp[i][j] = 1 + min of those three",
+      "the base cases are converting an empty prefix: dp[0][j] = j (insert j characters) and dp[i][0] = i (delete i characters)",
+      "fill the table row by row and return dp[m][n]"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try all three operations (insert, delete, replace) at each mismatched position and take the minimum over all resulting paths to convert word1 into word2",
+    "time": "O(3^(m+n))",
+    "space": "O(m + n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

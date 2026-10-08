@@ -1,0 +1,636 @@
+{
+  "id": "minimum-height-trees",
+  "questionId": "minimum-height-trees",
+  "slug": "minimum-height-trees",
+  "title": "Minimum Height Trees",
+  "difficulty": "Hard",
+  "category": "Topological sort",
+  "patterns": [
+    "topological sort",
+    "tree",
+    "bfs layers",
+    "leaf peeling"
+  ],
+  "lists": [
+    "grind-75"
+  ],
+  "hints": [
+    "rooting the tree at a leaf tends to produce a tall, lopsided tree - which nodes would make the shortest, most 'centered' tree?",
+    "instead of computing height from every possible root, which costs O(n^2), think about repeatedly trimming the tree from its outer edges inward",
+    "compute the degree of every node, and repeatedly remove all current leaves (degree-1 nodes) in layers, similar to peeling off zero-in-degree nodes in Kahn's algorithm, updating the degrees of their neighbors as you go",
+    "each layer you peel shrinks the tree's diameter by 2, one from each end - keep going until 1 or 2 nodes remain, since those final node(s) are equidistant from every original leaf and minimize the height",
+    "sort the final 1 or 2 remaining node ids ascending before returning"
+  ],
+  "commonMistakes": [
+    "computing the actual height from every single node with a full BFS or DFS, which is correct but far slower than the leaf-peeling approach",
+    "stopping the peeling process too early or too late instead of stopping exactly when 1 or 2 nodes remain",
+    "forgetting that the answer can be two nodes, when the tree's center lies on an edge (an even-length longest path), not just one node"
+  ],
+  "content": {
+    "problemStatement": "You're given an undirected tree with `n` nodes, labeled 0 to n-1, and a\nlist of n-1 `edges` connecting them (a tree is connected and has no\ncycles). For any node you pick as the root, the tree has some height (the\nnumber of edges on the longest path from that root down to a leaf).\n\n**Return every node that, if picked as the root, produces the minimum possible height, in ascending order.**\n\nThere will always be either one or two such nodes.\n",
+    "constraints": [
+      "1 <= n <= 2 * 10^4",
+      "edges.length == n - 1",
+      "the edges are guaranteed to form a valid, connected, undirected tree"
+    ],
+    "notes": [
+      "a single node with no edges - it's the only possible answer",
+      "two nodes connected by a single edge - both are equally valid answers",
+      "a star-shaped tree - a single unique center node",
+      "a straight line (path) tree - one or two middle nodes, depending on whether the path length is even or odd"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 4, edges = [[1, 0], [1, 2], [1, 3]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": "node 1 is the center of this star shape; rooting anywhere else gives a taller tree"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 6, edges = [[3, 0], [3, 1], [3, 2], [3, 4], [5, 4]]",
+        "output": "[3, 4]",
+        "expectedOutput": "[3, 4]",
+        "explanation": "rooting at either 3 or 4 gives the same minimum height"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 1, edges = []",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "explanation": "a single node is its own root with height 0"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[4,[[1,0],[1,2],[1,3]]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[6,[[3,0],[3,1],[3,2],[3,4],[5,4]]]",
+        "output": "[3,4]",
+        "expectedOutput": "[3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[1,[]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[2,[[0,1]]]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[7,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6]]]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[10,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9]]]",
+        "output": "[4,5]",
+        "expectedOutput": "[4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[8,[[0,1],[1,2],[1,3],[3,4],[3,5],[5,6],[5,7]]]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[5,[[0,1],[0,2],[0,3],[0,4]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[3,[[0,1],[1,2]]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]]]",
+        "output": "[9,10]",
+        "expectedOutput": "[9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[25,[[0,1],[1,2],[0,3],[1,4],[3,5],[1,6],[4,7],[0,8],[0,9],[0,10],[0,11],[9,12],[5,13],[4,14],[1,15],[11,16],[7,17],[13,18],[18,19],[9,20],[18,21],[4,22],[6,23],[11,24]]]",
+        "output": "[0,3]",
+        "expectedOutput": "[0,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[9,[[0,1],[1,2],[1,3],[3,4],[3,5],[5,6],[5,7],[7,8]]]",
+        "output": "[3,5]",
+        "expectedOutput": "[3,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[6,[[0,1],[1,2],[1,3],[1,4],[4,5]]]",
+        "output": "[1,4]",
+        "expectedOutput": "[1,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[4,[[0,1],[1,2],[2,3]]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[13,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12]]]",
+        "output": "[6]",
+        "expectedOutput": "[6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[7,[[0,1],[0,2],[0,3],[3,4],[3,5],[3,6]]]",
+        "output": "[0,3]",
+        "expectedOutput": "[0,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[2,[[0,1]]]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[15,[[0,1],[0,2],[2,3],[0,4],[0,5],[1,6],[6,7],[1,8],[2,9],[7,10],[0,11],[4,12],[11,13],[9,14]]]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[11,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10]]]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[5,[[0,1],[0,2],[2,3],[2,4]]]",
+        "output": "[0,2]",
+        "expectedOutput": "[0,2]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 4, edges = [[1, 0], [1, 2], [1, 3]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": "node 1 is the center of this star shape; rooting anywhere else gives a taller tree"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 6, edges = [[3, 0], [3, 1], [3, 2], [3, 4], [5, 4]]",
+      "output": "[3, 4]",
+      "expectedOutput": "[3, 4]",
+      "explanation": "rooting at either 3 or 4 gives the same minimum height"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 1, edges = []",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "explanation": "a single node is its own root with height 0"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 4, edges = [[1, 0], [1, 2], [1, 3]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": "node 1 is the center of this star shape; rooting anywhere else gives a taller tree"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 6, edges = [[3, 0], [3, 1], [3, 2], [3, 4], [5, 4]]",
+      "output": "[3, 4]",
+      "expectedOutput": "[3, 4]",
+      "explanation": "rooting at either 3 or 4 gives the same minimum height"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 1, edges = []",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "explanation": "a single node is its own root with height 0"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[4,[[1,0],[1,2],[1,3]]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[6,[[3,0],[3,1],[3,2],[3,4],[5,4]]]",
+      "output": "[3,4]",
+      "expectedOutput": "[3,4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[1,[]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[2,[[0,1]]]",
+      "output": "[0,1]",
+      "expectedOutput": "[0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[7,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6]]]",
+      "output": "[3]",
+      "expectedOutput": "[3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[10,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9]]]",
+      "output": "[4,5]",
+      "expectedOutput": "[4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[8,[[0,1],[1,2],[1,3],[3,4],[3,5],[5,6],[5,7]]]",
+      "output": "[3]",
+      "expectedOutput": "[3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[5,[[0,1],[0,2],[0,3],[0,4]]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[3,[[0,1],[1,2]]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]]]",
+      "output": "[9,10]",
+      "expectedOutput": "[9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[25,[[0,1],[1,2],[0,3],[1,4],[3,5],[1,6],[4,7],[0,8],[0,9],[0,10],[0,11],[9,12],[5,13],[4,14],[1,15],[11,16],[7,17],[13,18],[18,19],[9,20],[18,21],[4,22],[6,23],[11,24]]]",
+      "output": "[0,3]",
+      "expectedOutput": "[0,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[9,[[0,1],[1,2],[1,3],[3,4],[3,5],[5,6],[5,7],[7,8]]]",
+      "output": "[3,5]",
+      "expectedOutput": "[3,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[6,[[0,1],[1,2],[1,3],[1,4],[4,5]]]",
+      "output": "[1,4]",
+      "expectedOutput": "[1,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[4,[[0,1],[1,2],[2,3]]]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[13,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12]]]",
+      "output": "[6]",
+      "expectedOutput": "[6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[7,[[0,1],[0,2],[0,3],[3,4],[3,5],[3,6]]]",
+      "output": "[0,3]",
+      "expectedOutput": "[0,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[2,[[0,1]]]",
+      "output": "[0,1]",
+      "expectedOutput": "[0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[15,[[0,1],[0,2],[2,3],[0,4],[0,5],[1,6],[6,7],[1,8],[2,9],[7,10],[0,11],[4,12],[11,13],[9,14]]]",
+      "output": "[0,1]",
+      "expectedOutput": "[0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[11,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10]]]",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[5,[[0,1],[0,2],[2,3],[2,4]]]",
+      "output": "[0,2]",
+      "expectedOutput": "[0,2]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 4, edges = [[1, 0], [1, 2], [1, 3]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": "node 1 is the center of this star shape; rooting anywhere else gives a taller tree"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 6, edges = [[3, 0], [3, 1], [3, 2], [3, 4], [5, 4]]",
+        "output": "[3, 4]",
+        "expectedOutput": "[3, 4]",
+        "explanation": "rooting at either 3 or 4 gives the same minimum height"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 1, edges = []",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "explanation": "a single node is its own root with height 0"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[4,[[1,0],[1,2],[1,3]]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[6,[[3,0],[3,1],[3,2],[3,4],[5,4]]]",
+        "output": "[3,4]",
+        "expectedOutput": "[3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[1,[]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[2,[[0,1]]]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[7,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6]]]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[10,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9]]]",
+        "output": "[4,5]",
+        "expectedOutput": "[4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[8,[[0,1],[1,2],[1,3],[3,4],[3,5],[5,6],[5,7]]]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[5,[[0,1],[0,2],[0,3],[0,4]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[3,[[0,1],[1,2]]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]]]",
+        "output": "[9,10]",
+        "expectedOutput": "[9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[25,[[0,1],[1,2],[0,3],[1,4],[3,5],[1,6],[4,7],[0,8],[0,9],[0,10],[0,11],[9,12],[5,13],[4,14],[1,15],[11,16],[7,17],[13,18],[18,19],[9,20],[18,21],[4,22],[6,23],[11,24]]]",
+        "output": "[0,3]",
+        "expectedOutput": "[0,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[9,[[0,1],[1,2],[1,3],[3,4],[3,5],[5,6],[5,7],[7,8]]]",
+        "output": "[3,5]",
+        "expectedOutput": "[3,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[6,[[0,1],[1,2],[1,3],[1,4],[4,5]]]",
+        "output": "[1,4]",
+        "expectedOutput": "[1,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[4,[[0,1],[1,2],[2,3]]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[13,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12]]]",
+        "output": "[6]",
+        "expectedOutput": "[6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[7,[[0,1],[0,2],[0,3],[3,4],[3,5],[3,6]]]",
+        "output": "[0,3]",
+        "expectedOutput": "[0,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[2,[[0,1]]]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[15,[[0,1],[0,2],[2,3],[0,4],[0,5],[1,6],[6,7],[1,8],[2,9],[7,10],[0,11],[4,12],[11,13],[9,14]]]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[11,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10]]]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[5,[[0,1],[0,2],[2,3],[2,4]]]",
+        "output": "[0,2]",
+        "expectedOutput": "[0,2]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findMinHeightTrees(self, n, edges):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findMinHeightTrees(int n, vector<vector<int>>& edges) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findMinHeightTrees(int n, int[][] edges) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMinHeightTrees(n: Int, edges: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMinHeightTrees(n, edges) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findMinHeightTrees(self, n, edges):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findMinHeightTrees(int n, vector<vector<int>>& edges) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findMinHeightTrees(int n, int[][] edges) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMinHeightTrees(n: Int, edges: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMinHeightTrees(n, edges) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findMinHeightTrees(self, n, edges):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findMinHeightTrees(int n, vector<vector<int>>& edges) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findMinHeightTrees(int n, int[][] edges) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMinHeightTrees(n: Int, edges: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMinHeightTrees(n, edges) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findMinHeightTrees(self, n, edges):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findMinHeightTrees(int n, vector<vector<int>>& edges) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findMinHeightTrees(int n, int[][] edges) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMinHeightTrees(n: Int, edges: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMinHeightTrees(n, edges) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(V + E)",
+      "space": "O(V + E)",
+      "pattern": "iteratively peel leaves (degree-1 nodes) layer by layer, like a Kahn's-style reduction working inward from the outside, until 1 or 2 nodes remain"
+    },
+    "bruteForce": {
+      "approach": "for every node, run a BFS or DFS to compute the tree's height when rooted there, and return every node achieving the overall minimum",
+      "time": "O(n^2)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "iteratively peel leaves (degree-1 nodes) layer by layer, like a Kahn's-style reduction working inward from the outside, until 1 or 2 nodes remain",
+    "time": "O(V + E)",
+    "space": "O(V + E)",
+    "hint_ladder": [
+      "rooting the tree at a leaf tends to produce a tall, lopsided tree - which nodes would make the shortest, most 'centered' tree?",
+      "instead of computing height from every possible root, which costs O(n^2), think about repeatedly trimming the tree from its outer edges inward",
+      "compute the degree of every node, and repeatedly remove all current leaves (degree-1 nodes) in layers, similar to peeling off zero-in-degree nodes in Kahn's algorithm, updating the degrees of their neighbors as you go",
+      "each layer you peel shrinks the tree's diameter by 2, one from each end - keep going until 1 or 2 nodes remain, since those final node(s) are equidistant from every original leaf and minimize the height",
+      "sort the final 1 or 2 remaining node ids ascending before returning"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every node, run a BFS or DFS to compute the tree's height when rooted there, and return every node achieving the overall minimum",
+    "time": "O(n^2)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

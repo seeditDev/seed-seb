@@ -1,0 +1,714 @@
+{
+  "id": "maximum-width-of-binary-tree",
+  "questionId": "maximum-width-of-binary-tree",
+  "slug": "maximum-width-of-binary-tree",
+  "title": "Maximum Width of Binary Tree",
+  "difficulty": "Hard",
+  "category": "Tree bfs",
+  "patterns": [
+    "tree bfs",
+    "queue"
+  ],
+  "lists": [],
+  "hints": [
+    "the relative position doubles every level, same shape as heap indices - but you need it reset per-level, not as a raw global array index, since a deep missing subtree would otherwise inflate the number unrealistically",
+    "push (node index, relative position) pairs onto the queue; start with (0, 0) for the root",
+    "when processing a level, the width is just (relative position of the last node dequeued this level) - (relative position of the first node dequeued this level) + 1 - you don't need every position, only the two ends",
+    "watch for overflow: normalize each level's positions by subtracting the first position's value before computing children's positions, so numbers stay small even in very deep, lopsided trees"
+  ],
+  "commonMistakes": [
+    "using the node's actual array index (from the 2*i+1 / 2*i+2 encoding) directly as its position, which does NOT reset per level and produces wildly wrong widths for lower levels",
+    "computing width from the count of real nodes present on a level instead of from the span between the leftmost and rightmost real node's relative position",
+    "letting relative positions grow unboundedly across many levels without renormalizing, causing integer overflow on deep, unbalanced trees"
+  ],
+  "content": {
+    "problemStatement": "A binary tree is given as a plain integer array named `tree`, using a\ncomplete-binary-tree (heap) index layout:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array bounds **and** its value isn't the sentinel `-101`\n- `-101` means \"no node here\" - real node values always fall between -100 and 100, so -101 can never be a genuine value\n\n**Return the tree's maximum width across all levels**, where a level's width is measured as if the tree were extended to a full binary tree:\n\n- the root gets relative position 0\n- a node at relative position `p` has children at positions `2*p` and `2*p+1`, **reset to start at 0 on each level**\n- a level's width is (rightmost real node's position) minus (leftmost real node's position) plus 1, so any missing nodes between them still count toward that level's width\n\nFor example, `[1, 2, 3, 4, -101, -101, 5]` encodes this tree:\n\n```\n      1\n     / \\\n    2   3\n   /     \\\n  4       5\n```\n\nOn level 2, node 4 sits at relative position 0 while node 5 - the right\nchild of node 3, whose own left child is the sentinel - sits at relative\nposition 3. The width is 3 - 0 + 1 = 4, even though only 2 real nodes\nexist on that level.\n",
+    "constraints": [
+      "1 <= length of tree <= 2000",
+      "every real node value is in the range -100 to 100",
+      "the sentinel value -101 marks a missing node and never appears as a real value",
+      "the answer fits within a 32-bit signed integer"
+    ],
+    "notes": [
+      "a single-node tree, whose only level has width 1",
+      "a purely left-leaning or right-leaning chain, where every level's width is 1 despite the tree being tall",
+      "a level where the widest gap is created by an entire missing subtree between two distant real nodes"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, 4, -101, -101, 5]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "level 2 has node 4 (child of node 2, position 0) and node 5 (child of node 3, position 3, since node 3's left child is a sentinel and node 5 is its right child) - width is 3 - 0 + 1 = 4, even though only 2 real nodes exist on that level"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, 4, 5, 6, 7]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "the last level is completely full with 4 nodes at positions 0, 1, 2, 3 - width 4 - 0 + 1 = 4"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [1, 2, -101, 3]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "every level here has exactly one real node with nothing missing between it and itself, so every level's width is 1"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,-101,-101,5]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,-101,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[42]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-17]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[10,11,-101,12,-101,-101,-101,13,-101,-101,-101,-101,-101,-101,-101,14]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-5,-101,-4,-101,-101,-101,-3,-101,-101,-101,-101,-101,-101,-101,-2,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,-101,3,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,6,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,8]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-22,27,20,-24,-101,-101,19,-6,2,-101,-101,-101,-101,-101,29,16,28,26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,17,5,-101,-101,-5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-11,-20]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-66,-37,-101,12,75,-101,-101,-79,62,13,33,-101,-101,-101,-101,-101,-101,-101,-24,-20,-57,-101,28,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-18,-32,-72,10,-101,-101,-101,-101,77,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-69,-101,47,36]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-40,20,21,-32,40,33,5,-101,9,-84,-62,66,64,-101,-101,-101,-101,-14,-91,-101,-66,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,47,52,-101,-101,-101,-101,74,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-44,-101,-101,-101,-101,-101,-101,-101,-101,-101,46,46,66,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,72]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-40,22,-94,60,95,46,29,-101,91,40,-56,97,-101,68,10,-101,-101,-101,12,-34,-91,-101,-9,-101,-101,-101,-101,-101,-85,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-75,65,-101,-101,-101,-101,-98,-100,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,40,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-29,-101,-7,12,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-94,-101,-101,-101,-101,67,39]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[9,-7,10,10,-5,-1,2,3,-101,-5,-101,2,0,-8,1,-1,-101,-101,-101,-101,-9,-101,-101,-101,6,-101,-101,3,-101,-101,-101,-8]]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,-101,5,-101,7,-101,-101,-101,-101,-101,-101,-101,15]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,-101,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[-1,-2,-3,-4,-5,-6,-7]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[0,0,0,0,0,0,0]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[[1,2,3,-101,-101,-101,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_24",
+        "input": "[[1,-101,3,-101,-101,-101,4]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, 4, -101, -101, 5]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "level 2 has node 4 (child of node 2, position 0) and node 5 (child of node 3, position 3, since node 3's left child is a sentinel and node 5 is its right child) - width is 3 - 0 + 1 = 4, even though only 2 real nodes exist on that level"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, 4, 5, 6, 7]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "the last level is completely full with 4 nodes at positions 0, 1, 2, 3 - width 4 - 0 + 1 = 4"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [1, 2, -101, 3]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "every level here has exactly one real node with nothing missing between it and itself, so every level's width is 1"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, 4, -101, -101, 5]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "level 2 has node 4 (child of node 2, position 0) and node 5 (child of node 3, position 3, since node 3's left child is a sentinel and node 5 is its right child) - width is 3 - 0 + 1 = 4, even though only 2 real nodes exist on that level"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, 4, 5, 6, 7]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "the last level is completely full with 4 nodes at positions 0, 1, 2, 3 - width 4 - 0 + 1 = 4"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [1, 2, -101, 3]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "every level here has exactly one real node with nothing missing between it and itself, so every level's width is 1"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,4,-101,-101,5]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3,4,5,6,7]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,-101,3]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[5]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[42]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[-17]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[10,11,-101,12,-101,-101,-101,13,-101,-101,-101,-101,-101,-101,-101,14]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-5,-101,-4,-101,-101,-101,-3,-101,-101,-101,-101,-101,-101,-101,-2,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,-101,3,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,6,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,8]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5,6,7]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[-22,27,20,-24,-101,-101,19,-6,2,-101,-101,-101,-101,-101,29,16,28,26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,17,5,-101,-101,-5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-11,-20]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-66,-37,-101,12,75,-101,-101,-79,62,13,33,-101,-101,-101,-101,-101,-101,-101,-24,-20,-57,-101,28,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-18,-32,-72,10,-101,-101,-101,-101,77,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-69,-101,47,36]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-40,20,21,-32,40,33,5,-101,9,-84,-62,66,64,-101,-101,-101,-101,-14,-91,-101,-66,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,47,52,-101,-101,-101,-101,74,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-44,-101,-101,-101,-101,-101,-101,-101,-101,-101,46,46,66,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,72]]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[-40,22,-94,60,95,46,29,-101,91,40,-56,97,-101,68,10,-101,-101,-101,12,-34,-91,-101,-9,-101,-101,-101,-101,-101,-85,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-75,65,-101,-101,-101,-101,-98,-100,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,40,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-29,-101,-7,12,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-94,-101,-101,-101,-101,67,39]]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[9,-7,10,10,-5,-1,2,3,-101,-5,-101,2,0,-8,1,-1,-101,-101,-101,-101,-9,-101,-101,-101,6,-101,-101,3,-101,-101,-101,-8]]",
+      "output": "13",
+      "expectedOutput": "13",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,-101,5,-101,7,-101,-101,-101,-101,-101,-101,-101,15]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,-101,3]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[-1,-2,-3,-4,-5,-6,-7]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[[0,0,0,0,0,0,0]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_23",
+      "input": "[[1,2,3,-101,-101,-101,4]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_24",
+      "input": "[[1,-101,3,-101,-101,-101,4]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, 4, -101, -101, 5]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "level 2 has node 4 (child of node 2, position 0) and node 5 (child of node 3, position 3, since node 3's left child is a sentinel and node 5 is its right child) - width is 3 - 0 + 1 = 4, even though only 2 real nodes exist on that level"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, 4, 5, 6, 7]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "the last level is completely full with 4 nodes at positions 0, 1, 2, 3 - width 4 - 0 + 1 = 4"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [1, 2, -101, 3]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "every level here has exactly one real node with nothing missing between it and itself, so every level's width is 1"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,-101,-101,5]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,-101,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[42]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-17]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[10,11,-101,12,-101,-101,-101,13,-101,-101,-101,-101,-101,-101,-101,14]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-5,-101,-4,-101,-101,-101,-3,-101,-101,-101,-101,-101,-101,-101,-2,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,-101,3,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,6,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,8]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-22,27,20,-24,-101,-101,19,-6,2,-101,-101,-101,-101,-101,29,16,28,26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,17,5,-101,-101,-5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-11,-20]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-66,-37,-101,12,75,-101,-101,-79,62,13,33,-101,-101,-101,-101,-101,-101,-101,-24,-20,-57,-101,28,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-18,-32,-72,10,-101,-101,-101,-101,77,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-69,-101,47,36]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-40,20,21,-32,40,33,5,-101,9,-84,-62,66,64,-101,-101,-101,-101,-14,-91,-101,-66,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,47,52,-101,-101,-101,-101,74,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-44,-101,-101,-101,-101,-101,-101,-101,-101,-101,46,46,66,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,72]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-40,22,-94,60,95,46,29,-101,91,40,-56,97,-101,68,10,-101,-101,-101,12,-34,-91,-101,-9,-101,-101,-101,-101,-101,-85,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-75,65,-101,-101,-101,-101,-98,-100,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,40,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-29,-101,-7,12,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-94,-101,-101,-101,-101,67,39]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[9,-7,10,10,-5,-1,2,3,-101,-5,-101,2,0,-8,1,-1,-101,-101,-101,-101,-9,-101,-101,-101,6,-101,-101,3,-101,-101,-101,-8]]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,-101,5,-101,7,-101,-101,-101,-101,-101,-101,-101,15]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,-101,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[-1,-2,-3,-4,-5,-6,-7]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[0,0,0,0,0,0,0]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[[1,2,3,-101,-101,-101,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_24",
+        "input": "[[1,-101,3,-101,-101,-101,4]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def widthOfBinaryTree(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int widthOfBinaryTree(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int widthOfBinaryTree(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun widthOfBinaryTree(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    widthOfBinaryTree(tree) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def widthOfBinaryTree(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int widthOfBinaryTree(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int widthOfBinaryTree(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun widthOfBinaryTree(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    widthOfBinaryTree(tree) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def widthOfBinaryTree(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int widthOfBinaryTree(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int widthOfBinaryTree(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun widthOfBinaryTree(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    widthOfBinaryTree(tree) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def widthOfBinaryTree(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int widthOfBinaryTree(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int widthOfBinaryTree(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun widthOfBinaryTree(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    widthOfBinaryTree(tree) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the queue in the worst case",
+      "pattern": "BFS with a queue, carrying each node's relative position alongside it and computing width directly from the first and last position seen in each level's batch"
+    },
+    "bruteForce": {
+      "approach": "recursive DFS carrying each node's per-level relative position (root gets 0, left child gets 2*parentPos, right child gets 2*parentPos+1), recording the min and max position seen at each depth, then scanning those to find the largest (max-min+1)",
+      "time": "O(n)",
+      "space": "O(h) recursion stack plus O(n) for tracking per-depth min/max"
+    }
+  },
+  "optimal": {
+    "pattern": "BFS with a queue, carrying each node's relative position alongside it and computing width directly from the first and last position seen in each level's batch",
+    "time": "O(n)",
+    "space": "O(n) for the queue in the worst case",
+    "hint_ladder": [
+      "the relative position doubles every level, same shape as heap indices - but you need it reset per-level, not as a raw global array index, since a deep missing subtree would otherwise inflate the number unrealistically",
+      "push (node index, relative position) pairs onto the queue; start with (0, 0) for the root",
+      "when processing a level, the width is just (relative position of the last node dequeued this level) - (relative position of the first node dequeued this level) + 1 - you don't need every position, only the two ends",
+      "watch for overflow: normalize each level's positions by subtracting the first position's value before computing children's positions, so numbers stay small even in very deep, lopsided trees"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursive DFS carrying each node's per-level relative position (root gets 0, left child gets 2*parentPos, right child gets 2*parentPos+1), recording the min and max position seen at each depth, then scanning those to find the largest (max-min+1)",
+    "time": "O(n)",
+    "space": "O(h) recursion stack plus O(n) for tracking per-depth min/max"
+  },
+  "isIndex0": true,
+  "level": null
+}

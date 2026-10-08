@@ -1,0 +1,672 @@
+{
+  "id": "find-if-path-exists-in-graph",
+  "questionId": "find-if-path-exists-in-graph",
+  "slug": "find-if-path-exists-in-graph",
+  "title": "Find if Path Exists in Graph",
+  "difficulty": "Easy",
+  "category": "Graphs",
+  "patterns": [
+    "graph dfs/bfs",
+    "connectivity"
+  ],
+  "lists": [],
+  "hints": [
+    "this is really just asking: are source and destination in the same connected component?",
+    "build an adjacency list from the edge list first",
+    "run a DFS or BFS starting from source, marking visited nodes",
+    "return whether destination was ever visited during that traversal, and remember to short-circuit if source equals destination"
+  ],
+  "commonMistakes": [
+    "forgetting the graph is undirected and only adding the edge in one direction",
+    "not handling source == destination as trivially true",
+    "infinite looping by not tracking visited nodes"
+  ],
+  "content": {
+    "problemStatement": "You're given an undirected graph with `n` nodes, labeled 0 to n-1,\ndescribed by a list of edges where each edge is `[u, v]`, plus a\n`source` node and a `destination` node.\n\n**Return true if there is a path connecting `source` to `destination`, and false otherwise.**\n\nA path of zero edges counts, so if `source` equals `destination` the answer is always true.\n",
+    "constraints": [
+      "1 <= n <= 200000",
+      "edges are undirected, no self loops or repeated edges",
+      "0 <= source, destination < n"
+    ],
+    "notes": [
+      "source equals destination",
+      "graph with no edges at all",
+      "single node graph",
+      "source and destination in different connected components"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 3, edges = [[0,1],[1,2],[2,0]], source = 0, destination = 2",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "0 -> 1 -> 2 is a valid path"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 6, edges = [[0,1],[0,2],[3,5],[5,4],[4,3]], source = 0, destination = 5",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "nodes 0-1-2 form one component and 3-4-5 form a separate component"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 1, edges = [], source = 0, destination = 0",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "source and destination are the same node, so no edges are needed"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[3,[[0,1],[1,2],[2,0]],0,2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[6,[[0,1],[0,2],[3,5],[5,4],[4,3]],0,5]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[1,[],0,0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[5,[[0,1],[1,2],[2,3],[3,4]],0,4]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,[],0,0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[2,[],0,1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[5,[[0,1],[1,2]],3,3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[7,[[0,1],[1,2],[2,3],[4,5],[5,6]],0,6]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[7,[[0,1],[1,2],[2,3],[4,5],[5,6]],0,3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[10,[[0,1],[2,3],[4,5],[6,7],[8,9]],0,9]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],0,19]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],19,0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],5,5]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[25,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[19,20],[20,21],[21,22],[22,23],[23,24],[24,0]],3,20]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],0,15]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],2,8]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[3,[],0,2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[30,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[15,16],[16,17],[17,18],[18,19],[19,20],[20,21],[21,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29]],0,29]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[30,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[15,16],[16,17],[17,18],[18,19],[19,20],[20,21],[21,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29]],5,20]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[15,[[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],[0,10],[0,11],[0,12],[0,13],[0,14]],3,10]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[15,[[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],[0,10],[0,11],[0,12],[0,13],[0,14]],0,0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[2,[[0,1]],1,0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 3, edges = [[0,1],[1,2],[2,0]], source = 0, destination = 2",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "0 -> 1 -> 2 is a valid path"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 6, edges = [[0,1],[0,2],[3,5],[5,4],[4,3]], source = 0, destination = 5",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "nodes 0-1-2 form one component and 3-4-5 form a separate component"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 1, edges = [], source = 0, destination = 0",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "source and destination are the same node, so no edges are needed"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 3, edges = [[0,1],[1,2],[2,0]], source = 0, destination = 2",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "0 -> 1 -> 2 is a valid path"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 6, edges = [[0,1],[0,2],[3,5],[5,4],[4,3]], source = 0, destination = 5",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "nodes 0-1-2 form one component and 3-4-5 form a separate component"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 1, edges = [], source = 0, destination = 0",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "source and destination are the same node, so no edges are needed"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[3,[[0,1],[1,2],[2,0]],0,2]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[6,[[0,1],[0,2],[3,5],[5,4],[4,3]],0,5]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[1,[],0,0]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[5,[[0,1],[1,2],[2,3],[3,4]],0,4]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[1,[],0,0]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[2,[],0,1]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[5,[[0,1],[1,2]],3,3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[7,[[0,1],[1,2],[2,3],[4,5],[5,6]],0,6]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[7,[[0,1],[1,2],[2,3],[4,5],[5,6]],0,3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[10,[[0,1],[2,3],[4,5],[6,7],[8,9]],0,9]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],0,19]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],19,0]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],5,5]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[25,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[19,20],[20,21],[21,22],[22,23],[23,24],[24,0]],3,20]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],0,15]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],2,8]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[3,[],0,2]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[30,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[15,16],[16,17],[17,18],[18,19],[19,20],[20,21],[21,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29]],0,29]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[30,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[15,16],[16,17],[17,18],[18,19],[19,20],[20,21],[21,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29]],5,20]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[15,[[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],[0,10],[0,11],[0,12],[0,13],[0,14]],3,10]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[15,[[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],[0,10],[0,11],[0,12],[0,13],[0,14]],0,0]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[2,[[0,1]],1,0]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 3, edges = [[0,1],[1,2],[2,0]], source = 0, destination = 2",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "0 -> 1 -> 2 is a valid path"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 6, edges = [[0,1],[0,2],[3,5],[5,4],[4,3]], source = 0, destination = 5",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "nodes 0-1-2 form one component and 3-4-5 form a separate component"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 1, edges = [], source = 0, destination = 0",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "source and destination are the same node, so no edges are needed"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[3,[[0,1],[1,2],[2,0]],0,2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[6,[[0,1],[0,2],[3,5],[5,4],[4,3]],0,5]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[1,[],0,0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[5,[[0,1],[1,2],[2,3],[3,4]],0,4]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,[],0,0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[2,[],0,1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[5,[[0,1],[1,2]],3,3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[7,[[0,1],[1,2],[2,3],[4,5],[5,6]],0,6]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[7,[[0,1],[1,2],[2,3],[4,5],[5,6]],0,3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[10,[[0,1],[2,3],[4,5],[6,7],[8,9]],0,9]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],0,19]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],19,0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],5,5]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[25,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[19,20],[20,21],[21,22],[22,23],[23,24],[24,0]],3,20]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],0,15]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],2,8]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[3,[],0,2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[30,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[15,16],[16,17],[17,18],[18,19],[19,20],[20,21],[21,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29]],0,29]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[30,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[15,16],[16,17],[17,18],[18,19],[19,20],[20,21],[21,22],[22,23],[23,24],[24,25],[25,26],[26,27],[27,28],[28,29]],5,20]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[15,[[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],[0,10],[0,11],[0,12],[0,13],[0,14]],3,10]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[15,[[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],[0,10],[0,11],[0,12],[0,13],[0,14]],0,0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[2,[[0,1]],1,0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def validPath(self, n, edges, source, destination):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool validPath(int n, vector<vector<int>>& edges, int source, int destination) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean validPath(int n, int[][] edges, int source, int destination) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun validPath(n: Int, edges: Array<IntArray>, source: Int, destination: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    validPath(n, edges, source, destination) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def validPath(self, n, edges, source, destination):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool validPath(int n, vector<vector<int>>& edges, int source, int destination) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean validPath(int n, int[][] edges, int source, int destination) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun validPath(n: Int, edges: Array<IntArray>, source: Int, destination: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    validPath(n, edges, source, destination) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def validPath(self, n, edges, source, destination):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool validPath(int n, vector<vector<int>>& edges, int source, int destination) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean validPath(int n, int[][] edges, int source, int destination) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun validPath(n: Int, edges: Array<IntArray>, source: Int, destination: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    validPath(n, edges, source, destination) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def validPath(self, n, edges, source, destination):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool validPath(int n, vector<vector<int>>& edges, int source, int destination) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean validPath(int n, int[][] edges, int source, int destination) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun validPath(n: Int, edges: Array<IntArray>, source: Int, destination: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    validPath(n, edges, source, destination) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(nodes + edges)",
+      "space": "O(nodes + edges)",
+      "pattern": "graph dfs/bfs for connectivity"
+    },
+    "bruteForce": {
+      "approach": "try every possible path exhaustively (or union-find with naive merging), impractical to reason about compared to a direct traversal",
+      "time": "O(n^2) or worse without a proper traversal",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "graph dfs/bfs for connectivity",
+    "time": "O(nodes + edges)",
+    "space": "O(nodes + edges)",
+    "hint_ladder": [
+      "this is really just asking: are source and destination in the same connected component?",
+      "build an adjacency list from the edge list first",
+      "run a DFS or BFS starting from source, marking visited nodes",
+      "return whether destination was ever visited during that traversal, and remember to short-circuit if source equals destination"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every possible path exhaustively (or union-find with naive merging), impractical to reason about compared to a direct traversal",
+    "time": "O(n^2) or worse without a proper traversal",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,652 @@
+{
+  "id": "keys-and-rooms",
+  "questionId": "keys-and-rooms",
+  "slug": "keys-and-rooms",
+  "title": "Keys and Rooms",
+  "difficulty": "Medium",
+  "category": "Graphs",
+  "patterns": [
+    "graph dfs/bfs",
+    "adjacency list"
+  ],
+  "lists": [],
+  "hints": [
+    "treat each room as a node and each key found in a room as a directed edge to the room it unlocks",
+    "start a traversal from room 0, since that's the only room you begin with access to",
+    "every time you enter a room, add all of its keys to the set of rooms you can still visit",
+    "after the traversal finishes, check whether the number of visited rooms equals n"
+  ],
+  "commonMistakes": [
+    "not handling duplicate keys, causing rooms to be processed or added multiple times unnecessarily",
+    "forgetting that having a key doesn't mean you've visited that room yet - you still need to actually traverse there",
+    "assuming all rooms are reachable without checking, when some rooms may never receive a key"
+  ],
+  "content": {
+    "problemStatement": "There are n rooms labeled 0 to n-1, and you start locked in room 0 with\nevery other room locked. You're given a list `rooms` where `rooms[i]`\nis the list of key labels found inside room i; each key lets you unlock\nand enter the room with that label. Rooms can have any number of keys,\nincluding zero, and duplicate keys can appear.\n\n**Return true if you can eventually visit every room, false\notherwise.**\n",
+    "constraints": [
+      "n == rooms.length",
+      "1 <= n <= 1000",
+      "0 <= rooms[i][j] < n",
+      "0 <= rooms[i].length <= 1000"
+    ],
+    "notes": [
+      "only one room total",
+      "a room whose only key is to itself",
+      "a room that is completely unreachable",
+      "duplicate keys pointing to an already-unlocked room"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "rooms = [[1],[2],[3],[]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "room 0 has the key to room 1, room 1 has the key to room 2, room 2 has the key to room 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "rooms = [[1,3],[3,0,1],[2],[0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "room 2 is never reachable since no key to room 2 is ever found"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "rooms = [[]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "there's only one room and you start inside it"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1],[2],[3],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,3],[3,0,1],[2],[0]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,2],[2],[0]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[0]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1],[2],[],[3]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,1,1],[0],[0]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1],[2],[3],[4],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,2,3,4],[],[],[],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1],[0]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[],[]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,2,3,4,5,6,7,8,9],[],[],[],[],[],[],[],[],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1],[2],[3],[4],[0]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,2],[3],[3],[],[0]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1],[2],[],[4],[]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,2,3],[],[],[],[]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,1,1,1],[2],[],[],[]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "rooms = [[1],[2],[3],[]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "room 0 has the key to room 1, room 1 has the key to room 2, room 2 has the key to room 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "rooms = [[1,3],[3,0,1],[2],[0]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "room 2 is never reachable since no key to room 2 is ever found"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "rooms = [[]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "there's only one room and you start inside it"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "rooms = [[1],[2],[3],[]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "room 0 has the key to room 1, room 1 has the key to room 2, room 2 has the key to room 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "rooms = [[1,3],[3,0,1],[2],[0]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "room 2 is never reachable since no key to room 2 is ever found"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "rooms = [[]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "there's only one room and you start inside it"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1],[2],[3],[]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,3],[3,0,1],[2],[0]]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1,2],[2],[0]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[0]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1],[2],[],[3]]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,1,1],[0],[0]]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1],[2],[3],[4],[]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1,2,3,4],[],[],[],[]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[1],[0]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[],[]]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,2,3,4,5,6,7,8,9],[],[],[],[],[],[],[],[],[]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[1],[2],[3],[4],[0]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[1,2],[3],[3],[],[0]]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1],[2],[],[4],[]]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,2,3],[],[],[],[]]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,1,1,1],[2],[],[],[]]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[[]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "rooms = [[1],[2],[3],[]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "room 0 has the key to room 1, room 1 has the key to room 2, room 2 has the key to room 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "rooms = [[1,3],[3,0,1],[2],[0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "room 2 is never reachable since no key to room 2 is ever found"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "rooms = [[]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "there's only one room and you start inside it"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1],[2],[3],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,3],[3,0,1],[2],[0]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,2],[2],[0]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[0]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1],[2],[],[3]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,1,1],[0],[0]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1],[2],[3],[4],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,2,3,4],[],[],[],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1],[0]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[],[]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,2,3,4,5,6,7,8,9],[],[],[],[],[],[],[],[],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1],[2],[3],[4],[0]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,2],[3],[3],[],[0]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1],[2],[],[4],[]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,2,3],[],[],[],[]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,1,1,1],[2],[],[],[]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def canVisitAllRooms(self, rooms):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canVisitAllRooms(vector<vector<int>>& rooms) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canVisitAllRooms(int[][] rooms) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canVisitAllRooms(rooms: Array<IntArray>): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canVisitAllRooms(rooms) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def canVisitAllRooms(self, rooms):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canVisitAllRooms(vector<vector<int>>& rooms) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canVisitAllRooms(int[][] rooms) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canVisitAllRooms(rooms: Array<IntArray>): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canVisitAllRooms(rooms) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def canVisitAllRooms(self, rooms):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canVisitAllRooms(vector<vector<int>>& rooms) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canVisitAllRooms(int[][] rooms) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canVisitAllRooms(rooms: Array<IntArray>): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canVisitAllRooms(rooms) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def canVisitAllRooms(self, rooms):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canVisitAllRooms(vector<vector<int>>& rooms) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canVisitAllRooms(int[][] rooms) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canVisitAllRooms(rooms: Array<IntArray>): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canVisitAllRooms(rooms) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n + total keys)",
+      "space": "O(n)",
+      "pattern": "graph dfs/bfs where rooms[i] is directly the adjacency list of room i"
+    },
+    "bruteForce": {
+      "approach": "same as optimal, this problem is inherently a single traversal - there's no meaningfully slower alternative",
+      "time": "O(n + total keys)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "graph dfs/bfs where rooms[i] is directly the adjacency list of room i",
+    "time": "O(n + total keys)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "treat each room as a node and each key found in a room as a directed edge to the room it unlocks",
+      "start a traversal from room 0, since that's the only room you begin with access to",
+      "every time you enter a room, add all of its keys to the set of rooms you can still visit",
+      "after the traversal finishes, check whether the number of visited rooms equals n"
+    ]
+  },
+  "bruteForce": {
+    "approach": "same as optimal, this problem is inherently a single traversal - there's no meaningfully slower alternative",
+    "time": "O(n + total keys)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

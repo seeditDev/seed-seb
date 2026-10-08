@@ -1,0 +1,629 @@
+{
+  "id": "move-zeroes",
+  "questionId": "move-zeroes",
+  "slug": "move-zeroes",
+  "title": "Move Zeroes",
+  "difficulty": "Easy",
+  "category": "Two pointers",
+  "patterns": [
+    "two pointers",
+    "in-place array"
+  ],
+  "lists": [],
+  "hints": [
+    "can you avoid building a whole second array, and instead shift things around as you scan once?",
+    "what if a slow pointer marked 'the next spot a non-zero value belongs', and a fast pointer looked for non-zero values to put there?",
+    "walk the array with a fast pointer; every time you find a non-zero value, place it at the slow pointer's position and advance slow",
+    "once the fast pointer reaches the end, every position from the slow pointer onward should become zero"
+  ],
+  "commonMistakes": [
+    "swapping instead of overwriting when it isn't needed, or forgetting to zero out the remaining tail after placing all non-zero values",
+    "changing the relative order of the non-zero elements",
+    "allocating a second array when the point is to do it with two pointers over the same pass"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of numbers `nums`.\n\n**Return the list with every zero moved to the end, while every non-zero number keeps its original relative order.**\n\nDo it in a single pass, without allocating a second array to build the answer in.\n",
+    "constraints": [
+      "0 <= nums.length <= 10^4",
+      "-2^31 <= nums[i] <= 2^31 - 1",
+      "nums may contain any mix of positive, negative, and zero values"
+    ],
+    "notes": [
+      "no zeroes at all (array unchanged)",
+      "all zeroes",
+      "zeroes already at the end"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [0, 1, 0, 3, 12]",
+        "output": "[1, 3, 12, 0, 0]",
+        "expectedOutput": "[1, 3, 12, 0, 0]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 0, 2, 0, 3]",
+        "output": "[1, 2, 3, 0, 0]",
+        "expectedOutput": "[1, 2, 3, 0, 0]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[0,1,0,3,12]]",
+        "output": "[1,3,12,0,0]",
+        "expectedOutput": "[1,3,12,0,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,0,2,0,3]]",
+        "output": "[1,2,3,0,0]",
+        "expectedOutput": "[1,2,3,0,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0,0,0]]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5]]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,0,-2,0,3]]",
+        "output": "[-1,-2,3,0,0]",
+        "expectedOutput": "[-1,-2,3,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,0,1]]",
+        "output": "[1,0,0]",
+        "expectedOutput": "[1,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,0,0]]",
+        "output": "[1,0,0]",
+        "expectedOutput": "[1,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9,10,0]",
+        "expectedOutput": "[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9,10,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,3]]",
+        "output": "[1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+        "expectedOutput": "[1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]",
+        "output": "[1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+        "expectedOutput": "[1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,0,4,5,0,7,8,0,10,11,0,13,14,0,16,17,0,19,20]]",
+        "output": "[1,2,4,5,7,8,10,11,13,14,16,17,19,20,0,0,0,0,0,0]",
+        "expectedOutput": "[1,2,4,5,7,8,10,11,13,14,16,17,19,20,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,-1,0,-2,0,-3,0,-4]]",
+        "output": "[-1,-2,-3,-4,0,0,0,0]",
+        "expectedOutput": "[-1,-2,-3,-4,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[5,0,0,0,4,0,3,0,0,2,0,1]]",
+        "output": "[5,4,3,2,1,0,0,0,0,0,0,0]",
+        "expectedOutput": "[5,4,3,2,1,0,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]",
+        "expectedOutput": "[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,1]]",
+        "output": "[1,0,0,0,0,0,0,0,0,0,0]",
+        "expectedOutput": "[1,0,0,0,0,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [0, 1, 0, 3, 12]",
+      "output": "[1, 3, 12, 0, 0]",
+      "expectedOutput": "[1, 3, 12, 0, 0]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 0, 2, 0, 3]",
+      "output": "[1, 2, 3, 0, 0]",
+      "expectedOutput": "[1, 2, 3, 0, 0]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [0, 1, 0, 3, 12]",
+      "output": "[1, 3, 12, 0, 0]",
+      "expectedOutput": "[1, 3, 12, 0, 0]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 0, 2, 0, 3]",
+      "output": "[1, 2, 3, 0, 0]",
+      "expectedOutput": "[1, 2, 3, 0, 0]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[0,1,0,3,12]]",
+      "output": "[1,3,12,0,0]",
+      "expectedOutput": "[1,3,12,0,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,0,2,0,3]]",
+      "output": "[1,2,3,0,0]",
+      "expectedOutput": "[1,2,3,0,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2,3]]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[0,0,0]]",
+      "output": "[0,0,0]",
+      "expectedOutput": "[0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3,4,5]]",
+      "output": "[1,2,3,4,5]",
+      "expectedOutput": "[1,2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[-1,0,-2,0,3]]",
+      "output": "[-1,-2,3,0,0]",
+      "expectedOutput": "[-1,-2,3,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[0,0,1]]",
+      "output": "[1,0,0]",
+      "expectedOutput": "[1,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,0,0]]",
+      "output": "[1,0,0]",
+      "expectedOutput": "[1,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10]]",
+      "output": "[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9,10,0]",
+      "expectedOutput": "[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9,10,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,3]]",
+      "output": "[1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+      "expectedOutput": "[1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]",
+      "output": "[1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+      "expectedOutput": "[1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,0,4,5,0,7,8,0,10,11,0,13,14,0,16,17,0,19,20]]",
+      "output": "[1,2,4,5,7,8,10,11,13,14,16,17,19,20,0,0,0,0,0,0]",
+      "expectedOutput": "[1,2,4,5,7,8,10,11,13,14,16,17,19,20,0,0,0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[0,-1,0,-2,0,-3,0,-4]]",
+      "output": "[-1,-2,-3,-4,0,0,0,0]",
+      "expectedOutput": "[-1,-2,-3,-4,0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[5,0,0,0,4,0,3,0,0,2,0,1]]",
+      "output": "[5,4,3,2,1,0,0,0,0,0,0,0]",
+      "expectedOutput": "[5,4,3,2,1,0,0,0,0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+      "output": "[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]",
+      "expectedOutput": "[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[0,0,0,0,0,0,0,0,0,0,1]]",
+      "output": "[1,0,0,0,0,0,0,0,0,0,0]",
+      "expectedOutput": "[1,0,0,0,0,0,0,0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[0]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [0, 1, 0, 3, 12]",
+        "output": "[1, 3, 12, 0, 0]",
+        "expectedOutput": "[1, 3, 12, 0, 0]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 0, 2, 0, 3]",
+        "output": "[1, 2, 3, 0, 0]",
+        "expectedOutput": "[1, 2, 3, 0, 0]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[0,1,0,3,12]]",
+        "output": "[1,3,12,0,0]",
+        "expectedOutput": "[1,3,12,0,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,0,2,0,3]]",
+        "output": "[1,2,3,0,0]",
+        "expectedOutput": "[1,2,3,0,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0,0,0]]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5]]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,0,-2,0,3]]",
+        "output": "[-1,-2,3,0,0]",
+        "expectedOutput": "[-1,-2,3,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,0,1]]",
+        "output": "[1,0,0]",
+        "expectedOutput": "[1,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,0,0]]",
+        "output": "[1,0,0]",
+        "expectedOutput": "[1,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9,10,0]",
+        "expectedOutput": "[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9,10,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,3]]",
+        "output": "[1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+        "expectedOutput": "[1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]",
+        "output": "[1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+        "expectedOutput": "[1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,0,4,5,0,7,8,0,10,11,0,13,14,0,16,17,0,19,20]]",
+        "output": "[1,2,4,5,7,8,10,11,13,14,16,17,19,20,0,0,0,0,0,0]",
+        "expectedOutput": "[1,2,4,5,7,8,10,11,13,14,16,17,19,20,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,-1,0,-2,0,-3,0,-4]]",
+        "output": "[-1,-2,-3,-4,0,0,0,0]",
+        "expectedOutput": "[-1,-2,-3,-4,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[5,0,0,0,4,0,3,0,0,2,0,1]]",
+        "output": "[5,4,3,2,1,0,0,0,0,0,0,0]",
+        "expectedOutput": "[5,4,3,2,1,0,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]",
+        "expectedOutput": "[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,1]]",
+        "output": "[1,0,0,0,0,0,0,0,0,0,0]",
+        "expectedOutput": "[1,0,0,0,0,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def moveZeroes(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> moveZeroes(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] moveZeroes(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun moveZeroes(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    moveZeroes(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def moveZeroes(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> moveZeroes(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] moveZeroes(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun moveZeroes(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    moveZeroes(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def moveZeroes(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> moveZeroes(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] moveZeroes(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun moveZeroes(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    moveZeroes(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def moveZeroes(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> moveZeroes(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] moveZeroes(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun moveZeroes(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    moveZeroes(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra, beyond the output",
+      "pattern": "two pointers: a slow pointer marking where the next non-zero should go, a fast pointer scanning"
+    },
+    "bruteForce": {
+      "approach": "build a new list of the non-zero elements in order, then pad the end with zeroes to the original length",
+      "time": "O(n)",
+      "space": "O(n) for the new list"
+    }
+  },
+  "optimal": {
+    "pattern": "two pointers: a slow pointer marking where the next non-zero should go, a fast pointer scanning",
+    "time": "O(n)",
+    "space": "O(1) extra, beyond the output",
+    "hint_ladder": [
+      "can you avoid building a whole second array, and instead shift things around as you scan once?",
+      "what if a slow pointer marked 'the next spot a non-zero value belongs', and a fast pointer looked for non-zero values to put there?",
+      "walk the array with a fast pointer; every time you find a non-zero value, place it at the slow pointer's position and advance slow",
+      "once the fast pointer reaches the end, every position from the slow pointer onward should become zero"
+    ]
+  },
+  "bruteForce": {
+    "approach": "build a new list of the non-zero elements in order, then pad the end with zeroes to the original length",
+    "time": "O(n)",
+    "space": "O(n) for the new list"
+  },
+  "isIndex0": true,
+  "level": null
+}

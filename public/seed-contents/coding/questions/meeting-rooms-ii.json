@@ -1,0 +1,632 @@
+{
+  "id": "meeting-rooms-ii",
+  "questionId": "meeting-rooms-ii",
+  "slug": "meeting-rooms-ii",
+  "title": "Meeting Rooms II",
+  "difficulty": "Medium",
+  "category": "Merge intervals",
+  "patterns": [
+    "merge intervals",
+    "heap",
+    "sorting",
+    "sweep line"
+  ],
+  "lists": [],
+  "hints": [
+    "the number of rooms needed at any moment equals the number of meetings currently in progress at that moment - so what's the peak concurrency over time?",
+    "split the intervals into two sorted lists: all start times and all end times",
+    "walk through time using two pointers over the sorted starts and sorted ends: whenever the next start happens before the next end, a new room is needed (increment a counter); whenever the next end happens first, a room frees up (decrement the counter)",
+    "track the maximum value the room counter reaches during this sweep - that's the answer. tie-break: if a start time equals an end time, process the end first since that meeting has already vacated the room"
+  ],
+  "commonMistakes": [
+    "processing a start and an end that occur at the same time in the wrong order, incorrectly requiring an extra room for meetings that just touch at an endpoint",
+    "using a heap of end times but forgetting to sort start times first, which breaks the sweep",
+    "returning the count of overlapping pairs instead of the maximum concurrent meetings at any single point in time"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of meeting time `intervals`, each represented as\n`[start, end]`.\n\n**Return the minimum number of meeting rooms required so that every meeting can be scheduled without any two overlapping meetings sharing the same room.**\n",
+    "constraints": [
+      "each interval is [start, end] with start <= end",
+      "the input is not guaranteed to be sorted",
+      "the list may be empty"
+    ],
+    "notes": [
+      "empty list of meetings (answer 0)",
+      "no meetings overlap at all (answer 1, or 0 if the list is empty)",
+      "all meetings overlap at one common point (answer equals the number of meetings)",
+      "meetings that only touch at an endpoint (should not require an extra room)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "intervals = [[0,30],[5,10],[15,20]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "[5,10] and [15,20] can share a room sequentially, but [0,30] overlaps both, so a second room is needed"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "intervals = [[7,10],[2,4]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the meetings don't overlap, so one room is enough"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "intervals = [[1,5],[2,6],[3,7]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "at time 3, all three meetings are happening simultaneously"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,30],[5,10],[15,20]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[7,10],[2,4]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,5],[2,6],[3,7]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,4],[4,8]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,2]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,5],[1,5],[1,5]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,2],[3,4],[5,6]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[51,56],[35,36],[98,102],[44,54],[65,71],[86,94],[42,42],[14,18],[22,31],[33,33],[13,22],[55,60],[93,98],[55,64],[65,66],[49,58],[24,28],[5,11],[0,8],[68,78]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[0,10],[0,10],[5,15],[5,15],[10,20]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,4],[4,8],[8,12]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,3],[3,6],[6,9],[9,12],[12,15],[15,18],[18,21],[21,24],[24,27],[27,30]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,10],[2,9],[3,8],[4,7],[5,6]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[5,10],[10,15],[15,20]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,3],[2,4],[3,5],[4,6]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[9,9]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,20],[2,19],[3,18],[4,17],[5,16]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[8,18],[15,19],[24,30],[38,44],[38,42],[40,50],[41,47],[42,51],[46,52],[64,68],[70,72],[70,70],[78,87],[85,88],[85,91],[85,91],[86,88],[89,93]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[0,1],[0,1],[0,1],[0,1],[0,1]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,4],[2,3],[5,7],[6,8],[9,10]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "intervals = [[0,30],[5,10],[15,20]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "[5,10] and [15,20] can share a room sequentially, but [0,30] overlaps both, so a second room is needed"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "intervals = [[7,10],[2,4]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the meetings don't overlap, so one room is enough"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "intervals = [[1,5],[2,6],[3,7]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "at time 3, all three meetings are happening simultaneously"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "intervals = [[0,30],[5,10],[15,20]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "[5,10] and [15,20] can share a room sequentially, but [0,30] overlaps both, so a second room is needed"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "intervals = [[7,10],[2,4]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the meetings don't overlap, so one room is enough"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "intervals = [[1,5],[2,6],[3,7]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "at time 3, all three meetings are happening simultaneously"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[0,30],[5,10],[15,20]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[7,10],[2,4]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1,5],[2,6],[3,7]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,4],[4,8]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,2]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1,5],[1,5],[1,5]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,2],[3,4],[5,6]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[51,56],[35,36],[98,102],[44,54],[65,71],[86,94],[42,42],[14,18],[22,31],[33,33],[13,22],[55,60],[93,98],[55,64],[65,66],[49,58],[24,28],[5,11],[0,8],[68,78]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[0,10],[0,10],[5,15],[5,15],[10,20]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[1,4],[4,8],[8,12]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[0,3],[3,6],[6,9],[9,12],[12,15],[15,18],[18,21],[21,24],[24,27],[27,30]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1,10],[2,9],[3,8],[4,7],[5,6]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[5,10],[10,15],[15,20]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[1,3],[2,4],[3,5],[4,6]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[9,9]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,20],[2,19],[3,18],[4,17],[5,16]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[8,18],[15,19],[24,30],[38,44],[38,42],[40,50],[41,47],[42,51],[46,52],[64,68],[70,72],[70,70],[78,87],[85,88],[85,91],[85,91],[86,88],[89,93]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[0,1],[0,1],[0,1],[0,1],[0,1]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,4],[2,3],[5,7],[6,8],[9,10]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "intervals = [[0,30],[5,10],[15,20]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "[5,10] and [15,20] can share a room sequentially, but [0,30] overlaps both, so a second room is needed"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "intervals = [[7,10],[2,4]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the meetings don't overlap, so one room is enough"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "intervals = [[1,5],[2,6],[3,7]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "at time 3, all three meetings are happening simultaneously"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,30],[5,10],[15,20]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[7,10],[2,4]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,5],[2,6],[3,7]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,4],[4,8]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,2]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,5],[1,5],[1,5]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,2],[3,4],[5,6]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[51,56],[35,36],[98,102],[44,54],[65,71],[86,94],[42,42],[14,18],[22,31],[33,33],[13,22],[55,60],[93,98],[55,64],[65,66],[49,58],[24,28],[5,11],[0,8],[68,78]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[0,10],[0,10],[5,15],[5,15],[10,20]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,4],[4,8],[8,12]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,3],[3,6],[6,9],[9,12],[12,15],[15,18],[18,21],[21,24],[24,27],[27,30]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,10],[2,9],[3,8],[4,7],[5,6]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[5,10],[10,15],[15,20]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,3],[2,4],[3,5],[4,6]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[9,9]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,20],[2,19],[3,18],[4,17],[5,16]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[8,18],[15,19],[24,30],[38,44],[38,42],[40,50],[41,47],[42,51],[46,52],[64,68],[70,72],[70,70],[78,87],[85,88],[85,91],[85,91],[86,88],[89,93]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[0,1],[0,1],[0,1],[0,1],[0,1]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,4],[2,3],[5,7],[6,8],[9,10]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minMeetingRooms(self, intervals):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minMeetingRooms(vector<vector<int>>& intervals) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minMeetingRooms(int[][] intervals) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minMeetingRooms(intervals: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minMeetingRooms(intervals) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minMeetingRooms(self, intervals):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minMeetingRooms(vector<vector<int>>& intervals) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minMeetingRooms(int[][] intervals) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minMeetingRooms(intervals: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minMeetingRooms(intervals) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minMeetingRooms(self, intervals):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minMeetingRooms(vector<vector<int>>& intervals) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minMeetingRooms(int[][] intervals) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minMeetingRooms(intervals: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minMeetingRooms(intervals) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minMeetingRooms(self, intervals):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minMeetingRooms(vector<vector<int>>& intervals) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minMeetingRooms(int[][] intervals) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minMeetingRooms(intervals: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minMeetingRooms(intervals) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log n)",
+      "space": "O(n)",
+      "pattern": "sweep line: separate and sort start times and end times, walk through counting concurrent meetings"
+    },
+    "bruteForce": {
+      "approach": "for every meeting, check against every other meeting whether they overlap, and try to greedily assign meetings to a growing list of rooms, opening a new room whenever none of the existing rooms are free",
+      "time": "O(n^2)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "sweep line: separate and sort start times and end times, walk through counting concurrent meetings",
+    "time": "O(n log n)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "the number of rooms needed at any moment equals the number of meetings currently in progress at that moment - so what's the peak concurrency over time?",
+      "split the intervals into two sorted lists: all start times and all end times",
+      "walk through time using two pointers over the sorted starts and sorted ends: whenever the next start happens before the next end, a new room is needed (increment a counter); whenever the next end happens first, a room frees up (decrement the counter)",
+      "track the maximum value the room counter reaches during this sweep - that's the answer. tie-break: if a start time equals an end time, process the end first since that meeting has already vacated the room"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every meeting, check against every other meeting whether they overlap, and try to greedily assign meetings to a growing list of rooms, opening a new room whenever none of the existing rooms are free",
+    "time": "O(n^2)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

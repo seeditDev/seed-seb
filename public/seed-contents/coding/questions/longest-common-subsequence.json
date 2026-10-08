@@ -1,0 +1,634 @@
+{
+  "id": "longest-common-subsequence",
+  "questionId": "longest-common-subsequence",
+  "slug": "longest-common-subsequence",
+  "title": "Longest Common Subsequence",
+  "difficulty": "Medium",
+  "category": "Dp 2d",
+  "patterns": [
+    "dynamic programming",
+    "strings"
+  ],
+  "lists": [
+    "blind-75"
+  ],
+  "hints": [
+    "think about comparing text1 and text2 character by character from the end (or start) - what happens when the current characters match versus when they don't?",
+    "define dp[i][j] as the length of the longest common subsequence between the first i characters of text1 and the first j characters of text2",
+    "if text1[i-1] == text2[j-1], that matching character extends the best subsequence found without it: dp[i][j] = 1 + dp[i-1][j-1]",
+    "if they don't match, the character can't be part of a common subsequence ending exactly there, so take the best of dropping one character from either string: dp[i][j] = max(dp[i-1][j], dp[i][j-1])",
+    "dp[0][j] and dp[i][0] are all 0, since an empty string has no common subsequence with anything; fill the table and return dp[m][n]"
+  ],
+  "commonMistakes": [
+    "mixing up string indices (i-1, j-1) versus dp table indices (i, j), causing off-by-one bugs",
+    "taking the sum instead of the max when characters don't match",
+    "forgetting that a subsequence doesn't require contiguous characters, and accidentally solving for longest common substring instead"
+  ],
+  "content": {
+    "problemStatement": "You're given two strings. A subsequence is formed by deleting some\n(possibly zero) characters from a string without changing the order of\nthe remaining characters, and a common subsequence is one that appears\nas a subsequence in both strings.\n\n**Find the length of the longest common subsequence of the two\nstrings.**\n\nIf the two strings share no characters in common, return 0.\n",
+    "constraints": [
+      "1 <= text1.length <= 1000",
+      "1 <= text2.length <= 1000",
+      "text1 and text2 consist of only lowercase English characters"
+    ],
+    "notes": [
+      "the two strings share no characters at all",
+      "one string is a subsequence of the other",
+      "the two strings are identical",
+      "one of the strings has length 1"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "text1 = \"abcde\", text2 = \"ace\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "\"ace\" is a subsequence of both strings and has length 3."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "text1 = \"abc\", text2 = \"abc\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "text1 = \"abc\", text2 = \"def\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "The strings share no characters, so the longest common subsequence is empty."
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"abcde\",\"ace\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"abc\",\"abc\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"abc\",\"def\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"bsbininm\",\"jmjkbkjkv\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\",\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"\",\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a\",\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"abcdefghij\",\"jihgfedcba\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"aaaaaaaaaa\",\"aaaaa\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"ebddbdcdddac\",\"dcccbdaaaa\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"babaababbbabbba\",\"aabaabbabababaa\"]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abcxyzabc\",\"xyzabcxyz\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"ccccabbedabaaebdddcb\",\"ccceeaab\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"z\",\"z\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"longeststring\",\"shortstr\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"xzxzxyyzyyz\",\"yyyxzxyyxyzzz\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abcabcabc\",\"cba\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"mississippi\",\"ississippi\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcdefgh\",\"hgfedcba\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"programming\",\"gaming\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "text1 = \"abcde\", text2 = \"ace\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "\"ace\" is a subsequence of both strings and has length 3."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "text1 = \"abc\", text2 = \"abc\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "text1 = \"abc\", text2 = \"def\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "The strings share no characters, so the longest common subsequence is empty."
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "text1 = \"abcde\", text2 = \"ace\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "\"ace\" is a subsequence of both strings and has length 3."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "text1 = \"abc\", text2 = \"abc\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "text1 = \"abc\", text2 = \"def\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "The strings share no characters, so the longest common subsequence is empty."
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"abcde\",\"ace\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"abc\",\"abc\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"abc\",\"def\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"bsbininm\",\"jmjkbkjkv\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"a\",\"a\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"\",\"\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"a\",\"\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"abcdefghij\",\"jihgfedcba\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"aaaaaaaaaa\",\"aaaaa\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"ebddbdcdddac\",\"dcccbdaaaa\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"babaababbbabbba\",\"aabaabbabababaa\"]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"abcxyzabc\",\"xyzabcxyz\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"ccccabbedabaaebdddcb\",\"ccceeaab\"]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"z\",\"z\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"longeststring\",\"shortstr\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"xzxzxyyzyyz\",\"yyyxzxyyxyzzz\"]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"abcabcabc\",\"cba\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"mississippi\",\"ississippi\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"abcdefgh\",\"hgfedcba\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"programming\",\"gaming\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "text1 = \"abcde\", text2 = \"ace\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "\"ace\" is a subsequence of both strings and has length 3."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "text1 = \"abc\", text2 = \"abc\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "text1 = \"abc\", text2 = \"def\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "The strings share no characters, so the longest common subsequence is empty."
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"abcde\",\"ace\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"abc\",\"abc\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"abc\",\"def\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"bsbininm\",\"jmjkbkjkv\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\",\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"\",\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a\",\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"abcdefghij\",\"jihgfedcba\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"aaaaaaaaaa\",\"aaaaa\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"ebddbdcdddac\",\"dcccbdaaaa\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"babaababbbabbba\",\"aabaabbabababaa\"]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abcxyzabc\",\"xyzabcxyz\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"ccccabbedabaaebdddcb\",\"ccceeaab\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"z\",\"z\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"longeststring\",\"shortstr\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"xzxzxyyzyyz\",\"yyyxzxyyxyzzz\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abcabcabc\",\"cba\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"mississippi\",\"ississippi\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcdefgh\",\"hgfedcba\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"programming\",\"gaming\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def longestCommonSubsequence(self, text1, text2):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestCommonSubsequence(string text1, string text2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestCommonSubsequence(String text1, String text2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestCommonSubsequence(text1: String, text2: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestCommonSubsequence(text1, text2) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def longestCommonSubsequence(self, text1, text2):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestCommonSubsequence(string text1, string text2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestCommonSubsequence(String text1, String text2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestCommonSubsequence(text1: String, text2: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestCommonSubsequence(text1, text2) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def longestCommonSubsequence(self, text1, text2):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestCommonSubsequence(string text1, string text2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestCommonSubsequence(String text1, String text2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestCommonSubsequence(text1: String, text2: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestCommonSubsequence(text1, text2) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def longestCommonSubsequence(self, text1, text2):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestCommonSubsequence(string text1, string text2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestCommonSubsequence(String text1, String text2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestCommonSubsequence(text1: String, text2: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestCommonSubsequence(text1, text2) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(m * n)",
+      "space": "O(m * n), reducible to O(min(m, n))",
+      "pattern": "2D dynamic programming over two string indices"
+    },
+    "bruteForce": {
+      "approach": "recursively try, for each position, either skipping a character from text1, skipping a character from text2, or matching both if they're equal, exploring all branches",
+      "time": "O(2^(m+n))",
+      "space": "O(m + n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "2D dynamic programming over two string indices",
+    "time": "O(m * n)",
+    "space": "O(m * n), reducible to O(min(m, n))",
+    "hint_ladder": [
+      "think about comparing text1 and text2 character by character from the end (or start) - what happens when the current characters match versus when they don't?",
+      "define dp[i][j] as the length of the longest common subsequence between the first i characters of text1 and the first j characters of text2",
+      "if text1[i-1] == text2[j-1], that matching character extends the best subsequence found without it: dp[i][j] = 1 + dp[i-1][j-1]",
+      "if they don't match, the character can't be part of a common subsequence ending exactly there, so take the best of dropping one character from either string: dp[i][j] = max(dp[i-1][j], dp[i][j-1])",
+      "dp[0][j] and dp[i][0] are all 0, since an empty string has no common subsequence with anything; fill the table and return dp[m][n]"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try, for each position, either skipping a character from text1, skipping a character from text2, or matching both if they're equal, exploring all branches",
+    "time": "O(2^(m+n))",
+    "space": "O(m + n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

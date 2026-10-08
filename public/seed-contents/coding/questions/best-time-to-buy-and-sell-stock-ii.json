@@ -1,0 +1,631 @@
+{
+  "id": "best-time-to-buy-and-sell-stock-ii",
+  "questionId": "best-time-to-buy-and-sell-stock-ii",
+  "slug": "best-time-to-buy-and-sell-stock-ii",
+  "title": "Best Time to Buy and Sell Stock II",
+  "difficulty": "Medium",
+  "category": "Greedy",
+  "patterns": [
+    "greedy",
+    "single pass"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "since you can trade unlimited times, is there ever a reason to hold through a price drop?",
+    "any profitable multi-day climb can be split into single-day up-moves and you'd capture the same total either way - try summing just the up-moves",
+    "for each consecutive pair of days, if tomorrow's price is higher than today's, add that difference to your profit",
+    "why is capturing every single positive day-to-day step always at least as good as any other trading strategy? because a longer upward run's total gain equals the sum of its daily gains, so buying at the start and selling at the end of a run gives the same profit as buying/selling on every up day within it"
+  ],
+  "commonMistakes": [
+    "trying to find a small number of best global buy/sell windows instead of realizing every positive daily delta can just be summed directly",
+    "including negative day-over-day deltas in the sum instead of skipping them",
+    "assuming you need to hold across a flat or down day to catch a later rise, which is never necessary since you can re-buy the next day for free"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of daily stock prices, where `prices[i]` is the price on day `i`. You may buy and sell as many times as you like, but you can hold at most one share at a time, meaning you must sell before buying again.\n\n**Return the maximum total profit achievable.**\n",
+    "constraints": [
+      "1 <= prices.length <= 3 * 10^4",
+      "0 <= prices[i] <= 10^4"
+    ],
+    "notes": [
+      "prices strictly decreasing the whole time (answer is 0)",
+      "prices strictly increasing the whole time (answer is last - first)",
+      "a single price in the array",
+      "prices that oscillate up and down every day"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "prices = [7, 1, 5, 3, 6, 4]",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": "buy at 1, sell at 5 (profit 4), then buy at 3, sell at 6 (profit 3), total 7"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "prices = [1, 2, 3, 4, 5]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "buy at 1 and sell at 5 for a steady climb, or equivalently capture every daily rise: 1+1+1+1=4"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "prices = [7, 6, 4, 3, 1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "prices only fall, so no transaction is ever profitable"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[7,1,5,3,6,4]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[7,6,4,3,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,5,2,3,7,3]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5,5,5,5,5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[3,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[9,1,9,1,9,1,9]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[44,3,25,76,12,81,47,2,46,30,52,69,65,93,8,82,37,64,98,81]]",
+        "output": "388",
+        "expectedOutput": "388",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,10,2,9,3,8,4,7,5,6,1,10,2,9,3,8,4,7,5,6,1,10]]",
+        "output": "59",
+        "expectedOutput": "59",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[3,2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[100,1,100,1,100]]",
+        "output": "198",
+        "expectedOutput": "198",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,1,1,1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10,20,5,15,25,10,30]]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[47,15,35,31,12,10,35,29,25,49,30,3,1,9,30,13,2,17,23,44,18,28,41,27,1,7,40,5,33,23]]",
+        "output": "230",
+        "expectedOutput": "230",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,1,2,1,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "prices = [7, 1, 5, 3, 6, 4]",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": "buy at 1, sell at 5 (profit 4), then buy at 3, sell at 6 (profit 3), total 7"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "prices = [1, 2, 3, 4, 5]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "buy at 1 and sell at 5 for a steady climb, or equivalently capture every daily rise: 1+1+1+1=4"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "prices = [7, 6, 4, 3, 1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "prices only fall, so no transaction is ever profitable"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "prices = [7, 1, 5, 3, 6, 4]",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": "buy at 1, sell at 5 (profit 4), then buy at 3, sell at 6 (profit 3), total 7"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "prices = [1, 2, 3, 4, 5]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "buy at 1 and sell at 5 for a steady climb, or equivalently capture every daily rise: 1+1+1+1=4"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "prices = [7, 6, 4, 3, 1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "prices only fall, so no transaction is ever profitable"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[7,1,5,3,6,4]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3,4,5]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[7,6,4,3,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,5,2,3,7,3]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[5,5,5,5,5]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[3,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,3]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[9,1,9,1,9,1,9]]",
+      "output": "24",
+      "expectedOutput": "24",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[44,3,25,76,12,81,47,2,46,30,52,69,65,93,8,82,37,64,98,81]]",
+      "output": "388",
+      "expectedOutput": "388",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,10,2,9,3,8,4,7,5,6,1,10,2,9,3,8,4,7,5,6,1,10]]",
+      "output": "59",
+      "expectedOutput": "59",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[2,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[3,2,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[100,1,100,1,100]]",
+      "output": "198",
+      "expectedOutput": "198",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,1,1,1,1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[10,20,5,15,25,10,30]]",
+      "output": "50",
+      "expectedOutput": "50",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[47,15,35,31,12,10,35,29,25,49,30,3,1,9,30,13,2,17,23,44,18,28,41,27,1,7,40,5,33,23]]",
+      "output": "230",
+      "expectedOutput": "230",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,2,1,2,1,2]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "prices = [7, 1, 5, 3, 6, 4]",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": "buy at 1, sell at 5 (profit 4), then buy at 3, sell at 6 (profit 3), total 7"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "prices = [1, 2, 3, 4, 5]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "buy at 1 and sell at 5 for a steady climb, or equivalently capture every daily rise: 1+1+1+1=4"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "prices = [7, 6, 4, 3, 1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "prices only fall, so no transaction is ever profitable"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[7,1,5,3,6,4]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[7,6,4,3,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,5,2,3,7,3]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5,5,5,5,5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[3,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[9,1,9,1,9,1,9]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[44,3,25,76,12,81,47,2,46,30,52,69,65,93,8,82,37,64,98,81]]",
+        "output": "388",
+        "expectedOutput": "388",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,10,2,9,3,8,4,7,5,6,1,10,2,9,3,8,4,7,5,6,1,10]]",
+        "output": "59",
+        "expectedOutput": "59",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[3,2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[100,1,100,1,100]]",
+        "output": "198",
+        "expectedOutput": "198",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,1,1,1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10,20,5,15,25,10,30]]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[47,15,35,31,12,10,35,29,25,49,30,3,1,9,30,13,2,17,23,44,18,28,41,27,1,7,40,5,33,23]]",
+        "output": "230",
+        "expectedOutput": "230",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,1,2,1,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def maxProfit(self, prices):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxProfit(vector<int>& prices) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxProfit(int[] prices) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxProfit(prices: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxProfit(prices) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def maxProfit(self, prices):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxProfit(vector<int>& prices) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxProfit(int[] prices) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxProfit(prices: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxProfit(prices) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def maxProfit(self, prices):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxProfit(vector<int>& prices) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxProfit(int[] prices) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxProfit(prices: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxProfit(prices) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def maxProfit(self, prices):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxProfit(vector<int>& prices) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxProfit(int[] prices) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxProfit(prices: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxProfit(prices) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "single pass summing every positive day-over-day price increase"
+    },
+    "bruteForce": {
+      "approach": "try every possible set of non-overlapping buy/sell pairs recursively (buy or skip at each day), keep the best total",
+      "time": "O(2^n)",
+      "space": "O(n) recursion stack"
+    }
+  },
+  "optimal": {
+    "pattern": "single pass summing every positive day-over-day price increase",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "since you can trade unlimited times, is there ever a reason to hold through a price drop?",
+      "any profitable multi-day climb can be split into single-day up-moves and you'd capture the same total either way - try summing just the up-moves",
+      "for each consecutive pair of days, if tomorrow's price is higher than today's, add that difference to your profit",
+      "why is capturing every single positive day-to-day step always at least as good as any other trading strategy? because a longer upward run's total gain equals the sum of its daily gains, so buying at the start and selling at the end of a run gives the same profit as buying/selling on every up day within it"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every possible set of non-overlapping buy/sell pairs recursively (buy or skip at each day), keep the best total",
+    "time": "O(2^n)",
+    "space": "O(n) recursion stack"
+  },
+  "isIndex0": true,
+  "level": null
+}

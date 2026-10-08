@@ -1,0 +1,699 @@
+{
+  "id": "group-anagrams",
+  "questionId": "group-anagrams",
+  "slug": "group-anagrams",
+  "title": "Group Anagrams",
+  "difficulty": "Medium",
+  "category": "Hash map",
+  "patterns": [
+    "hash map",
+    "string",
+    "sorting"
+  ],
+  "lists": [
+    "blind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "two words are anagrams if and only if they become identical once you sort their letters - what does that suggest as a grouping key?",
+    "for each word, compute a canonical signature (its letters sorted alphabetically), and use that signature as a hash map key mapping to the list of original words sharing it",
+    "after one pass building the map, each value in the map is already a complete anagram group - no further comparison needed",
+    "for the final deterministic output, sort the words within each group alphabetically, then sort the groups themselves by their first word before joining into the encoded string"
+  ],
+  "commonMistakes": [
+    "using a letter frequency count as the key without normalizing it into a comparable/hashable form, or accidentally treating two different frequency counts as equal",
+    "forgetting to sort the words within each group before joining, producing output that depends on input order and isn't deterministic",
+    "forgetting to sort the groups themselves before joining, so equivalent inputs in a different order produce different-looking output",
+    "splitting the input string incorrectly (e.g. not handling a single trailing word correctly), producing an extra empty word",
+    "using string concatenation of unsorted characters as the key, which fails to recognize e.g. 'eat' and 'ate' as anagrams"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of lowercase words, given as a single space-delimited\nstring `strs`. Every word belongs to exactly one group, where a group\ncontains every word that is an anagram of every other word in it, using\nexactly the same letters and counts in any order.\n\n**Group the words, then encode the result as a single string: within each group, sort the words alphabetically and join them with commas, sort the groups themselves alphabetically by their own first word, and join the groups with a pipe character `\"|\"`.**\n\nThis makes the output fully deterministic regardless of the input order.\n",
+    "constraints": [
+      "1 <= number of words in strs <= 10^4",
+      "1 <= length of each word <= 100",
+      "every word consists of lowercase English letters only"
+    ],
+    "notes": [
+      "every word is a unique anagram of every other (all end up in one group)",
+      "no two words share any anagram relationship (every word is its own group)",
+      "duplicate identical words (they anagram with themselves and belong together)",
+      "a single word total"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "strs = \"eat tea tan ate nat bat\"",
+        "output": "\"ate,eat,tea|bat|nat,tan\"",
+        "expectedOutput": "\"ate,eat,tea|bat|nat,tan\"",
+        "explanation": "eat/tea/ate share letters a,e,t; tan/nat share a,n,t; bat is alone"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "strs = \"abc def ghi\"",
+        "output": "\"abc|def|ghi\"",
+        "expectedOutput": "\"abc|def|ghi\"",
+        "explanation": "no two words share the same letters, so every word is its own group"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "strs = \"a\"",
+        "output": "\"a\"",
+        "expectedOutput": "\"a\"",
+        "explanation": "a single word is trivially its own group"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"eat tea tan ate nat bat\"]",
+        "output": "ate,eat,tea|bat|nat,tan",
+        "expectedOutput": "ate,eat,tea|bat|nat,tan",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"abc bca cab bac\"]",
+        "output": "abc,bac,bca,cab",
+        "expectedOutput": "abc,bac,bca,cab",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"xyz zyx yxz\"]",
+        "output": "xyz,yxz,zyx",
+        "expectedOutput": "xyz,yxz,zyx",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"abc def ghi\"]",
+        "output": "abc|def|ghi",
+        "expectedOutput": "abc|def|ghi",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aa aa aa\"]",
+        "output": "aa,aa,aa",
+        "expectedOutput": "aa,aa,aa",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"listen silent enlist inlets\"]",
+        "output": "enlist,inlets,listen,silent",
+        "expectedOutput": "enlist,inlets,listen,silent",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"abcd bcda dabc cdab wxyz\"]",
+        "output": "abcd,bcda,cdab,dabc|wxyz",
+        "expectedOutput": "abcd,bcda,cdab,dabc|wxyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"z y x\"]",
+        "output": "x|y|z",
+        "expectedOutput": "x|y|z",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"ab ba\"]",
+        "output": "ab,ba",
+        "expectedOutput": "ab,ba",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"cab abc bca acb bac cba\"]",
+        "output": "abc,acb,bac,bca,cab,cba",
+        "expectedOutput": "abc,acb,bac,bca,cab,cba",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"one two three four\"]",
+        "output": "four|one|three|two",
+        "expectedOutput": "four|one|three|two",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"aabb bbaa abab baba\"]",
+        "output": "aabb,abab,baba,bbaa",
+        "expectedOutput": "aabb,abab,baba,bbaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"q\"]",
+        "output": "q",
+        "expectedOutput": "q",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"eat ate tea\"]",
+        "output": "ate,eat,tea",
+        "expectedOutput": "ate,eat,tea",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"rat art tar star tars rats arts tsar\"]",
+        "output": "art,rat,tar|arts,rats,star,tars,tsar",
+        "expectedOutput": "art,rat,tar|arts,rats,star,tars,tsar",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"dog god cat act tac\"]",
+        "output": "act,cat,tac|dog,god",
+        "expectedOutput": "act,cat,tac|dog,god",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"pan nap apn\"]",
+        "output": "apn,nap,pan",
+        "expectedOutput": "apn,nap,pan",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"hello world\"]",
+        "output": "hello|world",
+        "expectedOutput": "hello|world",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"aaa aaa\"]",
+        "output": "aaa,aaa",
+        "expectedOutput": "aaa,aaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"flow wolf\"]",
+        "output": "flow,wolf",
+        "expectedOutput": "flow,wolf",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[\"moon noom onmo\"]",
+        "output": "moon,noom,onmo",
+        "expectedOutput": "moon,noom,onmo",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "strs = \"eat tea tan ate nat bat\"",
+      "output": "\"ate,eat,tea|bat|nat,tan\"",
+      "expectedOutput": "\"ate,eat,tea|bat|nat,tan\"",
+      "explanation": "eat/tea/ate share letters a,e,t; tan/nat share a,n,t; bat is alone"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "strs = \"abc def ghi\"",
+      "output": "\"abc|def|ghi\"",
+      "expectedOutput": "\"abc|def|ghi\"",
+      "explanation": "no two words share the same letters, so every word is its own group"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "strs = \"a\"",
+      "output": "\"a\"",
+      "expectedOutput": "\"a\"",
+      "explanation": "a single word is trivially its own group"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "strs = \"eat tea tan ate nat bat\"",
+      "output": "\"ate,eat,tea|bat|nat,tan\"",
+      "expectedOutput": "\"ate,eat,tea|bat|nat,tan\"",
+      "explanation": "eat/tea/ate share letters a,e,t; tan/nat share a,n,t; bat is alone"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "strs = \"abc def ghi\"",
+      "output": "\"abc|def|ghi\"",
+      "expectedOutput": "\"abc|def|ghi\"",
+      "explanation": "no two words share the same letters, so every word is its own group"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "strs = \"a\"",
+      "output": "\"a\"",
+      "expectedOutput": "\"a\"",
+      "explanation": "a single word is trivially its own group"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"eat tea tan ate nat bat\"]",
+      "output": "ate,eat,tea|bat|nat,tan",
+      "expectedOutput": "ate,eat,tea|bat|nat,tan",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"a\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"abc bca cab bac\"]",
+      "output": "abc,bac,bca,cab",
+      "expectedOutput": "abc,bac,bca,cab",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"xyz zyx yxz\"]",
+      "output": "xyz,yxz,zyx",
+      "expectedOutput": "xyz,yxz,zyx",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"abc def ghi\"]",
+      "output": "abc|def|ghi",
+      "expectedOutput": "abc|def|ghi",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"aa aa aa\"]",
+      "output": "aa,aa,aa",
+      "expectedOutput": "aa,aa,aa",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"listen silent enlist inlets\"]",
+      "output": "enlist,inlets,listen,silent",
+      "expectedOutput": "enlist,inlets,listen,silent",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"abcd bcda dabc cdab wxyz\"]",
+      "output": "abcd,bcda,cdab,dabc|wxyz",
+      "expectedOutput": "abcd,bcda,cdab,dabc|wxyz",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"z y x\"]",
+      "output": "x|y|z",
+      "expectedOutput": "x|y|z",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"ab ba\"]",
+      "output": "ab,ba",
+      "expectedOutput": "ab,ba",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"cab abc bca acb bac cba\"]",
+      "output": "abc,acb,bac,bca,cab,cba",
+      "expectedOutput": "abc,acb,bac,bca,cab,cba",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"one two three four\"]",
+      "output": "four|one|three|two",
+      "expectedOutput": "four|one|three|two",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"aabb bbaa abab baba\"]",
+      "output": "aabb,abab,baba,bbaa",
+      "expectedOutput": "aabb,abab,baba,bbaa",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"q\"]",
+      "output": "q",
+      "expectedOutput": "q",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"abc\"]",
+      "output": "abc",
+      "expectedOutput": "abc",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"eat ate tea\"]",
+      "output": "ate,eat,tea",
+      "expectedOutput": "ate,eat,tea",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"rat art tar star tars rats arts tsar\"]",
+      "output": "art,rat,tar|arts,rats,star,tars,tsar",
+      "expectedOutput": "art,rat,tar|arts,rats,star,tars,tsar",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"dog god cat act tac\"]",
+      "output": "act,cat,tac|dog,god",
+      "expectedOutput": "act,cat,tac|dog,god",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"pan nap apn\"]",
+      "output": "apn,nap,pan",
+      "expectedOutput": "apn,nap,pan",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"hello world\"]",
+      "output": "hello|world",
+      "expectedOutput": "hello|world",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"aaa aaa\"]",
+      "output": "aaa,aaa",
+      "expectedOutput": "aaa,aaa",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[\"flow wolf\"]",
+      "output": "flow,wolf",
+      "expectedOutput": "flow,wolf",
+      "hidden": true
+    },
+    {
+      "id": "tc_23",
+      "input": "[\"moon noom onmo\"]",
+      "output": "moon,noom,onmo",
+      "expectedOutput": "moon,noom,onmo",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "strs = \"eat tea tan ate nat bat\"",
+        "output": "\"ate,eat,tea|bat|nat,tan\"",
+        "expectedOutput": "\"ate,eat,tea|bat|nat,tan\"",
+        "explanation": "eat/tea/ate share letters a,e,t; tan/nat share a,n,t; bat is alone"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "strs = \"abc def ghi\"",
+        "output": "\"abc|def|ghi\"",
+        "expectedOutput": "\"abc|def|ghi\"",
+        "explanation": "no two words share the same letters, so every word is its own group"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "strs = \"a\"",
+        "output": "\"a\"",
+        "expectedOutput": "\"a\"",
+        "explanation": "a single word is trivially its own group"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"eat tea tan ate nat bat\"]",
+        "output": "ate,eat,tea|bat|nat,tan",
+        "expectedOutput": "ate,eat,tea|bat|nat,tan",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"abc bca cab bac\"]",
+        "output": "abc,bac,bca,cab",
+        "expectedOutput": "abc,bac,bca,cab",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"xyz zyx yxz\"]",
+        "output": "xyz,yxz,zyx",
+        "expectedOutput": "xyz,yxz,zyx",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"abc def ghi\"]",
+        "output": "abc|def|ghi",
+        "expectedOutput": "abc|def|ghi",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aa aa aa\"]",
+        "output": "aa,aa,aa",
+        "expectedOutput": "aa,aa,aa",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"listen silent enlist inlets\"]",
+        "output": "enlist,inlets,listen,silent",
+        "expectedOutput": "enlist,inlets,listen,silent",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"abcd bcda dabc cdab wxyz\"]",
+        "output": "abcd,bcda,cdab,dabc|wxyz",
+        "expectedOutput": "abcd,bcda,cdab,dabc|wxyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"z y x\"]",
+        "output": "x|y|z",
+        "expectedOutput": "x|y|z",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"ab ba\"]",
+        "output": "ab,ba",
+        "expectedOutput": "ab,ba",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"cab abc bca acb bac cba\"]",
+        "output": "abc,acb,bac,bca,cab,cba",
+        "expectedOutput": "abc,acb,bac,bca,cab,cba",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"one two three four\"]",
+        "output": "four|one|three|two",
+        "expectedOutput": "four|one|three|two",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"aabb bbaa abab baba\"]",
+        "output": "aabb,abab,baba,bbaa",
+        "expectedOutput": "aabb,abab,baba,bbaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"q\"]",
+        "output": "q",
+        "expectedOutput": "q",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"eat ate tea\"]",
+        "output": "ate,eat,tea",
+        "expectedOutput": "ate,eat,tea",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"rat art tar star tars rats arts tsar\"]",
+        "output": "art,rat,tar|arts,rats,star,tars,tsar",
+        "expectedOutput": "art,rat,tar|arts,rats,star,tars,tsar",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"dog god cat act tac\"]",
+        "output": "act,cat,tac|dog,god",
+        "expectedOutput": "act,cat,tac|dog,god",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"pan nap apn\"]",
+        "output": "apn,nap,pan",
+        "expectedOutput": "apn,nap,pan",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"hello world\"]",
+        "output": "hello|world",
+        "expectedOutput": "hello|world",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"aaa aaa\"]",
+        "output": "aaa,aaa",
+        "expectedOutput": "aaa,aaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"flow wolf\"]",
+        "output": "flow,wolf",
+        "expectedOutput": "flow,wolf",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[\"moon noom onmo\"]",
+        "output": "moon,noom,onmo",
+        "expectedOutput": "moon,noom,onmo",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def groupAnagrams(self, strs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <algorithm>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string groupAnagrams(string strs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String groupAnagrams(String strs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun groupAnagrams(strs: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    groupAnagrams(strs) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def groupAnagrams(self, strs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <algorithm>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string groupAnagrams(string strs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String groupAnagrams(String strs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun groupAnagrams(strs: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    groupAnagrams(strs) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def groupAnagrams(self, strs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <algorithm>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string groupAnagrams(string strs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String groupAnagrams(String strs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun groupAnagrams(strs: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    groupAnagrams(strs) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def groupAnagrams(self, strs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <algorithm>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string groupAnagrams(string strs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String groupAnagrams(String strs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun groupAnagrams(strs: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    groupAnagrams(strs) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n * k log k) where n is the number of words and k is the max word length, dominated by sorting each word's letters",
+      "space": "O(n * k) for the hash map storing all words",
+      "pattern": "hash map keyed by each word's sorted-letters signature, so every anagram of a word maps to the same key"
+    },
+    "bruteForce": {
+      "approach": "for every pair of words, check whether they're anagrams by sorting both and comparing, then union words into groups based on these pairwise matches",
+      "time": "O(n^2 * k log k) where n is the number of words and k is the max word length, from the pairwise comparisons",
+      "space": "O(n * k) to store the groups"
+    }
+  },
+  "optimal": {
+    "pattern": "hash map keyed by each word's sorted-letters signature, so every anagram of a word maps to the same key",
+    "time": "O(n * k log k) where n is the number of words and k is the max word length, dominated by sorting each word's letters",
+    "space": "O(n * k) for the hash map storing all words",
+    "hint_ladder": [
+      "two words are anagrams if and only if they become identical once you sort their letters - what does that suggest as a grouping key?",
+      "for each word, compute a canonical signature (its letters sorted alphabetically), and use that signature as a hash map key mapping to the list of original words sharing it",
+      "after one pass building the map, each value in the map is already a complete anagram group - no further comparison needed",
+      "for the final deterministic output, sort the words within each group alphabetically, then sort the groups themselves by their first word before joining into the encoded string"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every pair of words, check whether they're anagrams by sorting both and comparing, then union words into groups based on these pairwise matches",
+    "time": "O(n^2 * k log k) where n is the number of words and k is the max word length, from the pairwise comparisons",
+    "space": "O(n * k) to store the groups"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,634 @@
+{
+  "id": "linked-list-cycle",
+  "questionId": "linked-list-cycle",
+  "slug": "linked-list-cycle",
+  "title": "Linked List Cycle",
+  "difficulty": "Easy",
+  "category": "Fast slow pointers",
+  "patterns": [
+    "fast & slow pointers",
+    "cycle detection",
+    "linked list"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "you could track every index you've visited in a set, but can you detect revisiting a node without extra memory?",
+    "imagine two people walking the same track, one twice as fast as the other - if the track loops, what eventually happens to the gap between them?",
+    "if there's no cycle, the fast pointer (moving 2 steps at a time) will reach the end of the list and stop",
+    "if there is a cycle, the fast pointer will eventually catch up to and land on the exact same node as the slow pointer - that's your signal"
+  ],
+  "commonMistakes": [
+    "not handling pos = -1 as a normal list ending, and instead treating index -1 as a valid wraparound target",
+    "forgetting to check whether fast (or fast's next) is at the end before advancing it two steps",
+    "comparing values instead of node positions/identity when checking if fast and slow have met"
+  ],
+  "content": {
+    "problemStatement": "A singly linked list is described by an array `nums`, where `nums[i]`\nis the value of the i-th node and node i normally points to node i+1.\nYou're also given an integer `pos`: the 0-indexed position that the\nlast node's next pointer connects back to, instead of ending the list\nnormally. Reason about the list as if you were traversing it node by\nnode with a next pointer, wrapping around to index `pos` after the\nlast element when `pos != -1`.\n\n**Determine whether the list has a cycle.**\n\nIf `pos` is -1, the list has no cycle and simply ends after the last\nnode.\n",
+    "constraints": [
+      "1 <= nums.length <= 10^4",
+      "-10^5 <= nums[i] <= 10^5",
+      "-1 <= pos < nums.length"
+    ],
+    "notes": [
+      "pos = -1 (no cycle)",
+      "a single-node list that cycles to itself (pos = 0)",
+      "the cycle starts at the head (pos = 0) versus somewhere in the middle"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 2, 0, -4], pos = 1",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the last node (-4) points back to index 1 (value 2), forming a cycle"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2], pos = 0",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the last node (2) points back to index 0 (value 1)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1], pos = -1",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "single node, no cycle, the list just ends"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[3,2,0,-4],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2],0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1],-1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4,5],-1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5],0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5],4]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,4,3,2,1,0],2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],5]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],-1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1,1,1,1],0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-1,-2,-3,-4],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],10]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],-1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[9,8,7,6,5,4,3,2,1],-1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],29]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3],2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[100],-1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 2, 0, -4], pos = 1",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the last node (-4) points back to index 1 (value 2), forming a cycle"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2], pos = 0",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the last node (2) points back to index 0 (value 1)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1], pos = -1",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "single node, no cycle, the list just ends"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 2, 0, -4], pos = 1",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the last node (-4) points back to index 1 (value 2), forming a cycle"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2], pos = 0",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the last node (2) points back to index 0 (value 1)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1], pos = -1",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "single node, no cycle, the list just ends"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[3,2,0,-4],1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2],0]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1],-1]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1],0]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,2,3,4,5],-1]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,3,4,5],0]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3,4,5],4]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[5,4,3,2,1,0],2]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],5]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],-1]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,1,1,1,1],0]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[-1,-2,-3,-4],1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],10]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],-1]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2],1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[9,8,7,6,5,4,3,2,1],-1]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],0]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],29]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3],2]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[100],-1]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 2, 0, -4], pos = 1",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the last node (-4) points back to index 1 (value 2), forming a cycle"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2], pos = 0",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the last node (2) points back to index 0 (value 1)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1], pos = -1",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "single node, no cycle, the list just ends"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[3,2,0,-4],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2],0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1],-1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4,5],-1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5],0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5],4]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,4,3,2,1,0],2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],5]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],-1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1,1,1,1],0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-1,-2,-3,-4],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],10]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],-1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[9,8,7,6,5,4,3,2,1],-1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],29]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3],2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[100],-1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def hasCycle(self, nums, pos):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool hasCycle(vector<int>& nums, int pos) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean hasCycle(int[] nums, int pos) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun hasCycle(nums: IntArray, pos: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    hasCycle(nums, pos) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def hasCycle(self, nums, pos):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool hasCycle(vector<int>& nums, int pos) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean hasCycle(int[] nums, int pos) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun hasCycle(nums: IntArray, pos: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    hasCycle(nums, pos) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def hasCycle(self, nums, pos):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool hasCycle(vector<int>& nums, int pos) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean hasCycle(int[] nums, int pos) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun hasCycle(nums: IntArray, pos: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    hasCycle(nums, pos) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def hasCycle(self, nums, pos):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool hasCycle(vector<int>& nums, int pos) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean hasCycle(int[] nums, int pos) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun hasCycle(nums: IntArray, pos: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    hasCycle(nums, pos) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "fast & slow pointers (Floyd's cycle detection), fast moves two steps for every one step of slow"
+    },
+    "bruteForce": {
+      "approach": "walk the list keeping a hash set of visited indices; if you revisit an index (via pos wraparound), there's a cycle, if you fall off the end (pos == -1 case), there isn't",
+      "time": "O(n)",
+      "space": "O(n) for the visited set"
+    }
+  },
+  "optimal": {
+    "pattern": "fast & slow pointers (Floyd's cycle detection), fast moves two steps for every one step of slow",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "you could track every index you've visited in a set, but can you detect revisiting a node without extra memory?",
+      "imagine two people walking the same track, one twice as fast as the other - if the track loops, what eventually happens to the gap between them?",
+      "if there's no cycle, the fast pointer (moving 2 steps at a time) will reach the end of the list and stop",
+      "if there is a cycle, the fast pointer will eventually catch up to and land on the exact same node as the slow pointer - that's your signal"
+    ]
+  },
+  "bruteForce": {
+    "approach": "walk the list keeping a hash set of visited indices; if you revisit an index (via pos wraparound), there's a cycle, if you fall off the end (pos == -1 case), there isn't",
+    "time": "O(n)",
+    "space": "O(n) for the visited set"
+  },
+  "isIndex0": true,
+  "level": null
+}

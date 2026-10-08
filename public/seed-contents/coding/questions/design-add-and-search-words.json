@@ -1,0 +1,636 @@
+{
+  "id": "design-add-and-search-words",
+  "questionId": "design-add-and-search-words",
+  "slug": "design-add-and-search-words",
+  "title": "Design Add and Search Words Data Structure",
+  "difficulty": "Medium",
+  "category": "Trie",
+  "patterns": [
+    "trie",
+    "simulation",
+    "backtracking"
+  ],
+  "lists": [
+    "blind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "insert works exactly like a normal trie insert - no wildcards involved there",
+    "for search, a plain letter follows one child pointer, just like a regular trie search",
+    "the wildcard is where it gets interesting: when you hit a '.', you don't know which child to follow, so try ALL of the current node's children",
+    "write search as a recursive function taking (node, position in pattern): if the character at that position is a letter, recurse into that one child if it exists; if it's '.', recurse into every child and return true if ANY of them eventually succeed",
+    "the base case: you've consumed the whole pattern, so return whether the current node is marked end-of-word"
+  ],
+  "commonMistakes": [
+    "treating '.' as matching zero-or-more characters (regex-style) instead of exactly one character",
+    "not stopping early once one branch of a wildcard search succeeds, wasting time exploring the rest unnecessarily (a minor efficiency bug, not a correctness one)",
+    "forgetting the end-of-word check at the end of the recursion, so a search matches on a prefix that was never actually inserted as a full word"
+  ],
+  "content": {
+    "problemStatement": "You're given a single space-delimited sequence of operations to run\nagainst an initially empty word dictionary. Each token has one of two\nforms:\n\n- \"insert:word\" - add word to the dictionary, no return value\n- \"search:pattern\" - return 1 if pattern matches any inserted word of the\n  SAME length, where each character of pattern is either a lowercase\n  letter (must match exactly) or a '.' (matches any single character);\n  otherwise return 0\n\n**Simulate the tokens in order, and return a list containing the result of every \"search\" operation, in the order they occurred.**\n",
+    "constraints": [
+      "1 <= word.length, pattern.length <= 25",
+      "words consist of lowercase English letters only",
+      "patterns consist of lowercase English letters and the '.' wildcard",
+      "at most 10^4 insert and search operations combined"
+    ],
+    "notes": [
+      "search called before any insert",
+      "a pattern that is all wildcards, e.g. '...'",
+      "a pattern whose length matches no inserted word's length at all"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"insert:bad insert:dad insert:mad search:pad search:bad search:.ad search:b..\"",
+        "output": "[0, 1, 1, 1]",
+        "expectedOutput": "[0, 1, 1, 1]",
+        "explanation": "\"pad\" was never inserted (0); \"bad\" matches exactly (1); \".ad\" matches \"bad\" or \"dad\" (1); \"b..\" matches \"bad\" (1)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"insert:a search:a search:. search:aa\"",
+        "output": "[1, 1, 0]",
+        "expectedOutput": "[1, 1, 0]",
+        "explanation": "\"a\" matches exactly (1); \".\" matches the single-character word \"a\" (1); \"aa\" has no length-2 match (0)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"insert:dog search:d.g search:do. search:dog.\"",
+        "output": "[1, 1, 0]",
+        "expectedOutput": "[1, 1, 0]",
+        "explanation": "\"d.g\" and \"do.\" both match \"dog\" letter-by-letter with one wildcard; \"dog.\" has length 4 but \"dog\" has length 3, so no match"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"insert:bad insert:dad insert:mad search:pad search:bad search:.ad search:b..\"]",
+        "output": "[0,1,1,1]",
+        "expectedOutput": "[0,1,1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"insert:a search:a search:. search:aa\"]",
+        "output": "[1,1,0]",
+        "expectedOutput": "[1,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"insert:at insert:and insert:an insert:add search:a search:.at search:an. search:....\"]",
+        "output": "[0,0,1,0]",
+        "expectedOutput": "[0,0,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"insert:dog search:d.g search:do. search:dog.\"]",
+        "output": "[1,1,0]",
+        "expectedOutput": "[1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"insert:a search:a\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"search:a search:b search:c\"]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"insert:aa insert:ab insert:ac search:.. search:a. search:aa\"]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"insert:abc search:abc search:abd search:ab. search:a.c search:..c search:...\"]",
+        "output": "[1,0,1,1,1,1]",
+        "expectedOutput": "[1,0,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"insert:x insert:xy insert:xyz search:x search:xy search:xyz search:xyzz\"]",
+        "output": "[1,1,1,0]",
+        "expectedOutput": "[1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"insert:cat insert:bat insert:rat search:.at search:c.t search:ca. search:..t search:...\"]",
+        "output": "[1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"insert:aaa insert:aab insert:aba insert:baa search:aa. search:a.a search:.aa search:...\"]",
+        "output": "[1,1,1,1]",
+        "expectedOutput": "[1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"insert:hello search:hallo search:h.llo search:he.lo search:hel.o search:hell.\"]",
+        "output": "[0,1,1,1,1]",
+        "expectedOutput": "[0,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"insert:a insert:aa insert:aaa insert:aaaa search:. search:.. search:... search:....\"]",
+        "output": "[1,1,1,1]",
+        "expectedOutput": "[1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"insert:dog insert:cat insert:bat search:d.. search:.a. search:..t search:...\"]",
+        "output": "[1,1,1,1]",
+        "expectedOutput": "[1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"search:.\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"insert:zzz search:zzz search:zz. search:z.z search:.zz search:zzzz\"]",
+        "output": "[1,1,1,1,0]",
+        "expectedOutput": "[1,1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"insert:no insert:go insert:so search:.o search:n. search:go search:xo\"]",
+        "output": "[1,1,1,0]",
+        "expectedOutput": "[1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"insert:apple insert:apply insert:ample search:a.ple search:app.y search:...le\"]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"insert:one insert:two insert:six search:one search:two search:six search:.ne search:t.o search:s.x\"]",
+        "output": "[1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"insert:p insert:pp insert:ppp search:p search:pp search:ppp search:. search:.. search:...\"]",
+        "output": "[1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"insert:bad insert:dad insert:mad search:pad search:bad search:.ad search:b..\"",
+      "output": "[0, 1, 1, 1]",
+      "expectedOutput": "[0, 1, 1, 1]",
+      "explanation": "\"pad\" was never inserted (0); \"bad\" matches exactly (1); \".ad\" matches \"bad\" or \"dad\" (1); \"b..\" matches \"bad\" (1)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"insert:a search:a search:. search:aa\"",
+      "output": "[1, 1, 0]",
+      "expectedOutput": "[1, 1, 0]",
+      "explanation": "\"a\" matches exactly (1); \".\" matches the single-character word \"a\" (1); \"aa\" has no length-2 match (0)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"insert:dog search:d.g search:do. search:dog.\"",
+      "output": "[1, 1, 0]",
+      "expectedOutput": "[1, 1, 0]",
+      "explanation": "\"d.g\" and \"do.\" both match \"dog\" letter-by-letter with one wildcard; \"dog.\" has length 4 but \"dog\" has length 3, so no match"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"insert:bad insert:dad insert:mad search:pad search:bad search:.ad search:b..\"",
+      "output": "[0, 1, 1, 1]",
+      "expectedOutput": "[0, 1, 1, 1]",
+      "explanation": "\"pad\" was never inserted (0); \"bad\" matches exactly (1); \".ad\" matches \"bad\" or \"dad\" (1); \"b..\" matches \"bad\" (1)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"insert:a search:a search:. search:aa\"",
+      "output": "[1, 1, 0]",
+      "expectedOutput": "[1, 1, 0]",
+      "explanation": "\"a\" matches exactly (1); \".\" matches the single-character word \"a\" (1); \"aa\" has no length-2 match (0)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"insert:dog search:d.g search:do. search:dog.\"",
+      "output": "[1, 1, 0]",
+      "expectedOutput": "[1, 1, 0]",
+      "explanation": "\"d.g\" and \"do.\" both match \"dog\" letter-by-letter with one wildcard; \"dog.\" has length 4 but \"dog\" has length 3, so no match"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"insert:bad insert:dad insert:mad search:pad search:bad search:.ad search:b..\"]",
+      "output": "[0,1,1,1]",
+      "expectedOutput": "[0,1,1,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"insert:a search:a search:. search:aa\"]",
+      "output": "[1,1,0]",
+      "expectedOutput": "[1,1,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"insert:at insert:and insert:an insert:add search:a search:.at search:an. search:....\"]",
+      "output": "[0,0,1,0]",
+      "expectedOutput": "[0,0,1,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"insert:dog search:d.g search:do. search:dog.\"]",
+      "output": "[1,1,0]",
+      "expectedOutput": "[1,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"insert:a search:a\"]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"search:a search:b search:c\"]",
+      "output": "[0,0,0]",
+      "expectedOutput": "[0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"insert:aa insert:ab insert:ac search:.. search:a. search:aa\"]",
+      "output": "[1,1,1]",
+      "expectedOutput": "[1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"insert:abc search:abc search:abd search:ab. search:a.c search:..c search:...\"]",
+      "output": "[1,0,1,1,1,1]",
+      "expectedOutput": "[1,0,1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"insert:x insert:xy insert:xyz search:x search:xy search:xyz search:xyzz\"]",
+      "output": "[1,1,1,0]",
+      "expectedOutput": "[1,1,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"insert:cat insert:bat insert:rat search:.at search:c.t search:ca. search:..t search:...\"]",
+      "output": "[1,1,1,1,1]",
+      "expectedOutput": "[1,1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"insert:aaa insert:aab insert:aba insert:baa search:aa. search:a.a search:.aa search:...\"]",
+      "output": "[1,1,1,1]",
+      "expectedOutput": "[1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"insert:hello search:hallo search:h.llo search:he.lo search:hel.o search:hell.\"]",
+      "output": "[0,1,1,1,1]",
+      "expectedOutput": "[0,1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"insert:a insert:aa insert:aaa insert:aaaa search:. search:.. search:... search:....\"]",
+      "output": "[1,1,1,1]",
+      "expectedOutput": "[1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"insert:dog insert:cat insert:bat search:d.. search:.a. search:..t search:...\"]",
+      "output": "[1,1,1,1]",
+      "expectedOutput": "[1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"search:.\"]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"insert:zzz search:zzz search:zz. search:z.z search:.zz search:zzzz\"]",
+      "output": "[1,1,1,1,0]",
+      "expectedOutput": "[1,1,1,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"insert:no insert:go insert:so search:.o search:n. search:go search:xo\"]",
+      "output": "[1,1,1,0]",
+      "expectedOutput": "[1,1,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"insert:apple insert:apply insert:ample search:a.ple search:app.y search:...le\"]",
+      "output": "[1,1,1]",
+      "expectedOutput": "[1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"insert:one insert:two insert:six search:one search:two search:six search:.ne search:t.o search:s.x\"]",
+      "output": "[1,1,1,1,1,1]",
+      "expectedOutput": "[1,1,1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"insert:p insert:pp insert:ppp search:p search:pp search:ppp search:. search:.. search:...\"]",
+      "output": "[1,1,1,1,1,1]",
+      "expectedOutput": "[1,1,1,1,1,1]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"insert:bad insert:dad insert:mad search:pad search:bad search:.ad search:b..\"",
+        "output": "[0, 1, 1, 1]",
+        "expectedOutput": "[0, 1, 1, 1]",
+        "explanation": "\"pad\" was never inserted (0); \"bad\" matches exactly (1); \".ad\" matches \"bad\" or \"dad\" (1); \"b..\" matches \"bad\" (1)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"insert:a search:a search:. search:aa\"",
+        "output": "[1, 1, 0]",
+        "expectedOutput": "[1, 1, 0]",
+        "explanation": "\"a\" matches exactly (1); \".\" matches the single-character word \"a\" (1); \"aa\" has no length-2 match (0)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"insert:dog search:d.g search:do. search:dog.\"",
+        "output": "[1, 1, 0]",
+        "expectedOutput": "[1, 1, 0]",
+        "explanation": "\"d.g\" and \"do.\" both match \"dog\" letter-by-letter with one wildcard; \"dog.\" has length 4 but \"dog\" has length 3, so no match"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"insert:bad insert:dad insert:mad search:pad search:bad search:.ad search:b..\"]",
+        "output": "[0,1,1,1]",
+        "expectedOutput": "[0,1,1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"insert:a search:a search:. search:aa\"]",
+        "output": "[1,1,0]",
+        "expectedOutput": "[1,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"insert:at insert:and insert:an insert:add search:a search:.at search:an. search:....\"]",
+        "output": "[0,0,1,0]",
+        "expectedOutput": "[0,0,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"insert:dog search:d.g search:do. search:dog.\"]",
+        "output": "[1,1,0]",
+        "expectedOutput": "[1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"insert:a search:a\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"search:a search:b search:c\"]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"insert:aa insert:ab insert:ac search:.. search:a. search:aa\"]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"insert:abc search:abc search:abd search:ab. search:a.c search:..c search:...\"]",
+        "output": "[1,0,1,1,1,1]",
+        "expectedOutput": "[1,0,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"insert:x insert:xy insert:xyz search:x search:xy search:xyz search:xyzz\"]",
+        "output": "[1,1,1,0]",
+        "expectedOutput": "[1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"insert:cat insert:bat insert:rat search:.at search:c.t search:ca. search:..t search:...\"]",
+        "output": "[1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"insert:aaa insert:aab insert:aba insert:baa search:aa. search:a.a search:.aa search:...\"]",
+        "output": "[1,1,1,1]",
+        "expectedOutput": "[1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"insert:hello search:hallo search:h.llo search:he.lo search:hel.o search:hell.\"]",
+        "output": "[0,1,1,1,1]",
+        "expectedOutput": "[0,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"insert:a insert:aa insert:aaa insert:aaaa search:. search:.. search:... search:....\"]",
+        "output": "[1,1,1,1]",
+        "expectedOutput": "[1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"insert:dog insert:cat insert:bat search:d.. search:.a. search:..t search:...\"]",
+        "output": "[1,1,1,1]",
+        "expectedOutput": "[1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"search:.\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"insert:zzz search:zzz search:zz. search:z.z search:.zz search:zzzz\"]",
+        "output": "[1,1,1,1,0]",
+        "expectedOutput": "[1,1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"insert:no insert:go insert:so search:.o search:n. search:go search:xo\"]",
+        "output": "[1,1,1,0]",
+        "expectedOutput": "[1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"insert:apple insert:apply insert:ample search:a.ple search:app.y search:...le\"]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"insert:one insert:two insert:six search:one search:two search:six search:.ne search:t.o search:s.x\"]",
+        "output": "[1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"insert:p insert:pp insert:ppp search:p search:pp search:ppp search:. search:.. search:...\"]",
+        "output": "[1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def wordDictionaryResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> wordDictionaryResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] wordDictionaryResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wordDictionaryResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wordDictionaryResults(ops) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def wordDictionaryResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> wordDictionaryResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] wordDictionaryResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wordDictionaryResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wordDictionaryResults(ops) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def wordDictionaryResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> wordDictionaryResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] wordDictionaryResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wordDictionaryResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wordDictionaryResults(ops) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def wordDictionaryResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> wordDictionaryResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] wordDictionaryResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wordDictionaryResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wordDictionaryResults(ops) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(m) per search in the average case, up to O(26^m) worst case with many wildcards",
+      "space": "O(total inserted characters) for the trie, O(m) recursion depth per search",
+      "pattern": "insert words into a trie; search with backtracking DFS, branching over every child when a '.' is encountered instead of following a single path"
+    },
+    "bruteForce": {
+      "approach": "keep a plain list of inserted words; for each search, check every word of matching length against the pattern position by position",
+      "time": "O(n * m) per search, where n is inserted word count and m is pattern length",
+      "space": "O(n * m)"
+    }
+  },
+  "optimal": {
+    "pattern": "insert words into a trie; search with backtracking DFS, branching over every child when a '.' is encountered instead of following a single path",
+    "time": "O(m) per search in the average case, up to O(26^m) worst case with many wildcards",
+    "space": "O(total inserted characters) for the trie, O(m) recursion depth per search",
+    "hint_ladder": [
+      "insert works exactly like a normal trie insert - no wildcards involved there",
+      "for search, a plain letter follows one child pointer, just like a regular trie search",
+      "the wildcard is where it gets interesting: when you hit a '.', you don't know which child to follow, so try ALL of the current node's children",
+      "write search as a recursive function taking (node, position in pattern): if the character at that position is a letter, recurse into that one child if it exists; if it's '.', recurse into every child and return true if ANY of them eventually succeed",
+      "the base case: you've consumed the whole pattern, so return whether the current node is marked end-of-word"
+    ]
+  },
+  "bruteForce": {
+    "approach": "keep a plain list of inserted words; for each search, check every word of matching length against the pattern position by position",
+    "time": "O(n * m) per search, where n is inserted word count and m is pattern length",
+    "space": "O(n * m)"
+  },
+  "isIndex0": true,
+  "level": null
+}

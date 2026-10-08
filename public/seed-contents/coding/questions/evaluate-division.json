@@ -1,0 +1,663 @@
+{
+  "id": "evaluate-division",
+  "questionId": "evaluate-division",
+  "slug": "evaluate-division",
+  "title": "Evaluate Division",
+  "difficulty": "Medium",
+  "category": "Graphs",
+  "patterns": [
+    "graph",
+    "weighted graph",
+    "dfs"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "each equation a/b = k tells you two facts at once: an edge a -> b with weight k, and an edge b -> a with weight 1/k - how would you represent that as a graph?",
+    "build an adjacency list where each node is a variable and each edge stores the multiplier to go from one variable to the other",
+    "for a query c/d, if you can find any path from c to d in this graph, multiplying the edge weights along the way gives you the answer",
+    "use DFS or BFS from c, tracking the running product, and stop as soon as you reach d - if the search exhausts without reaching d (or c or d were never seen as nodes at all), the answer is undetermined",
+    "don't forget the fixed-point scaling: convert values100[i] to a real ratio by dividing by 100.0 for the internal computation, then multiply the final answer by 100 and round to the nearest integer before returning"
+  ],
+  "commonMistakes": [
+    "forgetting to add the reciprocal edge (b -> a with weight 1/k) when only the a -> b edge from the equation is given",
+    "not handling a query where both variables are equal but neither ever appeared in any equation - the self-ratio only counts if the variable exists in the graph",
+    "accumulating floating point error across long chains without a final rounding step, causing off-by-one results in the scaled integer output",
+    "treating a query variable that's absent from the graph as though it should raise an error instead of simply returning -1",
+    "using integer division on values100 directly instead of first converting to a real ratio (values100 / 100.0) before chaining multiplications"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of division equations and their results, plus a list\nof queries. Each equation is given as a pair of variable names, but to\nkeep things in our closed integer type system, variables are already\nrelabeled as small integers 0..n-1, so \"a/b\" becomes the pair `[a, b]`\nwhere `a` and `b` are integers. `equations[i] = [a, b]` paired with\n`values100[i]` means variable `a` divided by variable `b` equals\n`values100[i] / 100.0`, the true ratio scaled by 100 and rounded to a\nfixed-point integer.\n\n**For each query `[c, d]` in `queries`, compute `c / d` using the chain of known equations, and return the answer for every query as an integer scaled by 100 and rounded to the nearest integer, or -1 if the answer cannot be determined.**\n\nDivision is transitive: if `a/b` and `b/c` are known, then `a/c = (a/b) * (b/c)`. An answer is undetermined if either variable never appears in any equation, or there's no chain connecting them. Worked example: `a/b = 2.5` is stored as `values100 = 250`; a true ratio of 0.3333... scales to 33 (100/3 = 33.33..., rounds to 33).\n",
+    "constraints": [
+      "1 <= equations.length <= 20",
+      "equations[i].length == 2",
+      "1 <= values100.length == equations.length <= 20",
+      "values100[i] is a positive integer, the true ratio (values100[i] / 100.0) is between 0.001 and 1000.0",
+      "1 <= queries.length <= 20",
+      "queries[i].length == 2",
+      "variable ids are non-negative integers, not necessarily contiguous or starting at 0"
+    ],
+    "notes": [
+      "a query where both variables are the same and that variable exists (answer is always 100, meaning ratio 1.0)",
+      "a query where both variables are the same but neither ever appears in any equation (still -1, since an unknown variable has no defined self-ratio)",
+      "a query variable that never appears in any equation at all",
+      "a query where the two variables exist but belong to disconnected groups of equations",
+      "a long chain requiring multiple multiplications to connect two variables"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "equations = [[0, 1], [1, 2]], values100 = [200, 300], queries = [[0, 2], [2, 0], [0, 3], [3, 3]]",
+        "output": "[600, 17, -1, -1]",
+        "expectedOutput": "[600, 17, -1, -1]",
+        "explanation": "0/1 = 2.0 and 1/2 = 3.0, so 0/2 = 2.0 * 3.0 = 6.0 -> 600. 2/0 = 1/6.0 = 0.1666... -> 17. variable 3 never appears, so both queries touching it return -1."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "equations = [[0, 1], [1, 2], [2, 3], [3, 4]], values100 = [150, 250, 500, 100], queries = [[0, 4], [4, 0], [0, 0]]",
+        "output": "[1875, 5, 100]",
+        "expectedOutput": "[1875, 5, 100]",
+        "explanation": "0/4 = 1.5 * 2.5 * 5.0 * 1.0 = 18.75 -> 1875. 4/0 is the reciprocal, 1/18.75 = 0.0533... -> 5. 0/0 is always 1.0 -> 100."
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "equations = [[0, 1]], values100 = [200], queries = [[1, 0]]",
+        "output": "[50]",
+        "expectedOutput": "[50]",
+        "explanation": "0/1 = 2.0 so 1/0 = 0.5 -> 50"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,1],[1,2]],[200,300],[[0,2],[2,0],[0,3],[3,3]]]",
+        "output": "[600,17,-1,-1]",
+        "expectedOutput": "[600,17,-1,-1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0,1],[1,2],[2,3],[3,4]],[150,250,500,100],[[0,4],[4,0],[0,0]]]",
+        "output": "[1875,5,100]",
+        "expectedOutput": "[1875,5,100]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,1]],[200],[[1,0]]]",
+        "output": "[50]",
+        "expectedOutput": "[50]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[0,1]],[100],[[0,1],[1,0],[0,0],[1,1]]]",
+        "output": "[100,100,100,100]",
+        "expectedOutput": "[100,100,100,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[0,1],[2,3]],[200,300],[[0,3],[1,2]]]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[0,1],[1,2],[3,4]],[200,300,400],[[0,2],[3,4],[0,4]]]",
+        "output": "[600,400,-1]",
+        "expectedOutput": "[600,400,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0,1]],[500],[[5,5]]]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[0,1],[1,0]],[200,50],[[0,0]]]",
+        "output": "[100]",
+        "expectedOutput": "[100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0,1],[1,2],[2,0]],[200,300,17],[[0,0],[1,1],[2,2]]]",
+        "output": "[100,100,100]",
+        "expectedOutput": "[100,100,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,2],[2,3],[3,4],[4,5]],[100,100,100,100],[[1,5],[5,1]]]",
+        "output": "[100,100]",
+        "expectedOutput": "[100,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,1],[1,2]],[100,300],[[0,2]]]",
+        "output": "[300]",
+        "expectedOutput": "[300]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,1],[1,2],[2,3]],[200,200,150],[[0,3],[3,0]]]",
+        "output": "[600,17]",
+        "expectedOutput": "[600,17]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[6,7]],[400],[[7,6],[6,7],[6,6],[8,8]]]",
+        "output": "[25,400,100,-1]",
+        "expectedOutput": "[25,400,100,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[0,1],[2,3],[1,2]],[200,300,100],[[0,3]]]",
+        "output": "[600]",
+        "expectedOutput": "[600]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,1],[1,2],[3,0]],[200,50,400],[[3,2]]]",
+        "output": "[400]",
+        "expectedOutput": "[400]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[9,10]],[1],[[9,10],[10,9]]]",
+        "output": "[1,10000]",
+        "expectedOutput": "[1,10000]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,1],[1,2],[2,3],[3,0]],[200,300,200,25],[[0,0]]]",
+        "output": "[100]",
+        "expectedOutput": "[100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0,1]],[300],[[2,2]]]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[0,1],[1,2],[1,3]],[200,300,400],[[0,2],[0,3],[2,3]]]",
+        "output": "[600,800,133]",
+        "expectedOutput": "[600,800,133]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,1],[1,2],[2,3],[4,5]],[200,200,200,200],[[0,3],[4,5],[0,5]]]",
+        "output": "[800,200,-1]",
+        "expectedOutput": "[800,200,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[0,1],[1,2],[2,3],[3,4],[4,5]],[100,100,100,100,100],[[0,5],[5,0],[2,4]]]",
+        "output": "[100,100,100]",
+        "expectedOutput": "[100,100,100]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "equations = [[0, 1], [1, 2]], values100 = [200, 300], queries = [[0, 2], [2, 0], [0, 3], [3, 3]]",
+      "output": "[600, 17, -1, -1]",
+      "expectedOutput": "[600, 17, -1, -1]",
+      "explanation": "0/1 = 2.0 and 1/2 = 3.0, so 0/2 = 2.0 * 3.0 = 6.0 -> 600. 2/0 = 1/6.0 = 0.1666... -> 17. variable 3 never appears, so both queries touching it return -1."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "equations = [[0, 1], [1, 2], [2, 3], [3, 4]], values100 = [150, 250, 500, 100], queries = [[0, 4], [4, 0], [0, 0]]",
+      "output": "[1875, 5, 100]",
+      "expectedOutput": "[1875, 5, 100]",
+      "explanation": "0/4 = 1.5 * 2.5 * 5.0 * 1.0 = 18.75 -> 1875. 4/0 is the reciprocal, 1/18.75 = 0.0533... -> 5. 0/0 is always 1.0 -> 100."
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "equations = [[0, 1]], values100 = [200], queries = [[1, 0]]",
+      "output": "[50]",
+      "expectedOutput": "[50]",
+      "explanation": "0/1 = 2.0 so 1/0 = 0.5 -> 50"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "equations = [[0, 1], [1, 2]], values100 = [200, 300], queries = [[0, 2], [2, 0], [0, 3], [3, 3]]",
+      "output": "[600, 17, -1, -1]",
+      "expectedOutput": "[600, 17, -1, -1]",
+      "explanation": "0/1 = 2.0 and 1/2 = 3.0, so 0/2 = 2.0 * 3.0 = 6.0 -> 600. 2/0 = 1/6.0 = 0.1666... -> 17. variable 3 never appears, so both queries touching it return -1."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "equations = [[0, 1], [1, 2], [2, 3], [3, 4]], values100 = [150, 250, 500, 100], queries = [[0, 4], [4, 0], [0, 0]]",
+      "output": "[1875, 5, 100]",
+      "expectedOutput": "[1875, 5, 100]",
+      "explanation": "0/4 = 1.5 * 2.5 * 5.0 * 1.0 = 18.75 -> 1875. 4/0 is the reciprocal, 1/18.75 = 0.0533... -> 5. 0/0 is always 1.0 -> 100."
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "equations = [[0, 1]], values100 = [200], queries = [[1, 0]]",
+      "output": "[50]",
+      "expectedOutput": "[50]",
+      "explanation": "0/1 = 2.0 so 1/0 = 0.5 -> 50"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[0,1],[1,2]],[200,300],[[0,2],[2,0],[0,3],[3,3]]]",
+      "output": "[600,17,-1,-1]",
+      "expectedOutput": "[600,17,-1,-1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[0,1],[1,2],[2,3],[3,4]],[150,250,500,100],[[0,4],[4,0],[0,0]]]",
+      "output": "[1875,5,100]",
+      "expectedOutput": "[1875,5,100]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[0,1]],[200],[[1,0]]]",
+      "output": "[50]",
+      "expectedOutput": "[50]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[0,1]],[100],[[0,1],[1,0],[0,0],[1,1]]]",
+      "output": "[100,100,100,100]",
+      "expectedOutput": "[100,100,100,100]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[0,1],[2,3]],[200,300],[[0,3],[1,2]]]",
+      "output": "[-1,-1]",
+      "expectedOutput": "[-1,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[0,1],[1,2],[3,4]],[200,300,400],[[0,2],[3,4],[0,4]]]",
+      "output": "[600,400,-1]",
+      "expectedOutput": "[600,400,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[0,1]],[500],[[5,5]]]",
+      "output": "[-1]",
+      "expectedOutput": "[-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[0,1],[1,0]],[200,50],[[0,0]]]",
+      "output": "[100]",
+      "expectedOutput": "[100]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[0,1],[1,2],[2,0]],[200,300,17],[[0,0],[1,1],[2,2]]]",
+      "output": "[100,100,100]",
+      "expectedOutput": "[100,100,100]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1,2],[2,3],[3,4],[4,5]],[100,100,100,100],[[1,5],[5,1]]]",
+      "output": "[100,100]",
+      "expectedOutput": "[100,100]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[0,1],[1,2]],[100,300],[[0,2]]]",
+      "output": "[300]",
+      "expectedOutput": "[300]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[0,1],[1,2],[2,3]],[200,200,150],[[0,3],[3,0]]]",
+      "output": "[600,17]",
+      "expectedOutput": "[600,17]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[6,7]],[400],[[7,6],[6,7],[6,6],[8,8]]]",
+      "output": "[25,400,100,-1]",
+      "expectedOutput": "[25,400,100,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[0,1],[2,3],[1,2]],[200,300,100],[[0,3]]]",
+      "output": "[600]",
+      "expectedOutput": "[600]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[0,1],[1,2],[3,0]],[200,50,400],[[3,2]]]",
+      "output": "[400]",
+      "expectedOutput": "[400]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[9,10]],[1],[[9,10],[10,9]]]",
+      "output": "[1,10000]",
+      "expectedOutput": "[1,10000]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[0,1],[1,2],[2,3],[3,0]],[200,300,200,25],[[0,0]]]",
+      "output": "[100]",
+      "expectedOutput": "[100]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[0,1]],[300],[[2,2]]]",
+      "output": "[-1]",
+      "expectedOutput": "[-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[0,1],[1,2],[1,3]],[200,300,400],[[0,2],[0,3],[2,3]]]",
+      "output": "[600,800,133]",
+      "expectedOutput": "[600,800,133]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[0,1],[1,2],[2,3],[4,5]],[200,200,200,200],[[0,3],[4,5],[0,5]]]",
+      "output": "[800,200,-1]",
+      "expectedOutput": "[800,200,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[[0,1],[1,2],[2,3],[3,4],[4,5]],[100,100,100,100,100],[[0,5],[5,0],[2,4]]]",
+      "output": "[100,100,100]",
+      "expectedOutput": "[100,100,100]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "equations = [[0, 1], [1, 2]], values100 = [200, 300], queries = [[0, 2], [2, 0], [0, 3], [3, 3]]",
+        "output": "[600, 17, -1, -1]",
+        "expectedOutput": "[600, 17, -1, -1]",
+        "explanation": "0/1 = 2.0 and 1/2 = 3.0, so 0/2 = 2.0 * 3.0 = 6.0 -> 600. 2/0 = 1/6.0 = 0.1666... -> 17. variable 3 never appears, so both queries touching it return -1."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "equations = [[0, 1], [1, 2], [2, 3], [3, 4]], values100 = [150, 250, 500, 100], queries = [[0, 4], [4, 0], [0, 0]]",
+        "output": "[1875, 5, 100]",
+        "expectedOutput": "[1875, 5, 100]",
+        "explanation": "0/4 = 1.5 * 2.5 * 5.0 * 1.0 = 18.75 -> 1875. 4/0 is the reciprocal, 1/18.75 = 0.0533... -> 5. 0/0 is always 1.0 -> 100."
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "equations = [[0, 1]], values100 = [200], queries = [[1, 0]]",
+        "output": "[50]",
+        "expectedOutput": "[50]",
+        "explanation": "0/1 = 2.0 so 1/0 = 0.5 -> 50"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,1],[1,2]],[200,300],[[0,2],[2,0],[0,3],[3,3]]]",
+        "output": "[600,17,-1,-1]",
+        "expectedOutput": "[600,17,-1,-1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0,1],[1,2],[2,3],[3,4]],[150,250,500,100],[[0,4],[4,0],[0,0]]]",
+        "output": "[1875,5,100]",
+        "expectedOutput": "[1875,5,100]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,1]],[200],[[1,0]]]",
+        "output": "[50]",
+        "expectedOutput": "[50]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[0,1]],[100],[[0,1],[1,0],[0,0],[1,1]]]",
+        "output": "[100,100,100,100]",
+        "expectedOutput": "[100,100,100,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[0,1],[2,3]],[200,300],[[0,3],[1,2]]]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[0,1],[1,2],[3,4]],[200,300,400],[[0,2],[3,4],[0,4]]]",
+        "output": "[600,400,-1]",
+        "expectedOutput": "[600,400,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0,1]],[500],[[5,5]]]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[0,1],[1,0]],[200,50],[[0,0]]]",
+        "output": "[100]",
+        "expectedOutput": "[100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0,1],[1,2],[2,0]],[200,300,17],[[0,0],[1,1],[2,2]]]",
+        "output": "[100,100,100]",
+        "expectedOutput": "[100,100,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,2],[2,3],[3,4],[4,5]],[100,100,100,100],[[1,5],[5,1]]]",
+        "output": "[100,100]",
+        "expectedOutput": "[100,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,1],[1,2]],[100,300],[[0,2]]]",
+        "output": "[300]",
+        "expectedOutput": "[300]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,1],[1,2],[2,3]],[200,200,150],[[0,3],[3,0]]]",
+        "output": "[600,17]",
+        "expectedOutput": "[600,17]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[6,7]],[400],[[7,6],[6,7],[6,6],[8,8]]]",
+        "output": "[25,400,100,-1]",
+        "expectedOutput": "[25,400,100,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[0,1],[2,3],[1,2]],[200,300,100],[[0,3]]]",
+        "output": "[600]",
+        "expectedOutput": "[600]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,1],[1,2],[3,0]],[200,50,400],[[3,2]]]",
+        "output": "[400]",
+        "expectedOutput": "[400]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[9,10]],[1],[[9,10],[10,9]]]",
+        "output": "[1,10000]",
+        "expectedOutput": "[1,10000]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,1],[1,2],[2,3],[3,0]],[200,300,200,25],[[0,0]]]",
+        "output": "[100]",
+        "expectedOutput": "[100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0,1]],[300],[[2,2]]]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[0,1],[1,2],[1,3]],[200,300,400],[[0,2],[0,3],[2,3]]]",
+        "output": "[600,800,133]",
+        "expectedOutput": "[600,800,133]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,1],[1,2],[2,3],[4,5]],[200,200,200,200],[[0,3],[4,5],[0,5]]]",
+        "output": "[800,200,-1]",
+        "expectedOutput": "[800,200,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[0,1],[1,2],[2,3],[3,4],[4,5]],[100,100,100,100,100],[[0,5],[5,0],[2,4]]]",
+        "output": "[100,100,100]",
+        "expectedOutput": "[100,100,100]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def calcEquation(self, equations, values100, queries):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> calcEquation(vector<vector<int>>& equations, vector<int>& values100, vector<vector<int>>& queries) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] calcEquation(int[][] equations, int[] values100, int[][] queries) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun calcEquation(equations: Array<IntArray>, values100: IntArray, queries: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    calcEquation(equations, values100, queries) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def calcEquation(self, equations, values100, queries):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> calcEquation(vector<vector<int>>& equations, vector<int>& values100, vector<vector<int>>& queries) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] calcEquation(int[][] equations, int[] values100, int[][] queries) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun calcEquation(equations: Array<IntArray>, values100: IntArray, queries: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    calcEquation(equations, values100, queries) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def calcEquation(self, equations, values100, queries):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> calcEquation(vector<vector<int>>& equations, vector<int>& values100, vector<vector<int>>& queries) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] calcEquation(int[][] equations, int[] values100, int[][] queries) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun calcEquation(equations: Array<IntArray>, values100: IntArray, queries: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    calcEquation(equations, values100, queries) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def calcEquation(self, equations, values100, queries):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> calcEquation(vector<vector<int>>& equations, vector<int>& values100, vector<vector<int>>& queries) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] calcEquation(int[][] equations, int[] values100, int[][] queries) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun calcEquation(equations: Array<IntArray>, values100: IntArray, queries: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    calcEquation(equations, values100, queries) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O((V + E) * Q), where V and E come from the equations and Q is the number of queries",
+      "space": "O(V + E)",
+      "pattern": "graph traversal (DFS/BFS) over a weighted graph built from the equations, treating each equation as two directed edges with reciprocal weights"
+    },
+    "bruteForce": {
+      "approach": "build a weighted directed graph from every equation (and its reciprocal edge), then for each query run a DFS or BFS from the source variable to the target variable, multiplying edge weights along the path",
+      "time": "O(E) per query for the graph build (reused), O(V + E) per query for the traversal, so O(Q * (V + E))",
+      "space": "O(V + E) for the adjacency list"
+    }
+  },
+  "optimal": {
+    "pattern": "graph traversal (DFS/BFS) over a weighted graph built from the equations, treating each equation as two directed edges with reciprocal weights",
+    "time": "O((V + E) * Q), where V and E come from the equations and Q is the number of queries",
+    "space": "O(V + E)",
+    "hint_ladder": [
+      "each equation a/b = k tells you two facts at once: an edge a -> b with weight k, and an edge b -> a with weight 1/k - how would you represent that as a graph?",
+      "build an adjacency list where each node is a variable and each edge stores the multiplier to go from one variable to the other",
+      "for a query c/d, if you can find any path from c to d in this graph, multiplying the edge weights along the way gives you the answer",
+      "use DFS or BFS from c, tracking the running product, and stop as soon as you reach d - if the search exhausts without reaching d (or c or d were never seen as nodes at all), the answer is undetermined",
+      "don't forget the fixed-point scaling: convert values100[i] to a real ratio by dividing by 100.0 for the internal computation, then multiply the final answer by 100 and round to the nearest integer before returning"
+    ]
+  },
+  "bruteForce": {
+    "approach": "build a weighted directed graph from every equation (and its reciprocal edge), then for each query run a DFS or BFS from the source variable to the target variable, multiplying edge weights along the path",
+    "time": "O(E) per query for the graph build (reused), O(V + E) per query for the traversal, so O(Q * (V + E))",
+    "space": "O(V + E) for the adjacency list"
+  },
+  "isIndex0": true,
+  "level": null
+}

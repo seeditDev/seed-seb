@@ -1,0 +1,629 @@
+{
+  "id": "maximum-population-year",
+  "questionId": "maximum-population-year",
+  "slug": "maximum-population-year",
+  "title": "Population via Range Counting",
+  "difficulty": "Medium",
+  "category": "Cyclic sort",
+  "patterns": [
+    "cyclic sort",
+    "array",
+    "counting"
+  ],
+  "lists": [],
+  "hints": [
+    "years are small bounded integers, so instead of a general interval-overlap algorithm, you can index directly into an array by year, similar in spirit to placing values by their known range in cyclic sort problems",
+    "for each log [birth, death], think of it as a +1 event at year birth and a -1 event at year death (since the person is no longer counted starting at death)",
+    "build a delta array indexed by year, add +1 at each birth index and -1 at each death index, then sweep through years in order keeping a running total (population), which changes by exactly the delta at each year",
+    "track the maximum running total seen so far and the year it was first reached, since ties should resolve to the earliest year"
+  ],
+  "commonMistakes": [
+    "counting death as still alive, i.e. treating the interval as inclusive on both ends instead of [birth, death - 1]",
+    "not resolving ties correctly (should return the earliest year at the max, not just any year at the max)",
+    "forgetting to offset years to a small array index (e.g. subtracting a base year like 1950) when the actual year values are large"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of `logs` where each log is `[birth, death]`,\nrepresenting a person who was alive during every year from `birth` up to\n(but not including) `death`.\n\n**Return the earliest year that had the maximum number of people alive at once.**\n",
+    "constraints": [
+      "1 <= logs.length <= 100",
+      "1900 <= birth[i] < death[i] <= 2050"
+    ],
+    "notes": [
+      "overlapping logs that tie for maximum population in multiple years (return the earliest)",
+      "a single log with no overlaps",
+      "all logs share the exact same birth year"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "logs = [[1993, 1999], [2000, 2010]]",
+        "output": "1993",
+        "expectedOutput": "1993",
+        "explanation": "1993-1998 each have 1 person alive, 1999 has 0 (that person died), 2000-2009 have 1 person alive. the max alive at any point is 1, and the earliest year reaching it is 1993"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "logs = [[1950, 1961], [1960, 1971], [1970, 1981]]",
+        "output": "1960",
+        "expectedOutput": "1960",
+        "explanation": "1960 has both the first and second person alive (2 people), which is the peak; it's the earliest year reaching that peak"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "logs = [[1900, 1910]]",
+        "output": "1900",
+        "expectedOutput": "1900",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1993,1999],[2000,2010]]]",
+        "output": "1993",
+        "expectedOutput": "1993",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1950,1961],[1960,1971],[1970,1981]]]",
+        "output": "1960",
+        "expectedOutput": "1960",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1900,1910]]]",
+        "output": "1900",
+        "expectedOutput": "1900",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1920,1925],[1921,1925],[1922,1925]]]",
+        "output": "1922",
+        "expectedOutput": "1922",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[2000,2001]]]",
+        "output": "2000",
+        "expectedOutput": "2000",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[2000,2010],[2000,2010]]]",
+        "output": "2000",
+        "expectedOutput": "2000",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1950,2050]]]",
+        "output": "1950",
+        "expectedOutput": "1950",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[2000,2005],[2001,2006],[2002,2007]]]",
+        "output": "2002",
+        "expectedOutput": "2002",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1980,1990],[1980,1990],[1980,1990]]]",
+        "output": "1980",
+        "expectedOutput": "1980",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1950,1951],[1951,1952],[1952,1953]]]",
+        "output": "1950",
+        "expectedOutput": "1950",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[2004,2049],[2021,2043],[2012,2022],[1974,2012],[1977,1985],[2024,2048],[2019,2021],[1990,1994],[1956,2031],[2011,2044],[2017,2028],[1957,2023],[1960,1984],[1958,2035],[1958,2045],[1980,2032],[1965,2038],[1981,1987],[2029,2032],[2003,2046]]]",
+        "output": "2019",
+        "expectedOutput": "2019",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[2024,2043],[2016,2037],[1983,2010],[2035,2047],[1990,2006],[1983,2034],[1966,2049],[1988,2018],[1990,2050],[1959,1961],[2008,2048],[2022,2026],[1959,2028],[1977,2042],[1983,2000],[1994,1999],[1981,2029],[1986,2007],[2006,2041],[2040,2045],[2028,2049],[2017,2018],[2035,2049],[2020,2030],[2034,2038],[1967,2001],[1964,1978],[2020,2025],[1984,2021],[2027,2034]]]",
+        "output": "1994",
+        "expectedOutput": "1994",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1990,2000],[1990,2000],[1995,2005]]]",
+        "output": "1995",
+        "expectedOutput": "1995",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1950,1955],[1955,1960],[1960,1965]]]",
+        "output": "1950",
+        "expectedOutput": "1950",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[2000,2020],[2005,2010],[2005,2010],[2015,2020]]]",
+        "output": "2005",
+        "expectedOutput": "2005",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1960,1970],[1961,1971],[1962,1972],[1963,1973],[1964,1974]]]",
+        "output": "1964",
+        "expectedOutput": "1964",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[2010,2015],[2012,2017],[2011,2016],[2013,2018],[2014,2019],[2010,2020]]]",
+        "output": "2014",
+        "expectedOutput": "2014",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1950,2050],[1960,2040],[1970,2030],[1980,2020]]]",
+        "output": "1980",
+        "expectedOutput": "1980",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[2000,2001],[2001,2002],[2002,2003],[2003,2004]]]",
+        "output": "2000",
+        "expectedOutput": "2000",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1975,1985],[1976,1986],[1977,1978]]]",
+        "output": "1977",
+        "expectedOutput": "1977",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "logs = [[1993, 1999], [2000, 2010]]",
+      "output": "1993",
+      "expectedOutput": "1993",
+      "explanation": "1993-1998 each have 1 person alive, 1999 has 0 (that person died), 2000-2009 have 1 person alive. the max alive at any point is 1, and the earliest year reaching it is 1993"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "logs = [[1950, 1961], [1960, 1971], [1970, 1981]]",
+      "output": "1960",
+      "expectedOutput": "1960",
+      "explanation": "1960 has both the first and second person alive (2 people), which is the peak; it's the earliest year reaching that peak"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "logs = [[1900, 1910]]",
+      "output": "1900",
+      "expectedOutput": "1900",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "logs = [[1993, 1999], [2000, 2010]]",
+      "output": "1993",
+      "expectedOutput": "1993",
+      "explanation": "1993-1998 each have 1 person alive, 1999 has 0 (that person died), 2000-2009 have 1 person alive. the max alive at any point is 1, and the earliest year reaching it is 1993"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "logs = [[1950, 1961], [1960, 1971], [1970, 1981]]",
+      "output": "1960",
+      "expectedOutput": "1960",
+      "explanation": "1960 has both the first and second person alive (2 people), which is the peak; it's the earliest year reaching that peak"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "logs = [[1900, 1910]]",
+      "output": "1900",
+      "expectedOutput": "1900",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1993,1999],[2000,2010]]]",
+      "output": "1993",
+      "expectedOutput": "1993",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1950,1961],[1960,1971],[1970,1981]]]",
+      "output": "1960",
+      "expectedOutput": "1960",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1900,1910]]]",
+      "output": "1900",
+      "expectedOutput": "1900",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1920,1925],[1921,1925],[1922,1925]]]",
+      "output": "1922",
+      "expectedOutput": "1922",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[2000,2001]]]",
+      "output": "2000",
+      "expectedOutput": "2000",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[2000,2010],[2000,2010]]]",
+      "output": "2000",
+      "expectedOutput": "2000",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1950,2050]]]",
+      "output": "1950",
+      "expectedOutput": "1950",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[2000,2005],[2001,2006],[2002,2007]]]",
+      "output": "2002",
+      "expectedOutput": "2002",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1980,1990],[1980,1990],[1980,1990]]]",
+      "output": "1980",
+      "expectedOutput": "1980",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1950,1951],[1951,1952],[1952,1953]]]",
+      "output": "1950",
+      "expectedOutput": "1950",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[2004,2049],[2021,2043],[2012,2022],[1974,2012],[1977,1985],[2024,2048],[2019,2021],[1990,1994],[1956,2031],[2011,2044],[2017,2028],[1957,2023],[1960,1984],[1958,2035],[1958,2045],[1980,2032],[1965,2038],[1981,1987],[2029,2032],[2003,2046]]]",
+      "output": "2019",
+      "expectedOutput": "2019",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[2024,2043],[2016,2037],[1983,2010],[2035,2047],[1990,2006],[1983,2034],[1966,2049],[1988,2018],[1990,2050],[1959,1961],[2008,2048],[2022,2026],[1959,2028],[1977,2042],[1983,2000],[1994,1999],[1981,2029],[1986,2007],[2006,2041],[2040,2045],[2028,2049],[2017,2018],[2035,2049],[2020,2030],[2034,2038],[1967,2001],[1964,1978],[2020,2025],[1984,2021],[2027,2034]]]",
+      "output": "1994",
+      "expectedOutput": "1994",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1990,2000],[1990,2000],[1995,2005]]]",
+      "output": "1995",
+      "expectedOutput": "1995",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1950,1955],[1955,1960],[1960,1965]]]",
+      "output": "1950",
+      "expectedOutput": "1950",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[2000,2020],[2005,2010],[2005,2010],[2015,2020]]]",
+      "output": "2005",
+      "expectedOutput": "2005",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[1960,1970],[1961,1971],[1962,1972],[1963,1973],[1964,1974]]]",
+      "output": "1964",
+      "expectedOutput": "1964",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[2010,2015],[2012,2017],[2011,2016],[2013,2018],[2014,2019],[2010,2020]]]",
+      "output": "2014",
+      "expectedOutput": "2014",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1950,2050],[1960,2040],[1970,2030],[1980,2020]]]",
+      "output": "1980",
+      "expectedOutput": "1980",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[2000,2001],[2001,2002],[2002,2003],[2003,2004]]]",
+      "output": "2000",
+      "expectedOutput": "2000",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1975,1985],[1976,1986],[1977,1978]]]",
+      "output": "1977",
+      "expectedOutput": "1977",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "logs = [[1993, 1999], [2000, 2010]]",
+        "output": "1993",
+        "expectedOutput": "1993",
+        "explanation": "1993-1998 each have 1 person alive, 1999 has 0 (that person died), 2000-2009 have 1 person alive. the max alive at any point is 1, and the earliest year reaching it is 1993"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "logs = [[1950, 1961], [1960, 1971], [1970, 1981]]",
+        "output": "1960",
+        "expectedOutput": "1960",
+        "explanation": "1960 has both the first and second person alive (2 people), which is the peak; it's the earliest year reaching that peak"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "logs = [[1900, 1910]]",
+        "output": "1900",
+        "expectedOutput": "1900",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1993,1999],[2000,2010]]]",
+        "output": "1993",
+        "expectedOutput": "1993",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1950,1961],[1960,1971],[1970,1981]]]",
+        "output": "1960",
+        "expectedOutput": "1960",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1900,1910]]]",
+        "output": "1900",
+        "expectedOutput": "1900",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1920,1925],[1921,1925],[1922,1925]]]",
+        "output": "1922",
+        "expectedOutput": "1922",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[2000,2001]]]",
+        "output": "2000",
+        "expectedOutput": "2000",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[2000,2010],[2000,2010]]]",
+        "output": "2000",
+        "expectedOutput": "2000",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1950,2050]]]",
+        "output": "1950",
+        "expectedOutput": "1950",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[2000,2005],[2001,2006],[2002,2007]]]",
+        "output": "2002",
+        "expectedOutput": "2002",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1980,1990],[1980,1990],[1980,1990]]]",
+        "output": "1980",
+        "expectedOutput": "1980",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1950,1951],[1951,1952],[1952,1953]]]",
+        "output": "1950",
+        "expectedOutput": "1950",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[2004,2049],[2021,2043],[2012,2022],[1974,2012],[1977,1985],[2024,2048],[2019,2021],[1990,1994],[1956,2031],[2011,2044],[2017,2028],[1957,2023],[1960,1984],[1958,2035],[1958,2045],[1980,2032],[1965,2038],[1981,1987],[2029,2032],[2003,2046]]]",
+        "output": "2019",
+        "expectedOutput": "2019",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[2024,2043],[2016,2037],[1983,2010],[2035,2047],[1990,2006],[1983,2034],[1966,2049],[1988,2018],[1990,2050],[1959,1961],[2008,2048],[2022,2026],[1959,2028],[1977,2042],[1983,2000],[1994,1999],[1981,2029],[1986,2007],[2006,2041],[2040,2045],[2028,2049],[2017,2018],[2035,2049],[2020,2030],[2034,2038],[1967,2001],[1964,1978],[2020,2025],[1984,2021],[2027,2034]]]",
+        "output": "1994",
+        "expectedOutput": "1994",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1990,2000],[1990,2000],[1995,2005]]]",
+        "output": "1995",
+        "expectedOutput": "1995",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1950,1955],[1955,1960],[1960,1965]]]",
+        "output": "1950",
+        "expectedOutput": "1950",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[2000,2020],[2005,2010],[2005,2010],[2015,2020]]]",
+        "output": "2005",
+        "expectedOutput": "2005",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1960,1970],[1961,1971],[1962,1972],[1963,1973],[1964,1974]]]",
+        "output": "1964",
+        "expectedOutput": "1964",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[2010,2015],[2012,2017],[2011,2016],[2013,2018],[2014,2019],[2010,2020]]]",
+        "output": "2014",
+        "expectedOutput": "2014",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1950,2050],[1960,2040],[1970,2030],[1980,2020]]]",
+        "output": "1980",
+        "expectedOutput": "1980",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[2000,2001],[2001,2002],[2002,2003],[2003,2004]]]",
+        "output": "2000",
+        "expectedOutput": "2000",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1975,1985],[1976,1986],[1977,1978]]]",
+        "output": "1977",
+        "expectedOutput": "1977",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def maximumPopulationYear(self, logs):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maximumPopulationYear(vector<vector<int>>& logs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maximumPopulationYear(int[][] logs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maximumPopulationYear(logs: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maximumPopulationYear(logs) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def maximumPopulationYear(self, logs):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maximumPopulationYear(vector<vector<int>>& logs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maximumPopulationYear(int[][] logs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maximumPopulationYear(logs: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maximumPopulationYear(logs) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def maximumPopulationYear(self, logs):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maximumPopulationYear(vector<vector<int>>& logs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maximumPopulationYear(int[][] logs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maximumPopulationYear(logs: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maximumPopulationYear(logs) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def maximumPopulationYear(self, logs):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maximumPopulationYear(vector<vector<int>>& logs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maximumPopulationYear(int[][] logs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maximumPopulationYear(logs: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maximumPopulationYear(logs) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n + range) where range is the span of years",
+      "space": "O(range) for the delta array",
+      "pattern": "place a +1 delta at each birth year and a -1 delta at each death year into a small indexed array (index by year, an application of the same 'known bounded range means direct indexing' idea behind cyclic sort), then scan and take a running sum, tracking the earliest peak"
+    },
+    "bruteForce": {
+      "approach": "for every candidate year in the overall range, scan every log and count how many logs have birth <= year < death, then track the max",
+      "time": "O(n * range) where range is the span of years considered",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "place a +1 delta at each birth year and a -1 delta at each death year into a small indexed array (index by year, an application of the same 'known bounded range means direct indexing' idea behind cyclic sort), then scan and take a running sum, tracking the earliest peak",
+    "time": "O(n + range) where range is the span of years",
+    "space": "O(range) for the delta array",
+    "hint_ladder": [
+      "years are small bounded integers, so instead of a general interval-overlap algorithm, you can index directly into an array by year, similar in spirit to placing values by their known range in cyclic sort problems",
+      "for each log [birth, death], think of it as a +1 event at year birth and a -1 event at year death (since the person is no longer counted starting at death)",
+      "build a delta array indexed by year, add +1 at each birth index and -1 at each death index, then sweep through years in order keeping a running total (population), which changes by exactly the delta at each year",
+      "track the maximum running total seen so far and the year it was first reached, since ties should resolve to the earliest year"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every candidate year in the overall range, scan every log and count how many logs have birth <= year < death, then track the max",
+    "time": "O(n * range) where range is the span of years considered",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

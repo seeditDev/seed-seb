@@ -1,0 +1,632 @@
+{
+  "id": "add-two-numbers",
+  "questionId": "add-two-numbers",
+  "slug": "add-two-numbers",
+  "title": "Add Two Numbers",
+  "difficulty": "Medium",
+  "category": "Linked list",
+  "patterns": [
+    "linked list",
+    "simulation",
+    "math"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "since digits are already stored least-significant-first, does that order match how you'd naturally add numbers by hand?",
+    "what do you do with a carry when adding two digits by hand, and where does it get applied next?",
+    "walk both lists together, adding corresponding digits plus any carry from the previous step, and appending sum % 10 to the result while carrying sum / 10 forward",
+    "keep going until both lists are exhausted AND the carry is zero - a final leftover carry needs its own extra digit"
+  ],
+  "commonMistakes": [
+    "stopping as soon as the shorter list runs out instead of continuing until both lists and the carry are exhausted",
+    "forgetting to emit an extra digit for a final carry after both lists end",
+    "treating the digits as most-significant-first and reversing at the wrong step"
+  ],
+  "content": {
+    "problemStatement": "Two non-negative integers are each stored as a singly linked list, given to you as arrays `l1` and `l2`. Each node holds a single digit, and the digits are stored in reverse order, so the head of the list is the least significant digit.\n\n**Add the two numbers and return the sum as a linked list in the same reversed-digit format.**\n\nThe result should be an array where index 0 is the least significant digit of the sum.\n",
+    "constraints": [
+      "1 <= l1.length, l2.length <= 100",
+      "0 <= l1[i], l2[i] <= 9",
+      "it is guaranteed that the list represents a number that does not have leading zeros, except the number 0 itself"
+    ],
+    "notes": [
+      "the two numbers have different lengths",
+      "a carry propagates past the last digit of both numbers, growing the result by one digit",
+      "both numbers are just [0]"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "l1 = [2, 4, 3], l2 = [5, 6, 4]",
+        "output": "[7, 0, 8]",
+        "expectedOutput": "[7, 0, 8]",
+        "explanation": "l1 represents 342, l2 represents 465, 342 + 465 = 807, stored reversed as [7, 0, 8]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "l1 = [0], l2 = [0]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "l1 = [9, 9, 9, 9, 9, 9, 9], l2 = [9, 9, 9, 9]",
+        "output": "[8, 9, 9, 9, 0, 0, 0, 1]",
+        "expectedOutput": "[8, 9, 9, 9, 0, 0, 0, 1]",
+        "explanation": "9999999 + 9999 = 10009998, stored reversed with a new leading digit for the carry"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[2,4,3],[5,6,4]]",
+        "output": "[7,0,8]",
+        "expectedOutput": "[7,0,8]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0],[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[9,9,9,9,9,9,9],[9,9,9,9]]",
+        "output": "[8,9,9,9,0,0,0,1]",
+        "expectedOutput": "[8,9,9,9,0,0,0,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2],[3,4,5]]",
+        "output": "[4,6,5]",
+        "expectedOutput": "[4,6,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[5],[5]]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3],[9,9,9]]",
+        "output": "[0,2,3,1]",
+        "expectedOutput": "[0,2,3,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0],[9,9,9,9,9]]",
+        "output": "[9,9,9,9,9]",
+        "expectedOutput": "[9,9,9,9,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[9],[1]]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,4,3,0,0,0,0,0,0,1],[5,6,4]]",
+        "output": "[7,0,8,0,0,0,0,0,0,1]",
+        "expectedOutput": "[7,0,8,0,0,0,0,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[9,9,9,9,9,9,9,9,9,9,9,9,9,9,9]]",
+        "output": "[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1]",
+        "expectedOutput": "[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9],[9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9]]",
+        "output": "[8,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,1]",
+        "expectedOutput": "[8,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[3,7],[8,5,2,1]]",
+        "output": "[1,3,3,1]",
+        "expectedOutput": "[1,3,3,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[0],[1,2,3]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,0,0],[0,0,1]]",
+        "output": "[1,0,1]",
+        "expectedOutput": "[1,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[4,3,2,1],[6,7,8,9,0,1]]",
+        "output": "[0,1,1,1,1,1]",
+        "expectedOutput": "[0,1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[5,9,2],[5,9,2]]",
+        "output": "[0,9,5]",
+        "expectedOutput": "[0,9,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,0,1,2,3,4,5],[9,8,7,6,5,4,3,2,1,0]]",
+        "output": "[0,1,1,1,1,1,1,1,1,1,1,2,3,4,5]",
+        "expectedOutput": "[0,1,1,1,1,1,1,1,1,1,1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7],[3]]",
+        "output": "[0,8,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7]",
+        "expectedOutput": "[0,8,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,9,9],[1]]",
+        "output": "[3,9,9]",
+        "expectedOutput": "[3,9,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,9,9,9,9],[9,1]]",
+        "output": "[0,1,0,0,0,1]",
+        "expectedOutput": "[0,1,0,0,0,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "l1 = [2, 4, 3], l2 = [5, 6, 4]",
+      "output": "[7, 0, 8]",
+      "expectedOutput": "[7, 0, 8]",
+      "explanation": "l1 represents 342, l2 represents 465, 342 + 465 = 807, stored reversed as [7, 0, 8]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "l1 = [0], l2 = [0]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "l1 = [9, 9, 9, 9, 9, 9, 9], l2 = [9, 9, 9, 9]",
+      "output": "[8, 9, 9, 9, 0, 0, 0, 1]",
+      "expectedOutput": "[8, 9, 9, 9, 0, 0, 0, 1]",
+      "explanation": "9999999 + 9999 = 10009998, stored reversed with a new leading digit for the carry"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "l1 = [2, 4, 3], l2 = [5, 6, 4]",
+      "output": "[7, 0, 8]",
+      "expectedOutput": "[7, 0, 8]",
+      "explanation": "l1 represents 342, l2 represents 465, 342 + 465 = 807, stored reversed as [7, 0, 8]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "l1 = [0], l2 = [0]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "l1 = [9, 9, 9, 9, 9, 9, 9], l2 = [9, 9, 9, 9]",
+      "output": "[8, 9, 9, 9, 0, 0, 0, 1]",
+      "expectedOutput": "[8, 9, 9, 9, 0, 0, 0, 1]",
+      "explanation": "9999999 + 9999 = 10009998, stored reversed with a new leading digit for the carry"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[2,4,3],[5,6,4]]",
+      "output": "[7,0,8]",
+      "expectedOutput": "[7,0,8]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0],[0]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[9,9,9,9,9,9,9],[9,9,9,9]]",
+      "output": "[8,9,9,9,0,0,0,1]",
+      "expectedOutput": "[8,9,9,9,0,0,0,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2],[3,4,5]]",
+      "output": "[4,6,5]",
+      "expectedOutput": "[4,6,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[5],[5]]",
+      "output": "[0,1]",
+      "expectedOutput": "[0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,3],[9,9,9]]",
+      "output": "[0,2,3,1]",
+      "expectedOutput": "[0,2,3,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[0],[9,9,9,9,9]]",
+      "output": "[9,9,9,9,9]",
+      "expectedOutput": "[9,9,9,9,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[9],[1]]",
+      "output": "[0,1]",
+      "expectedOutput": "[0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[2,4,3,0,0,0,0,0,0,1],[5,6,4]]",
+      "output": "[7,0,8,0,0,0,0,0,0,1]",
+      "expectedOutput": "[7,0,8,0,0,0,0,0,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[9,9,9,9,9,9,9,9,9,9,9,9,9,9,9]]",
+      "output": "[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1]",
+      "expectedOutput": "[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9],[9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9]]",
+      "output": "[8,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,1]",
+      "expectedOutput": "[8,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[3,7],[8,5,2,1]]",
+      "output": "[1,3,3,1]",
+      "expectedOutput": "[1,3,3,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[0],[1,2,3]]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,0,0],[0,0,1]]",
+      "output": "[1,0,1]",
+      "expectedOutput": "[1,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[4,3,2,1],[6,7,8,9,0,1]]",
+      "output": "[0,1,1,1,1,1]",
+      "expectedOutput": "[0,1,1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[5,9,2],[5,9,2]]",
+      "output": "[0,9,5]",
+      "expectedOutput": "[0,9,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,3,4,5,6,7,8,9,0,1,2,3,4,5],[9,8,7,6,5,4,3,2,1,0]]",
+      "output": "[0,1,1,1,1,1,1,1,1,1,1,2,3,4,5]",
+      "expectedOutput": "[0,1,1,1,1,1,1,1,1,1,1,2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7],[3]]",
+      "output": "[0,8,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7]",
+      "expectedOutput": "[0,8,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[2,9,9],[1]]",
+      "output": "[3,9,9]",
+      "expectedOutput": "[3,9,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,9,9,9,9],[9,1]]",
+      "output": "[0,1,0,0,0,1]",
+      "expectedOutput": "[0,1,0,0,0,1]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "l1 = [2, 4, 3], l2 = [5, 6, 4]",
+        "output": "[7, 0, 8]",
+        "expectedOutput": "[7, 0, 8]",
+        "explanation": "l1 represents 342, l2 represents 465, 342 + 465 = 807, stored reversed as [7, 0, 8]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "l1 = [0], l2 = [0]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "l1 = [9, 9, 9, 9, 9, 9, 9], l2 = [9, 9, 9, 9]",
+        "output": "[8, 9, 9, 9, 0, 0, 0, 1]",
+        "expectedOutput": "[8, 9, 9, 9, 0, 0, 0, 1]",
+        "explanation": "9999999 + 9999 = 10009998, stored reversed with a new leading digit for the carry"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[2,4,3],[5,6,4]]",
+        "output": "[7,0,8]",
+        "expectedOutput": "[7,0,8]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0],[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[9,9,9,9,9,9,9],[9,9,9,9]]",
+        "output": "[8,9,9,9,0,0,0,1]",
+        "expectedOutput": "[8,9,9,9,0,0,0,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2],[3,4,5]]",
+        "output": "[4,6,5]",
+        "expectedOutput": "[4,6,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[5],[5]]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3],[9,9,9]]",
+        "output": "[0,2,3,1]",
+        "expectedOutput": "[0,2,3,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0],[9,9,9,9,9]]",
+        "output": "[9,9,9,9,9]",
+        "expectedOutput": "[9,9,9,9,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[9],[1]]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,4,3,0,0,0,0,0,0,1],[5,6,4]]",
+        "output": "[7,0,8,0,0,0,0,0,0,1]",
+        "expectedOutput": "[7,0,8,0,0,0,0,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[9,9,9,9,9,9,9,9,9,9,9,9,9,9,9]]",
+        "output": "[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1]",
+        "expectedOutput": "[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9],[9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9]]",
+        "output": "[8,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,1]",
+        "expectedOutput": "[8,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[3,7],[8,5,2,1]]",
+        "output": "[1,3,3,1]",
+        "expectedOutput": "[1,3,3,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[0],[1,2,3]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,0,0],[0,0,1]]",
+        "output": "[1,0,1]",
+        "expectedOutput": "[1,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[4,3,2,1],[6,7,8,9,0,1]]",
+        "output": "[0,1,1,1,1,1]",
+        "expectedOutput": "[0,1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[5,9,2],[5,9,2]]",
+        "output": "[0,9,5]",
+        "expectedOutput": "[0,9,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,0,1,2,3,4,5],[9,8,7,6,5,4,3,2,1,0]]",
+        "output": "[0,1,1,1,1,1,1,1,1,1,1,2,3,4,5]",
+        "expectedOutput": "[0,1,1,1,1,1,1,1,1,1,1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7],[3]]",
+        "output": "[0,8,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7]",
+        "expectedOutput": "[0,8,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,9,9],[1]]",
+        "output": "[3,9,9]",
+        "expectedOutput": "[3,9,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,9,9,9,9],[9,1]]",
+        "output": "[0,1,0,0,0,1]",
+        "expectedOutput": "[0,1,0,0,0,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def addTwoNumbers(self, l1, l2):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> addTwoNumbers(vector<int>& l1, vector<int>& l2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] addTwoNumbers(int[] l1, int[] l2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun addTwoNumbers(l1: IntArray, l2: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    addTwoNumbers(l1, l2) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def addTwoNumbers(self, l1, l2):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> addTwoNumbers(vector<int>& l1, vector<int>& l2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] addTwoNumbers(int[] l1, int[] l2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun addTwoNumbers(l1: IntArray, l2: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    addTwoNumbers(l1, l2) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def addTwoNumbers(self, l1, l2):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> addTwoNumbers(vector<int>& l1, vector<int>& l2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] addTwoNumbers(int[] l1, int[] l2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun addTwoNumbers(l1: IntArray, l2: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    addTwoNumbers(l1, l2) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def addTwoNumbers(self, l1, l2):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> addTwoNumbers(vector<int>& l1, vector<int>& l2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] addTwoNumbers(int[] l1, int[] l2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun addTwoNumbers(l1: IntArray, l2: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    addTwoNumbers(l1, l2) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(max(n, m))",
+      "space": "O(max(n, m)) for the output",
+      "pattern": "simulate elementary-school addition digit by digit, carrying as you go"
+    },
+    "bruteForce": {
+      "approach": "convert each digit list back into an integer, add them, then split the sum back into reversed digits",
+      "time": "O(n+m)",
+      "space": "O(n+m), and risks overflow for very long numbers in fixed-width integer types"
+    }
+  },
+  "optimal": {
+    "pattern": "simulate elementary-school addition digit by digit, carrying as you go",
+    "time": "O(max(n, m))",
+    "space": "O(max(n, m)) for the output",
+    "hint_ladder": [
+      "since digits are already stored least-significant-first, does that order match how you'd naturally add numbers by hand?",
+      "what do you do with a carry when adding two digits by hand, and where does it get applied next?",
+      "walk both lists together, adding corresponding digits plus any carry from the previous step, and appending sum % 10 to the result while carrying sum / 10 forward",
+      "keep going until both lists are exhausted AND the carry is zero - a final leftover carry needs its own extra digit"
+    ]
+  },
+  "bruteForce": {
+    "approach": "convert each digit list back into an integer, add them, then split the sum back into reversed digits",
+    "time": "O(n+m)",
+    "space": "O(n+m), and risks overflow for very long numbers in fixed-width integer types"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,631 @@
+{
+  "id": "last-stone-weight",
+  "questionId": "last-stone-weight",
+  "slug": "last-stone-weight",
+  "title": "Last Stone Weight",
+  "difficulty": "Easy",
+  "category": "Heap",
+  "patterns": [
+    "heap",
+    "max-heap",
+    "simulation"
+  ],
+  "lists": [],
+  "hints": [
+    "at every step you only care about the two heaviest stones - re-sorting the entire list each time wastes work",
+    "a heap keeps the largest element accessible in O(log n) time without re-sorting everything",
+    "push all stones onto a max-heap; pop the top two, smash them, and if there's a leftover push it back on",
+    "stop when the heap has zero or one stone left; that remaining value (or 0) is your answer"
+  ],
+  "commonMistakes": [
+    "using a min-heap instead of a max-heap, which finds the two lightest stones instead of the heaviest",
+    "forgetting to push the leftover stone back into the heap when the two smashed stones aren't equal",
+    "returning a negative or wrong value when only one stone remains from the start, instead of returning it directly"
+  ],
+  "content": {
+    "problemStatement": "You have a pile of stones, each with a positive weight. Repeat the\nfollowing process until at most one stone remains: pick up the two\nheaviest stones (call their weights x and y, with x <= y) and smash them\ntogether. If they're equal weight, both stones are destroyed. Otherwise\nthe lighter stone is destroyed and the heavier one loses weight x,\nbecoming a new stone of weight y - x that goes back into the pile.\n\n**Return the weight of the single stone left at the end, or 0 if every\nstone was destroyed.**\n",
+    "constraints": [
+      "1 <= stones.length <= 30",
+      "1 <= stones[i] <= 1000",
+      "process continues until zero or one stones remain"
+    ],
+    "notes": [
+      "single stone in the pile (no smashing occurs)",
+      "all stones destroy each other exactly, leaving weight 0",
+      "all stones have the same weight",
+      "two stones only"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "stones = [2, 7, 4, 1, 8, 1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "8 and 7 smash to leave 1; 4 and 2 smash to leave 2; 2 and 1 smash to leave 1; the remaining two 1s smash and destroy each other, leaving a single stone of weight 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "stones = [1, 3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "3 and 1 smash together, leaving a stone of weight 2"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "stones = [2, 2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "the two equal stones destroy each other completely"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[2,7,4,1,8,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[2,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[5,5,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[10]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1000,1000]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,1,1,1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[10,4,2,10]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[3,7,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1000]]",
+        "output": "999",
+        "expectedOutput": "999",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[50,50,50,50,50]]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[9,3,2,10,100,47]]",
+        "output": "29",
+        "expectedOutput": "29",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,3,5,8,13,21,34]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[100,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "90",
+        "expectedOutput": "90",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[30,30,30]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1000,1,999,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "stones = [2, 7, 4, 1, 8, 1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "8 and 7 smash to leave 1; 4 and 2 smash to leave 2; 2 and 1 smash to leave 1; the remaining two 1s smash and destroy each other, leaving a single stone of weight 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "stones = [1, 3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "3 and 1 smash together, leaving a stone of weight 2"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "stones = [2, 2]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "the two equal stones destroy each other completely"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "stones = [2, 7, 4, 1, 8, 1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "8 and 7 smash to leave 1; 4 and 2 smash to leave 2; 2 and 1 smash to leave 1; the remaining two 1s smash and destroy each other, leaving a single stone of weight 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "stones = [1, 3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "3 and 1 smash together, leaving a stone of weight 2"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "stones = [2, 2]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "the two equal stones destroy each other completely"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[2,7,4,1,8,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,3]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[2,2]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[5,5,5]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[10]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3,4,5]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1000,1000]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,1,1,1,1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[10,4,2,10]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[3,7,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,1000]]",
+      "output": "999",
+      "expectedOutput": "999",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[50,50,50,50,50]]",
+      "output": "50",
+      "expectedOutput": "50",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[9,3,2,10,100,47]]",
+      "output": "29",
+      "expectedOutput": "29",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[2,3,5,8,13,21,34]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[100,1,1,1,1,1,1,1,1,1,1]]",
+      "output": "90",
+      "expectedOutput": "90",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[30,30,30]]",
+      "output": "30",
+      "expectedOutput": "30",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1000,1,999,2]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "stones = [2, 7, 4, 1, 8, 1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "8 and 7 smash to leave 1; 4 and 2 smash to leave 2; 2 and 1 smash to leave 1; the remaining two 1s smash and destroy each other, leaving a single stone of weight 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "stones = [1, 3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "3 and 1 smash together, leaving a stone of weight 2"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "stones = [2, 2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "the two equal stones destroy each other completely"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[2,7,4,1,8,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[2,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[5,5,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[10]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1000,1000]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,1,1,1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[10,4,2,10]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[3,7,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1000]]",
+        "output": "999",
+        "expectedOutput": "999",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[50,50,50,50,50]]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[9,3,2,10,100,47]]",
+        "output": "29",
+        "expectedOutput": "29",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,3,5,8,13,21,34]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[100,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "90",
+        "expectedOutput": "90",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[30,30,30]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1000,1,999,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def lastStoneWeight(self, stones):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lastStoneWeight(vector<int>& stones) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lastStoneWeight(int[] stones) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lastStoneWeight(stones: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lastStoneWeight(stones) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def lastStoneWeight(self, stones):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lastStoneWeight(vector<int>& stones) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lastStoneWeight(int[] stones) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lastStoneWeight(stones: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lastStoneWeight(stones) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def lastStoneWeight(self, stones):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lastStoneWeight(vector<int>& stones) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lastStoneWeight(int[] stones) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lastStoneWeight(stones: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lastStoneWeight(stones) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def lastStoneWeight(self, stones):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lastStoneWeight(vector<int>& stones) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lastStoneWeight(int[] stones) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lastStoneWeight(stones: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lastStoneWeight(stones) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log n)",
+      "space": "O(n)",
+      "pattern": "max-heap, always popping the two current heaviest stones"
+    },
+    "bruteForce": {
+      "approach": "repeatedly sort the list descending, smash the first two, insert the result back in, and repeat",
+      "time": "O(n^2 log n)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "max-heap, always popping the two current heaviest stones",
+    "time": "O(n log n)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "at every step you only care about the two heaviest stones - re-sorting the entire list each time wastes work",
+      "a heap keeps the largest element accessible in O(log n) time without re-sorting everything",
+      "push all stones onto a max-heap; pop the top two, smash them, and if there's a leftover push it back on",
+      "stop when the heap has zero or one stone left; that remaining value (or 0) is your answer"
+    ]
+  },
+  "bruteForce": {
+    "approach": "repeatedly sort the list descending, smash the first two, insert the result back in, and repeat",
+    "time": "O(n^2 log n)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

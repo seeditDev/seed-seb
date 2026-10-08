@@ -1,0 +1,653 @@
+{
+  "id": "longest-substring-without-repeating-characters",
+  "questionId": "longest-substring-without-repeating-characters",
+  "slug": "longest-substring-without-repeating-characters",
+  "title": "Longest Substring Without Repeating Characters",
+  "difficulty": "Medium",
+  "category": "Sliding window",
+  "patterns": [
+    "sliding window",
+    "hash map"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "when you hit a repeated character, do you need to restart the window from scratch, or can you shrink it from the left?",
+    "if you know the last index each character appeared at, how far do you need to move the left edge?",
+    "keep a window [left, right] and a map of char -> last seen index",
+    "when char at right was seen before inside the current window, jump left to (last seen index + 1), then update the max window length"
+  ],
+  "commonMistakes": [
+    "moving left backward when the repeated character's last occurrence is outside the current window (should only move left forward, never backward)",
+    "off-by-one when computing window length (right - left + 1)",
+    "forgetting to update the last-seen index for every character, not just repeats"
+  ],
+  "content": {
+    "problemStatement": "You're given a string.\n\n**Find the length of the longest contiguous stretch of characters\nwithin it that contains no repeated character.**\n",
+    "constraints": [
+      "0 <= s.length <= 5 * 10^4",
+      "s consists of English letters, digits, symbols, and spaces"
+    ],
+    "notes": [
+      "empty string (answer 0)",
+      "all characters identical (answer 1)",
+      "all characters unique (answer is the full length)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"abcabcbb\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "the longest repeat-free stretch is \"abc\", length 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"bbbbb\"",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the longest repeat-free stretch is \"b\", length 1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"pwwkew\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "the longest repeat-free stretch is \"wke\", length 3"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"abcabcbb\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"bbbbb\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"pwwkew\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aa\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ab\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"dvdf\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"anviaj\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abcdefghijklmnop\"]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aabbccddeeff\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"tmmzuxt\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abcabcabcabcabc\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\" \"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"au\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"abba\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"thequickbrownfoxjumpsoverthelazydog\"]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"xxxxxxxxxxxxxxxxxxxx\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcdefgabcdefgabcdefg\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"wwwwwwwwwwwwwwwwwwww\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"pqrpqrpqrpqrpqrpqrst\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"abcabcbb\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "the longest repeat-free stretch is \"abc\", length 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"bbbbb\"",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the longest repeat-free stretch is \"b\", length 1"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"pwwkew\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "the longest repeat-free stretch is \"wke\", length 3"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"abcabcbb\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "the longest repeat-free stretch is \"abc\", length 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"bbbbb\"",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the longest repeat-free stretch is \"b\", length 1"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"pwwkew\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "the longest repeat-free stretch is \"wke\", length 3"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"abcabcbb\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"bbbbb\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"pwwkew\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"a\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"aa\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"ab\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"dvdf\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"anviaj\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"abcdefghijklmnop\"]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"aabbccddeeff\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"tmmzuxt\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"abcabcabcabcabc\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\" \"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"au\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"abba\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"thequickbrownfoxjumpsoverthelazydog\"]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"xxxxxxxxxxxxxxxxxxxx\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"abcdefgabcdefgabcdefg\"]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"wwwwwwwwwwwwwwwwwwww\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"pqrpqrpqrpqrpqrpqrst\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"abcabcbb\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "the longest repeat-free stretch is \"abc\", length 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"bbbbb\"",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the longest repeat-free stretch is \"b\", length 1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"pwwkew\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "the longest repeat-free stretch is \"wke\", length 3"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"abcabcbb\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"bbbbb\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"pwwkew\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aa\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ab\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"dvdf\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"anviaj\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abcdefghijklmnop\"]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aabbccddeeff\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"tmmzuxt\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abcabcabcabcabc\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\" \"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"au\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"abba\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"thequickbrownfoxjumpsoverthelazydog\"]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"xxxxxxxxxxxxxxxxxxxx\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcdefgabcdefgabcdefg\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"wwwwwwwwwwwwwwwwwwww\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"pqrpqrpqrpqrpqrpqrst\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def lengthOfLongestSubstring(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lengthOfLongestSubstring(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lengthOfLongestSubstring(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lengthOfLongestSubstring(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lengthOfLongestSubstring(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def lengthOfLongestSubstring(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lengthOfLongestSubstring(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lengthOfLongestSubstring(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lengthOfLongestSubstring(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lengthOfLongestSubstring(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def lengthOfLongestSubstring(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lengthOfLongestSubstring(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lengthOfLongestSubstring(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lengthOfLongestSubstring(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lengthOfLongestSubstring(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def lengthOfLongestSubstring(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lengthOfLongestSubstring(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lengthOfLongestSubstring(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lengthOfLongestSubstring(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lengthOfLongestSubstring(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(min(n, alphabet size))",
+      "pattern": "sliding window with a hash map of last-seen index"
+    },
+    "bruteForce": {
+      "approach": "for every starting index, extend forward and check (using a set) whether the current window still has all-unique characters, track the max length",
+      "time": "O(n^2) (or O(n^3) if uniqueness is checked with a nested scan instead of a set)",
+      "space": "O(min(n, alphabet size))"
+    }
+  },
+  "optimal": {
+    "pattern": "sliding window with a hash map of last-seen index",
+    "time": "O(n)",
+    "space": "O(min(n, alphabet size))",
+    "hint_ladder": [
+      "when you hit a repeated character, do you need to restart the window from scratch, or can you shrink it from the left?",
+      "if you know the last index each character appeared at, how far do you need to move the left edge?",
+      "keep a window [left, right] and a map of char -> last seen index",
+      "when char at right was seen before inside the current window, jump left to (last seen index + 1), then update the max window length"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every starting index, extend forward and check (using a set) whether the current window still has all-unique characters, track the max length",
+    "time": "O(n^2) (or O(n^3) if uniqueness is checked with a nested scan instead of a set)",
+    "space": "O(min(n, alphabet size))"
+  },
+  "isIndex0": true,
+  "level": null
+}

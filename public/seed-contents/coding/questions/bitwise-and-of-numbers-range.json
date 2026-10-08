@@ -1,0 +1,628 @@
+{
+  "id": "bitwise-and-of-numbers-range",
+  "questionId": "bitwise-and-of-numbers-range",
+  "slug": "bitwise-and-of-numbers-range",
+  "title": "Bitwise AND of Numbers Range",
+  "difficulty": "Hard",
+  "category": "Bit manipulation",
+  "patterns": [
+    "bit manipulation"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "as soon as the range [left, right] spans more than one value with a differing bit at some position, that bit position gets AND-ed with both a 0 and a 1 somewhere in the range, so it becomes 0 in the final answer - what does that tell you about which bits can possibly survive?",
+    "only the bit positions where left and right agree, all the way from the most significant bit down to where they first differ, can survive - everything from the first differing bit downward is guaranteed to be zeroed out",
+    "so the answer is exactly the common binary prefix shared by left and right, with all lower bits set to 0",
+    "find that common prefix by right-shifting both left and right together, one bit at a time, until they become equal - count how many shifts it took, then left-shift the now-equal value back by that same count"
+  ],
+  "commonMistakes": [
+    "trying to iterate through the entire range and AND every value, which times out for large ranges like [1, 2^31 - 1]",
+    "shifting only one of left or right instead of both together when hunting for the common prefix",
+    "forgetting to shift the final common-prefix value back left by the number of shift steps taken, and returning the shifted-down value instead"
+  ],
+  "content": {
+    "problemStatement": "You're given two integers `left` and `right` representing an inclusive range `[left, right]`.\n\n**Return the bitwise AND of every integer in that range.**\n",
+    "constraints": [
+      "0 <= left <= right <= 2^31 - 1"
+    ],
+    "notes": [
+      "left equals right (the answer is just that single number)",
+      "the range spans a power of two, forcing many low bits to become 0",
+      "left = 0 (the answer is always 0 whenever left = 0 and right > 0)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "left = 5, right = 7",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "5 & 6 & 7 = 101 & 110 & 111 = 100 = 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "left = 0, right = 0",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "left = 12, right = 15",
+        "output": "12",
+        "expectedOutput": "12",
+        "explanation": "12, 13, 14, 15 are 1100, 1101, 1110, 1111 - AND-ing them all leaves 1100 = 12"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[5,7]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[0,0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[1,2147483647]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[12,15]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[5,5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[0,1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[1,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[2,3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[4,7]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[8,8]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[100,200]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[1000,1023]",
+        "output": "992",
+        "expectedOutput": "992",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[2147483647,2147483647]",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[1073741824,2147483647]",
+        "output": "1073741824",
+        "expectedOutput": "1073741824",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[0,2147483647]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[6,6]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[16,31]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[7,8]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[2147483646,2147483647]",
+        "output": "2147483646",
+        "expectedOutput": "2147483646",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[3,4]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "left = 5, right = 7",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "5 & 6 & 7 = 101 & 110 & 111 = 100 = 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "left = 0, right = 0",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "left = 12, right = 15",
+      "output": "12",
+      "expectedOutput": "12",
+      "explanation": "12, 13, 14, 15 are 1100, 1101, 1110, 1111 - AND-ing them all leaves 1100 = 12"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "left = 5, right = 7",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "5 & 6 & 7 = 101 & 110 & 111 = 100 = 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "left = 0, right = 0",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "left = 12, right = 15",
+      "output": "12",
+      "expectedOutput": "12",
+      "explanation": "12, 13, 14, 15 are 1100, 1101, 1110, 1111 - AND-ing them all leaves 1100 = 12"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[5,7]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[0,0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[1,2147483647]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[12,15]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[5,5]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[0,1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[1,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[2,3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[4,7]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[8,8]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[100,200]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[1000,1023]",
+      "output": "992",
+      "expectedOutput": "992",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[2147483647,2147483647]",
+      "output": "2147483647",
+      "expectedOutput": "2147483647",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[1073741824,2147483647]",
+      "output": "1073741824",
+      "expectedOutput": "1073741824",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[0,2147483647]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[6,6]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[16,31]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[7,8]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[2147483646,2147483647]",
+      "output": "2147483646",
+      "expectedOutput": "2147483646",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[3,4]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "left = 5, right = 7",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "5 & 6 & 7 = 101 & 110 & 111 = 100 = 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "left = 0, right = 0",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "left = 12, right = 15",
+        "output": "12",
+        "expectedOutput": "12",
+        "explanation": "12, 13, 14, 15 are 1100, 1101, 1110, 1111 - AND-ing them all leaves 1100 = 12"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[5,7]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[0,0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[1,2147483647]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[12,15]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[5,5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[0,1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[1,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[2,3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[4,7]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[8,8]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[100,200]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[1000,1023]",
+        "output": "992",
+        "expectedOutput": "992",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[2147483647,2147483647]",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[1073741824,2147483647]",
+        "output": "1073741824",
+        "expectedOutput": "1073741824",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[0,2147483647]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[6,6]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[16,31]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[7,8]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[2147483646,2147483647]",
+        "output": "2147483646",
+        "expectedOutput": "2147483646",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[3,4]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def rangeBitwiseAnd(self, left, right):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int rangeBitwiseAnd(int left, int right) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int rangeBitwiseAnd(int left, int right) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun rangeBitwiseAnd(left: Int, right: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    rangeBitwiseAnd(left, right) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def rangeBitwiseAnd(self, left, right):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int rangeBitwiseAnd(int left, int right) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int rangeBitwiseAnd(int left, int right) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun rangeBitwiseAnd(left: Int, right: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    rangeBitwiseAnd(left, right) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def rangeBitwiseAnd(self, left, right):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int rangeBitwiseAnd(int left, int right) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int rangeBitwiseAnd(int left, int right) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun rangeBitwiseAnd(left: Int, right: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    rangeBitwiseAnd(left, right) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def rangeBitwiseAnd(self, left, right):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int rangeBitwiseAnd(int left, int right) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int rangeBitwiseAnd(int left, int right) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun rangeBitwiseAnd(left: Int, right: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    rangeBitwiseAnd(left, right) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(32) = O(1), bounded by bit width",
+      "space": "O(1)",
+      "pattern": "bit manipulation (find the common binary prefix of left and right)"
+    },
+    "bruteForce": {
+      "approach": "AND every integer from left to right together in a running accumulator, one at a time",
+      "time": "O(right - left), which can be up to 2^31 - way too slow for large ranges",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "bit manipulation (find the common binary prefix of left and right)",
+    "time": "O(32) = O(1), bounded by bit width",
+    "space": "O(1)",
+    "hint_ladder": [
+      "as soon as the range [left, right] spans more than one value with a differing bit at some position, that bit position gets AND-ed with both a 0 and a 1 somewhere in the range, so it becomes 0 in the final answer - what does that tell you about which bits can possibly survive?",
+      "only the bit positions where left and right agree, all the way from the most significant bit down to where they first differ, can survive - everything from the first differing bit downward is guaranteed to be zeroed out",
+      "so the answer is exactly the common binary prefix shared by left and right, with all lower bits set to 0",
+      "find that common prefix by right-shifting both left and right together, one bit at a time, until they become equal - count how many shifts it took, then left-shift the now-equal value back by that same count"
+    ]
+  },
+  "bruteForce": {
+    "approach": "AND every integer from left to right together in a running accumulator, one at a time",
+    "time": "O(right - left), which can be up to 2^31 - way too slow for large ranges",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

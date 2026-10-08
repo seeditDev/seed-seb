@@ -1,0 +1,630 @@
+{
+  "id": "minimum-cost-to-connect-sticks",
+  "questionId": "minimum-cost-to-connect-sticks",
+  "slug": "minimum-cost-to-connect-sticks",
+  "title": "Minimum Cost to Connect Sticks",
+  "difficulty": "Medium",
+  "category": "Heap",
+  "patterns": [
+    "heap",
+    "min-heap",
+    "greedy"
+  ],
+  "lists": [],
+  "hints": [
+    "connecting a small stick early keeps its length contributing to fewer future combination costs; connecting two large sticks early makes that big sum get added again and again in later combinations",
+    "so at every step, the cheapest move is to combine whichever two sticks are currently smallest",
+    "a heap gives fast repeated access to the two smallest values without re-sorting the whole collection each time",
+    "push all stick lengths onto a min-heap. repeatedly pop the two smallest, add their sum to a running total cost, and push the sum back onto the heap. stop when only one stick remains"
+  ],
+  "commonMistakes": [
+    "re-sorting the entire array after every single combination instead of using a heap, which is much slower",
+    "combining the two largest sticks first instead of the two smallest, producing a higher total cost",
+    "forgetting to push the newly combined stick back into the heap before continuing"
+  ],
+  "content": {
+    "problemStatement": "You have a collection of `sticks`, each with a positive length, and you\nwant to combine them all into a single stick. Each move, you may pick any\ntwo sticks and connect them, which costs an amount equal to the sum of\ntheir two lengths; the resulting combined stick is then added back to\nyour collection, replacing the two you used, and you repeat until only\none stick remains.\n\n**Return the minimum total cost to combine everything into one stick.**\n",
+    "constraints": [
+      "1 <= sticks.length <= 10000",
+      "1 <= sticks[i] <= 100000"
+    ],
+    "notes": [
+      "only one stick, requiring zero cost",
+      "exactly two sticks",
+      "all sticks the same length",
+      "many sticks of length 1"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "sticks = [2, 4, 3]",
+        "output": "14",
+        "expectedOutput": "14",
+        "explanation": "connect 2 and 3 first for a cost of 5, producing a stick of length 5; then connect 5 and 4 for a cost of 9; total cost is 5 + 9 = 14"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "sticks = [1, 8, 3, 5]",
+        "output": "30",
+        "expectedOutput": "30",
+        "explanation": "connect 1 and 3 (cost 4, producing 4); connect 4 and 5 (cost 9, producing 9); connect 9 and 8 (cost 17); total is 4 + 9 + 17 = 30"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "sticks = [1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "a single stick needs no connecting at all"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[2,4,3]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,8,3,5]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,5,5,5]]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[10,10]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5]]",
+        "output": "33",
+        "expectedOutput": "33",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "34",
+        "expectedOutput": "34",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[100000,1,1,1]]",
+        "output": "100008",
+        "expectedOutput": "100008",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[2,2,2,2,2,2]]",
+        "output": "32",
+        "expectedOutput": "32",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[5,10,15,20,25]]",
+        "output": "165",
+        "expectedOutput": "165",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "444",
+        "expectedOutput": "444",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "34",
+        "expectedOutput": "34",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[100,200,300,400]]",
+        "output": "1900",
+        "expectedOutput": "1900",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[7,3,9,1,5,2,8,4,6]]",
+        "output": "135",
+        "expectedOutput": "135",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,3,3]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "88",
+        "expectedOutput": "88",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[50000,50000,100000]]",
+        "output": "300000",
+        "expectedOutput": "300000",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "sticks = [2, 4, 3]",
+      "output": "14",
+      "expectedOutput": "14",
+      "explanation": "connect 2 and 3 first for a cost of 5, producing a stick of length 5; then connect 5 and 4 for a cost of 9; total cost is 5 + 9 = 14"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "sticks = [1, 8, 3, 5]",
+      "output": "30",
+      "expectedOutput": "30",
+      "explanation": "connect 1 and 3 (cost 4, producing 4); connect 4 and 5 (cost 9, producing 9); connect 9 and 8 (cost 17); total is 4 + 9 + 17 = 30"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "sticks = [1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "a single stick needs no connecting at all"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "sticks = [2, 4, 3]",
+      "output": "14",
+      "expectedOutput": "14",
+      "explanation": "connect 2 and 3 first for a cost of 5, producing a stick of length 5; then connect 5 and 4 for a cost of 9; total cost is 5 + 9 = 14"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "sticks = [1, 8, 3, 5]",
+      "output": "30",
+      "expectedOutput": "30",
+      "explanation": "connect 1 and 3 (cost 4, producing 4); connect 4 and 5 (cost 9, producing 9); connect 9 and 8 (cost 17); total is 4 + 9 + 17 = 30"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "sticks = [1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "a single stick needs no connecting at all"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[2,4,3]]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,8,3,5]]",
+      "output": "30",
+      "expectedOutput": "30",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[5,5,5,5]]",
+      "output": "40",
+      "expectedOutput": "40",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[10,10]]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3,4,5]]",
+      "output": "33",
+      "expectedOutput": "33",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+      "output": "34",
+      "expectedOutput": "34",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[100000,1,1,1]]",
+      "output": "100008",
+      "expectedOutput": "100008",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[2,2,2,2,2,2]]",
+      "output": "32",
+      "expectedOutput": "32",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[5,10,15,20,25]]",
+      "output": "165",
+      "expectedOutput": "165",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+      "output": "444",
+      "expectedOutput": "444",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+      "output": "34",
+      "expectedOutput": "34",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[100,200,300,400]]",
+      "output": "1900",
+      "expectedOutput": "1900",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[7,3,9,1,5,2,8,4,6]]",
+      "output": "135",
+      "expectedOutput": "135",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[3,3,3]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+      "output": "88",
+      "expectedOutput": "88",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[50000,50000,100000]]",
+      "output": "300000",
+      "expectedOutput": "300000",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "sticks = [2, 4, 3]",
+        "output": "14",
+        "expectedOutput": "14",
+        "explanation": "connect 2 and 3 first for a cost of 5, producing a stick of length 5; then connect 5 and 4 for a cost of 9; total cost is 5 + 9 = 14"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "sticks = [1, 8, 3, 5]",
+        "output": "30",
+        "expectedOutput": "30",
+        "explanation": "connect 1 and 3 (cost 4, producing 4); connect 4 and 5 (cost 9, producing 9); connect 9 and 8 (cost 17); total is 4 + 9 + 17 = 30"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "sticks = [1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "a single stick needs no connecting at all"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[2,4,3]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,8,3,5]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,5,5,5]]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[10,10]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5]]",
+        "output": "33",
+        "expectedOutput": "33",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "34",
+        "expectedOutput": "34",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[100000,1,1,1]]",
+        "output": "100008",
+        "expectedOutput": "100008",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[2,2,2,2,2,2]]",
+        "output": "32",
+        "expectedOutput": "32",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[5,10,15,20,25]]",
+        "output": "165",
+        "expectedOutput": "165",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "444",
+        "expectedOutput": "444",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "34",
+        "expectedOutput": "34",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[100,200,300,400]]",
+        "output": "1900",
+        "expectedOutput": "1900",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[7,3,9,1,5,2,8,4,6]]",
+        "output": "135",
+        "expectedOutput": "135",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,3,3]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "88",
+        "expectedOutput": "88",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[50000,50000,100000]]",
+        "output": "300000",
+        "expectedOutput": "300000",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def connectSticks(self, sticks):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int connectSticks(vector<int>& sticks) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int connectSticks(int[] sticks) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun connectSticks(sticks: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    connectSticks(sticks) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def connectSticks(self, sticks):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int connectSticks(vector<int>& sticks) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int connectSticks(int[] sticks) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun connectSticks(sticks: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    connectSticks(sticks) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def connectSticks(self, sticks):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int connectSticks(vector<int>& sticks) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int connectSticks(int[] sticks) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun connectSticks(sticks: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    connectSticks(sticks) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def connectSticks(self, sticks):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int connectSticks(vector<int>& sticks) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int connectSticks(int[] sticks) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun connectSticks(sticks: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    connectSticks(sticks) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log n)",
+      "space": "O(n)",
+      "pattern": "min-heap, always connecting the two currently smallest sticks"
+    },
+    "bruteForce": {
+      "approach": "repeatedly sort the sticks ascending, connect the two smallest, insert the combined stick back into the list, and repeat",
+      "time": "O(n^2 log n)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "min-heap, always connecting the two currently smallest sticks",
+    "time": "O(n log n)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "connecting a small stick early keeps its length contributing to fewer future combination costs; connecting two large sticks early makes that big sum get added again and again in later combinations",
+      "so at every step, the cheapest move is to combine whichever two sticks are currently smallest",
+      "a heap gives fast repeated access to the two smallest values without re-sorting the whole collection each time",
+      "push all stick lengths onto a min-heap. repeatedly pop the two smallest, add their sum to a running total cost, and push the sum back onto the heap. stop when only one stick remains"
+    ]
+  },
+  "bruteForce": {
+    "approach": "repeatedly sort the sticks ascending, connect the two smallest, insert the combined stick back into the list, and repeat",
+    "time": "O(n^2 log n)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

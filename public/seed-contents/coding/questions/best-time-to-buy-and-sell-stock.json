@@ -1,0 +1,600 @@
+{
+  "id": "best-time-to-buy-and-sell-stock",
+  "questionId": "best-time-to-buy-and-sell-stock",
+  "slug": "best-time-to-buy-and-sell-stock",
+  "title": "Best Time to Buy and Sell Stock",
+  "difficulty": "Easy",
+  "category": "Greedy",
+  "patterns": [
+    "greedy",
+    "single pass"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "for a fixed sell day, which buy day gives the best profit?",
+    "as you scan left to right, what's the one number about the past you actually need to remember?",
+    "you don't need every past price - just the smallest one so far",
+    "track min price seen so far, and at each day compute price - min_so_far, keeping the max"
+  ],
+  "commonMistakes": [
+    "allowing sell day to come before or equal to buy day",
+    "returning a negative number instead of 0 when no profitable transaction exists",
+    "updating the running max profit before updating min price, or vice versa, in the wrong order"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of daily stock prices, where `prices[i]` is the price on day `i`. You may buy the stock on one day and sell it on a later day, at most once.\n\n**Return the maximum profit you can make, or 0 if no profit is possible.**\n",
+    "constraints": [
+      "0 <= prices.length <= 10^5",
+      "0 <= prices[i] <= 10^4"
+    ],
+    "notes": [
+      "prices strictly decreasing the whole time (answer is 0)",
+      "prices strictly increasing the whole time (answer is last - first)",
+      "single price in the array"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "prices = [7, 1, 5, 3, 6, 4]",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "buy on day 1 (price 1), sell on day 4 (price 6), profit = 6 - 1 = 5"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "prices = [7, 6, 4, 3, 1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "prices only fall, so no transaction is profitable"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[7,1,5,3,6,4]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[7,6,4,3,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[2,4,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5,5,5,5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[3,2,6,5,0,3]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[725,91,85,444,920,9,815,549,387,76,560,711,651,414,30,331,269,979,484,34,769,576,343,425,357]]",
+        "output": "970",
+        "expectedOutput": "970",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[10,9,8,7,6,1,2,3,4,5,6,7,8,9,20]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[2,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[100,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,100]]",
+        "output": "99",
+        "expectedOutput": "99",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[3,3,3,3,3]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[9,8,7,1,2,3,4,10,1,2]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[13,328,326,497,84,453,494,215,33,368,446,348,74,191,343,121,381,41,423,451,322,30,389,266,199,276,157,75,468,336,396,469,150,398,428]]",
+        "output": "484",
+        "expectedOutput": "484",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[5,10,4,20,1,2]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[4,2,8,1,9,3,15]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "prices = [7, 1, 5, 3, 6, 4]",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "buy on day 1 (price 1), sell on day 4 (price 6), profit = 6 - 1 = 5"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "prices = [7, 6, 4, 3, 1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "prices only fall, so no transaction is profitable"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "prices = [7, 1, 5, 3, 6, 4]",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "buy on day 1 (price 1), sell on day 4 (price 6), profit = 6 - 1 = 5"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "prices = [7, 6, 4, 3, 1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "prices only fall, so no transaction is profitable"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[7,1,5,3,6,4]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[7,6,4,3,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[2,4,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[5,5,5,5]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[3,2,6,5,0,3]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[2,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[725,91,85,444,920,9,815,549,387,76,560,711,651,414,30,331,269,979,484,34,769,576,343,425,357]]",
+      "output": "970",
+      "expectedOutput": "970",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[10,9,8,7,6,1,2,3,4,5,6,7,8,9,20]]",
+      "output": "19",
+      "expectedOutput": "19",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+      "output": "19",
+      "expectedOutput": "19",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[2,2]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[100,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,100]]",
+      "output": "99",
+      "expectedOutput": "99",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[3,3,3,3,3]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[9,8,7,1,2,3,4,10,1,2]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[13,328,326,497,84,453,494,215,33,368,446,348,74,191,343,121,381,41,423,451,322,30,389,266,199,276,157,75,468,336,396,469,150,398,428]]",
+      "output": "484",
+      "expectedOutput": "484",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[5,10,4,20,1,2]]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[4,2,8,1,9,3,15]]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "prices = [7, 1, 5, 3, 6, 4]",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "buy on day 1 (price 1), sell on day 4 (price 6), profit = 6 - 1 = 5"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "prices = [7, 6, 4, 3, 1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "prices only fall, so no transaction is profitable"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[7,1,5,3,6,4]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[7,6,4,3,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[2,4,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5,5,5,5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[3,2,6,5,0,3]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[725,91,85,444,920,9,815,549,387,76,560,711,651,414,30,331,269,979,484,34,769,576,343,425,357]]",
+        "output": "970",
+        "expectedOutput": "970",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[10,9,8,7,6,1,2,3,4,5,6,7,8,9,20]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[2,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[100,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,100]]",
+        "output": "99",
+        "expectedOutput": "99",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[3,3,3,3,3]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[9,8,7,1,2,3,4,10,1,2]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[13,328,326,497,84,453,494,215,33,368,446,348,74,191,343,121,381,41,423,451,322,30,389,266,199,276,157,75,468,336,396,469,150,398,428]]",
+        "output": "484",
+        "expectedOutput": "484",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[5,10,4,20,1,2]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[4,2,8,1,9,3,15]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def maxProfit(self, prices):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxProfit(vector<int>& prices) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxProfit(int[] prices) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxProfit(prices: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxProfit(prices) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def maxProfit(self, prices):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxProfit(vector<int>& prices) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxProfit(int[] prices) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxProfit(prices: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxProfit(prices) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def maxProfit(self, prices):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxProfit(vector<int>& prices) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxProfit(int[] prices) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxProfit(prices: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxProfit(prices) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def maxProfit(self, prices):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxProfit(vector<int>& prices) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxProfit(int[] prices) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxProfit(prices: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxProfit(prices) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "single pass tracking minimum price seen so far"
+    },
+    "bruteForce": {
+      "approach": "nested loop over every (buy day, sell day) pair with buy < sell, track max profit",
+      "time": "O(n^2)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "single pass tracking minimum price seen so far",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "for a fixed sell day, which buy day gives the best profit?",
+      "as you scan left to right, what's the one number about the past you actually need to remember?",
+      "you don't need every past price - just the smallest one so far",
+      "track min price seen so far, and at each day compute price - min_so_far, keeping the max"
+    ]
+  },
+  "bruteForce": {
+    "approach": "nested loop over every (buy day, sell day) pair with buy < sell, track max profit",
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,635 @@
+{
+  "id": "remove-duplicates-from-sorted-array-ii",
+  "questionId": "remove-duplicates-from-sorted-array-ii",
+  "slug": "remove-duplicates-from-sorted-array-ii",
+  "title": "Remove Duplicates from Sorted Array II",
+  "difficulty": "Medium",
+  "category": "Two pointers",
+  "patterns": [
+    "two pointers",
+    "in-place filtering"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "since the array is already sorted, all copies of the same value are grouped together - you just need to cap each group at 2",
+    "keep a write pointer for where the next kept element goes; a new element is safe to keep unless it equals the element already sitting two spots before the write pointer",
+    "why two spots back specifically? because if nums[i] equals the value at write pointer - 2, that means the last two kept slots are already that same value, so a third would be one too many",
+    "start the write pointer at index 2 for arrays with at least 2 elements, since the first two elements are always safe to keep as-is",
+    "walk through by hand on [1,1,1,2,2,3] and track the write pointer to see exactly when it skips versus advances"
+  ],
+  "commonMistakes": [
+    "comparing against the immediately preceding kept element instead of the one two positions back, which only enforces 'no more than 1 duplicate' instead of 2",
+    "assuming the input is unsorted and trying to count occurrences globally, which is unnecessary extra work given the sorted precondition",
+    "off-by-one when initializing the write pointer, causing the first two elements to be mishandled",
+    "confusing this with the plain 'remove duplicates' problem, which only allows 1 copy of each value instead of 2"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of integers already sorted in non-decreasing order.\n\n**Trim it down so that every distinct value appears at most twice, while keeping the remaining elements in their original (sorted) relative order, and return the trimmed list.**\n\nThe classic in-place version of this problem cares about not using extra space and reporting a count, but for this exercise just return the resulting list directly.\n",
+    "constraints": [
+      "1 <= nums.length <= 3 * 10^4",
+      "-10^4 <= nums[i] <= 10^4",
+      "nums is sorted in non-decreasing order"
+    ],
+    "notes": [
+      "every element is the same value (result keeps only the first two)",
+      "no element repeats at all (result equals the input)",
+      "a single-element array",
+      "a value that appears exactly three or four times in a row"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1,1,1,2,2,3]",
+        "output": "[1,1,2,2,3]",
+        "expectedOutput": "[1,1,2,2,3]",
+        "explanation": "the third 1 is dropped since 1 already appears twice; everything else appears at most twice already"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0,0,1,1,1,1,2,3,3]",
+        "output": "[0,0,1,1,2,3,3]",
+        "expectedOutput": "[0,0,1,1,2,3,3]",
+        "explanation": "1 appears four times in the input, so the third and fourth copies are dropped, leaving exactly two"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1,2,3]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "explanation": "no value repeats more than twice, so nothing is removed"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,1,1,2,2,3]]",
+        "output": "[1,1,2,2,3]",
+        "expectedOutput": "[1,1,2,2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,0,1,1,1,1,2,3,3]]",
+        "output": "[0,0,1,1,2,3,3]",
+        "expectedOutput": "[0,0,1,1,2,3,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1,1]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1,2,2,3,3]]",
+        "output": "[1,1,2,2,3,3]",
+        "expectedOutput": "[1,1,2,2,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,5,5,5,5,5]]",
+        "output": "[5,5]",
+        "expectedOutput": "[5,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,1,1,1,2]]",
+        "output": "[1,1,2]",
+        "expectedOutput": "[1,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-2,-2,-1,-1,0,0,0,1]]",
+        "output": "[-2,-2,-1,-1,0,0,1]",
+        "expectedOutput": "[-2,-2,-1,-1,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1,1,2,3,3]]",
+        "output": "[1,1,2,3,3]",
+        "expectedOutput": "[1,1,2,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[2,2,3]]",
+        "output": "[2,2,3]",
+        "expectedOutput": "[2,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,2]]",
+        "output": "[1,1,2]",
+        "expectedOutput": "[1,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,0,0,0,0,0,0]]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,2,2,3,3,3,4,4,4,4]]",
+        "output": "[1,2,2,3,3,4,4]",
+        "expectedOutput": "[1,2,2,3,3,4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,2,2,2,2,3,3]]",
+        "output": "[1,1,2,2,3,3]",
+        "expectedOutput": "[1,1,2,2,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-5,-5,-5,-3,-3,-1]]",
+        "output": "[-5,-5,-3,-3,-1]",
+        "expectedOutput": "[-5,-5,-3,-3,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[7,7]]",
+        "output": "[7,7]",
+        "expectedOutput": "[7,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-10000,-10000,-10000,10000,10000,10000]]",
+        "output": "[-10000,-10000,10000,10000]",
+        "expectedOutput": "[-10000,-10000,10000,10000]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1,1,1,2,2,3]",
+      "output": "[1,1,2,2,3]",
+      "expectedOutput": "[1,1,2,2,3]",
+      "explanation": "the third 1 is dropped since 1 already appears twice; everything else appears at most twice already"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0,0,1,1,1,1,2,3,3]",
+      "output": "[0,0,1,1,2,3,3]",
+      "expectedOutput": "[0,0,1,1,2,3,3]",
+      "explanation": "1 appears four times in the input, so the third and fourth copies are dropped, leaving exactly two"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1,2,3]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "explanation": "no value repeats more than twice, so nothing is removed"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1,1,1,2,2,3]",
+      "output": "[1,1,2,2,3]",
+      "expectedOutput": "[1,1,2,2,3]",
+      "explanation": "the third 1 is dropped since 1 already appears twice; everything else appears at most twice already"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0,0,1,1,1,1,2,3,3]",
+      "output": "[0,0,1,1,2,3,3]",
+      "expectedOutput": "[0,0,1,1,2,3,3]",
+      "explanation": "1 appears four times in the input, so the third and fourth copies are dropped, leaving exactly two"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1,2,3]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "explanation": "no value repeats more than twice, so nothing is removed"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,1,1,2,2,3]]",
+      "output": "[1,1,2,2,3]",
+      "expectedOutput": "[1,1,2,2,3]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0,0,1,1,1,1,2,3,3]]",
+      "output": "[0,0,1,1,2,3,3]",
+      "expectedOutput": "[0,0,1,1,2,3,3]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,1]]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,1,1]]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,1,2,2,3,3]]",
+      "output": "[1,1,2,2,3,3]",
+      "expectedOutput": "[1,1,2,2,3,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3]]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[5,5,5,5,5,5]]",
+      "output": "[5,5]",
+      "expectedOutput": "[5,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,1,1,1,2]]",
+      "output": "[1,1,2]",
+      "expectedOutput": "[1,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[-2,-2,-1,-1,0,0,0,1]]",
+      "output": "[-2,-2,-1,-1,0,0,1]",
+      "expectedOutput": "[-2,-2,-1,-1,0,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,1,1,2,3,3]]",
+      "output": "[1,1,2,3,3]",
+      "expectedOutput": "[1,1,2,3,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[2,2,3]]",
+      "output": "[2,2,3]",
+      "expectedOutput": "[2,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,1,2]]",
+      "output": "[1,1,2]",
+      "expectedOutput": "[1,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[0,0,0,0,0,0,0]]",
+      "output": "[0,0]",
+      "expectedOutput": "[0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2,2,2,3,3,3,4,4,4,4]]",
+      "output": "[1,2,2,3,3,4,4]",
+      "expectedOutput": "[1,2,2,3,3,4,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,1,2,2,2,2,3,3]]",
+      "output": "[1,1,2,2,3,3]",
+      "expectedOutput": "[1,1,2,2,3,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[-5,-5,-5,-3,-3,-1]]",
+      "output": "[-5,-5,-3,-3,-1]",
+      "expectedOutput": "[-5,-5,-3,-3,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[7,7]]",
+      "output": "[7,7]",
+      "expectedOutput": "[7,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[-10000,-10000,-10000,10000,10000,10000]]",
+      "output": "[-10000,-10000,10000,10000]",
+      "expectedOutput": "[-10000,-10000,10000,10000]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1,1,1,2,2,3]",
+        "output": "[1,1,2,2,3]",
+        "expectedOutput": "[1,1,2,2,3]",
+        "explanation": "the third 1 is dropped since 1 already appears twice; everything else appears at most twice already"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0,0,1,1,1,1,2,3,3]",
+        "output": "[0,0,1,1,2,3,3]",
+        "expectedOutput": "[0,0,1,1,2,3,3]",
+        "explanation": "1 appears four times in the input, so the third and fourth copies are dropped, leaving exactly two"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1,2,3]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "explanation": "no value repeats more than twice, so nothing is removed"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,1,1,2,2,3]]",
+        "output": "[1,1,2,2,3]",
+        "expectedOutput": "[1,1,2,2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,0,1,1,1,1,2,3,3]]",
+        "output": "[0,0,1,1,2,3,3]",
+        "expectedOutput": "[0,0,1,1,2,3,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1,1]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1,2,2,3,3]]",
+        "output": "[1,1,2,2,3,3]",
+        "expectedOutput": "[1,1,2,2,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,5,5,5,5,5]]",
+        "output": "[5,5]",
+        "expectedOutput": "[5,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,1,1,1,2]]",
+        "output": "[1,1,2]",
+        "expectedOutput": "[1,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-2,-2,-1,-1,0,0,0,1]]",
+        "output": "[-2,-2,-1,-1,0,0,1]",
+        "expectedOutput": "[-2,-2,-1,-1,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1,1,2,3,3]]",
+        "output": "[1,1,2,3,3]",
+        "expectedOutput": "[1,1,2,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[2,2,3]]",
+        "output": "[2,2,3]",
+        "expectedOutput": "[2,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,2]]",
+        "output": "[1,1,2]",
+        "expectedOutput": "[1,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,0,0,0,0,0,0]]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,2,2,3,3,3,4,4,4,4]]",
+        "output": "[1,2,2,3,3,4,4]",
+        "expectedOutput": "[1,2,2,3,3,4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,2,2,2,2,3,3]]",
+        "output": "[1,1,2,2,3,3]",
+        "expectedOutput": "[1,1,2,2,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-5,-5,-5,-3,-3,-1]]",
+        "output": "[-5,-5,-3,-3,-1]",
+        "expectedOutput": "[-5,-5,-3,-3,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[7,7]]",
+        "output": "[7,7]",
+        "expectedOutput": "[7,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-10000,-10000,-10000,10000,10000,10000]]",
+        "output": "[-10000,-10000,10000,10000]",
+        "expectedOutput": "[-10000,-10000,10000,10000]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def removeDuplicates(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeDuplicates(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeDuplicates(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeDuplicates(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeDuplicates(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def removeDuplicates(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeDuplicates(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeDuplicates(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeDuplicates(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeDuplicates(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def removeDuplicates(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeDuplicates(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeDuplicates(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeDuplicates(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeDuplicates(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def removeDuplicates(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeDuplicates(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeDuplicates(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeDuplicates(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeDuplicates(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra beyond the output",
+      "pattern": "two pointers, overwrite in place using a write pointer that compares against the element two positions back"
+    },
+    "bruteForce": {
+      "approach": "build a new list, and for each value, count how many times it has already been appended to the new list before deciding whether to append it again (skip once the running count for that value reaches 2)",
+      "time": "O(n)",
+      "space": "O(n) for the new list, plus a running count"
+    }
+  },
+  "optimal": {
+    "pattern": "two pointers, overwrite in place using a write pointer that compares against the element two positions back",
+    "time": "O(n)",
+    "space": "O(1) extra beyond the output",
+    "hint_ladder": [
+      "since the array is already sorted, all copies of the same value are grouped together - you just need to cap each group at 2",
+      "keep a write pointer for where the next kept element goes; a new element is safe to keep unless it equals the element already sitting two spots before the write pointer",
+      "why two spots back specifically? because if nums[i] equals the value at write pointer - 2, that means the last two kept slots are already that same value, so a third would be one too many",
+      "start the write pointer at index 2 for arrays with at least 2 elements, since the first two elements are always safe to keep as-is",
+      "walk through by hand on [1,1,1,2,2,3] and track the write pointer to see exactly when it skips versus advances"
+    ]
+  },
+  "bruteForce": {
+    "approach": "build a new list, and for each value, count how many times it has already been appended to the new list before deciding whether to append it again (skip once the running count for that value reaches 2)",
+    "time": "O(n)",
+    "space": "O(n) for the new list, plus a running count"
+  },
+  "isIndex0": true,
+  "level": null
+}

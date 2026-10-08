@@ -1,0 +1,599 @@
+{
+  "id": "lemonade-change",
+  "questionId": "lemonade-change",
+  "slug": "lemonade-change",
+  "title": "Lemonade Change",
+  "difficulty": "Easy",
+  "category": "Greedy",
+  "patterns": [
+    "greedy",
+    "simulation"
+  ],
+  "lists": [],
+  "hints": [
+    "you never hand a $20 bill back as change to anyone, so do you ever need to remember how many $20s you're holding?",
+    "track just two counters: number of $5 bills and number of $10 bills in hand",
+    "for a $10 payment there's only one way to make $5 change: one $5 bill",
+    "for a $20 payment there are two ways to make $15 change: one $10 + one $5, or three $5s - when both are available, which should you prefer, and why does that choice conserve flexibility for future customers?",
+    "prefer one $10 + one $5 over three $5s, because $10 bills are useless for any other change amount, while $5 bills are the only thing that can make change for a future $10 customer"
+  ],
+  "commonMistakes": [
+    "always breaking a $20 into three $5s even when a $10 is available, which needlessly drains the $5 supply that a later $10-paying customer will need",
+    "forgetting to update the running counts before checking the next customer, or checking availability of a $5 for change to a $10 customer before decrementing it",
+    "not handling the very first customer paying with $10 or $20 as an immediate failure"
+  ],
+  "content": {
+    "problemStatement": "Lemonade costs $5 a cup. Customers line up and each pays with a $5,\n$10, or $20 bill, one at a time, in the order given by `bills`. You\nstart with no change on hand and must give each customer the correct\nchange before serving the next one.\n\n**Return true if you can give every customer exact change, or false if\nat some point you cannot.**\n",
+    "constraints": [
+      "1 <= bills.length <= 10^5",
+      "bills[i] is 5, 10, or 20"
+    ],
+    "notes": [
+      "the very first customer pays with 10 or 20 (impossible, no change available yet)",
+      "a run of $10 bills that drains your $5 supply",
+      "a $20 customer when you have three $5 bills but no $10 (must fall back to three $5s)",
+      "all customers pay with exactly $5"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "bills = [5, 5, 5, 10, 20]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the first three $5 bills need no change, the $10 is covered by one $5, the $20 is covered by one $10 and one $5"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "bills = [5, 5, 10, 10, 20]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "after the two $10s you have no $5 bills left, and the $20 customer needs $15 in change"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[5,5,5,10,20]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[5,5,10,10,20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[10,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,5,5,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[5,5,5,20]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,5,5,10,10,20]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,5,10,20,5,20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[5,5,5,5,5,10,10,20,20]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,5,5,5,5,5,5,5,5,5,10,10,10,10,10,20,20,20,20,20]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[5,5,5,10,10,10,20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[5,5,5,5,20,5,5,5,5,20]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[5,10]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[5,5,20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[5,5,5,20,20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[5,20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[5,5,5,5,5,20,20,20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[5,5,5,5,5,5,5,5,5,5,20,20,20]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "bills = [5, 5, 5, 10, 20]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the first three $5 bills need no change, the $10 is covered by one $5, the $20 is covered by one $10 and one $5"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "bills = [5, 5, 10, 10, 20]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "after the two $10s you have no $5 bills left, and the $20 customer needs $15 in change"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "bills = [5, 5, 5, 10, 20]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the first three $5 bills need no change, the $10 is covered by one $5, the $20 is covered by one $10 and one $5"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "bills = [5, 5, 10, 10, 20]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "after the two $10s you have no $5 bills left, and the $20 customer needs $15 in change"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[5,5,5,10,20]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[5,5,10,10,20]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[10,5]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[5,5,5,5]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[5]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[20]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[5,5,5,20]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[5,5,5,10,10,20]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[5,5,10,20,5,20]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[5,5,5,5,5,10,10,20,20]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[5,5,5,5,5,5,5,5,5,5,10,10,10,10,10,20,20,20,20,20]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[5,5,5,10,10,10,20]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[5,5,5,5,20,5,5,5,5,20]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[5,10]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[5,5,20]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[5,5,5,20,20]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[5,20]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[10]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[5,5,5,5,5,20,20,20]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[5,5,5,5,5,5,5,5,5,5,20,20,20]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "bills = [5, 5, 5, 10, 20]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the first three $5 bills need no change, the $10 is covered by one $5, the $20 is covered by one $10 and one $5"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "bills = [5, 5, 10, 10, 20]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "after the two $10s you have no $5 bills left, and the $20 customer needs $15 in change"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[5,5,5,10,20]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[5,5,10,10,20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[10,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,5,5,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[5,5,5,20]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,5,5,10,10,20]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,5,10,20,5,20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[5,5,5,5,5,10,10,20,20]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,5,5,5,5,5,5,5,5,5,10,10,10,10,10,20,20,20,20,20]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[5,5,5,10,10,10,20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[5,5,5,5,20,5,5,5,5,20]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[5,10]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[5,5,20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[5,5,5,20,20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[5,20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[5,5,5,5,5,20,20,20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[5,5,5,5,5,5,5,5,5,5,20,20,20]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def lemonadeChange(self, bills):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool lemonadeChange(vector<int>& bills) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean lemonadeChange(int[] bills) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lemonadeChange(bills: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lemonadeChange(bills) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def lemonadeChange(self, bills):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool lemonadeChange(vector<int>& bills) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean lemonadeChange(int[] bills) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lemonadeChange(bills: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lemonadeChange(bills) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def lemonadeChange(self, bills):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool lemonadeChange(vector<int>& bills) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean lemonadeChange(int[] bills) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lemonadeChange(bills: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lemonadeChange(bills) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def lemonadeChange(self, bills):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool lemonadeChange(vector<int>& bills) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean lemonadeChange(int[] bills) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lemonadeChange(bills: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lemonadeChange(bills) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "track only counts of $5 and $10 bills on hand, since $20 bills are never given back as change"
+    },
+    "bruteForce": {
+      "approach": "there isn't really a slower alternative here - the natural solution is already the single pass, tracking every bill you're holding in a map",
+      "time": "O(n)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "track only counts of $5 and $10 bills on hand, since $20 bills are never given back as change",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "you never hand a $20 bill back as change to anyone, so do you ever need to remember how many $20s you're holding?",
+      "track just two counters: number of $5 bills and number of $10 bills in hand",
+      "for a $10 payment there's only one way to make $5 change: one $5 bill",
+      "for a $20 payment there are two ways to make $15 change: one $10 + one $5, or three $5s - when both are available, which should you prefer, and why does that choice conserve flexibility for future customers?",
+      "prefer one $10 + one $5 over three $5s, because $10 bills are useless for any other change amount, while $5 bills are the only thing that can make change for a future $10 customer"
+    ]
+  },
+  "bruteForce": {
+    "approach": "there isn't really a slower alternative here - the natural solution is already the single pass, tracking every bill you're holding in a map",
+    "time": "O(n)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

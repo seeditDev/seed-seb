@@ -1,0 +1,628 @@
+{
+  "id": "find-k-closest-elements",
+  "questionId": "find-k-closest-elements",
+  "slug": "find-k-closest-elements",
+  "title": "Find K Closest Elements",
+  "difficulty": "Medium",
+  "category": "Binary search",
+  "patterns": [
+    "binary search"
+  ],
+  "lists": [],
+  "hints": [
+    "the answer is always a single contiguous window of k elements in the sorted array - once you know where that window starts, you're done",
+    "there are only n - k + 1 possible starting positions for that window - can you binary search over those positions instead of sorting by distance?",
+    "for a candidate window start i, compare x - arr[i] (how far the left edge is) to arr[i+k] - x (how far the element just past the right edge is) - whichever is smaller tells you which side to keep",
+    "binary search left from 0 to (n - k): if x - arr[mid] > arr[mid+k] - x, the window should move right (mid+1 becomes the new left bound), otherwise shrink the right bound to mid; when left meets right, that's the window start"
+  ],
+  "commonMistakes": [
+    "breaking distance ties in favor of the larger value instead of the smaller one",
+    "treating the answer as k independently chosen elements instead of one contiguous window in the sorted array",
+    "off-by-one on the binary search bounds for the window start, e.g. allowing a start index that would run the window past the end of the array"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of integers sorted in ascending order, an integer\n`k`, and an integer `x`.\n\n**Return the `k` elements of the array that are closest to `x`, sorted in ascending order.**\n\nIf two elements are equally close to `x`, prefer the smaller of the two.\n",
+    "constraints": [
+      "arr is sorted in ascending order",
+      "1 <= k <= length of arr",
+      "ties in distance are broken in favor of the smaller value"
+    ],
+    "notes": [
+      "x smaller than every element, or larger than every element",
+      "k equal to the full length of the array",
+      "a tie in distance right at the boundary of the window"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "arr = [1, 2, 3, 4, 5], k = 4, x = 3",
+        "output": "[1, 2, 3, 4]",
+        "expectedOutput": "[1, 2, 3, 4]",
+        "explanation": "dropping 5 (distance 2) keeps the 4 closest values to 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "arr = [1, 2, 3, 4, 5], k = 4, x = -1",
+        "output": "[1, 2, 3, 4]",
+        "expectedOutput": "[1, 2, 3, 4]",
+        "explanation": "everything is to the right of x, so the 4 smallest values are the closest"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "arr = [1, 2, 3, 4, 5], k = 2, x = 3",
+        "output": "[2, 3]",
+        "expectedOutput": "[2, 3]",
+        "explanation": "2 and 4 are tied at distance 1 from 3, so the smaller one (2) wins the tie, alongside 3 itself at distance 0"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5],4,3]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5],4,-1]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,4,5],2,3]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3,4,5],1,3]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,3,5,7,9],3,5]",
+        "output": "[3,5,7]",
+        "expectedOutput": "[3,5,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],5,10]",
+        "output": "[8,9,10,11,12]",
+        "expectedOutput": "[8,9,10,11,12]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],3,1]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],3,20]",
+        "output": "[18,19,20]",
+        "expectedOutput": "[18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],20,10]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],5,100]",
+        "output": "[6,7,8,9,10]",
+        "expectedOutput": "[6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],5,-100]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,4,5,6,9],4,5]",
+        "output": "[2,4,5,6]",
+        "expectedOutput": "[2,4,5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,5,10,15,20,25,30],3,17]",
+        "output": "[10,15,20]",
+        "expectedOutput": "[10,15,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,5,10,15,20,25,30],1,17]",
+        "output": "[15]",
+        "expectedOutput": "[15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-10,-5,0,5,10,15,20],4,0]",
+        "output": "[-10,-5,0,5]",
+        "expectedOutput": "[-10,-5,0,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3],3,2]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,3,5,7,9,11,13,15,17,19,21,23,25],6,14]",
+        "output": "[9,11,13,15,17,19]",
+        "expectedOutput": "[9,11,13,15,17,19]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[2,4,6,8,10,12,14,16,18,20],5,9]",
+        "output": "[4,6,8,10,12]",
+        "expectedOutput": "[4,6,8,10,12]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],7,7]",
+        "output": "[4,5,6,7,8,9,10]",
+        "expectedOutput": "[4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],7,8]",
+        "output": "[5,6,7,8,9,10,11]",
+        "expectedOutput": "[5,6,7,8,9,10,11]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "arr = [1, 2, 3, 4, 5], k = 4, x = 3",
+      "output": "[1, 2, 3, 4]",
+      "expectedOutput": "[1, 2, 3, 4]",
+      "explanation": "dropping 5 (distance 2) keeps the 4 closest values to 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "arr = [1, 2, 3, 4, 5], k = 4, x = -1",
+      "output": "[1, 2, 3, 4]",
+      "expectedOutput": "[1, 2, 3, 4]",
+      "explanation": "everything is to the right of x, so the 4 smallest values are the closest"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "arr = [1, 2, 3, 4, 5], k = 2, x = 3",
+      "output": "[2, 3]",
+      "expectedOutput": "[2, 3]",
+      "explanation": "2 and 4 are tied at distance 1 from 3, so the smaller one (2) wins the tie, alongside 3 itself at distance 0"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "arr = [1, 2, 3, 4, 5], k = 4, x = 3",
+      "output": "[1, 2, 3, 4]",
+      "expectedOutput": "[1, 2, 3, 4]",
+      "explanation": "dropping 5 (distance 2) keeps the 4 closest values to 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "arr = [1, 2, 3, 4, 5], k = 4, x = -1",
+      "output": "[1, 2, 3, 4]",
+      "expectedOutput": "[1, 2, 3, 4]",
+      "explanation": "everything is to the right of x, so the 4 smallest values are the closest"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "arr = [1, 2, 3, 4, 5], k = 2, x = 3",
+      "output": "[2, 3]",
+      "expectedOutput": "[2, 3]",
+      "explanation": "2 and 4 are tied at distance 1 from 3, so the smaller one (2) wins the tie, alongside 3 itself at distance 0"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,4,5],4,3]",
+      "output": "[1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3,4,5],4,-1]",
+      "output": "[1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3,4,5],2,3]",
+      "output": "[2,3]",
+      "expectedOutput": "[2,3]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2,3,4,5],1,3]",
+      "output": "[3]",
+      "expectedOutput": "[3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,3,5,7,9],3,5]",
+      "output": "[3,5,7]",
+      "expectedOutput": "[3,5,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],5,10]",
+      "output": "[8,9,10,11,12]",
+      "expectedOutput": "[8,9,10,11,12]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],3,1]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],3,20]",
+      "output": "[18,19,20]",
+      "expectedOutput": "[18,19,20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],20,10]",
+      "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],5,100]",
+      "output": "[6,7,8,9,10]",
+      "expectedOutput": "[6,7,8,9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],5,-100]",
+      "output": "[1,2,3,4,5]",
+      "expectedOutput": "[1,2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,4,5,6,9],4,5]",
+      "output": "[2,4,5,6]",
+      "expectedOutput": "[2,4,5,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,5,10,15,20,25,30],3,17]",
+      "output": "[10,15,20]",
+      "expectedOutput": "[10,15,20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,5,10,15,20,25,30],1,17]",
+      "output": "[15]",
+      "expectedOutput": "[15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-10,-5,0,5,10,15,20],4,0]",
+      "output": "[-10,-5,0,5]",
+      "expectedOutput": "[-10,-5,0,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,3],3,2]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,3,5,7,9,11,13,15,17,19,21,23,25],6,14]",
+      "output": "[9,11,13,15,17,19]",
+      "expectedOutput": "[9,11,13,15,17,19]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[2,4,6,8,10,12,14,16,18,20],5,9]",
+      "output": "[4,6,8,10,12]",
+      "expectedOutput": "[4,6,8,10,12]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],7,7]",
+      "output": "[4,5,6,7,8,9,10]",
+      "expectedOutput": "[4,5,6,7,8,9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],7,8]",
+      "output": "[5,6,7,8,9,10,11]",
+      "expectedOutput": "[5,6,7,8,9,10,11]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "arr = [1, 2, 3, 4, 5], k = 4, x = 3",
+        "output": "[1, 2, 3, 4]",
+        "expectedOutput": "[1, 2, 3, 4]",
+        "explanation": "dropping 5 (distance 2) keeps the 4 closest values to 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "arr = [1, 2, 3, 4, 5], k = 4, x = -1",
+        "output": "[1, 2, 3, 4]",
+        "expectedOutput": "[1, 2, 3, 4]",
+        "explanation": "everything is to the right of x, so the 4 smallest values are the closest"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "arr = [1, 2, 3, 4, 5], k = 2, x = 3",
+        "output": "[2, 3]",
+        "expectedOutput": "[2, 3]",
+        "explanation": "2 and 4 are tied at distance 1 from 3, so the smaller one (2) wins the tie, alongside 3 itself at distance 0"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5],4,3]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5],4,-1]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,4,5],2,3]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3,4,5],1,3]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,3,5,7,9],3,5]",
+        "output": "[3,5,7]",
+        "expectedOutput": "[3,5,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],5,10]",
+        "output": "[8,9,10,11,12]",
+        "expectedOutput": "[8,9,10,11,12]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],3,1]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],3,20]",
+        "output": "[18,19,20]",
+        "expectedOutput": "[18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],20,10]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],5,100]",
+        "output": "[6,7,8,9,10]",
+        "expectedOutput": "[6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],5,-100]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,4,5,6,9],4,5]",
+        "output": "[2,4,5,6]",
+        "expectedOutput": "[2,4,5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,5,10,15,20,25,30],3,17]",
+        "output": "[10,15,20]",
+        "expectedOutput": "[10,15,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,5,10,15,20,25,30],1,17]",
+        "output": "[15]",
+        "expectedOutput": "[15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-10,-5,0,5,10,15,20],4,0]",
+        "output": "[-10,-5,0,5]",
+        "expectedOutput": "[-10,-5,0,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3],3,2]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,3,5,7,9,11,13,15,17,19,21,23,25],6,14]",
+        "output": "[9,11,13,15,17,19]",
+        "expectedOutput": "[9,11,13,15,17,19]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[2,4,6,8,10,12,14,16,18,20],5,9]",
+        "output": "[4,6,8,10,12]",
+        "expectedOutput": "[4,6,8,10,12]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],7,7]",
+        "output": "[4,5,6,7,8,9,10]",
+        "expectedOutput": "[4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],7,8]",
+        "output": "[5,6,7,8,9,10,11]",
+        "expectedOutput": "[5,6,7,8,9,10,11]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findClosestElements(self, arr, k, x):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findClosestElements(vector<int>& arr, int k, int x) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findClosestElements(int[] arr, int k, int x) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findClosestElements(arr: IntArray, k: Int, x: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findClosestElements(arr, k, x) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findClosestElements(self, arr, k, x):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findClosestElements(vector<int>& arr, int k, int x) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findClosestElements(int[] arr, int k, int x) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findClosestElements(arr: IntArray, k: Int, x: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findClosestElements(arr, k, x) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findClosestElements(self, arr, k, x):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findClosestElements(vector<int>& arr, int k, int x) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findClosestElements(int[] arr, int k, int x) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findClosestElements(arr: IntArray, k: Int, x: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findClosestElements(arr, k, x) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findClosestElements(self, arr, k, x):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findClosestElements(vector<int>& arr, int k, int x) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findClosestElements(int[] arr, int k, int x) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findClosestElements(arr: IntArray, k: Int, x: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findClosestElements(arr, k, x) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(log(n - k))",
+      "space": "O(k) for the output",
+      "pattern": "binary search for the left edge of the k-element output window directly over the sorted array"
+    },
+    "bruteForce": {
+      "approach": "compute the distance from x for every element, sort the array by (distance, value), take the first k, then sort those k values ascending",
+      "time": "O(n log n)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "binary search for the left edge of the k-element output window directly over the sorted array",
+    "time": "O(log(n - k))",
+    "space": "O(k) for the output",
+    "hint_ladder": [
+      "the answer is always a single contiguous window of k elements in the sorted array - once you know where that window starts, you're done",
+      "there are only n - k + 1 possible starting positions for that window - can you binary search over those positions instead of sorting by distance?",
+      "for a candidate window start i, compare x - arr[i] (how far the left edge is) to arr[i+k] - x (how far the element just past the right edge is) - whichever is smaller tells you which side to keep",
+      "binary search left from 0 to (n - k): if x - arr[mid] > arr[mid+k] - x, the window should move right (mid+1 becomes the new left bound), otherwise shrink the right bound to mid; when left meets right, that's the window start"
+    ]
+  },
+  "bruteForce": {
+    "approach": "compute the distance from x for every element, sort the array by (distance, value), take the first k, then sort those k values ascending",
+    "time": "O(n log n)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

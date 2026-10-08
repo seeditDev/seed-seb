@@ -1,0 +1,628 @@
+{
+  "id": "next-greater-element-ii",
+  "questionId": "next-greater-element-ii",
+  "slug": "next-greater-element-ii",
+  "title": "Next Greater Element II (Circular)",
+  "difficulty": "Medium",
+  "category": "Monotonic stack",
+  "patterns": [
+    "monotonic stack",
+    "circular array"
+  ],
+  "lists": [],
+  "hints": [
+    "this is the same next-greater-element idea as a non-circular array, except an element near the end might need to look at elements near the beginning - how could you simulate 'wrapping around' without actually duplicating the array in memory?",
+    "what if you iterated 2n times (or n times twice) but always accessed the array using index modulo n?",
+    "use a monotonic decreasing stack of indices exactly like the non-circular version, but iterate i from 0 to 2n - 1, using nums[i % n] as the value at each step",
+    "only record an answer the first time an index is resolved (the second lap is purely to let earlier elements see values that wrapped around); never push an index onto the stack more than once"
+  ],
+  "commonMistakes": [
+    "actually concatenating nums with itself, which wastes space unnecessarily when modulo indexing works just as well",
+    "pushing the same index onto the stack twice across the two laps, corrupting the stack",
+    "forgetting that if the stack still isn't fully resolved after two full laps, those indices really do have no next greater element (should stay -1)"
+  ],
+  "content": {
+    "problemStatement": "You're given a circular array of integers `nums`, meaning the element after the last one wraps around to the first.\n\n**For every element, find the next element that is strictly greater than it, searching forward and allowing the search to wrap around the array once. Use -1 for a position with no such element, even after wrapping.**\n",
+    "constraints": [
+      "1 <= nums.length",
+      "the search may wrap around the array at most once (not indefinitely)"
+    ],
+    "notes": [
+      "a single element (no next greater element is possible)",
+      "the global maximum, which never has a next greater element",
+      "the answer requires wrapping all the way back to index 0"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 1]",
+        "output": "[2, -1, 2]",
+        "expectedOutput": "[2, -1, 2]",
+        "explanation": "index 0 (1) finds 2 right after it; index 1 (2) is the maximum, so wrapping never finds anything greater; index 2 (1) wraps around and finds 2 at index 0"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 3]",
+        "output": "[2, 3, 4, -1, 4]",
+        "expectedOutput": "[2, 3, 4, -1, 4]",
+        "explanation": "index 3 (4) is the maximum and never finds anything greater, even after wrapping; index 4 (3) wraps around to find 4 at index 3"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [5, 4, 3, 2, 1]",
+        "output": "[-1, 5, 5, 5, 5]",
+        "expectedOutput": "[-1, 5, 5, 5, 5]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,1]]",
+        "output": "[2,-1,2]",
+        "expectedOutput": "[2,-1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,3]]",
+        "output": "[2,3,4,-1,4]",
+        "expectedOutput": "[2,3,4,-1,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[5,4,3,2,1]]",
+        "output": "[-1,5,5,5,5]",
+        "expectedOutput": "[-1,5,5,5,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[7]]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[3,3]]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1]]",
+        "output": "[-1,-1,-1,-1]",
+        "expectedOutput": "[-1,-1,-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,-1]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[-1,15,15,15,15,15,15,15,15,15,15,15,15,15,15]",
+        "expectedOutput": "[-1,15,15,15,15,15,15,15,15,15,15,15,15,15,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,31,8,49,26,10,44,3,9,8,35,15,46,49,9,10,48,3,43,4]]",
+        "output": "[31,49,49,-1,44,44,46,9,35,35,46,46,49,-1,10,48,49,43,49,31]",
+        "expectedOutput": "[31,49,49,-1,44,44,46,9,35,35,46,46,49,-1,10,48,49,43,49,31]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,1,2,1,2,1]]",
+        "output": "[-1,2,-1,2,-1,2]",
+        "expectedOutput": "[-1,2,-1,2,-1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[100,1,11,1,120,1,130]]",
+        "output": "[120,11,120,120,130,130,-1]",
+        "expectedOutput": "[120,11,120,120,130,130,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[5,5]]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2]]",
+        "output": "[2,-1]",
+        "expectedOutput": "[2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,1]]",
+        "output": "[-1,2]",
+        "expectedOutput": "[-1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[31,24,22,27,52,21,72,53,90,16,92,68,73,43,45,59,84,5,17,48,56,9,21,56,50,83,55,54,1,21]]",
+        "output": "[52,27,27,52,72,72,90,90,92,92,-1,73,84,45,59,84,90,17,48,56,83,21,56,83,83,90,72,72,21,31]",
+        "expectedOutput": "[52,27,27,52,72,72,90,90,92,92,-1,73,84,45,59,84,90,17,48,56,83,21,56,83,83,90,72,72,21,31]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2]]",
+        "output": "[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,-1]",
+        "expectedOutput": "[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[2,3,4,5,6,7,8,9,10,-1,2,3,4,5,6,7,8,9,10,-1]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,-1,2,3,4,5,6,7,8,9,10,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[50,40,30,20,10,60]]",
+        "output": "[60,60,60,60,60,-1]",
+        "expectedOutput": "[60,60,60,60,60,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,1,2,3,1,2,3]]",
+        "output": "[2,3,-1,2,3,-1,2,3,-1]",
+        "expectedOutput": "[2,3,-1,2,3,-1,2,3,-1]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 1]",
+      "output": "[2, -1, 2]",
+      "expectedOutput": "[2, -1, 2]",
+      "explanation": "index 0 (1) finds 2 right after it; index 1 (2) is the maximum, so wrapping never finds anything greater; index 2 (1) wraps around and finds 2 at index 0"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 3]",
+      "output": "[2, 3, 4, -1, 4]",
+      "expectedOutput": "[2, 3, 4, -1, 4]",
+      "explanation": "index 3 (4) is the maximum and never finds anything greater, even after wrapping; index 4 (3) wraps around to find 4 at index 3"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [5, 4, 3, 2, 1]",
+      "output": "[-1, 5, 5, 5, 5]",
+      "expectedOutput": "[-1, 5, 5, 5, 5]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 1]",
+      "output": "[2, -1, 2]",
+      "expectedOutput": "[2, -1, 2]",
+      "explanation": "index 0 (1) finds 2 right after it; index 1 (2) is the maximum, so wrapping never finds anything greater; index 2 (1) wraps around and finds 2 at index 0"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 3]",
+      "output": "[2, 3, 4, -1, 4]",
+      "expectedOutput": "[2, 3, 4, -1, 4]",
+      "explanation": "index 3 (4) is the maximum and never finds anything greater, even after wrapping; index 4 (3) wraps around to find 4 at index 3"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [5, 4, 3, 2, 1]",
+      "output": "[-1, 5, 5, 5, 5]",
+      "expectedOutput": "[-1, 5, 5, 5, 5]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,1]]",
+      "output": "[2,-1,2]",
+      "expectedOutput": "[2,-1,2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3,4,3]]",
+      "output": "[2,3,4,-1,4]",
+      "expectedOutput": "[2,3,4,-1,4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[5,4,3,2,1]]",
+      "output": "[-1,5,5,5,5]",
+      "expectedOutput": "[-1,5,5,5,5]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1]]",
+      "output": "[-1]",
+      "expectedOutput": "[-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[7]]",
+      "output": "[-1]",
+      "expectedOutput": "[-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[3,3]]",
+      "output": "[-1,-1]",
+      "expectedOutput": "[-1,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,1,1,1]]",
+      "output": "[-1,-1,-1,-1]",
+      "expectedOutput": "[-1,-1,-1,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+      "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,-1]",
+      "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+      "output": "[-1,15,15,15,15,15,15,15,15,15,15,15,15,15,15]",
+      "expectedOutput": "[-1,15,15,15,15,15,15,15,15,15,15,15,15,15,15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,31,8,49,26,10,44,3,9,8,35,15,46,49,9,10,48,3,43,4]]",
+      "output": "[31,49,49,-1,44,44,46,9,35,35,46,46,49,-1,10,48,49,43,49,31]",
+      "expectedOutput": "[31,49,49,-1,44,44,46,9,35,35,46,46,49,-1,10,48,49,43,49,31]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[2,1,2,1,2,1]]",
+      "output": "[-1,2,-1,2,-1,2]",
+      "expectedOutput": "[-1,2,-1,2,-1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[100,1,11,1,120,1,130]]",
+      "output": "[120,11,120,120,130,130,-1]",
+      "expectedOutput": "[120,11,120,120,130,130,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[5,5]]",
+      "output": "[-1,-1]",
+      "expectedOutput": "[-1,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2]]",
+      "output": "[2,-1]",
+      "expectedOutput": "[2,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[2,1]]",
+      "output": "[-1,2]",
+      "expectedOutput": "[-1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[31,24,22,27,52,21,72,53,90,16,92,68,73,43,45,59,84,5,17,48,56,9,21,56,50,83,55,54,1,21]]",
+      "output": "[52,27,27,52,72,72,90,90,92,92,-1,73,84,45,59,84,90,17,48,56,83,21,56,83,83,90,72,72,21,31]",
+      "expectedOutput": "[52,27,27,52,72,72,90,90,92,92,-1,73,84,45,59,84,90,17,48,56,83,21,56,83,83,90,72,72,21,31]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2]]",
+      "output": "[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,-1]",
+      "expectedOutput": "[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,1,2,3,4,5,6,7,8,9,10]]",
+      "output": "[2,3,4,5,6,7,8,9,10,-1,2,3,4,5,6,7,8,9,10,-1]",
+      "expectedOutput": "[2,3,4,5,6,7,8,9,10,-1,2,3,4,5,6,7,8,9,10,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[50,40,30,20,10,60]]",
+      "output": "[60,60,60,60,60,-1]",
+      "expectedOutput": "[60,60,60,60,60,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,2,3,1,2,3,1,2,3]]",
+      "output": "[2,3,-1,2,3,-1,2,3,-1]",
+      "expectedOutput": "[2,3,-1,2,3,-1,2,3,-1]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 1]",
+        "output": "[2, -1, 2]",
+        "expectedOutput": "[2, -1, 2]",
+        "explanation": "index 0 (1) finds 2 right after it; index 1 (2) is the maximum, so wrapping never finds anything greater; index 2 (1) wraps around and finds 2 at index 0"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 3]",
+        "output": "[2, 3, 4, -1, 4]",
+        "expectedOutput": "[2, 3, 4, -1, 4]",
+        "explanation": "index 3 (4) is the maximum and never finds anything greater, even after wrapping; index 4 (3) wraps around to find 4 at index 3"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [5, 4, 3, 2, 1]",
+        "output": "[-1, 5, 5, 5, 5]",
+        "expectedOutput": "[-1, 5, 5, 5, 5]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,1]]",
+        "output": "[2,-1,2]",
+        "expectedOutput": "[2,-1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,3]]",
+        "output": "[2,3,4,-1,4]",
+        "expectedOutput": "[2,3,4,-1,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[5,4,3,2,1]]",
+        "output": "[-1,5,5,5,5]",
+        "expectedOutput": "[-1,5,5,5,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[7]]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[3,3]]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1]]",
+        "output": "[-1,-1,-1,-1]",
+        "expectedOutput": "[-1,-1,-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,-1]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[-1,15,15,15,15,15,15,15,15,15,15,15,15,15,15]",
+        "expectedOutput": "[-1,15,15,15,15,15,15,15,15,15,15,15,15,15,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,31,8,49,26,10,44,3,9,8,35,15,46,49,9,10,48,3,43,4]]",
+        "output": "[31,49,49,-1,44,44,46,9,35,35,46,46,49,-1,10,48,49,43,49,31]",
+        "expectedOutput": "[31,49,49,-1,44,44,46,9,35,35,46,46,49,-1,10,48,49,43,49,31]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,1,2,1,2,1]]",
+        "output": "[-1,2,-1,2,-1,2]",
+        "expectedOutput": "[-1,2,-1,2,-1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[100,1,11,1,120,1,130]]",
+        "output": "[120,11,120,120,130,130,-1]",
+        "expectedOutput": "[120,11,120,120,130,130,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[5,5]]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2]]",
+        "output": "[2,-1]",
+        "expectedOutput": "[2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,1]]",
+        "output": "[-1,2]",
+        "expectedOutput": "[-1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[31,24,22,27,52,21,72,53,90,16,92,68,73,43,45,59,84,5,17,48,56,9,21,56,50,83,55,54,1,21]]",
+        "output": "[52,27,27,52,72,72,90,90,92,92,-1,73,84,45,59,84,90,17,48,56,83,21,56,83,83,90,72,72,21,31]",
+        "expectedOutput": "[52,27,27,52,72,72,90,90,92,92,-1,73,84,45,59,84,90,17,48,56,83,21,56,83,83,90,72,72,21,31]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2]]",
+        "output": "[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,-1]",
+        "expectedOutput": "[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[2,3,4,5,6,7,8,9,10,-1,2,3,4,5,6,7,8,9,10,-1]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,-1,2,3,4,5,6,7,8,9,10,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[50,40,30,20,10,60]]",
+        "output": "[60,60,60,60,60,-1]",
+        "expectedOutput": "[60,60,60,60,60,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,1,2,3,1,2,3]]",
+        "output": "[2,3,-1,2,3,-1,2,3,-1]",
+        "expectedOutput": "[2,3,-1,2,3,-1,2,3,-1]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def nextGreaterElementsCircular(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> nextGreaterElementsCircular(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] nextGreaterElementsCircular(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun nextGreaterElementsCircular(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    nextGreaterElementsCircular(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def nextGreaterElementsCircular(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> nextGreaterElementsCircular(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] nextGreaterElementsCircular(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun nextGreaterElementsCircular(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    nextGreaterElementsCircular(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def nextGreaterElementsCircular(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> nextGreaterElementsCircular(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] nextGreaterElementsCircular(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun nextGreaterElementsCircular(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    nextGreaterElementsCircular(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def nextGreaterElementsCircular(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> nextGreaterElementsCircular(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] nextGreaterElementsCircular(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun nextGreaterElementsCircular(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    nextGreaterElementsCircular(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the stack",
+      "pattern": "monotonic decreasing stack of indices, run over the array twice (conceptually) using modulo indexing to simulate the wraparound"
+    },
+    "bruteForce": {
+      "approach": "for each index, scan forward up to 2n - 1 positions (using modulo to wrap), stopping at the first greater value or after a full lap",
+      "time": "O(n^2)",
+      "space": "O(1) beyond the output"
+    }
+  },
+  "optimal": {
+    "pattern": "monotonic decreasing stack of indices, run over the array twice (conceptually) using modulo indexing to simulate the wraparound",
+    "time": "O(n)",
+    "space": "O(n) for the stack",
+    "hint_ladder": [
+      "this is the same next-greater-element idea as a non-circular array, except an element near the end might need to look at elements near the beginning - how could you simulate 'wrapping around' without actually duplicating the array in memory?",
+      "what if you iterated 2n times (or n times twice) but always accessed the array using index modulo n?",
+      "use a monotonic decreasing stack of indices exactly like the non-circular version, but iterate i from 0 to 2n - 1, using nums[i % n] as the value at each step",
+      "only record an answer the first time an index is resolved (the second lap is purely to let earlier elements see values that wrapped around); never push an index onto the stack more than once"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each index, scan forward up to 2n - 1 positions (using modulo to wrap), stopping at the first greater value or after a full lap",
+    "time": "O(n^2)",
+    "space": "O(1) beyond the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

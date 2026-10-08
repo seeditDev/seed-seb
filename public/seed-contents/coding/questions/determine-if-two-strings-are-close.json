@@ -1,0 +1,650 @@
+{
+  "id": "determine-if-two-strings-are-close",
+  "questionId": "determine-if-two-strings-are-close",
+  "slug": "determine-if-two-strings-are-close",
+  "title": "Determine if Two Strings Are Close",
+  "difficulty": "Medium",
+  "category": "Hash map",
+  "patterns": [
+    "hash map",
+    "frequency counting"
+  ],
+  "lists": [],
+  "hints": [
+    "swapping characters means positions don't matter at all - only how many of each letter you have. what does 'replace every X with Y' do to those counts?",
+    "the replace operation lets you relabel which letter owns which count, but it can't change the SET of counts themselves, and it can't invent a new letter that wasn't already present",
+    "two conditions must both hold: the two strings must use exactly the same set of distinct letters, and the sorted list of frequency counts must match exactly",
+    "build a frequency map for each string, check the key sets are equal, then check the sorted lists of values are equal"
+  ],
+  "commonMistakes": [
+    "checking only the frequency counts and forgetting to also check that the same set of letters is used",
+    "not sorting the counts before comparing them (two strings can have the same counts assigned to different letters)",
+    "forgetting the length check, which the frequency-set comparison actually already implies but is easy to special-case incorrectly"
+  ],
+  "content": {
+    "problemStatement": "Two strings are considered \"close\" if you can make them identical\nusing any number of these two operations, in any order: swap the\npositions of any two existing characters, or replace every occurrence\nof one existing character with another existing character (and vice\nversa).\n\n**Determine whether `word1` and `word2` are close.**\n",
+    "constraints": [
+      "0 <= word1.length, word2.length <= 100",
+      "word1 and word2 consist only of lowercase English letters",
+      "operations may be applied any number of times, in any order"
+    ],
+    "notes": [
+      "different lengths (always false)",
+      "the two strings use a different SET of letters, even if counts would otherwise match",
+      "identical strings"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "word1 = \"abc\", word2 = \"bca\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "swapping characters can turn abc into bca directly, since they use the same letters"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "word1 = \"a\", word2 = \"aa\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "different lengths can never be made equal"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "word1 = \"cabbba\", word2 = \"abbccc\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "both use the letters a, b, c with counts that can be matched up: {1,3,2} and {1,3,2}"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"abc\",\"bca\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a\",\"aa\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"cabbba\",\"abbccc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"cabbba\",\"aabbss\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"b\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ab\",\"ba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aabbcc\",\"abcabc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"uau\",\"ssx\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abbzzca\",\"babzzcz\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"mmmnnnnnooo\",\"oonnnnmmma\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"mnop\",\"mnop\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"xxyyzz\",\"xxxyzz\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abcdefghij\",\"jihgfedcba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abcdefghijklmnoabcdefghijklmno\",\"onmlkjihgfedcbaonmlkjihgfedcba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aaabbbcccddd\",\"dddcccbbbaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"z\",\"z\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"ab\",\"aabb\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaabbbbbbbbbb\",\"bbbbbbbbbbbbbbbbbbbbaaaaaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"abcabcabc\",\"cbacbacba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"aabbccddeeffgghh\",\"hhggffeeddccbbaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "word1 = \"abc\", word2 = \"bca\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "swapping characters can turn abc into bca directly, since they use the same letters"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "word1 = \"a\", word2 = \"aa\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "different lengths can never be made equal"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "word1 = \"cabbba\", word2 = \"abbccc\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "both use the letters a, b, c with counts that can be matched up: {1,3,2} and {1,3,2}"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "word1 = \"abc\", word2 = \"bca\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "swapping characters can turn abc into bca directly, since they use the same letters"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "word1 = \"a\", word2 = \"aa\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "different lengths can never be made equal"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "word1 = \"cabbba\", word2 = \"abbccc\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "both use the letters a, b, c with counts that can be matched up: {1,3,2} and {1,3,2}"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"abc\",\"bca\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"a\",\"aa\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"cabbba\",\"abbccc\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"cabbba\",\"aabbss\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"\",\"\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\",\"b\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"ab\",\"ba\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"aabbcc\",\"abcabc\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"uau\",\"ssx\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"abbzzca\",\"babzzcz\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"mmmnnnnnooo\",\"oonnnnmmma\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"mnop\",\"mnop\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"xxyyzz\",\"xxxyzz\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"abcdefghij\",\"jihgfedcba\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"abcdefghijklmnoabcdefghijklmno\",\"onmlkjihgfedcbaonmlkjihgfedcba\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"aaabbbcccddd\",\"dddcccbbbaaa\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"z\",\"z\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"ab\",\"aabb\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"aaaaaaaaaaaaaaaaaaaabbbbbbbbbb\",\"bbbbbbbbbbbbbbbbbbbbaaaaaaaaaa\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"abcabcabc\",\"cbacbacba\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"aabbccddeeffgghh\",\"hhggffeeddccbbaa\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "word1 = \"abc\", word2 = \"bca\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "swapping characters can turn abc into bca directly, since they use the same letters"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "word1 = \"a\", word2 = \"aa\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "different lengths can never be made equal"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "word1 = \"cabbba\", word2 = \"abbccc\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "both use the letters a, b, c with counts that can be matched up: {1,3,2} and {1,3,2}"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"abc\",\"bca\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a\",\"aa\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"cabbba\",\"abbccc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"cabbba\",\"aabbss\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"b\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ab\",\"ba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aabbcc\",\"abcabc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"uau\",\"ssx\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abbzzca\",\"babzzcz\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"mmmnnnnnooo\",\"oonnnnmmma\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"mnop\",\"mnop\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"xxyyzz\",\"xxxyzz\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abcdefghij\",\"jihgfedcba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abcdefghijklmnoabcdefghijklmno\",\"onmlkjihgfedcbaonmlkjihgfedcba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aaabbbcccddd\",\"dddcccbbbaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"z\",\"z\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"ab\",\"aabb\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaabbbbbbbbbb\",\"bbbbbbbbbbbbbbbbbbbbaaaaaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"abcabcabc\",\"cbacbacba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"aabbccddeeffgghh\",\"hhggffeeddccbbaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def closeStrings(self, word1, word2):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool closeStrings(string word1, string word2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean closeStrings(String word1, String word2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun closeStrings(word1: String, word2: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    closeStrings(word1, word2) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def closeStrings(self, word1, word2):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool closeStrings(string word1, string word2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean closeStrings(String word1, String word2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun closeStrings(word1: String, word2: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    closeStrings(word1, word2) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def closeStrings(self, word1, word2):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool closeStrings(string word1, string word2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean closeStrings(String word1, String word2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun closeStrings(word1: String, word2: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    closeStrings(word1, word2) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def closeStrings(self, word1, word2):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool closeStrings(string word1, string word2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean closeStrings(String word1, String word2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun closeStrings(word1: String, word2: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    closeStrings(word1, word2) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n) to build the frequency maps, plus O(26 log 26) to compare sorted counts",
+      "space": "O(1) (26 letters)",
+      "pattern": "hash maps of letter frequencies, comparing which letters are used and what the multiset of counts looks like"
+    },
+    "bruteForce": {
+      "approach": "try simulating every possible sequence of swaps and replacements to see if one string can reach the other",
+      "time": "exponential - way too slow to be practical",
+      "space": "large"
+    }
+  },
+  "optimal": {
+    "pattern": "hash maps of letter frequencies, comparing which letters are used and what the multiset of counts looks like",
+    "time": "O(n) to build the frequency maps, plus O(26 log 26) to compare sorted counts",
+    "space": "O(1) (26 letters)",
+    "hint_ladder": [
+      "swapping characters means positions don't matter at all - only how many of each letter you have. what does 'replace every X with Y' do to those counts?",
+      "the replace operation lets you relabel which letter owns which count, but it can't change the SET of counts themselves, and it can't invent a new letter that wasn't already present",
+      "two conditions must both hold: the two strings must use exactly the same set of distinct letters, and the sorted list of frequency counts must match exactly",
+      "build a frequency map for each string, check the key sets are equal, then check the sorted lists of values are equal"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try simulating every possible sequence of swaps and replacements to see if one string can reach the other",
+    "time": "exponential - way too slow to be practical",
+    "space": "large"
+  },
+  "isIndex0": true,
+  "level": null
+}

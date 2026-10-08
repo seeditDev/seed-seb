@@ -1,0 +1,734 @@
+{
+  "id": "happy-number",
+  "questionId": "happy-number",
+  "slug": "happy-number",
+  "title": "Happy Number",
+  "difficulty": "Easy",
+  "category": "Fast slow pointers",
+  "patterns": [
+    "fast & slow pointers",
+    "cycle detection"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "the sequence of squared-digit sums either reaches 1, or it must eventually repeat a value it has seen before, since there are only finitely many possible sums for numbers of a given size - what does 'eventually repeats' remind you of?",
+    "you don't need to store every value you've seen - you can detect a repeat the same way you'd detect a cycle in a linked list",
+    "define a 'next' step as replacing a number with the sum of squares of its digits, then run a slow pointer that takes one step at a time and a fast pointer that takes two steps at a time",
+    "if the fast pointer ever reaches 1, the number is happy; if the fast and slow pointers ever meet at a value that isn't 1, you're in a loop and the number is not happy"
+  ],
+  "commonMistakes": [
+    "using a hash set to detect repeats when the problem wants O(1) space via cycle detection",
+    "forgetting to handle n = 1 as an immediate true",
+    "computing the sum of digits instead of the sum of squares of digits"
+  ],
+  "content": {
+    "problemStatement": "You're given a positive integer `n`. Repeatedly replace `n` with the sum\nof the squares of its digits.\n\n**Return true if this process eventually reaches 1, and false if it instead enters a loop that never reaches 1.**\n",
+    "constraints": [
+      "1 <= n <= 2^31 - 1"
+    ],
+    "notes": [
+      "n = 1 (already happy, no iterations needed)",
+      "n is a single digit that is not 1 (e.g. n = 2, which loops)",
+      "n with repeated digits (e.g. 11, 100)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 19",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "19 -> 1^2+9^2=82 -> 8^2+2^2=68 -> 6^2+8^2=100 -> 1^2+0^2+0^2=1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 2",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the sequence of squared-digit sums starting from 2 loops forever without hitting 1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 1",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "n is already 1"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[19]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[7]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[4]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[5]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[6]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[8]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[9]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[10]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[11]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[12]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[13]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[20]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[23]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[68]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[100]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[999]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[1234]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[1111111]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[2147483647]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[44]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_24",
+        "input": "[42]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_25",
+        "input": "[89]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 19",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "19 -> 1^2+9^2=82 -> 8^2+2^2=68 -> 6^2+8^2=100 -> 1^2+0^2+0^2=1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 2",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the sequence of squared-digit sums starting from 2 loops forever without hitting 1"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 1",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "n is already 1"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 19",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "19 -> 1^2+9^2=82 -> 8^2+2^2=68 -> 6^2+8^2=100 -> 1^2+0^2+0^2=1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 2",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the sequence of squared-digit sums starting from 2 loops forever without hitting 1"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 1",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "n is already 1"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[19]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[2]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[7]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[4]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[3]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[5]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[6]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[8]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[9]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[10]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[11]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[12]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[13]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[20]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[23]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[68]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[100]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[999]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[1234]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[1111111]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[2147483647]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_23",
+      "input": "[44]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_24",
+      "input": "[42]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_25",
+      "input": "[89]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 19",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "19 -> 1^2+9^2=82 -> 8^2+2^2=68 -> 6^2+8^2=100 -> 1^2+0^2+0^2=1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 2",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the sequence of squared-digit sums starting from 2 loops forever without hitting 1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 1",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "n is already 1"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[19]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[7]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[4]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[5]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[6]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[8]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[9]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[10]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[11]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[12]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[13]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[20]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[23]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[68]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[100]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[999]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[1234]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[1111111]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[2147483647]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[44]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_24",
+        "input": "[42]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_25",
+        "input": "[89]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def isHappy(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isHappy(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isHappy(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isHappy(n: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isHappy(n) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def isHappy(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isHappy(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isHappy(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isHappy(n: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isHappy(n) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def isHappy(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isHappy(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isHappy(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isHappy(n: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isHappy(n) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def isHappy(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isHappy(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isHappy(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isHappy(n: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isHappy(n) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(log n) per step, overall bounded by the cycle length which is small",
+      "space": "O(1)",
+      "pattern": "fast & slow pointers (Floyd's cycle detection) over the implicit sequence of squared-digit sums"
+    },
+    "bruteForce": {
+      "approach": "keep a hash set of every value seen so far in the sequence; if a value repeats, it's a loop (not happy), if you hit 1, it's happy",
+      "time": "O(log n) per squared-digit-sum step, bounded number of steps before a repeat",
+      "space": "O(k) for the set of seen values"
+    }
+  },
+  "optimal": {
+    "pattern": "fast & slow pointers (Floyd's cycle detection) over the implicit sequence of squared-digit sums",
+    "time": "O(log n) per step, overall bounded by the cycle length which is small",
+    "space": "O(1)",
+    "hint_ladder": [
+      "the sequence of squared-digit sums either reaches 1, or it must eventually repeat a value it has seen before, since there are only finitely many possible sums for numbers of a given size - what does 'eventually repeats' remind you of?",
+      "you don't need to store every value you've seen - you can detect a repeat the same way you'd detect a cycle in a linked list",
+      "define a 'next' step as replacing a number with the sum of squares of its digits, then run a slow pointer that takes one step at a time and a fast pointer that takes two steps at a time",
+      "if the fast pointer ever reaches 1, the number is happy; if the fast and slow pointers ever meet at a value that isn't 1, you're in a loop and the number is not happy"
+    ]
+  },
+  "bruteForce": {
+    "approach": "keep a hash set of every value seen so far in the sequence; if a value repeats, it's a loop (not happy), if you hit 1, it's happy",
+    "time": "O(log n) per squared-digit-sum step, bounded number of steps before a repeat",
+    "space": "O(k) for the set of seen values"
+  },
+  "isIndex0": true,
+  "level": null
+}

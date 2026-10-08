@@ -1,0 +1,650 @@
+{
+  "id": "132-pattern",
+  "questionId": "132-pattern",
+  "slug": "132-pattern",
+  "title": "132 Pattern",
+  "difficulty": "Medium",
+  "category": "Monotonic stack",
+  "patterns": [
+    "monotonic stack",
+    "array"
+  ],
+  "lists": [],
+  "hints": [
+    "think of nums[k] as playing the role of '2' - it needs to be less than some '3' (nums[j]) but greater than some earlier '1' (nums[i]). if you scan from the right, which of these three roles becomes easiest to fix first?",
+    "scan from right to left, treating the current element as a candidate '1'. you need to know: is there some pair further to the right where a bigger value came before a smaller-but-still-bigger-than-current value?",
+    "maintain a monotonic decreasing stack of values (candidates for '3'), and a running variable for the best '2' found so far, initialized very small. whenever the current element is smaller than that '2' value, you've found your '1' and can return true",
+    "whenever the current element is greater than the top of the stack, pop values off the stack, updating your '2' value to the largest one popped (since a smaller value popped later becomes a worse, i.e. less useful, '2' candidate), then push the current element"
+  ],
+  "commonMistakes": [
+    "using non-strict inequalities (<=) somewhere, which would allow equal values to incorrectly count as a valid pattern",
+    "trying to fix i first and scan forward for j and k, which makes it hard to know the best possible '2' efficiently",
+    "updating the '2' candidate to the wrong popped value (it should be the largest one popped, not the last one)"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of integers `nums`.\n\n**Determine whether there exist three indices `i`, `j`, `k` with `i < j < k` such that `nums[i] < nums[k] < nums[j]`.**\n\nThis shape (a small value, then a big value, then a middle value) is called a \"132 pattern\" because the three values' relative sizes look like 1, 3, 2 in that order.\n",
+    "constraints": [
+      "1 <= nums.length",
+      "nums may contain negative numbers",
+      "the three indices must satisfy i < j < k strictly"
+    ],
+    "notes": [
+      "an array with fewer than 3 elements (never has a valid pattern)",
+      "the pattern requires values from far apart, not just adjacent indices",
+      "duplicate values, where strict inequality must still hold"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the array is strictly increasing, so no later value is ever between two earlier ones in the required way"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [3, 1, 4, 2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "i=1 (value 1), j=2 (value 4), k=3 (value 2): 1 < 2 < 4"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [-1, 3, 2, 0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "i=0 (value -1), j=1 (value 3), k=2 (value 2): -1 < 2 < 3"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[3,1,4,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[-1,3,2,0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,0,1,-4,-3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[3,5,0,3,4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-2,1,-2,-1,-2,-2,-2,-2,-2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,-1,-2,-3,-4,-5,-6,-7]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[50,20,30,10,25,15,5,45,5,1,100,60,70,20,80]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,0,0,0,0,0,0,0,0,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[9,4,8,3,7,2,6,1,5,0,9,4,8,3,7,2,6,1,5,0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,3,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[24,-26,19,-5,9,-44,34,14,-23,27,-22,-14,12,38,50,-23,-8,6,-41,-18,-26,-30,-39,6,48,18,-4,-26,10,50]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,4,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,1,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-1,-2,-3,-4,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[3,1,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the array is strictly increasing, so no later value is ever between two earlier ones in the required way"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [3, 1, 4, 2]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "i=1 (value 1), j=2 (value 4), k=3 (value 2): 1 < 2 < 4"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [-1, 3, 2, 0]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "i=0 (value -1), j=1 (value 3), k=2 (value 2): -1 < 2 < 3"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the array is strictly increasing, so no later value is ever between two earlier ones in the required way"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [3, 1, 4, 2]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "i=1 (value 1), j=2 (value 4), k=3 (value 2): 1 < 2 < 4"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [-1, 3, 2, 0]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "i=0 (value -1), j=1 (value 3), k=2 (value 2): -1 < 2 < 3"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,4]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[3,1,4,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[-1,3,2,0]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,0,1,-4,-3]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,1,1,1,1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[3,5,0,3,4]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-2,1,-2,-1,-2,-2,-2,-2,-2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,-1,-2,-3,-4,-5,-6,-7]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[50,20,30,10,25,15,5,45,5,1,100,60,70,20,80]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[0,0,0,0,0,0,0,0,0,0]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[9,4,8,3,7,2,6,1,5,0,9,4,8,3,7,2,6,1,5,0]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,3,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[24,-26,19,-5,9,-44,34,14,-23,27,-22,-14,12,38,50,-23,-8,6,-41,-18,-26,-30,-39,6,48,18,-4,-26,10,50]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,4,0]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[2,1,2]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[-1,-2,-3,-4,0]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[3,1,2]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the array is strictly increasing, so no later value is ever between two earlier ones in the required way"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [3, 1, 4, 2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "i=1 (value 1), j=2 (value 4), k=3 (value 2): 1 < 2 < 4"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [-1, 3, 2, 0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "i=0 (value -1), j=1 (value 3), k=2 (value 2): -1 < 2 < 3"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[3,1,4,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[-1,3,2,0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,0,1,-4,-3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[3,5,0,3,4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-2,1,-2,-1,-2,-2,-2,-2,-2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,-1,-2,-3,-4,-5,-6,-7]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[50,20,30,10,25,15,5,45,5,1,100,60,70,20,80]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,0,0,0,0,0,0,0,0,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[9,4,8,3,7,2,6,1,5,0,9,4,8,3,7,2,6,1,5,0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,3,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[24,-26,19,-5,9,-44,34,14,-23,27,-22,-14,12,38,50,-23,-8,6,-41,-18,-26,-30,-39,6,48,18,-4,-26,10,50]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,4,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,1,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-1,-2,-3,-4,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[3,1,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def find132pattern(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool find132pattern(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean find132pattern(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun find132pattern(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    find132pattern(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def find132pattern(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool find132pattern(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean find132pattern(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun find132pattern(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    find132pattern(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def find132pattern(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool find132pattern(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean find132pattern(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun find132pattern(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    find132pattern(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def find132pattern(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool find132pattern(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean find132pattern(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun find132pattern(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    find132pattern(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the stack",
+      "pattern": "scan right to left, using a monotonic decreasing stack to track candidate '3' values while maintaining the best possible '2' value seen so far"
+    },
+    "bruteForce": {
+      "approach": "try every triple of indices i < j < k directly and check whether nums[i] < nums[k] < nums[j]",
+      "time": "O(n^3), or O(n^2) with a precomputed minimum prefix for nums[i]",
+      "space": "O(1) to O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "scan right to left, using a monotonic decreasing stack to track candidate '3' values while maintaining the best possible '2' value seen so far",
+    "time": "O(n)",
+    "space": "O(n) for the stack",
+    "hint_ladder": [
+      "think of nums[k] as playing the role of '2' - it needs to be less than some '3' (nums[j]) but greater than some earlier '1' (nums[i]). if you scan from the right, which of these three roles becomes easiest to fix first?",
+      "scan from right to left, treating the current element as a candidate '1'. you need to know: is there some pair further to the right where a bigger value came before a smaller-but-still-bigger-than-current value?",
+      "maintain a monotonic decreasing stack of values (candidates for '3'), and a running variable for the best '2' found so far, initialized very small. whenever the current element is smaller than that '2' value, you've found your '1' and can return true",
+      "whenever the current element is greater than the top of the stack, pop values off the stack, updating your '2' value to the largest one popped (since a smaller value popped later becomes a worse, i.e. less useful, '2' candidate), then push the current element"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every triple of indices i < j < k directly and check whether nums[i] < nums[k] < nums[j]",
+    "time": "O(n^3), or O(n^2) with a precomputed minimum prefix for nums[i]",
+    "space": "O(1) to O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,628 @@
+{
+  "id": "beautiful-arrangement-count",
+  "questionId": "beautiful-arrangement-count",
+  "slug": "beautiful-arrangement-count",
+  "title": "Count of Beautiful Arrangements",
+  "difficulty": "Hard",
+  "category": "Backtracking",
+  "patterns": [
+    "backtracking"
+  ],
+  "lists": [],
+  "hints": [
+    "rather than generating a full permutation and checking it afterward, check the divisibility condition the moment you place each number - invalid placements can be pruned immediately",
+    "recurse by position, from 1 to n; at each position, try every still-unused value from 1 to n",
+    "only recurse into a value if it satisfies value % position == 0 or position % value == 0 - skip it entirely otherwise, without recursing",
+    "mark a value used before recursing to the next position, count a completed arrangement once position exceeds n, and unmark the value (undo) after that branch returns so the next candidate value can be tried at this position"
+  ],
+  "commonMistakes": [
+    "generating full permutations first and validating afterward instead of pruning during construction, which is correct but far slower",
+    "checking the condition with the wrong index (0-indexed position instead of the 1-indexed position the problem defines it against)",
+    "forgetting to unmark a value as unused after backtracking out of a branch, which silently makes some numbers permanently unavailable"
+  ],
+  "content": {
+    "problemStatement": "You're given an integer `n`. Consider arrangements (permutations) of the numbers 1 through n placed into positions 1 through n. An arrangement is called beautiful if, for every position `i`, either the number placed at position `i` is evenly divisible by `i`, or `i` is evenly divisible by the number placed at position `i`.\n\n**Count how many beautiful arrangements exist.**\n",
+    "constraints": [
+      "positions and values are both 1 to n, 1-indexed",
+      "1 <= n <= 12",
+      "at position i, the placed value v must satisfy v % i == 0 or i % v == 0"
+    ],
+    "notes": [
+      "n = 1 (trivially 1 arrangement)",
+      "n = 2 (smallest case with more than one arrangement)",
+      "a larger n to confirm the count is computed correctly, not just estimated"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 2",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "[1, 2] and [2, 1] are both beautiful (every number placed anywhere is compatible with position 1, and position 2 accepts 2 or 1)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the only arrangement, [1], is trivially beautiful"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 3",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "[1, 2, 3], [2, 1, 3], and [3, 2, 1] are the beautiful arrangements"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[4]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[5]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[6]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[7]",
+        "output": "41",
+        "expectedOutput": "41",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[8]",
+        "output": "132",
+        "expectedOutput": "132",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[9]",
+        "output": "250",
+        "expectedOutput": "250",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[10]",
+        "output": "700",
+        "expectedOutput": "700",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[11]",
+        "output": "750",
+        "expectedOutput": "750",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[12]",
+        "output": "4010",
+        "expectedOutput": "4010",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[4]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[6]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[7]",
+        "output": "41",
+        "expectedOutput": "41",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[9]",
+        "output": "250",
+        "expectedOutput": "250",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[11]",
+        "output": "750",
+        "expectedOutput": "750",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[12]",
+        "output": "4010",
+        "expectedOutput": "4010",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 2",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "[1, 2] and [2, 1] are both beautiful (every number placed anywhere is compatible with position 1, and position 2 accepts 2 or 1)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the only arrangement, [1], is trivially beautiful"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 3",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "[1, 2, 3], [2, 1, 3], and [3, 2, 1] are the beautiful arrangements"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 2",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "[1, 2] and [2, 1] are both beautiful (every number placed anywhere is compatible with position 1, and position 2 accepts 2 or 1)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the only arrangement, [1], is trivially beautiful"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 3",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "[1, 2, 3], [2, 1, 3], and [3, 2, 1] are the beautiful arrangements"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[4]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[5]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[6]",
+      "output": "36",
+      "expectedOutput": "36",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[7]",
+      "output": "41",
+      "expectedOutput": "41",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[8]",
+      "output": "132",
+      "expectedOutput": "132",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[9]",
+      "output": "250",
+      "expectedOutput": "250",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[10]",
+      "output": "700",
+      "expectedOutput": "700",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[11]",
+      "output": "750",
+      "expectedOutput": "750",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[12]",
+      "output": "4010",
+      "expectedOutput": "4010",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[4]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[6]",
+      "output": "36",
+      "expectedOutput": "36",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[7]",
+      "output": "41",
+      "expectedOutput": "41",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[9]",
+      "output": "250",
+      "expectedOutput": "250",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[11]",
+      "output": "750",
+      "expectedOutput": "750",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[12]",
+      "output": "4010",
+      "expectedOutput": "4010",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 2",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "[1, 2] and [2, 1] are both beautiful (every number placed anywhere is compatible with position 1, and position 2 accepts 2 or 1)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the only arrangement, [1], is trivially beautiful"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 3",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "[1, 2, 3], [2, 1, 3], and [3, 2, 1] are the beautiful arrangements"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[4]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[5]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[6]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[7]",
+        "output": "41",
+        "expectedOutput": "41",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[8]",
+        "output": "132",
+        "expectedOutput": "132",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[9]",
+        "output": "250",
+        "expectedOutput": "250",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[10]",
+        "output": "700",
+        "expectedOutput": "700",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[11]",
+        "output": "750",
+        "expectedOutput": "750",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[12]",
+        "output": "4010",
+        "expectedOutput": "4010",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[4]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[6]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[7]",
+        "output": "41",
+        "expectedOutput": "41",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[9]",
+        "output": "250",
+        "expectedOutput": "250",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[11]",
+        "output": "750",
+        "expectedOutput": "750",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[12]",
+        "output": "4010",
+        "expectedOutput": "4010",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def countBeautifulArrangements(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countBeautifulArrangements(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countBeautifulArrangements(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countBeautifulArrangements(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countBeautifulArrangements(n) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def countBeautifulArrangements(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countBeautifulArrangements(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countBeautifulArrangements(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countBeautifulArrangements(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countBeautifulArrangements(n) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def countBeautifulArrangements(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countBeautifulArrangements(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countBeautifulArrangements(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countBeautifulArrangements(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countBeautifulArrangements(n) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def countBeautifulArrangements(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countBeautifulArrangements(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countBeautifulArrangements(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countBeautifulArrangements(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countBeautifulArrangements(n) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(k) for some k substantially smaller than n!, since invalid branches are pruned as early as position 1 instead of being fully built out",
+      "space": "O(n) for the used-values tracker and recursion depth",
+      "pattern": "backtracking that fills positions 1 to n in order, only trying values that satisfy the divisibility condition at the current position, with a used-values tracker"
+    },
+    "bruteForce": {
+      "approach": "generate all n! permutations of 1..n and check the divisibility condition at every position for each one",
+      "time": "O(n! * n)",
+      "space": "O(n) extra beyond enumeration"
+    }
+  },
+  "optimal": {
+    "pattern": "backtracking that fills positions 1 to n in order, only trying values that satisfy the divisibility condition at the current position, with a used-values tracker",
+    "time": "O(k) for some k substantially smaller than n!, since invalid branches are pruned as early as position 1 instead of being fully built out",
+    "space": "O(n) for the used-values tracker and recursion depth",
+    "hint_ladder": [
+      "rather than generating a full permutation and checking it afterward, check the divisibility condition the moment you place each number - invalid placements can be pruned immediately",
+      "recurse by position, from 1 to n; at each position, try every still-unused value from 1 to n",
+      "only recurse into a value if it satisfies value % position == 0 or position % value == 0 - skip it entirely otherwise, without recursing",
+      "mark a value used before recursing to the next position, count a completed arrangement once position exceeds n, and unmark the value (undo) after that branch returns so the next candidate value can be tried at this position"
+    ]
+  },
+  "bruteForce": {
+    "approach": "generate all n! permutations of 1..n and check the divisibility condition at every position for each one",
+    "time": "O(n! * n)",
+    "space": "O(n) extra beyond enumeration"
+  },
+  "isIndex0": true,
+  "level": null
+}

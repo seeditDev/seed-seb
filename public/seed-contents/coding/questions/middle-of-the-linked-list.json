@@ -1,0 +1,651 @@
+{
+  "id": "middle-of-the-linked-list",
+  "questionId": "middle-of-the-linked-list",
+  "slug": "middle-of-the-linked-list",
+  "title": "Middle of the Linked List",
+  "difficulty": "Easy",
+  "category": "Fast slow pointers",
+  "patterns": [
+    "fast & slow pointers",
+    "linked list"
+  ],
+  "lists": [
+    "grind-75"
+  ],
+  "hints": [
+    "you could count the length first and walk there, but is there a way to find the middle in a single pass without knowing the length up front?",
+    "what if one pointer moved twice as fast as another? when the fast one finishes, where would the slow one be?",
+    "start both pointers at the head; each step, move slow by one node and fast by two nodes",
+    "when fast reaches the end of the list (or has no next node to jump to), slow is sitting at the middle - return from slow onward"
+  ],
+  "commonMistakes": [
+    "off-by-one on the even-length case, returning the first middle instead of the second",
+    "not checking for fast being null before accessing fast.next when advancing two steps",
+    "counting the length first when a single-pass two-pointer approach is expected"
+  ],
+  "content": {
+    "problemStatement": "A singly linked list is given to you as an array `nums`, where `nums[i]`\nis the value of the i-th node and the nodes are connected in order (node\n`i` points to node `i+1`).\n\n**Return the second half of the list, starting at the middle node.**\n\nIf the list has an even number of nodes, treat the middle as the second\nof the two center nodes (index `n/2` using integer division), so the\nsecond half is the longer or equal half.\n",
+    "constraints": [
+      "1 <= nums.length <= 100",
+      "-1000 <= nums[i] <= 1000"
+    ],
+    "notes": [
+      "a single-node list",
+      "a two-node list",
+      "an odd-length list vs an even-length list"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5]",
+        "output": "[3, 4, 5]",
+        "expectedOutput": "[3, 4, 5]",
+        "explanation": "5 nodes, middle is index 2 (value 3), return from there onward"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5, 6]",
+        "output": "[4, 5, 6]",
+        "expectedOutput": "[4, 5, 6]",
+        "explanation": "6 nodes, n/2 = 3, so the middle is index 3 (value 4)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": "a single node is its own middle"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5]]",
+        "output": "[3,4,5]",
+        "expectedOutput": "[3,4,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5,6]]",
+        "output": "[4,5,6]",
+        "expectedOutput": "[4,5,6]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2]]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[7,8,9,10]]",
+        "output": "[9,10]",
+        "expectedOutput": "[9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[3]]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2]]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-5,-4,-3,-2,-1]]",
+        "output": "[-3,-2,-1]",
+        "expectedOutput": "[-3,-2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,0,0,0,0,0]]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "[11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]]",
+        "output": "[11,12,13,14,15,16,17,18,19,20,21]",
+        "expectedOutput": "[11,12,13,14,15,16,17,18,19,20,21]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[100]]",
+        "output": "[100]",
+        "expectedOutput": "[100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[4,4,4,4,4,4,4]]",
+        "output": "[4,4,4,4]",
+        "expectedOutput": "[4,4,4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[6,7,8,9,10]",
+        "expectedOutput": "[6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-1,-2,-3]]",
+        "output": "[-2,-3]",
+        "expectedOutput": "[-2,-3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[50,49,48,47,46,45,44,43,42,41,40,39,38,37,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]",
+        "expectedOutput": "[25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4]]",
+        "output": "[3,4]",
+        "expectedOutput": "[3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[8,8]]",
+        "output": "[8]",
+        "expectedOutput": "[8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7,8,9]]",
+        "output": "[5,6,7,8,9]",
+        "expectedOutput": "[5,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[-9,-8,-7,-6]]",
+        "output": "[-7,-6]",
+        "expectedOutput": "[-7,-6]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5]",
+      "output": "[3, 4, 5]",
+      "expectedOutput": "[3, 4, 5]",
+      "explanation": "5 nodes, middle is index 2 (value 3), return from there onward"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5, 6]",
+      "output": "[4, 5, 6]",
+      "expectedOutput": "[4, 5, 6]",
+      "explanation": "6 nodes, n/2 = 3, so the middle is index 3 (value 4)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": "a single node is its own middle"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5]",
+      "output": "[3, 4, 5]",
+      "expectedOutput": "[3, 4, 5]",
+      "explanation": "5 nodes, middle is index 2 (value 3), return from there onward"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5, 6]",
+      "output": "[4, 5, 6]",
+      "expectedOutput": "[4, 5, 6]",
+      "explanation": "6 nodes, n/2 = 3, so the middle is index 3 (value 4)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": "a single node is its own middle"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,4,5]]",
+      "output": "[3,4,5]",
+      "expectedOutput": "[3,4,5]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3,4,5,6]]",
+      "output": "[4,5,6]",
+      "expectedOutput": "[4,5,6]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2]]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[7,8,9,10]]",
+      "output": "[9,10]",
+      "expectedOutput": "[9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[3]]",
+      "output": "[3]",
+      "expectedOutput": "[3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2]]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3]]",
+      "output": "[2,3]",
+      "expectedOutput": "[2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-5,-4,-3,-2,-1]]",
+      "output": "[-3,-2,-1]",
+      "expectedOutput": "[-3,-2,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[0,0,0,0,0,0]]",
+      "output": "[0,0,0]",
+      "expectedOutput": "[0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+      "output": "[11,12,13,14,15,16,17,18,19,20]",
+      "expectedOutput": "[11,12,13,14,15,16,17,18,19,20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]]",
+      "output": "[11,12,13,14,15,16,17,18,19,20,21]",
+      "expectedOutput": "[11,12,13,14,15,16,17,18,19,20,21]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[100]]",
+      "output": "[100]",
+      "expectedOutput": "[100]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[4,4,4,4,4,4,4]]",
+      "output": "[4,4,4,4]",
+      "expectedOutput": "[4,4,4,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+      "output": "[6,7,8,9,10]",
+      "expectedOutput": "[6,7,8,9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[-1,-2,-3]]",
+      "output": "[-2,-3]",
+      "expectedOutput": "[-2,-3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[50,49,48,47,46,45,44,43,42,41,40,39,38,37,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+      "output": "[25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]",
+      "expectedOutput": "[25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,4]]",
+      "output": "[3,4]",
+      "expectedOutput": "[3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[8,8]]",
+      "output": "[8]",
+      "expectedOutput": "[8]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,2,3,4,5,6,7,8,9]]",
+      "output": "[5,6,7,8,9]",
+      "expectedOutput": "[5,6,7,8,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[-9,-8,-7,-6]]",
+      "output": "[-7,-6]",
+      "expectedOutput": "[-7,-6]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5]",
+        "output": "[3, 4, 5]",
+        "expectedOutput": "[3, 4, 5]",
+        "explanation": "5 nodes, middle is index 2 (value 3), return from there onward"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5, 6]",
+        "output": "[4, 5, 6]",
+        "expectedOutput": "[4, 5, 6]",
+        "explanation": "6 nodes, n/2 = 3, so the middle is index 3 (value 4)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": "a single node is its own middle"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5]]",
+        "output": "[3,4,5]",
+        "expectedOutput": "[3,4,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5,6]]",
+        "output": "[4,5,6]",
+        "expectedOutput": "[4,5,6]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2]]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[7,8,9,10]]",
+        "output": "[9,10]",
+        "expectedOutput": "[9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[3]]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2]]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-5,-4,-3,-2,-1]]",
+        "output": "[-3,-2,-1]",
+        "expectedOutput": "[-3,-2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,0,0,0,0,0]]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "[11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]]",
+        "output": "[11,12,13,14,15,16,17,18,19,20,21]",
+        "expectedOutput": "[11,12,13,14,15,16,17,18,19,20,21]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[100]]",
+        "output": "[100]",
+        "expectedOutput": "[100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[4,4,4,4,4,4,4]]",
+        "output": "[4,4,4,4]",
+        "expectedOutput": "[4,4,4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[6,7,8,9,10]",
+        "expectedOutput": "[6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-1,-2,-3]]",
+        "output": "[-2,-3]",
+        "expectedOutput": "[-2,-3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[50,49,48,47,46,45,44,43,42,41,40,39,38,37,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]",
+        "expectedOutput": "[25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4]]",
+        "output": "[3,4]",
+        "expectedOutput": "[3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[8,8]]",
+        "output": "[8]",
+        "expectedOutput": "[8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7,8,9]]",
+        "output": "[5,6,7,8,9]",
+        "expectedOutput": "[5,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[-9,-8,-7,-6]]",
+        "output": "[-7,-6]",
+        "expectedOutput": "[-7,-6]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def middleOfLinkedList(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> middleOfLinkedList(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] middleOfLinkedList(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun middleOfLinkedList(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    middleOfLinkedList(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def middleOfLinkedList(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> middleOfLinkedList(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] middleOfLinkedList(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun middleOfLinkedList(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    middleOfLinkedList(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def middleOfLinkedList(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> middleOfLinkedList(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] middleOfLinkedList(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun middleOfLinkedList(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    middleOfLinkedList(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def middleOfLinkedList(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> middleOfLinkedList(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] middleOfLinkedList(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun middleOfLinkedList(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    middleOfLinkedList(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra besides the output",
+      "pattern": "fast & slow pointers, fast moves two steps for every one step of slow"
+    },
+    "bruteForce": {
+      "approach": "count the length of the list first, then walk to index n/2 and return the rest",
+      "time": "O(n)",
+      "space": "O(1) extra besides the output"
+    }
+  },
+  "optimal": {
+    "pattern": "fast & slow pointers, fast moves two steps for every one step of slow",
+    "time": "O(n)",
+    "space": "O(1) extra besides the output",
+    "hint_ladder": [
+      "you could count the length first and walk there, but is there a way to find the middle in a single pass without knowing the length up front?",
+      "what if one pointer moved twice as fast as another? when the fast one finishes, where would the slow one be?",
+      "start both pointers at the head; each step, move slow by one node and fast by two nodes",
+      "when fast reaches the end of the list (or has no next node to jump to), slow is sitting at the middle - return from slow onward"
+    ]
+  },
+  "bruteForce": {
+    "approach": "count the length of the list first, then walk to index n/2 and return the rest",
+    "time": "O(n)",
+    "space": "O(1) extra besides the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

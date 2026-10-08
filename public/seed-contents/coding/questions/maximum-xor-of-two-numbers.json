@@ -1,0 +1,630 @@
+{
+  "id": "maximum-xor-of-two-numbers",
+  "questionId": "maximum-xor-of-two-numbers",
+  "slug": "maximum-xor-of-two-numbers",
+  "title": "Maximum XOR of Two Numbers in an Array",
+  "difficulty": "Medium",
+  "category": "Trie",
+  "patterns": [
+    "trie",
+    "bit manipulation"
+  ],
+  "lists": [],
+  "hints": [
+    "XOR is maximized bit by bit, from the most significant bit down - at each bit position you WANT the two numbers to disagree (one 0, one 1)",
+    "picture every number as a fixed-length binary string (say 32 bits); if you insert all of them into a trie bit by bit (MSB first), two numbers that share a long common bit-prefix are 'close' and two that diverge early are 'far' in XOR terms",
+    "insert every number into this binary trie first",
+    "then, for each number, walk the trie again trying at every level to step into the child representing the OPPOSITE bit of the current number's bit at that level - if that opposite child doesn't exist, you're forced to take the same-bit child instead",
+    "the number formed by the bits you actually walked, XORed with the original number, is the best XOR achievable using that number as one side of the pair - track the maximum over all numbers"
+  ],
+  "commonMistakes": [
+    "using a fixed bit width that's too small and truncating larger values (32 bits is safe for standard 32-bit integers)",
+    "walking the trie greedily but forgetting to fall back to the same-bit child when the opposite-bit child doesn't exist",
+    "starting the bit walk from the least significant bit instead of the most significant bit, which breaks the greedy argument"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of non-negative integers `nums`.\n\n**Find the maximum value of `nums[i] XOR nums[j]` over all pairs of indices `i`, `j`.**\n\nSince XOR of a number with itself is 0, the maximum always comes from two\ndistinct positions in practice.\n",
+    "constraints": [
+      "2 <= nums.length <= 2 * 10^5",
+      "0 <= nums[i] <= 2^31 - 1"
+    ],
+    "notes": [
+      "an array where the two largest numbers do not produce the maximum XOR",
+      "all elements identical (maximum XOR is 0)",
+      "an array containing 0 alongside other values"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 10, 5, 25, 2, 8]",
+        "output": "28",
+        "expectedOutput": "28",
+        "explanation": "5 XOR 25 = 28, the largest achievable XOR among all pairs"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [8, 10, 2]",
+        "output": "10",
+        "expectedOutput": "10",
+        "explanation": "8 XOR 10 = 2, 8 XOR 2 = 10, 10 XOR 2 = 8; the best is 10"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[3,10,5,25,2,8]]",
+        "output": "28",
+        "expectedOutput": "28",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[8,10,2]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[5,5,5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[7,14]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,4,8,16,32]]",
+        "output": "48",
+        "expectedOutput": "48",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[100,200,300,400,500]]",
+        "output": "500",
+        "expectedOutput": "500",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,4,8,16,32,64]]",
+        "output": "96",
+        "expectedOutput": "96",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[15,15,15,15]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[0,2147483647]]",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[12,15,9,1,3,7]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1000000,999999,500000,250000]]",
+        "output": "824016",
+        "expectedOutput": "824016",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[3,3,3,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[21,5,9,12,17,8]]",
+        "output": "29",
+        "expectedOutput": "29",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[6,1]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[123456,654321,111111,999999]]",
+        "output": "979000",
+        "expectedOutput": "979000",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[2,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 10, 5, 25, 2, 8]",
+      "output": "28",
+      "expectedOutput": "28",
+      "explanation": "5 XOR 25 = 28, the largest achievable XOR among all pairs"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [8, 10, 2]",
+      "output": "10",
+      "expectedOutput": "10",
+      "explanation": "8 XOR 10 = 2, 8 XOR 2 = 10, 10 XOR 2 = 8; the best is 10"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 10, 5, 25, 2, 8]",
+      "output": "28",
+      "expectedOutput": "28",
+      "explanation": "5 XOR 25 = 28, the largest achievable XOR among all pairs"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [8, 10, 2]",
+      "output": "10",
+      "expectedOutput": "10",
+      "explanation": "8 XOR 10 = 2, 8 XOR 2 = 10, 10 XOR 2 = 8; the best is 10"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[3,10,5,25,2,8]]",
+      "output": "28",
+      "expectedOutput": "28",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[8,10,2]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[5,5,5]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[0,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[7,14]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[2,4,8,16,32]]",
+      "output": "48",
+      "expectedOutput": "48",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[100,200,300,400,500]]",
+      "output": "500",
+      "expectedOutput": "500",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,4,8,16,32,64]]",
+      "output": "96",
+      "expectedOutput": "96",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[15,15,15,15]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[0,2147483647]]",
+      "output": "2147483647",
+      "expectedOutput": "2147483647",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[12,15,9,1,3,7]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1000000,999999,500000,250000]]",
+      "output": "824016",
+      "expectedOutput": "824016",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[3,3,3,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[21,5,9,12,17,8]]",
+      "output": "29",
+      "expectedOutput": "29",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[6,1]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[123456,654321,111111,999999]]",
+      "output": "979000",
+      "expectedOutput": "979000",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[2,3]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 10, 5, 25, 2, 8]",
+        "output": "28",
+        "expectedOutput": "28",
+        "explanation": "5 XOR 25 = 28, the largest achievable XOR among all pairs"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [8, 10, 2]",
+        "output": "10",
+        "expectedOutput": "10",
+        "explanation": "8 XOR 10 = 2, 8 XOR 2 = 10, 10 XOR 2 = 8; the best is 10"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[3,10,5,25,2,8]]",
+        "output": "28",
+        "expectedOutput": "28",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[8,10,2]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[5,5,5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[7,14]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,4,8,16,32]]",
+        "output": "48",
+        "expectedOutput": "48",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[100,200,300,400,500]]",
+        "output": "500",
+        "expectedOutput": "500",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,4,8,16,32,64]]",
+        "output": "96",
+        "expectedOutput": "96",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[15,15,15,15]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[0,2147483647]]",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[12,15,9,1,3,7]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1000000,999999,500000,250000]]",
+        "output": "824016",
+        "expectedOutput": "824016",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[3,3,3,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[21,5,9,12,17,8]]",
+        "output": "29",
+        "expectedOutput": "29",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[6,1]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[123456,654321,111111,999999]]",
+        "output": "979000",
+        "expectedOutput": "979000",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[2,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findMaximumXOR(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMaximumXOR(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findMaximumXOR(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMaximumXOR(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMaximumXOR(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findMaximumXOR(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMaximumXOR(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findMaximumXOR(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMaximumXOR(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMaximumXOR(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findMaximumXOR(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMaximumXOR(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findMaximumXOR(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMaximumXOR(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMaximumXOR(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findMaximumXOR(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMaximumXOR(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findMaximumXOR(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMaximumXOR(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMaximumXOR(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n * 32)",
+      "space": "O(n * 32) for the trie nodes",
+      "pattern": "a binary trie over the 32-bit representation of each number (most significant bit first); for each number, greedily walk the trie trying to go the OPPOSITE bit at every level to maximize the running XOR"
+    },
+    "bruteForce": {
+      "approach": "check every pair of indices i < j, compute nums[i] XOR nums[j], and track the maximum",
+      "time": "O(n^2)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "a binary trie over the 32-bit representation of each number (most significant bit first); for each number, greedily walk the trie trying to go the OPPOSITE bit at every level to maximize the running XOR",
+    "time": "O(n * 32)",
+    "space": "O(n * 32) for the trie nodes",
+    "hint_ladder": [
+      "XOR is maximized bit by bit, from the most significant bit down - at each bit position you WANT the two numbers to disagree (one 0, one 1)",
+      "picture every number as a fixed-length binary string (say 32 bits); if you insert all of them into a trie bit by bit (MSB first), two numbers that share a long common bit-prefix are 'close' and two that diverge early are 'far' in XOR terms",
+      "insert every number into this binary trie first",
+      "then, for each number, walk the trie again trying at every level to step into the child representing the OPPOSITE bit of the current number's bit at that level - if that opposite child doesn't exist, you're forced to take the same-bit child instead",
+      "the number formed by the bits you actually walked, XORed with the original number, is the best XOR achievable using that number as one side of the pair - track the maximum over all numbers"
+    ]
+  },
+  "bruteForce": {
+    "approach": "check every pair of indices i < j, compute nums[i] XOR nums[j], and track the maximum",
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

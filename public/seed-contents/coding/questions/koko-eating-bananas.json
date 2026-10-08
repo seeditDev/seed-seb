@@ -1,0 +1,629 @@
+{
+  "id": "koko-eating-bananas",
+  "questionId": "koko-eating-bananas",
+  "slug": "koko-eating-bananas",
+  "title": "Koko Eating Bananas",
+  "difficulty": "Medium",
+  "category": "Binary search",
+  "patterns": [
+    "binary search",
+    "binary search on answer"
+  ],
+  "lists": [],
+  "hints": [
+    "you're not searching the piles array itself - you're searching over possible eating speeds. what makes a speed 'valid'?",
+    "as speed k increases, the hours needed to finish all piles only ever decreases or stays the same - that monotonic relationship is what makes binary search possible here",
+    "for a candidate speed k, computing the hours needed just means summing ceil(pile / k) over every pile",
+    "binary search k between 1 and the largest pile (no speed faster than the biggest pile ever helps); for each candidate, check if hours(k) <= h, and shrink toward the smallest k that still works"
+  ],
+  "commonMistakes": [
+    "trying to binary search directly over the piles array instead of over the space of possible speeds",
+    "using integer division instead of ceiling division when computing hours for a pile (e.g. pile=7, k=4 needs 2 hours, not 1)",
+    "setting the upper bound of the speed search too low (must allow at least the maximum pile size, since Koko can't split a pile across hours in a way that requires more)"
+  ],
+  "content": {
+    "problemStatement": "Koko has piles of bananas to eat before the guards return in `h` hours.\nEach hour, she picks one pile and eats up to `k` bananas from it, where\n`k` is her eating speed (a fixed integer she chooses in advance). If the\npile has fewer than `k` bananas left, she finishes that pile for the\nhour and doesn't carry the leftover speed over to another pile that\nsame hour.\n\n**Given the piles and `h`, return the minimum integer eating speed `k`\nthat lets her finish every pile within `h` hours.**\n",
+    "constraints": [
+      "1 <= piles.length <= 10^4",
+      "piles.length <= h <= 10^9",
+      "1 <= piles[i] <= 10^9"
+    ],
+    "notes": [
+      "h exactly equals the number of piles (forces speed to cover the largest pile)",
+      "h is very large relative to the piles (speed 1 might already work)",
+      "a single pile"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "piles = [3, 6, 7, 11], h = 8",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "at speed 4, the hours needed are ceil(3/4)+ceil(6/4)+ceil(7/4)+ceil(11/4) = 1+2+2+3 = 8, exactly fitting"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "piles = [30, 11, 23, 4, 20], h = 5",
+        "output": "30",
+        "expectedOutput": "30",
+        "explanation": "with only 5 hours for 5 piles, she must clear each pile in a single hour, so speed must cover the largest pile"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "piles = [30, 11, 23, 4, 20], h = 6",
+        "output": "23",
+        "expectedOutput": "23",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[3,6,7,11],8]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[30,11,23,4,20],5]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[30,11,23,4,20],6]",
+        "output": "23",
+        "expectedOutput": "23",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1,1,1],4]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1000000000],2]",
+        "output": "500000000",
+        "expectedOutput": "500000000",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1],10]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,5,5,5,5],5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,5,5,5,5],25]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[100],1]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],10]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],55]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[805306368,805306368],2]",
+        "output": "805306368",
+        "expectedOutput": "805306368",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[312884470],312884469]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[3,6,7,11,4,8,2,9,15,20],12]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[25,10,23,4,30,15,18,7,3,12,9,21],15]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1000000000,1000000000],2]",
+        "output": "1000000000",
+        "expectedOutput": "1000000000",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1000000000,1000000000],1000000000]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,2,2,2,2,2,2,2,2,2],10]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[2,2,2,2,2,2,2,2,2,2],20]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "piles = [3, 6, 7, 11], h = 8",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "at speed 4, the hours needed are ceil(3/4)+ceil(6/4)+ceil(7/4)+ceil(11/4) = 1+2+2+3 = 8, exactly fitting"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "piles = [30, 11, 23, 4, 20], h = 5",
+      "output": "30",
+      "expectedOutput": "30",
+      "explanation": "with only 5 hours for 5 piles, she must clear each pile in a single hour, so speed must cover the largest pile"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "piles = [30, 11, 23, 4, 20], h = 6",
+      "output": "23",
+      "expectedOutput": "23",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "piles = [3, 6, 7, 11], h = 8",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "at speed 4, the hours needed are ceil(3/4)+ceil(6/4)+ceil(7/4)+ceil(11/4) = 1+2+2+3 = 8, exactly fitting"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "piles = [30, 11, 23, 4, 20], h = 5",
+      "output": "30",
+      "expectedOutput": "30",
+      "explanation": "with only 5 hours for 5 piles, she must clear each pile in a single hour, so speed must cover the largest pile"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "piles = [30, 11, 23, 4, 20], h = 6",
+      "output": "23",
+      "expectedOutput": "23",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[3,6,7,11],8]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[30,11,23,4,20],5]",
+      "output": "30",
+      "expectedOutput": "30",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[30,11,23,4,20],6]",
+      "output": "23",
+      "expectedOutput": "23",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,1,1,1],4]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1000000000],2]",
+      "output": "500000000",
+      "expectedOutput": "500000000",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1],10]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[5,5,5,5,5],5]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[5,5,5,5,5],25]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[100],1]",
+      "output": "100",
+      "expectedOutput": "100",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],10]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],55]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[805306368,805306368],2]",
+      "output": "805306368",
+      "expectedOutput": "805306368",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[312884470],312884469]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[3,6,7,11,4,8,2,9,15,20],12]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[25,10,23,4,30,15,18,7,3,12,9,21],15]",
+      "output": "21",
+      "expectedOutput": "21",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1000000000,1000000000],2]",
+      "output": "1000000000",
+      "expectedOutput": "1000000000",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1000000000,1000000000],1000000000]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[2,2,2,2,2,2,2,2,2,2],10]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[2,2,2,2,2,2,2,2,2,2],20]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "piles = [3, 6, 7, 11], h = 8",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "at speed 4, the hours needed are ceil(3/4)+ceil(6/4)+ceil(7/4)+ceil(11/4) = 1+2+2+3 = 8, exactly fitting"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "piles = [30, 11, 23, 4, 20], h = 5",
+        "output": "30",
+        "expectedOutput": "30",
+        "explanation": "with only 5 hours for 5 piles, she must clear each pile in a single hour, so speed must cover the largest pile"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "piles = [30, 11, 23, 4, 20], h = 6",
+        "output": "23",
+        "expectedOutput": "23",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[3,6,7,11],8]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[30,11,23,4,20],5]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[30,11,23,4,20],6]",
+        "output": "23",
+        "expectedOutput": "23",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1,1,1],4]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1000000000],2]",
+        "output": "500000000",
+        "expectedOutput": "500000000",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1],10]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,5,5,5,5],5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,5,5,5,5],25]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[100],1]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],10]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],55]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[805306368,805306368],2]",
+        "output": "805306368",
+        "expectedOutput": "805306368",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[312884470],312884469]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[3,6,7,11,4,8,2,9,15,20],12]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[25,10,23,4,30,15,18,7,3,12,9,21],15]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1000000000,1000000000],2]",
+        "output": "1000000000",
+        "expectedOutput": "1000000000",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1000000000,1000000000],1000000000]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,2,2,2,2,2,2,2,2,2],10]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[2,2,2,2,2,2,2,2,2,2],20]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minEatingSpeed(self, piles, h):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minEatingSpeed(vector<int>& piles, int h) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minEatingSpeed(int[] piles, int h) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minEatingSpeed(piles: IntArray, h: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minEatingSpeed(piles, h) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minEatingSpeed(self, piles, h):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minEatingSpeed(vector<int>& piles, int h) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minEatingSpeed(int[] piles, int h) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minEatingSpeed(piles: IntArray, h: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minEatingSpeed(piles, h) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minEatingSpeed(self, piles, h):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minEatingSpeed(vector<int>& piles, int h) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minEatingSpeed(int[] piles, int h) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minEatingSpeed(piles: IntArray, h: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minEatingSpeed(piles, h) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minEatingSpeed(self, piles, h):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minEatingSpeed(vector<int>& piles, int h) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minEatingSpeed(int[] piles, int h) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minEatingSpeed(piles: IntArray, h: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minEatingSpeed(piles, h) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n * log(max(piles)))",
+      "space": "O(1)",
+      "pattern": "binary search on the answer (the eating speed), using 'total hours needed at this speed' as the feasibility check"
+    },
+    "bruteForce": {
+      "approach": "try every speed k = 1, 2, 3, ... computing total hours needed at that speed, and return the first k where hours <= h",
+      "time": "O(max(piles) * n)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "binary search on the answer (the eating speed), using 'total hours needed at this speed' as the feasibility check",
+    "time": "O(n * log(max(piles)))",
+    "space": "O(1)",
+    "hint_ladder": [
+      "you're not searching the piles array itself - you're searching over possible eating speeds. what makes a speed 'valid'?",
+      "as speed k increases, the hours needed to finish all piles only ever decreases or stays the same - that monotonic relationship is what makes binary search possible here",
+      "for a candidate speed k, computing the hours needed just means summing ceil(pile / k) over every pile",
+      "binary search k between 1 and the largest pile (no speed faster than the biggest pile ever helps); for each candidate, check if hours(k) <= h, and shrink toward the smallest k that still works"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every speed k = 1, 2, 3, ... computing total hours needed at that speed, and return the first k where hours <= h",
+    "time": "O(max(piles) * n)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

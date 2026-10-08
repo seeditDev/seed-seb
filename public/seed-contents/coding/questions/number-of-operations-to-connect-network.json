@@ -1,0 +1,630 @@
+{
+  "id": "number-of-operations-to-connect-network",
+  "questionId": "number-of-operations-to-connect-network",
+  "slug": "number-of-operations-to-connect-network",
+  "title": "Minimum Cables to Fully Connect a Network",
+  "difficulty": "Medium",
+  "category": "Union find",
+  "patterns": [
+    "union find",
+    "connected components"
+  ],
+  "lists": [],
+  "hints": [
+    "if there are fewer than n - 1 cables total, there's no way to connect everything - check that first",
+    "otherwise, union the endpoints of every cable to find how many separate groups of computers exist",
+    "connecting k separate groups into one always takes exactly k - 1 moves, since each move can only merge two groups into one",
+    "count the number of distinct roots after all unions, and subtract 1"
+  ],
+  "commonMistakes": [
+    "forgetting the early -1 check when connections.length < n - 1",
+    "trying to figure out exactly which cable goes where instead of just counting components",
+    "off-by-one when converting component count into number of moves"
+  ],
+  "content": {
+    "problemStatement": "A network has n computers, labeled 0 to n-1, and a list of existing `connections`, where each cable is a pair `[u, v]` directly connecting two computers. You can unplug any existing cable and use it to connect any two computers of your choice instead.\n\n**Return the minimum number of such moves needed to make every computer reachable from every other computer, or -1 if there simply aren't enough cables to do it no matter how you rearrange them.**\n",
+    "constraints": [
+      "1 <= n <= 100000",
+      "0 <= connections.length <= min(n * (n - 1) / 2, 100000)",
+      "connections are undirected, no self loops or repeated pairs"
+    ],
+    "notes": [
+      "already fully connected (0 moves needed)",
+      "not enough cables to possibly connect everything",
+      "a single computer with no cables at all",
+      "several isolated groups requiring multiple moves"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 4, connections = [[0,1],[0,2],[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "computers 0, 1, 2 are connected but 3 is isolated; one spare cable (the redundant 1-2 link) can be moved to connect it"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 6, connections = [[0,1],[0,2],[0,3],[1,2],[1,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "computers 0-3 form one group, and 4 and 5 are each isolated, needing two moves"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 6, connections = [[0,1],[0,2],[0,3],[1,2]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "only 4 cables exist but at least 5 are needed to connect 6 computers"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[4,[[0,1],[0,2],[1,2]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[6,[[0,1],[0,2],[0,3],[1,2],[1,3]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[6,[[0,1],[0,2],[0,3],[1,2]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[1,[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[5,[[0,1],[1,2],[2,3],[3,4]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3,[[0,1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[2,[]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[20,[[2,18],[12,14],[14,8],[7,6],[19,11],[15,6],[6,12],[14,17],[9,12],[17,11],[12,17],[13,5],[10,5],[12,11],[17,6],[8,1],[16,1],[12,13],[5,17],[6,2],[17,13],[13,9],[16,11],[4,19],[18,14]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[15,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[15,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[10,[[0,1],[2,3],[4,5],[6,7],[8,9]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[30,[[0,1],[3,4],[6,7],[9,10],[12,13],[15,16],[18,19],[21,22],[24,25],[27,28]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[1,[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[5,[[0,1],[1,2],[2,3],[3,4],[4,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[25,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[19,20],[20,21],[21,22],[22,23],[23,24],[0,2]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[8,[[0,1],[1,2],[0,2]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[12,[[0,1],[1,2],[2,0],[3,4],[4,5],[5,3],[6,7],[7,8],[8,6]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[6,[[0,1],[1,2],[2,0],[0,3]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[0,5],[3,10]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[9,[[0,1],[1,2],[3,4],[4,5],[6,7],[7,8]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 4, connections = [[0,1],[0,2],[1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "computers 0, 1, 2 are connected but 3 is isolated; one spare cable (the redundant 1-2 link) can be moved to connect it"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 6, connections = [[0,1],[0,2],[0,3],[1,2],[1,3]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "computers 0-3 form one group, and 4 and 5 are each isolated, needing two moves"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 6, connections = [[0,1],[0,2],[0,3],[1,2]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "only 4 cables exist but at least 5 are needed to connect 6 computers"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 4, connections = [[0,1],[0,2],[1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "computers 0, 1, 2 are connected but 3 is isolated; one spare cable (the redundant 1-2 link) can be moved to connect it"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 6, connections = [[0,1],[0,2],[0,3],[1,2],[1,3]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "computers 0-3 form one group, and 4 and 5 are each isolated, needing two moves"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 6, connections = [[0,1],[0,2],[0,3],[1,2]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "only 4 cables exist but at least 5 are needed to connect 6 computers"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[4,[[0,1],[0,2],[1,2]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[6,[[0,1],[0,2],[0,3],[1,2],[1,3]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[6,[[0,1],[0,2],[0,3],[1,2]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[1,[]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[5,[[0,1],[1,2],[2,3],[3,4]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[3,[[0,1]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[2,[]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[20,[[2,18],[12,14],[14,8],[7,6],[19,11],[15,6],[6,12],[14,17],[9,12],[17,11],[12,17],[13,5],[10,5],[12,11],[17,6],[8,1],[16,1],[12,13],[5,17],[6,2],[17,13],[13,9],[16,11],[4,19],[18,14]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[15,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[15,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[10,[[0,1],[2,3],[4,5],[6,7],[8,9]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[30,[[0,1],[3,4],[6,7],[9,10],[12,13],[15,16],[18,19],[21,22],[24,25],[27,28]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[1,[]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[5,[[0,1],[1,2],[2,3],[3,4],[4,0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[25,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[19,20],[20,21],[21,22],[22,23],[23,24],[0,2]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[8,[[0,1],[1,2],[0,2]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[12,[[0,1],[1,2],[2,0],[3,4],[4,5],[5,3],[6,7],[7,8],[8,6]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[6,[[0,1],[1,2],[2,0],[0,3]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[0,5],[3,10]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[9,[[0,1],[1,2],[3,4],[4,5],[6,7],[7,8]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 4, connections = [[0,1],[0,2],[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "computers 0, 1, 2 are connected but 3 is isolated; one spare cable (the redundant 1-2 link) can be moved to connect it"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 6, connections = [[0,1],[0,2],[0,3],[1,2],[1,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "computers 0-3 form one group, and 4 and 5 are each isolated, needing two moves"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 6, connections = [[0,1],[0,2],[0,3],[1,2]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "only 4 cables exist but at least 5 are needed to connect 6 computers"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[4,[[0,1],[0,2],[1,2]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[6,[[0,1],[0,2],[0,3],[1,2],[1,3]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[6,[[0,1],[0,2],[0,3],[1,2]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[1,[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[5,[[0,1],[1,2],[2,3],[3,4]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3,[[0,1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[2,[]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[20,[[2,18],[12,14],[14,8],[7,6],[19,11],[15,6],[6,12],[14,17],[9,12],[17,11],[12,17],[13,5],[10,5],[12,11],[17,6],[8,1],[16,1],[12,13],[5,17],[6,2],[17,13],[13,9],[16,11],[4,19],[18,14]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[15,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[15,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[10,[[0,1],[2,3],[4,5],[6,7],[8,9]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[30,[[0,1],[3,4],[6,7],[9,10],[12,13],[15,16],[18,19],[21,22],[24,25],[27,28]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[1,[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[5,[[0,1],[1,2],[2,3],[3,4],[4,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[25,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[19,20],[20,21],[21,22],[22,23],[23,24],[0,2]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[8,[[0,1],[1,2],[0,2]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[12,[[0,1],[1,2],[2,0],[3,4],[4,5],[5,3],[6,7],[7,8],[8,6]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[6,[[0,1],[1,2],[2,0],[0,3]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[0,5],[3,10]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[9,[[0,1],[1,2],[3,4],[4,5],[6,7],[7,8]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def makeConnected(self, n, connections):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int makeConnected(int n, vector<vector<int>>& connections) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int makeConnected(int n, int[][] connections) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun makeConnected(n: Int, connections: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    makeConnected(n, connections) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def makeConnected(self, n, connections):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int makeConnected(int n, vector<vector<int>>& connections) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int makeConnected(int n, int[][] connections) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun makeConnected(n: Int, connections: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    makeConnected(n, connections) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def makeConnected(self, n, connections):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int makeConnected(int n, vector<vector<int>>& connections) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int makeConnected(int n, int[][] connections) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun makeConnected(n: Int, connections: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    makeConnected(n, connections) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def makeConnected(self, n, connections):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int makeConnected(int n, vector<vector<int>>& connections) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int makeConnected(int n, int[][] connections) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun makeConnected(n: Int, connections: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    makeConnected(n, connections) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n + c * alpha(n))",
+      "space": "O(n)",
+      "pattern": "union find"
+    },
+    "bruteForce": {
+      "approach": "build an adjacency list and run DFS/BFS to find the connected components directly; the answer only depends on the component count and total cable count",
+      "time": "O(n + c)",
+      "space": "O(n + c)"
+    }
+  },
+  "optimal": {
+    "pattern": "union find",
+    "time": "O(n + c * alpha(n))",
+    "space": "O(n)",
+    "hint_ladder": [
+      "if there are fewer than n - 1 cables total, there's no way to connect everything - check that first",
+      "otherwise, union the endpoints of every cable to find how many separate groups of computers exist",
+      "connecting k separate groups into one always takes exactly k - 1 moves, since each move can only merge two groups into one",
+      "count the number of distinct roots after all unions, and subtract 1"
+    ]
+  },
+  "bruteForce": {
+    "approach": "build an adjacency list and run DFS/BFS to find the connected components directly; the answer only depends on the component count and total cable count",
+    "time": "O(n + c)",
+    "space": "O(n + c)"
+  },
+  "isIndex0": true,
+  "level": null
+}

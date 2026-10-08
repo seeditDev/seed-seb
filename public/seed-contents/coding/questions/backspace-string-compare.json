@@ -1,0 +1,669 @@
+{
+  "id": "backspace-string-compare",
+  "questionId": "backspace-string-compare",
+  "slug": "backspace-string-compare",
+  "title": "Backspace String Compare",
+  "difficulty": "Easy",
+  "category": "Two pointers",
+  "patterns": [
+    "two pointers"
+  ],
+  "lists": [],
+  "hints": [
+    "the stack approach works and is already efficient - can you get the same result without building an extra data structure?",
+    "what does a '#' actually do to the character before it? if you scanned from the END of the string instead of the start, could you account for backspaces as you go, without storing anything?",
+    "walk a pointer backward through each string; keep a counter of pending backspaces - when you hit a '#', increment it, when you hit a letter and the counter is positive, skip the letter and decrement the counter instead of using it",
+    "compare the next 'real' character each pointer lands on; if they ever differ (or one runs out before the other), the strings aren't equal"
+  ],
+  "commonMistakes": [
+    "processing the strings forward instead of backward, which makes it hard to know in advance which letters get deleted",
+    "forgetting a '#' can appear with nothing before it to delete",
+    "stopping the comparison as soon as one string is exhausted without checking the other still has real characters left"
+  ],
+  "content": {
+    "problemStatement": "You're given two strings that may contain the character '#', which means \"backspace\": it deletes the character before it (if any).\n\n**Simulate typing both strings, and decide whether the final results are equal.**\n",
+    "constraints": [
+      "0 <= s.length, t.length <= 200",
+      "s and t consist only of lowercase English letters and the character '#'"
+    ],
+    "notes": [
+      "a '#' at the very start of a string (does nothing)",
+      "more '#' characters than letters (everything gets deleted)",
+      "no '#' characters at all"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"ab#c\", t = \"ad#c\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "both type out to \"ac\""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"ab##\", t = \"c#d#\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "both type out to an empty string"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"a#c\", t = \"b\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "s types out to \"c\", t types out to \"b\""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"ab#c\",\"ad#c\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"ab##\",\"c#d#\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a#c\",\"b\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"bxj##tw\",\"bxo#j##tw\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"#\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"#a\",\"\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"a#\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"###\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"a##c\",\"#a#c\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"y#fo##f\",\"y#f#o##f\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"xy#z\",\"xzz#\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"a#b#c#\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abcd\",\"abcd\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abcd\",\"abce\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaa####################\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"ab#c#d##e\",\"ade\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"###abc\",\"abc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"a#a#a#a#a#a#a#a#a#a\",\"\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"thisisatest#ing\",\"thisisatestng\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"qqqqqqqqqqqqqqq#####\",\"qqqqqqqqqq\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"ab#c\", t = \"ad#c\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "both type out to \"ac\""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"ab##\", t = \"c#d#\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "both type out to an empty string"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"a#c\", t = \"b\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "s types out to \"c\", t types out to \"b\""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"ab#c\", t = \"ad#c\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "both type out to \"ac\""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"ab##\", t = \"c#d#\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "both type out to an empty string"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"a#c\", t = \"b\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "s types out to \"c\", t types out to \"b\""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"ab#c\",\"ad#c\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"ab##\",\"c#d#\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"a#c\",\"b\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"bxj##tw\",\"bxo#j##tw\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"\",\"\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"#\",\"\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"#a\",\"\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"a#\",\"\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"###\",\"\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"a##c\",\"#a#c\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"y#fo##f\",\"y#f#o##f\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"xy#z\",\"xzz#\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"a#b#c#\",\"\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"abcd\",\"abcd\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"abcd\",\"abce\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaaa\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"aaaaaaaaaaaaaaaaaaaa####################\",\"\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"ab#c#d##e\",\"ade\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"###abc\",\"abc\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"a#a#a#a#a#a#a#a#a#a\",\"\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"thisisatest#ing\",\"thisisatestng\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[\"qqqqqqqqqqqqqqq#####\",\"qqqqqqqqqq\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"ab#c\", t = \"ad#c\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "both type out to \"ac\""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"ab##\", t = \"c#d#\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "both type out to an empty string"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"a#c\", t = \"b\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "s types out to \"c\", t types out to \"b\""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"ab#c\",\"ad#c\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"ab##\",\"c#d#\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a#c\",\"b\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"bxj##tw\",\"bxo#j##tw\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"#\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"#a\",\"\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"a#\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"###\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"a##c\",\"#a#c\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"y#fo##f\",\"y#f#o##f\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"xy#z\",\"xzz#\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"a#b#c#\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abcd\",\"abcd\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abcd\",\"abce\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaa####################\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"ab#c#d##e\",\"ade\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"###abc\",\"abc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"a#a#a#a#a#a#a#a#a#a\",\"\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"thisisatest#ing\",\"thisisatestng\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"qqqqqqqqqqqqqqq#####\",\"qqqqqqqqqq\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def backspaceCompare(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool backspaceCompare(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean backspaceCompare(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun backspaceCompare(s: String, t: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    backspaceCompare(s, t) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def backspaceCompare(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool backspaceCompare(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean backspaceCompare(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun backspaceCompare(s: String, t: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    backspaceCompare(s, t) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def backspaceCompare(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool backspaceCompare(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean backspaceCompare(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun backspaceCompare(s: String, t: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    backspaceCompare(s, t) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def backspaceCompare(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool backspaceCompare(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean backspaceCompare(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun backspaceCompare(s: String, t: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    backspaceCompare(s, t) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n + m)",
+      "space": "O(1) extra",
+      "pattern": "two pointers walking each string backward, skipping letters that get backspaced on the fly"
+    },
+    "bruteForce": {
+      "approach": "simulate typing each string using a stack: push letters, pop on '#'; then compare the two resulting stacks/strings",
+      "time": "O(n + m)",
+      "space": "O(n + m) for the two stacks"
+    }
+  },
+  "optimal": {
+    "pattern": "two pointers walking each string backward, skipping letters that get backspaced on the fly",
+    "time": "O(n + m)",
+    "space": "O(1) extra",
+    "hint_ladder": [
+      "the stack approach works and is already efficient - can you get the same result without building an extra data structure?",
+      "what does a '#' actually do to the character before it? if you scanned from the END of the string instead of the start, could you account for backspaces as you go, without storing anything?",
+      "walk a pointer backward through each string; keep a counter of pending backspaces - when you hit a '#', increment it, when you hit a letter and the counter is positive, skip the letter and decrement the counter instead of using it",
+      "compare the next 'real' character each pointer lands on; if they ever differ (or one runs out before the other), the strings aren't equal"
+    ]
+  },
+  "bruteForce": {
+    "approach": "simulate typing each string using a stack: push letters, pop on '#'; then compare the two resulting stacks/strings",
+    "time": "O(n + m)",
+    "space": "O(n + m) for the two stacks"
+  },
+  "isIndex0": true,
+  "level": null
+}

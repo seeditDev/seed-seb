@@ -1,0 +1,632 @@
+{
+  "id": "evaluate-reverse-polish-notation",
+  "questionId": "evaluate-reverse-polish-notation",
+  "slug": "evaluate-reverse-polish-notation",
+  "title": "Evaluate Reverse Polish Notation",
+  "difficulty": "Medium",
+  "category": "Stack",
+  "patterns": [
+    "stack"
+  ],
+  "lists": [
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "in postfix notation, by the time you reach an operator, both numbers it needs have already appeared - where would you keep them in the meantime?",
+    "split tokens on spaces and process left to right: push numbers onto a stack, and when you see an operator, pop the two most recent numbers",
+    "watch the order: for '-' and '/', the second-popped number is the left operand and the first-popped is the right operand, since it was pushed later",
+    "push the result of each operation back onto the stack; at the end exactly one value remains, the answer"
+  ],
+  "commonMistakes": [
+    "swapping operand order for non-commutative operators (- and /), computing b-a instead of a-b",
+    "using language-default division/modulo that floors instead of truncating toward zero for negative results",
+    "not parsing multi-digit or negative-number tokens correctly when splitting on spaces"
+  ],
+  "content": {
+    "problemStatement": "You're given a space-delimited sequence of tokens representing an\narithmetic expression in Reverse Polish Notation (postfix notation). Each\ntoken is either an integer or one of the operators `+`, `-`, `*`, `/`, and\nin RPN an operator always applies to the two numbers immediately before\nit.\n\n**Evaluate the expression and return the result.**\n\nDivision between two integers truncates toward zero, not floor division.\n",
+    "constraints": [
+      "1 <= number of tokens <= 10^4",
+      "each token is an integer in [-200, 200] or one of the operators +, -, *, /",
+      "the answer and all intermediate results fit in a 32-bit signed integer",
+      "division truncates toward zero, not floor division"
+    ],
+    "notes": [
+      "division that would floor differently than it truncates (e.g. negative results)",
+      "a single integer token with no operators",
+      "an expression that produces a negative final result"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tokens = \"2 1 + 3 *\"",
+        "output": "9",
+        "expectedOutput": "9",
+        "explanation": "2 1 + evaluates to 3, then 3 3 * evaluates to 9"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tokens = \"4 13 5 / +\"",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "13 5 / truncates to 2, then 4 2 + evaluates to 6"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tokens = \"10 6 9 3 + -11 * / * 17 + 5 +\"",
+        "output": "22",
+        "expectedOutput": "22",
+        "explanation": "9 3 + = 12; -11 * 12 = -132; 6 -132 / truncates to 0; 10 0 * = 0; 0 17 + = 17; 17 5 + = 22"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"2 1 + 3 *\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"4 13 5 / +\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"10 6 9 3 + -11 * / * 17 + 5 +\"]",
+        "output": "22",
+        "expectedOutput": "22",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"18\"]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"4 3 -\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"0\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"-5\"]",
+        "output": "-5",
+        "expectedOutput": "-5",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"3 4 +\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"10 2 /\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"7 2 /\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"-7 2 /\"]",
+        "output": "-3",
+        "expectedOutput": "-3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"7 -2 /\"]",
+        "output": "-3",
+        "expectedOutput": "-3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"5 1 2 + 4 * + 3 -\"]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"2 3 * 4 +\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"15 7 1 1 + - / 3 * 2 1 1 + + -\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"100 200 *\"]",
+        "output": "20000",
+        "expectedOutput": "20000",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"6 2 3 + -\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"4 2 *\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"9 3 /\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"5 6 7 * -\"]",
+        "output": "-37",
+        "expectedOutput": "-37",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tokens = \"2 1 + 3 *\"",
+      "output": "9",
+      "expectedOutput": "9",
+      "explanation": "2 1 + evaluates to 3, then 3 3 * evaluates to 9"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tokens = \"4 13 5 / +\"",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "13 5 / truncates to 2, then 4 2 + evaluates to 6"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tokens = \"10 6 9 3 + -11 * / * 17 + 5 +\"",
+      "output": "22",
+      "expectedOutput": "22",
+      "explanation": "9 3 + = 12; -11 * 12 = -132; 6 -132 / truncates to 0; 10 0 * = 0; 0 17 + = 17; 17 5 + = 22"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tokens = \"2 1 + 3 *\"",
+      "output": "9",
+      "expectedOutput": "9",
+      "explanation": "2 1 + evaluates to 3, then 3 3 * evaluates to 9"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tokens = \"4 13 5 / +\"",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "13 5 / truncates to 2, then 4 2 + evaluates to 6"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tokens = \"10 6 9 3 + -11 * / * 17 + 5 +\"",
+      "output": "22",
+      "expectedOutput": "22",
+      "explanation": "9 3 + = 12; -11 * 12 = -132; 6 -132 / truncates to 0; 10 0 * = 0; 0 17 + = 17; 17 5 + = 22"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"2 1 + 3 *\"]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"4 13 5 / +\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"10 6 9 3 + -11 * / * 17 + 5 +\"]",
+      "output": "22",
+      "expectedOutput": "22",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"18\"]",
+      "output": "18",
+      "expectedOutput": "18",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"4 3 -\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"0\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"-5\"]",
+      "output": "-5",
+      "expectedOutput": "-5",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"3 4 +\"]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"10 2 /\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"7 2 /\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"-7 2 /\"]",
+      "output": "-3",
+      "expectedOutput": "-3",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"7 -2 /\"]",
+      "output": "-3",
+      "expectedOutput": "-3",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"5 1 2 + 4 * + 3 -\"]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"2 3 * 4 +\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"15 7 1 1 + - / 3 * 2 1 1 + + -\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"100 200 *\"]",
+      "output": "20000",
+      "expectedOutput": "20000",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"6 2 3 + -\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"4 2 *\"]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"9 3 /\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"5 6 7 * -\"]",
+      "output": "-37",
+      "expectedOutput": "-37",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tokens = \"2 1 + 3 *\"",
+        "output": "9",
+        "expectedOutput": "9",
+        "explanation": "2 1 + evaluates to 3, then 3 3 * evaluates to 9"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tokens = \"4 13 5 / +\"",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "13 5 / truncates to 2, then 4 2 + evaluates to 6"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tokens = \"10 6 9 3 + -11 * / * 17 + 5 +\"",
+        "output": "22",
+        "expectedOutput": "22",
+        "explanation": "9 3 + = 12; -11 * 12 = -132; 6 -132 / truncates to 0; 10 0 * = 0; 0 17 + = 17; 17 5 + = 22"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"2 1 + 3 *\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"4 13 5 / +\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"10 6 9 3 + -11 * / * 17 + 5 +\"]",
+        "output": "22",
+        "expectedOutput": "22",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"18\"]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"4 3 -\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"0\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"-5\"]",
+        "output": "-5",
+        "expectedOutput": "-5",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"3 4 +\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"10 2 /\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"7 2 /\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"-7 2 /\"]",
+        "output": "-3",
+        "expectedOutput": "-3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"7 -2 /\"]",
+        "output": "-3",
+        "expectedOutput": "-3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"5 1 2 + 4 * + 3 -\"]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"2 3 * 4 +\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"15 7 1 1 + - / 3 * 2 1 1 + + -\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"100 200 *\"]",
+        "output": "20000",
+        "expectedOutput": "20000",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"6 2 3 + -\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"4 2 *\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"9 3 /\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"5 6 7 * -\"]",
+        "output": "-37",
+        "expectedOutput": "-37",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def evalRPN(self, tokens):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int evalRPN(string tokens) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int evalRPN(String tokens) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun evalRPN(tokens: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    evalRPN(tokens) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def evalRPN(self, tokens):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int evalRPN(string tokens) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int evalRPN(String tokens) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun evalRPN(tokens: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    evalRPN(tokens) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def evalRPN(self, tokens):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int evalRPN(string tokens) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int evalRPN(String tokens) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun evalRPN(tokens: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    evalRPN(tokens) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def evalRPN(self, tokens):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int evalRPN(string tokens) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int evalRPN(String tokens) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun evalRPN(tokens: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    evalRPN(tokens) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n)",
+      "pattern": "stack (postfix evaluation)"
+    },
+    "bruteForce": {
+      "approach": "same as the optimal approach - a stack is already the direct and standard way to evaluate postfix notation",
+      "time": "O(n)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "stack (postfix evaluation)",
+    "time": "O(n)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "in postfix notation, by the time you reach an operator, both numbers it needs have already appeared - where would you keep them in the meantime?",
+      "split tokens on spaces and process left to right: push numbers onto a stack, and when you see an operator, pop the two most recent numbers",
+      "watch the order: for '-' and '/', the second-popped number is the left operand and the first-popped is the right operand, since it was pushed later",
+      "push the result of each operation back onto the stack; at the end exactly one value remains, the answer"
+    ]
+  },
+  "bruteForce": {
+    "approach": "same as the optimal approach - a stack is already the direct and standard way to evaluate postfix notation",
+    "time": "O(n)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

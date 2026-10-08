@@ -1,0 +1,632 @@
+{
+  "id": "prefix-and-suffix-search",
+  "questionId": "prefix-and-suffix-search",
+  "slug": "prefix-and-suffix-search",
+  "title": "Prefix and Suffix Search",
+  "difficulty": "Hard",
+  "category": "Trie",
+  "patterns": [
+    "trie",
+    "simulation"
+  ],
+  "lists": [],
+  "hints": [
+    "the tricky part is that a normal trie only lets you search efficiently by ONE anchor point (the start of the string) - here you need to match a prefix AND a suffix simultaneously",
+    "what if you could search using a single combined key that encodes both conditions? build, for each word w, several combined strings of the form suffix_of_w + '#' + w, one for every possible suffix length (including the empty suffix and the full word)",
+    "insert ALL of these combined strings (for every word, every suffix length) into one shared trie, and at every node along each insertion path, overwrite a stored 'largest index' with the current word's index (since insertion happens in increasing index order, the last overwrite naturally wins as the largest)",
+    "answering a query is now a single trie walk: search for the combined key suffix + '#' + prefix; the stored largest-index value at the end of that walk (if the walk succeeds) is your answer, -1 if the walk falls off the trie",
+    "this trades some insertion time and memory for very fast, uniform queries - a classic 'shift the work to build time' trie trick"
+  ],
+  "commonMistakes": [
+    "building separate prefix and suffix tries and trying to intersect their results per query, which is much slower and easy to get subtly wrong",
+    "not updating the stored index at EVERY node along an insertion path, only at the final node, which breaks the ability to answer queries by combined-key prefix",
+    "forgetting that word can be inserted multiple times and the LARGEST index (not the first) must always win"
+  ],
+  "content": {
+    "problemStatement": "You're given a single space-delimited sequence of operations to run\nagainst an initially empty, growing dictionary. Each token has one of\ntwo forms:\n\n- \"insert:word\" - append word to the dictionary; it receives an index equal to how many words were inserted before it (0-based, in insertion order), no return value\n- \"query:prefix,suffix\" - return the largest index among all currently inserted words that start with prefix and end with suffix, or -1 if no inserted word satisfies both\n\n**Simulate the tokens in order, and return a list containing the result of every \"query\" operation, in the order they occurred.**\n",
+    "constraints": [
+      "1 <= number of operations <= 10^4",
+      "1 <= length of each inserted word <= 500",
+      "1 <= length of prefix, suffix <= 10",
+      "words, prefixes, and suffixes consist only of lowercase English letters"
+    ],
+    "notes": [
+      "a word inserted twice, where only the later (larger) index should be reported as the answer",
+      "prefix or suffix longer than some inserted words (those words can't match)",
+      "query called before any insert"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"insert:apple insert:apply insert:ape query:ap,e query:app,le query:xyz,z\"",
+        "output": "[2, 0, -1]",
+        "expectedOutput": "[2, 0, -1]",
+        "explanation": "indices: apple=0, apply=1, ape=2; \"ap,e\" matches apple(0) and ape(2), largest is 2; \"app,le\" matches only apple(0); \"xyz,z\" matches nothing"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"insert:a insert:aa query:a,a\"",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": "indices: a=0, aa=1; both start and end appropriately, largest index is 1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"insert:cat query:c,t query:c,g query:d,t\"",
+        "output": "[0, -1, -1]",
+        "expectedOutput": "[0, -1, -1]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"insert:apple insert:apply insert:ape query:ap,e query:app,le query:xyz,z\"]",
+        "output": "[2,0,-1]",
+        "expectedOutput": "[2,0,-1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"insert:a insert:aa query:a,a\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"insert:cat query:c,t query:c,g query:d,t\"]",
+        "output": "[0,-1,-1]",
+        "expectedOutput": "[0,-1,-1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"insert:a insert:b insert:a query:a,a\"]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"insert:a query:a,a\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"insert:abc insert:abd insert:aef query:a,c query:a,d query:a,f query:a,z\"]",
+        "output": "[0,1,2,-1]",
+        "expectedOutput": "[0,1,2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"insert:test insert:testing insert:tester query:test,test query:te,ing query:te,er\"]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"insert:x insert:xx insert:xxx query:x,x\"]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"insert:apple insert:apple insert:apple query:a,e\"]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"insert:one insert:two insert:three query:o,e query:t,o query:t,e\"]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"insert:same insert:same query:sa,me\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"query:a,b\"]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"insert:abcabc query:abc,abc\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"insert:zzzz insert:zzzzz query:z,z query:zz,zz\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"insert:hello insert:help insert:hero query:he,o query:hel,lo query:her,o\"]",
+        "output": "[2,0,2]",
+        "expectedOutput": "[2,0,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"insert:ab insert:ba query:a,b query:b,a\"]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"insert:foo insert:bar insert:foobar query:foo,bar query:f,r query:b,o\"]",
+        "output": "[2,2,-1]",
+        "expectedOutput": "[2,2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"insert:aab insert:aac insert:aad query:aa,b query:aa,c query:aa,d query:aa,e\"]",
+        "output": "[0,1,2,-1]",
+        "expectedOutput": "[0,1,2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"insert:pqr query:p,r query:pq,qr\"]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"insert:m insert:mm insert:mmm insert:mmmm query:m,m query:mm,mm query:mmm,mmm\"]",
+        "output": "[3,3,3]",
+        "expectedOutput": "[3,3,3]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"insert:apple insert:apply insert:ape query:ap,e query:app,le query:xyz,z\"",
+      "output": "[2, 0, -1]",
+      "expectedOutput": "[2, 0, -1]",
+      "explanation": "indices: apple=0, apply=1, ape=2; \"ap,e\" matches apple(0) and ape(2), largest is 2; \"app,le\" matches only apple(0); \"xyz,z\" matches nothing"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"insert:a insert:aa query:a,a\"",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": "indices: a=0, aa=1; both start and end appropriately, largest index is 1"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"insert:cat query:c,t query:c,g query:d,t\"",
+      "output": "[0, -1, -1]",
+      "expectedOutput": "[0, -1, -1]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"insert:apple insert:apply insert:ape query:ap,e query:app,le query:xyz,z\"",
+      "output": "[2, 0, -1]",
+      "expectedOutput": "[2, 0, -1]",
+      "explanation": "indices: apple=0, apply=1, ape=2; \"ap,e\" matches apple(0) and ape(2), largest is 2; \"app,le\" matches only apple(0); \"xyz,z\" matches nothing"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"insert:a insert:aa query:a,a\"",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": "indices: a=0, aa=1; both start and end appropriately, largest index is 1"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"insert:cat query:c,t query:c,g query:d,t\"",
+      "output": "[0, -1, -1]",
+      "expectedOutput": "[0, -1, -1]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"insert:apple insert:apply insert:ape query:ap,e query:app,le query:xyz,z\"]",
+      "output": "[2,0,-1]",
+      "expectedOutput": "[2,0,-1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"insert:a insert:aa query:a,a\"]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"insert:cat query:c,t query:c,g query:d,t\"]",
+      "output": "[0,-1,-1]",
+      "expectedOutput": "[0,-1,-1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"insert:a insert:b insert:a query:a,a\"]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"insert:a query:a,a\"]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"insert:abc insert:abd insert:aef query:a,c query:a,d query:a,f query:a,z\"]",
+      "output": "[0,1,2,-1]",
+      "expectedOutput": "[0,1,2,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"insert:test insert:testing insert:tester query:test,test query:te,ing query:te,er\"]",
+      "output": "[0,1,2]",
+      "expectedOutput": "[0,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"insert:x insert:xx insert:xxx query:x,x\"]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"insert:apple insert:apple insert:apple query:a,e\"]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"insert:one insert:two insert:three query:o,e query:t,o query:t,e\"]",
+      "output": "[0,1,2]",
+      "expectedOutput": "[0,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"insert:same insert:same query:sa,me\"]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"query:a,b\"]",
+      "output": "[-1]",
+      "expectedOutput": "[-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"insert:abcabc query:abc,abc\"]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"insert:zzzz insert:zzzzz query:z,z query:zz,zz\"]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"insert:hello insert:help insert:hero query:he,o query:hel,lo query:her,o\"]",
+      "output": "[2,0,2]",
+      "expectedOutput": "[2,0,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"insert:ab insert:ba query:a,b query:b,a\"]",
+      "output": "[0,1]",
+      "expectedOutput": "[0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"insert:foo insert:bar insert:foobar query:foo,bar query:f,r query:b,o\"]",
+      "output": "[2,2,-1]",
+      "expectedOutput": "[2,2,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"insert:aab insert:aac insert:aad query:aa,b query:aa,c query:aa,d query:aa,e\"]",
+      "output": "[0,1,2,-1]",
+      "expectedOutput": "[0,1,2,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"insert:pqr query:p,r query:pq,qr\"]",
+      "output": "[0,0]",
+      "expectedOutput": "[0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"insert:m insert:mm insert:mmm insert:mmmm query:m,m query:mm,mm query:mmm,mmm\"]",
+      "output": "[3,3,3]",
+      "expectedOutput": "[3,3,3]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"insert:apple insert:apply insert:ape query:ap,e query:app,le query:xyz,z\"",
+        "output": "[2, 0, -1]",
+        "expectedOutput": "[2, 0, -1]",
+        "explanation": "indices: apple=0, apply=1, ape=2; \"ap,e\" matches apple(0) and ape(2), largest is 2; \"app,le\" matches only apple(0); \"xyz,z\" matches nothing"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"insert:a insert:aa query:a,a\"",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": "indices: a=0, aa=1; both start and end appropriately, largest index is 1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"insert:cat query:c,t query:c,g query:d,t\"",
+        "output": "[0, -1, -1]",
+        "expectedOutput": "[0, -1, -1]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"insert:apple insert:apply insert:ape query:ap,e query:app,le query:xyz,z\"]",
+        "output": "[2,0,-1]",
+        "expectedOutput": "[2,0,-1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"insert:a insert:aa query:a,a\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"insert:cat query:c,t query:c,g query:d,t\"]",
+        "output": "[0,-1,-1]",
+        "expectedOutput": "[0,-1,-1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"insert:a insert:b insert:a query:a,a\"]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"insert:a query:a,a\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"insert:abc insert:abd insert:aef query:a,c query:a,d query:a,f query:a,z\"]",
+        "output": "[0,1,2,-1]",
+        "expectedOutput": "[0,1,2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"insert:test insert:testing insert:tester query:test,test query:te,ing query:te,er\"]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"insert:x insert:xx insert:xxx query:x,x\"]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"insert:apple insert:apple insert:apple query:a,e\"]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"insert:one insert:two insert:three query:o,e query:t,o query:t,e\"]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"insert:same insert:same query:sa,me\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"query:a,b\"]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"insert:abcabc query:abc,abc\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"insert:zzzz insert:zzzzz query:z,z query:zz,zz\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"insert:hello insert:help insert:hero query:he,o query:hel,lo query:her,o\"]",
+        "output": "[2,0,2]",
+        "expectedOutput": "[2,0,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"insert:ab insert:ba query:a,b query:b,a\"]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"insert:foo insert:bar insert:foobar query:foo,bar query:f,r query:b,o\"]",
+        "output": "[2,2,-1]",
+        "expectedOutput": "[2,2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"insert:aab insert:aac insert:aad query:aa,b query:aa,c query:aa,d query:aa,e\"]",
+        "output": "[0,1,2,-1]",
+        "expectedOutput": "[0,1,2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"insert:pqr query:p,r query:pq,qr\"]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"insert:m insert:mm insert:mmm insert:mmmm query:m,m query:mm,mm query:mmm,mmm\"]",
+        "output": "[3,3,3]",
+        "expectedOutput": "[3,3,3]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def prefixSuffixQueryResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> prefixSuffixQueryResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] prefixSuffixQueryResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun prefixSuffixQueryResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    prefixSuffixQueryResults(ops) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def prefixSuffixQueryResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> prefixSuffixQueryResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] prefixSuffixQueryResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun prefixSuffixQueryResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    prefixSuffixQueryResults(ops) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def prefixSuffixQueryResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> prefixSuffixQueryResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] prefixSuffixQueryResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun prefixSuffixQueryResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    prefixSuffixQueryResults(ops) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def prefixSuffixQueryResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> prefixSuffixQueryResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] prefixSuffixQueryResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun prefixSuffixQueryResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    prefixSuffixQueryResults(ops) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(m^2) per insert (m^2 combined strings of total length O(m^2)), O(len(prefix)+len(suffix)) per query",
+      "space": "O(total characters across all suffix-prefix combinations)",
+      "pattern": "insert every word into a combined trie keyed by 'suffix#prefix' style combined strings (e.g. for word w, insert every 'w[i:] + \"#\" + w' combination), storing the largest index seen at each node; a query then walks the trie along 'suffix + \"#\" + prefix' directly"
+    },
+    "bruteForce": {
+      "approach": "keep a list of (word, index) pairs; for each query scan the whole list and track the maximum index among words that both start with prefix and end with suffix",
+      "time": "O(n * m) per query, where n is the number of inserted words and m is average word length",
+      "space": "O(n * m)"
+    }
+  },
+  "optimal": {
+    "pattern": "insert every word into a combined trie keyed by 'suffix#prefix' style combined strings (e.g. for word w, insert every 'w[i:] + \"#\" + w' combination), storing the largest index seen at each node; a query then walks the trie along 'suffix + \"#\" + prefix' directly",
+    "time": "O(m^2) per insert (m^2 combined strings of total length O(m^2)), O(len(prefix)+len(suffix)) per query",
+    "space": "O(total characters across all suffix-prefix combinations)",
+    "hint_ladder": [
+      "the tricky part is that a normal trie only lets you search efficiently by ONE anchor point (the start of the string) - here you need to match a prefix AND a suffix simultaneously",
+      "what if you could search using a single combined key that encodes both conditions? build, for each word w, several combined strings of the form suffix_of_w + '#' + w, one for every possible suffix length (including the empty suffix and the full word)",
+      "insert ALL of these combined strings (for every word, every suffix length) into one shared trie, and at every node along each insertion path, overwrite a stored 'largest index' with the current word's index (since insertion happens in increasing index order, the last overwrite naturally wins as the largest)",
+      "answering a query is now a single trie walk: search for the combined key suffix + '#' + prefix; the stored largest-index value at the end of that walk (if the walk succeeds) is your answer, -1 if the walk falls off the trie",
+      "this trades some insertion time and memory for very fast, uniform queries - a classic 'shift the work to build time' trie trick"
+    ]
+  },
+  "bruteForce": {
+    "approach": "keep a list of (word, index) pairs; for each query scan the whole list and track the maximum index among words that both start with prefix and end with suffix",
+    "time": "O(n * m) per query, where n is the number of inserted words and m is average word length",
+    "space": "O(n * m)"
+  },
+  "isIndex0": true,
+  "level": null
+}

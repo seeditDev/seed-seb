@@ -1,0 +1,603 @@
+{
+  "id": "minimum-platforms",
+  "questionId": "minimum-platforms",
+  "slug": "minimum-platforms",
+  "title": "Minimum Number of Platforms",
+  "difficulty": "Medium",
+  "category": "Greedy",
+  "patterns": [
+    "greedy",
+    "sorting",
+    "sweep line"
+  ],
+  "lists": [
+    "blind-75"
+  ],
+  "hints": [
+    "the answer is the maximum number of trains simultaneously at the station at any instant - how could you find that peak without checking every instant individually?",
+    "sort the arrival times and the departure times separately, each in ascending order",
+    "walk both sorted lists together: whenever the next event chronologically is an arrival, a platform is now needed; whenever it's a departure, a platform is freed",
+    "track a running count of platforms in use, updating a maximum as you go - when arrival[i] <= departure[j], that's a new arrival needing a platform before that next departure frees one, so increment; otherwise a departure happens first, so decrement",
+    "why does sorting the two arrays independently still give the correct answer, even though it destroys the pairing between a train's own arrival and departure? because the count of platforms in use at any moment only depends on how many arrivals-so-far exceed departures-so-far, not on which specific train is on which platform"
+  ],
+  "commonMistakes": [
+    "treating an arrival and departure at the exact same time as overlapping (they should not require an extra platform, since the departing train frees its platform first)",
+    "sorting the two arrays as pairs (keeping arrival[i] linked to departure[i]) instead of sorting each array independently, which breaks the two-pointer sweep",
+    "computing only the count of trains active at the very first or last event instead of tracking the running maximum across the whole sweep"
+  ],
+  "content": {
+    "problemStatement": "A train station has trains arriving and departing throughout the day. You're given `arrival`, where `arrival[i]` is the arrival time of the i-th train, and `departure`, where `departure[i]` is its departure time. A train occupies the same platform the whole time it's at the station, and a platform becomes free the moment a train departs.\n\n**Return the minimum number of platforms needed so that no two trains present at the station at the same time ever need the same platform.**\n",
+    "constraints": [
+      "1 <= arrival.length <= 10^4",
+      "arrival.length == departure.length",
+      "0 <= arrival[i] < departure[i] <= 10^6"
+    ],
+    "notes": [
+      "all trains overlap at the same instant (needs a platform per train)",
+      "no trains overlap at all (needs only 1 platform)",
+      "a single train",
+      "a train's departure exactly equals another's arrival (does not count as an overlap)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "arrival = [900, 940, 950, 1100, 1500, 1800], departure = [910, 1200, 1120, 1130, 1900, 2000]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "at time 1100 the trains arriving at 940, 950, and 1100 are all still present (none has departed yet), requiring 3 platforms at once"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "arrival = [100, 200], departure = [150, 250]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the first train departs at 150 before the second arrives at 200, so one platform suffices"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[900,940,950,1100,1500,1800],[910,1200,1120,1130,1900,2000]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[100,200],[150,250]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[100,100,100],[200,200,200]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[100],[200]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1000],[1005]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[100,150,200],[150,200,250]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[9,10,11,12],[15,15,15,15]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5],[2,3,4,5,6]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,33,61,88,100,143,149,166,205,224,338,414,440,468,677,807,813,871,883,959],[9,43,69,118,145,149,158,209,208,247,367,428,456,484,705,829,856,881,889,1003]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,37,41,85,51,44,100,29,7,7,70,8,14,31,36,30,16,71,0,100,77,98,82,69,33,53,71,47,47,80],[6,65,55,114,53,64,110,41,18,30,97,9,40,43,53,55,17,92,10,103,90,122,88,89,44,68,99,51,71,100]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[500],[600]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[100,100],[200,200]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[100,150],[150,200]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,3,5,7,9],[2,4,6,8,10]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,1,1,1,1],[10,10,10,10,10]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[900,905,910,915,920,925,930,935,940,945],[905,910,915,920,925,930,935,940,945,950]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12],[13,13,13,13,13,13,13,13,13,13,13,13]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10,20,30],[15,25,35]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[600,600,600,600],[601,601,601,601]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[200,210,220,230,240],[300,220,320,240,260]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "arrival = [900, 940, 950, 1100, 1500, 1800], departure = [910, 1200, 1120, 1130, 1900, 2000]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "at time 1100 the trains arriving at 940, 950, and 1100 are all still present (none has departed yet), requiring 3 platforms at once"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "arrival = [100, 200], departure = [150, 250]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the first train departs at 150 before the second arrives at 200, so one platform suffices"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "arrival = [900, 940, 950, 1100, 1500, 1800], departure = [910, 1200, 1120, 1130, 1900, 2000]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "at time 1100 the trains arriving at 940, 950, and 1100 are all still present (none has departed yet), requiring 3 platforms at once"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "arrival = [100, 200], departure = [150, 250]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the first train departs at 150 before the second arrives at 200, so one platform suffices"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[900,940,950,1100,1500,1800],[910,1200,1120,1130,1900,2000]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[100,200],[150,250]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[100,100,100],[200,200,200]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[100],[200]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1000],[1005]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[100,150,200],[150,200,250]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[9,10,11,12],[15,15,15,15]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3,4,5],[2,3,4,5,6]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[5,33,61,88,100,143,149,166,205,224,338,414,440,468,677,807,813,871,883,959],[9,43,69,118,145,149,158,209,208,247,367,428,456,484,705,829,856,881,889,1003]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,37,41,85,51,44,100,29,7,7,70,8,14,31,36,30,16,71,0,100,77,98,82,69,33,53,71,47,47,80],[6,65,55,114,53,64,110,41,18,30,97,9,40,43,53,55,17,92,10,103,90,122,88,89,44,68,99,51,71,100]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[500],[600]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[100,100],[200,200]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[100,150],[150,200]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,3,5,7,9],[2,4,6,8,10]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,1,1,1,1],[10,10,10,10,10]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[900,905,910,915,920,925,930,935,940,945],[905,910,915,920,925,930,935,940,945,950]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12],[13,13,13,13,13,13,13,13,13,13,13,13]]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[10,20,30],[15,25,35]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[600,600,600,600],[601,601,601,601]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[200,210,220,230,240],[300,220,320,240,260]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "arrival = [900, 940, 950, 1100, 1500, 1800], departure = [910, 1200, 1120, 1130, 1900, 2000]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "at time 1100 the trains arriving at 940, 950, and 1100 are all still present (none has departed yet), requiring 3 platforms at once"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "arrival = [100, 200], departure = [150, 250]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the first train departs at 150 before the second arrives at 200, so one platform suffices"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[900,940,950,1100,1500,1800],[910,1200,1120,1130,1900,2000]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[100,200],[150,250]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[100,100,100],[200,200,200]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[100],[200]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1000],[1005]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[100,150,200],[150,200,250]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[9,10,11,12],[15,15,15,15]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5],[2,3,4,5,6]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,33,61,88,100,143,149,166,205,224,338,414,440,468,677,807,813,871,883,959],[9,43,69,118,145,149,158,209,208,247,367,428,456,484,705,829,856,881,889,1003]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,37,41,85,51,44,100,29,7,7,70,8,14,31,36,30,16,71,0,100,77,98,82,69,33,53,71,47,47,80],[6,65,55,114,53,64,110,41,18,30,97,9,40,43,53,55,17,92,10,103,90,122,88,89,44,68,99,51,71,100]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[500],[600]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[100,100],[200,200]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[100,150],[150,200]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,3,5,7,9],[2,4,6,8,10]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,1,1,1,1],[10,10,10,10,10]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[900,905,910,915,920,925,930,935,940,945],[905,910,915,920,925,930,935,940,945,950]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12],[13,13,13,13,13,13,13,13,13,13,13,13]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10,20,30],[15,25,35]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[600,600,600,600],[601,601,601,601]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[200,210,220,230,240],[300,220,320,240,260]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minPlatforms(self, arrival, departure):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minPlatforms(vector<int>& arrival, vector<int>& departure) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minPlatforms(int[] arrival, int[] departure) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minPlatforms(arrival: IntArray, departure: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minPlatforms(arrival, departure) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minPlatforms(self, arrival, departure):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minPlatforms(vector<int>& arrival, vector<int>& departure) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minPlatforms(int[] arrival, int[] departure) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minPlatforms(arrival: IntArray, departure: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minPlatforms(arrival, departure) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minPlatforms(self, arrival, departure):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minPlatforms(vector<int>& arrival, vector<int>& departure) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minPlatforms(int[] arrival, int[] departure) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minPlatforms(arrival: IntArray, departure: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minPlatforms(arrival, departure) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minPlatforms(self, arrival, departure):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minPlatforms(vector<int>& arrival, vector<int>& departure) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minPlatforms(int[] arrival, int[] departure) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minPlatforms(arrival: IntArray, departure: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minPlatforms(arrival, departure) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log n)",
+      "space": "O(1) beyond sorting",
+      "pattern": "sort arrivals and departures independently, sweep both in time order tracking how many platforms are simultaneously in use"
+    },
+    "bruteForce": {
+      "approach": "for every time point (or every arrival event), count how many trains have arrived but not yet departed, keep the maximum such count",
+      "time": "O(n^2)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "sort arrivals and departures independently, sweep both in time order tracking how many platforms are simultaneously in use",
+    "time": "O(n log n)",
+    "space": "O(1) beyond sorting",
+    "hint_ladder": [
+      "the answer is the maximum number of trains simultaneously at the station at any instant - how could you find that peak without checking every instant individually?",
+      "sort the arrival times and the departure times separately, each in ascending order",
+      "walk both sorted lists together: whenever the next event chronologically is an arrival, a platform is now needed; whenever it's a departure, a platform is freed",
+      "track a running count of platforms in use, updating a maximum as you go - when arrival[i] <= departure[j], that's a new arrival needing a platform before that next departure frees one, so increment; otherwise a departure happens first, so decrement",
+      "why does sorting the two arrays independently still give the correct answer, even though it destroys the pairing between a train's own arrival and departure? because the count of platforms in use at any moment only depends on how many arrivals-so-far exceed departures-so-far, not on which specific train is on which platform"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every time point (or every arrival event), count how many trains have arrived but not yet departed, keep the maximum such count",
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

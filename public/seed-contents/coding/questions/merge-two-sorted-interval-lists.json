@@ -1,0 +1,630 @@
+{
+  "id": "merge-two-sorted-interval-lists",
+  "questionId": "merge-two-sorted-interval-lists",
+  "slug": "merge-two-sorted-interval-lists",
+  "title": "Merge Two Sorted Interval Lists",
+  "difficulty": "Easy",
+  "category": "Merge intervals",
+  "patterns": [
+    "merge intervals",
+    "two pointers"
+  ],
+  "lists": [],
+  "hints": [
+    "both lists are already sorted individually - do you really need to re-sort everything from scratch?",
+    "this looks like the merge step of merge sort: walk both lists with a pointer each, always advancing the one with the smaller start",
+    "keep a running 'last interval added to the result'. when the next candidate interval (from whichever pointer is smaller) overlaps it, extend it instead of appending a new one",
+    "after one pointer runs out, the rest of the other list can just be appended/merged in the same way, one interval at a time"
+  ],
+  "commonMistakes": [
+    "sorting the concatenated list unnecessarily instead of taking advantage of both inputs already being sorted",
+    "forgetting that an interval from a can overlap more than one interval from b (or vice versa), so merging must keep extending the last result interval, not just pairwise compare",
+    "treating touching intervals like [1,3] and [3,5] as non-overlapping and failing to merge them into [1,5]"
+  ],
+  "content": {
+    "problemStatement": "You're given two lists of intervals, `a` and `b`, each represented as\n`[start, end]`. Both lists are already sorted by start time and each list\ninternally has no overlapping intervals.\n\n**Merge the two lists into one combined list of intervals, sorted by start time and with no overlaps.**\n\nThis is a warm-up step, not a full overlap-merging problem: since each\ninput list is already clean on its own, you just need to weave the two\nlists together and merge any overlap that happens where they interleave.\n",
+    "constraints": [
+      "each input list is individually sorted by start and has no internal overlaps",
+      "either list may be empty",
+      "intervals given as [start, end] with start <= end"
+    ],
+    "notes": [
+      "one or both lists are empty",
+      "an interval from a fully contains an interval from b",
+      "intervals only touch at an endpoint, e.g. [1,3] and [3,5]",
+      "all intervals from a come entirely before all intervals from b"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "a = [[1,3],[5,7]], b = [[2,4],[6,8]]",
+        "output": "[[1,4],[5,8]]",
+        "expectedOutput": "[[1,4],[5,8]]",
+        "explanation": "[1,3] overlaps [2,4] to form [1,4]; [5,7] overlaps [6,8] to form [5,8]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "a = [[1,2],[5,6]], b = [[3,4]]",
+        "output": "[[1,2],[3,4],[5,6]]",
+        "expectedOutput": "[[1,2],[3,4],[5,6]]",
+        "explanation": "none of the intervals touch, so they just interleave in sorted order"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "a = [], b = [[1,5]]",
+        "output": "[[1,5]]",
+        "expectedOutput": "[[1,5]]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,3],[5,7]],[[2,4],[6,8]]]",
+        "output": "[[1,4],[5,8]]",
+        "expectedOutput": "[[1,4],[5,8]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,2],[5,6]],[[3,4]]]",
+        "output": "[[1,2],[3,4],[5,6]]",
+        "expectedOutput": "[[1,2],[3,4],[5,6]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[],[[1,5]]]",
+        "output": "[[1,5]]",
+        "expectedOutput": "[[1,5]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,3]],[[3,5]]]",
+        "output": "[[1,5]]",
+        "expectedOutput": "[[1,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[],[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,2]],[]]",
+        "output": "[[1,2]]",
+        "expectedOutput": "[[1,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[],[[3,4]]]",
+        "output": "[[3,4]]",
+        "expectedOutput": "[[3,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,5]],[[2,3]]]",
+        "output": "[[1,5]]",
+        "expectedOutput": "[[1,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,3],[7,9]],[[2,5],[8,12]]]",
+        "output": "[[1,5],[7,12]]",
+        "expectedOutput": "[[1,5],[7,12]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,2],[3,4],[5,6]],[[1,2],[3,4],[5,6]]]",
+        "output": "[[1,2],[3,4],[5,6]]",
+        "expectedOutput": "[[1,2],[3,4],[5,6]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,10]],[[2,3],[4,5],[6,7],[8,9]]]",
+        "output": "[[1,10]]",
+        "expectedOutput": "[[1,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,2],[5,8],[10,12]],[[1,3],[6,7],[9,11]]]",
+        "output": "[[0,3],[5,8],[9,12]]",
+        "expectedOutput": "[[0,3],[5,8],[9,12]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,1],[3,4],[6,7],[9,10],[12,13],[15,16],[18,19],[21,22],[24,25],[27,28]],[[1,2],[4,5],[7,8],[10,11],[13,14],[16,17],[19,20],[22,23],[25,26],[28,29]]]",
+        "output": "[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29]]",
+        "expectedOutput": "[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,5],[10,15]],[[16,20],[21,25]]]",
+        "output": "[[1,5],[10,15],[16,20],[21,25]]",
+        "expectedOutput": "[[1,5],[10,15],[16,20],[21,25]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[5,10]],[[1,3]]]",
+        "output": "[[1,3],[5,10]]",
+        "expectedOutput": "[[1,3],[5,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,1]],[[1,1]]]",
+        "output": "[[1,1]]",
+        "expectedOutput": "[[1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,2],[5,7],[10,12],[15,17],[20,22],[25,27],[30,32],[35,37],[40,42],[45,47],[50,52],[55,57]],[[100,102],[105,107],[110,112],[115,117],[120,122],[125,127],[130,132],[135,137],[140,142],[145,147],[150,152],[155,157]]]",
+        "output": "[[0,2],[5,7],[10,12],[15,17],[20,22],[25,27],[30,32],[35,37],[40,42],[45,47],[50,52],[55,57],[100,102],[105,107],[110,112],[115,117],[120,122],[125,127],[130,132],[135,137],[140,142],[145,147],[150,152],[155,157]]",
+        "expectedOutput": "[[0,2],[5,7],[10,12],[15,17],[20,22],[25,27],[30,32],[35,37],[40,42],[45,47],[50,52],[55,57],[100,102],[105,107],[110,112],[115,117],[120,122],[125,127],[130,132],[135,137],[140,142],[145,147],[150,152],[155,157]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,10]],[[2,3],[4,5],[6,7]]]",
+        "output": "[[1,10]]",
+        "expectedOutput": "[[1,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,4],[8,10]],[[2,3],[5,7],[9,12]]]",
+        "output": "[[1,4],[5,7],[8,12]]",
+        "expectedOutput": "[[1,4],[5,7],[8,12]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,3],[5,7],[9,11],[13,15]],[[2,6],[8,10],[12,16]]]",
+        "output": "[[1,7],[8,11],[12,16]]",
+        "expectedOutput": "[[1,7],[8,11],[12,16]]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "a = [[1,3],[5,7]], b = [[2,4],[6,8]]",
+      "output": "[[1,4],[5,8]]",
+      "expectedOutput": "[[1,4],[5,8]]",
+      "explanation": "[1,3] overlaps [2,4] to form [1,4]; [5,7] overlaps [6,8] to form [5,8]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "a = [[1,2],[5,6]], b = [[3,4]]",
+      "output": "[[1,2],[3,4],[5,6]]",
+      "expectedOutput": "[[1,2],[3,4],[5,6]]",
+      "explanation": "none of the intervals touch, so they just interleave in sorted order"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "a = [], b = [[1,5]]",
+      "output": "[[1,5]]",
+      "expectedOutput": "[[1,5]]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "a = [[1,3],[5,7]], b = [[2,4],[6,8]]",
+      "output": "[[1,4],[5,8]]",
+      "expectedOutput": "[[1,4],[5,8]]",
+      "explanation": "[1,3] overlaps [2,4] to form [1,4]; [5,7] overlaps [6,8] to form [5,8]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "a = [[1,2],[5,6]], b = [[3,4]]",
+      "output": "[[1,2],[3,4],[5,6]]",
+      "expectedOutput": "[[1,2],[3,4],[5,6]]",
+      "explanation": "none of the intervals touch, so they just interleave in sorted order"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "a = [], b = [[1,5]]",
+      "output": "[[1,5]]",
+      "expectedOutput": "[[1,5]]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,3],[5,7]],[[2,4],[6,8]]]",
+      "output": "[[1,4],[5,8]]",
+      "expectedOutput": "[[1,4],[5,8]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,2],[5,6]],[[3,4]]]",
+      "output": "[[1,2],[3,4],[5,6]]",
+      "expectedOutput": "[[1,2],[3,4],[5,6]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[],[[1,5]]]",
+      "output": "[[1,5]]",
+      "expectedOutput": "[[1,5]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1,3]],[[3,5]]]",
+      "output": "[[1,5]]",
+      "expectedOutput": "[[1,5]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[],[]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,2]],[]]",
+      "output": "[[1,2]]",
+      "expectedOutput": "[[1,2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[],[[3,4]]]",
+      "output": "[[3,4]]",
+      "expectedOutput": "[[3,4]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,5]],[[2,3]]]",
+      "output": "[[1,5]]",
+      "expectedOutput": "[[1,5]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1,3],[7,9]],[[2,5],[8,12]]]",
+      "output": "[[1,5],[7,12]]",
+      "expectedOutput": "[[1,5],[7,12]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1,2],[3,4],[5,6]],[[1,2],[3,4],[5,6]]]",
+      "output": "[[1,2],[3,4],[5,6]]",
+      "expectedOutput": "[[1,2],[3,4],[5,6]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[1,10]],[[2,3],[4,5],[6,7],[8,9]]]",
+      "output": "[[1,10]]",
+      "expectedOutput": "[[1,10]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[0,2],[5,8],[10,12]],[[1,3],[6,7],[9,11]]]",
+      "output": "[[0,3],[5,8],[9,12]]",
+      "expectedOutput": "[[0,3],[5,8],[9,12]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[0,1],[3,4],[6,7],[9,10],[12,13],[15,16],[18,19],[21,22],[24,25],[27,28]],[[1,2],[4,5],[7,8],[10,11],[13,14],[16,17],[19,20],[22,23],[25,26],[28,29]]]",
+      "output": "[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29]]",
+      "expectedOutput": "[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,5],[10,15]],[[16,20],[21,25]]]",
+      "output": "[[1,5],[10,15],[16,20],[21,25]]",
+      "expectedOutput": "[[1,5],[10,15],[16,20],[21,25]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[5,10]],[[1,3]]]",
+      "output": "[[1,3],[5,10]]",
+      "expectedOutput": "[[1,3],[5,10]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[1,1]],[[1,1]]]",
+      "output": "[[1,1]]",
+      "expectedOutput": "[[1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[0,2],[5,7],[10,12],[15,17],[20,22],[25,27],[30,32],[35,37],[40,42],[45,47],[50,52],[55,57]],[[100,102],[105,107],[110,112],[115,117],[120,122],[125,127],[130,132],[135,137],[140,142],[145,147],[150,152],[155,157]]]",
+      "output": "[[0,2],[5,7],[10,12],[15,17],[20,22],[25,27],[30,32],[35,37],[40,42],[45,47],[50,52],[55,57],[100,102],[105,107],[110,112],[115,117],[120,122],[125,127],[130,132],[135,137],[140,142],[145,147],[150,152],[155,157]]",
+      "expectedOutput": "[[0,2],[5,7],[10,12],[15,17],[20,22],[25,27],[30,32],[35,37],[40,42],[45,47],[50,52],[55,57],[100,102],[105,107],[110,112],[115,117],[120,122],[125,127],[130,132],[135,137],[140,142],[145,147],[150,152],[155,157]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1,10]],[[2,3],[4,5],[6,7]]]",
+      "output": "[[1,10]]",
+      "expectedOutput": "[[1,10]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,4],[8,10]],[[2,3],[5,7],[9,12]]]",
+      "output": "[[1,4],[5,7],[8,12]]",
+      "expectedOutput": "[[1,4],[5,7],[8,12]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,3],[5,7],[9,11],[13,15]],[[2,6],[8,10],[12,16]]]",
+      "output": "[[1,7],[8,11],[12,16]]",
+      "expectedOutput": "[[1,7],[8,11],[12,16]]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "a = [[1,3],[5,7]], b = [[2,4],[6,8]]",
+        "output": "[[1,4],[5,8]]",
+        "expectedOutput": "[[1,4],[5,8]]",
+        "explanation": "[1,3] overlaps [2,4] to form [1,4]; [5,7] overlaps [6,8] to form [5,8]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "a = [[1,2],[5,6]], b = [[3,4]]",
+        "output": "[[1,2],[3,4],[5,6]]",
+        "expectedOutput": "[[1,2],[3,4],[5,6]]",
+        "explanation": "none of the intervals touch, so they just interleave in sorted order"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "a = [], b = [[1,5]]",
+        "output": "[[1,5]]",
+        "expectedOutput": "[[1,5]]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,3],[5,7]],[[2,4],[6,8]]]",
+        "output": "[[1,4],[5,8]]",
+        "expectedOutput": "[[1,4],[5,8]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,2],[5,6]],[[3,4]]]",
+        "output": "[[1,2],[3,4],[5,6]]",
+        "expectedOutput": "[[1,2],[3,4],[5,6]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[],[[1,5]]]",
+        "output": "[[1,5]]",
+        "expectedOutput": "[[1,5]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,3]],[[3,5]]]",
+        "output": "[[1,5]]",
+        "expectedOutput": "[[1,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[],[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,2]],[]]",
+        "output": "[[1,2]]",
+        "expectedOutput": "[[1,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[],[[3,4]]]",
+        "output": "[[3,4]]",
+        "expectedOutput": "[[3,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,5]],[[2,3]]]",
+        "output": "[[1,5]]",
+        "expectedOutput": "[[1,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,3],[7,9]],[[2,5],[8,12]]]",
+        "output": "[[1,5],[7,12]]",
+        "expectedOutput": "[[1,5],[7,12]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,2],[3,4],[5,6]],[[1,2],[3,4],[5,6]]]",
+        "output": "[[1,2],[3,4],[5,6]]",
+        "expectedOutput": "[[1,2],[3,4],[5,6]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,10]],[[2,3],[4,5],[6,7],[8,9]]]",
+        "output": "[[1,10]]",
+        "expectedOutput": "[[1,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,2],[5,8],[10,12]],[[1,3],[6,7],[9,11]]]",
+        "output": "[[0,3],[5,8],[9,12]]",
+        "expectedOutput": "[[0,3],[5,8],[9,12]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,1],[3,4],[6,7],[9,10],[12,13],[15,16],[18,19],[21,22],[24,25],[27,28]],[[1,2],[4,5],[7,8],[10,11],[13,14],[16,17],[19,20],[22,23],[25,26],[28,29]]]",
+        "output": "[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29]]",
+        "expectedOutput": "[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,5],[10,15]],[[16,20],[21,25]]]",
+        "output": "[[1,5],[10,15],[16,20],[21,25]]",
+        "expectedOutput": "[[1,5],[10,15],[16,20],[21,25]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[5,10]],[[1,3]]]",
+        "output": "[[1,3],[5,10]]",
+        "expectedOutput": "[[1,3],[5,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,1]],[[1,1]]]",
+        "output": "[[1,1]]",
+        "expectedOutput": "[[1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,2],[5,7],[10,12],[15,17],[20,22],[25,27],[30,32],[35,37],[40,42],[45,47],[50,52],[55,57]],[[100,102],[105,107],[110,112],[115,117],[120,122],[125,127],[130,132],[135,137],[140,142],[145,147],[150,152],[155,157]]]",
+        "output": "[[0,2],[5,7],[10,12],[15,17],[20,22],[25,27],[30,32],[35,37],[40,42],[45,47],[50,52],[55,57],[100,102],[105,107],[110,112],[115,117],[120,122],[125,127],[130,132],[135,137],[140,142],[145,147],[150,152],[155,157]]",
+        "expectedOutput": "[[0,2],[5,7],[10,12],[15,17],[20,22],[25,27],[30,32],[35,37],[40,42],[45,47],[50,52],[55,57],[100,102],[105,107],[110,112],[115,117],[120,122],[125,127],[130,132],[135,137],[140,142],[145,147],[150,152],[155,157]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,10]],[[2,3],[4,5],[6,7]]]",
+        "output": "[[1,10]]",
+        "expectedOutput": "[[1,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,4],[8,10]],[[2,3],[5,7],[9,12]]]",
+        "output": "[[1,4],[5,7],[8,12]]",
+        "expectedOutput": "[[1,4],[5,7],[8,12]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,3],[5,7],[9,11],[13,15]],[[2,6],[8,10],[12,16]]]",
+        "output": "[[1,7],[8,11],[12,16]]",
+        "expectedOutput": "[[1,7],[8,11],[12,16]]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def mergeTwoSortedLists(self, a, b):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> mergeTwoSortedLists(vector<vector<int>>& a, vector<vector<int>>& b) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] mergeTwoSortedLists(int[][] a, int[][] b) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun mergeTwoSortedLists(a: Array<IntArray>, b: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    mergeTwoSortedLists(a, b) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def mergeTwoSortedLists(self, a, b):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> mergeTwoSortedLists(vector<vector<int>>& a, vector<vector<int>>& b) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] mergeTwoSortedLists(int[][] a, int[][] b) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun mergeTwoSortedLists(a: Array<IntArray>, b: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    mergeTwoSortedLists(a, b) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def mergeTwoSortedLists(self, a, b):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> mergeTwoSortedLists(vector<vector<int>>& a, vector<vector<int>>& b) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] mergeTwoSortedLists(int[][] a, int[][] b) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun mergeTwoSortedLists(a: Array<IntArray>, b: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    mergeTwoSortedLists(a, b) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def mergeTwoSortedLists(self, a, b):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> mergeTwoSortedLists(vector<vector<int>>& a, vector<vector<int>>& b) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] mergeTwoSortedLists(int[][] a, int[][] b) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun mergeTwoSortedLists(a: Array<IntArray>, b: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    mergeTwoSortedLists(a, b) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n + m)",
+      "space": "O(n + m) for the output",
+      "pattern": "two pointers merging two already-sorted lists"
+    },
+    "bruteForce": {
+      "approach": "concatenate both lists, sort all intervals by start, then run a standard linear merge pass over the combined list",
+      "time": "O((n + m) log(n + m))",
+      "space": "O(n + m)"
+    }
+  },
+  "optimal": {
+    "pattern": "two pointers merging two already-sorted lists",
+    "time": "O(n + m)",
+    "space": "O(n + m) for the output",
+    "hint_ladder": [
+      "both lists are already sorted individually - do you really need to re-sort everything from scratch?",
+      "this looks like the merge step of merge sort: walk both lists with a pointer each, always advancing the one with the smaller start",
+      "keep a running 'last interval added to the result'. when the next candidate interval (from whichever pointer is smaller) overlaps it, extend it instead of appending a new one",
+      "after one pointer runs out, the rest of the other list can just be appended/merged in the same way, one interval at a time"
+    ]
+  },
+  "bruteForce": {
+    "approach": "concatenate both lists, sort all intervals by start, then run a standard linear merge pass over the combined list",
+    "time": "O((n + m) log(n + m))",
+    "space": "O(n + m)"
+  },
+  "isIndex0": true,
+  "level": null
+}

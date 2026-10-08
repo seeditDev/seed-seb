@@ -1,0 +1,631 @@
+{
+  "id": "count-square-submatrices-with-all-ones",
+  "questionId": "count-square-submatrices-with-all-ones",
+  "slug": "count-square-submatrices-with-all-ones",
+  "title": "Count Square Submatrices with All Ones",
+  "difficulty": "Easy",
+  "category": "Dp 2d",
+  "patterns": [
+    "dynamic programming",
+    "grid",
+    "matrix"
+  ],
+  "lists": [],
+  "hints": [
+    "this is closely related to finding the single largest square of 1s - what does the largest-square-ending-here value at a cell actually tell you about how many total squares end at that cell?",
+    "define dp[i][j] as the side length of the largest all-1s square whose bottom-right corner is cell (i, j), same as in the maximal square problem",
+    "if matrix[i][j] == 1, dp[i][j] = 1 + min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]); if matrix[i][j] == 0, dp[i][j] = 0",
+    "here's the key insight: if dp[i][j] = k, that means there are exactly k distinct squares (of sizes 1x1, 2x2, ..., kxk) that all end with their bottom-right corner at (i, j)",
+    "so instead of just tracking the maximum dp value, sum up every dp[i][j] across the whole table - that sum is the total count of square submatrices of all sizes containing only 1s"
+  ],
+  "commonMistakes": [
+    "computing the same dp table as maximal square but returning the max value squared instead of the sum of all dp values",
+    "forgetting that each dp[i][j] value of k represents k separate squares, not just one",
+    "not handling the first row/column edge case when dp[i-1][j-1] would be out of bounds"
+  ],
+  "content": {
+    "problemStatement": "You're given a `matrix` of 0s and 1s.\n\n**Count the total number of square submatrices, of any size, with all four sides aligned to the grid, that contain only 1s.**\n",
+    "constraints": [
+      "1 <= rows, cols <= 300",
+      "matrix[i][j] is either 0 or 1"
+    ],
+    "notes": [
+      "a matrix of all zeros (answer is 0)",
+      "a matrix of all ones (many squares of every size up to min(rows, cols))",
+      "a single row or single column (only 1x1 squares are possible)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "matrix = [[0,1,1,1],[1,1,1,1],[0,1,1,1]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "explanation": "There are 10 squares of size 1x1, 4 of size 2x2, and 1 of size 3x3, totaling 15."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "matrix = [[1,0,1],[1,1,0],[1,1,0]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": "There are 6 squares of size 1x1 and 1 of size 2x2, totaling 7."
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "matrix = [[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,1,1,1],[1,1,1,1],[0,1,1,1]]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,0,1],[1,1,0],[1,1,0]]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1,1],[1,1,1]]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0,0,0],[0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,1,1,1,1]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1],[1],[1],[1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,1,1,1,1,1,0,1],[1,1,1,1,1,1,1,1],[1,1,0,1,0,1,1,1],[0,1,1,1,0,1,0,1],[1,0,1,1,0,1,0,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,0,1,1],[1,1,1,1,0,1,1,1]]]",
+        "output": "74",
+        "expectedOutput": "74",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,0,1,1,1,1,1,0,0,1],[0,1,0,1,1,1,1,1,1,0],[1,1,0,1,1,1,1,0,0,1],[1,1,0,1,0,0,1,0,0,1],[1,0,1,1,1,0,0,1,1,1],[0,0,1,0,0,1,0,1,0,1],[1,1,1,0,0,0,1,1,0,0],[1,1,1,0,0,1,1,1,1,0],[1,1,1,0,1,1,0,0,1,1],[1,1,1,1,1,1,1,0,1,0]]]",
+        "output": "82",
+        "expectedOutput": "82",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,1,1,1,1,1,0,1,1],[1,0,1,1,1,1,1,1,1],[0,1,1,1,0,1,1,1,1],[1,1,0,1,0,1,1,0,0],[0,0,0,1,1,1,1,1,1],[0,1,1,1,1,0,0,1,1],[1,1,0,1,1,1,1,1,1],[0,1,0,1,1,1,1,1,1],[0,1,1,1,1,1,1,0,1],[1,1,1,1,1,1,1,1,1],[0,0,1,1,1,0,0,0,1],[1,0,1,1,0,1,1,0,1]]]",
+        "output": "116",
+        "expectedOutput": "116",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1]]]",
+        "output": "385",
+        "expectedOutput": "385",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,0,1,1,1,1,1,1,0,1,1,1,1,0,0],[1,1,1,1,0,1,1,0,1,1,1,1,0,0,1],[0,1,1,1,1,0,0,0,0,1,1,1,0,0,1],[1,1,0,0,0,0,0,1,0,1,0,0,0,0,1],[0,1,0,0,1,0,1,1,0,1,1,1,1,0,0]]]",
+        "output": "51",
+        "expectedOutput": "51",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,1,1,0,1],[0,1,0,1,0],[1,1,1,0,1],[1,1,1,1,1],[0,1,0,1,0],[0,0,1,1,0],[1,1,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,1,1,1],[1,0,0,1,1],[1,1,1,0,0],[0,1,1,1,1],[1,0,1,1,1]]]",
+        "output": "61",
+        "expectedOutput": "61",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0]]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,0,1,1,0,1,0,0,1],[1,1,0,0,1,1,0,1,0],[0,0,0,0,0,0,0,0,0],[0,0,0,1,1,1,0,0,0],[0,1,1,1,1,1,0,1,1],[0,0,1,1,0,1,1,1,0],[0,0,0,0,1,1,1,0,0],[0,1,0,0,0,1,1,1,1],[1,0,1,1,1,1,0,1,1]]]",
+        "output": "46",
+        "expectedOutput": "46",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,0,1,1,1,1],[1,0,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,0,1,1,1,1,0],[1,1,1,1,1,1,1,0,1,1,0],[1,1,1,1,1,1,1,1,1,0,1],[1,1,1,1,0,1,1,1,1,1,1],[1,0,1,1,0,1,1,1,1,1,0],[1,1,1,1,0,1,1,1,0,1,1],[1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1]]]",
+        "output": "188",
+        "expectedOutput": "188",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,1,0,1,0],[1,1,1,1,1],[0,1,1,1,0],[1,1,1,1,1],[0,1,0,1,0]]]",
+        "output": "22",
+        "expectedOutput": "22",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "matrix = [[0,1,1,1],[1,1,1,1],[0,1,1,1]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "explanation": "There are 10 squares of size 1x1, 4 of size 2x2, and 1 of size 3x3, totaling 15."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "matrix = [[1,0,1],[1,1,0],[1,1,0]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": "There are 6 squares of size 1x1 and 1 of size 2x2, totaling 7."
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "matrix = [[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "matrix = [[0,1,1,1],[1,1,1,1],[0,1,1,1]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "explanation": "There are 10 squares of size 1x1, 4 of size 2x2, and 1 of size 3x3, totaling 15."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "matrix = [[1,0,1],[1,1,0],[1,1,0]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": "There are 6 squares of size 1x1 and 1 of size 2x2, totaling 7."
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "matrix = [[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[0,1,1,1],[1,1,1,1],[0,1,1,1]]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,0,1],[1,1,0],[1,1,0]]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1,1],[1,1]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,1,1],[1,1,1]]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[0,0,0],[0,0,0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,1,1,1,1]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1],[1],[1],[1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1,1,1,1,1,1,0,1],[1,1,1,1,1,1,1,1],[1,1,0,1,0,1,1,1],[0,1,1,1,0,1,0,1],[1,0,1,1,0,1,0,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,0,1,1],[1,1,1,1,0,1,1,1]]]",
+      "output": "74",
+      "expectedOutput": "74",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[0,0,1,1,1,1,1,0,0,1],[0,1,0,1,1,1,1,1,1,0],[1,1,0,1,1,1,1,0,0,1],[1,1,0,1,0,0,1,0,0,1],[1,0,1,1,1,0,0,1,1,1],[0,0,1,0,0,1,0,1,0,1],[1,1,1,0,0,0,1,1,0,0],[1,1,1,0,0,1,1,1,1,0],[1,1,1,0,1,1,0,0,1,1],[1,1,1,1,1,1,1,0,1,0]]]",
+      "output": "82",
+      "expectedOutput": "82",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[0,1,1,1,1,1,0,1,1],[1,0,1,1,1,1,1,1,1],[0,1,1,1,0,1,1,1,1],[1,1,0,1,0,1,1,0,0],[0,0,0,1,1,1,1,1,1],[0,1,1,1,1,0,0,1,1],[1,1,0,1,1,1,1,1,1],[0,1,0,1,1,1,1,1,1],[0,1,1,1,1,1,1,0,1],[1,1,1,1,1,1,1,1,1],[0,0,1,1,1,0,0,0,1],[1,0,1,1,0,1,1,0,1]]]",
+      "output": "116",
+      "expectedOutput": "116",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1]]]",
+      "output": "385",
+      "expectedOutput": "385",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[0,0,1,1,1,1,1,1,0,1,1,1,1,0,0],[1,1,1,1,0,1,1,0,1,1,1,1,0,0,1],[0,1,1,1,1,0,0,0,0,1,1,1,0,0,1],[1,1,0,0,0,0,0,1,0,1,0,0,0,0,1],[0,1,0,0,1,0,1,1,0,1,1,1,1,0,0]]]",
+      "output": "51",
+      "expectedOutput": "51",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[1,1,1,0,1],[0,1,0,1,0],[1,1,1,0,1],[1,1,1,1,1],[0,1,0,1,0],[0,0,1,1,0],[1,1,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,1,1,1],[1,0,0,1,1],[1,1,1,0,0],[0,1,1,1,1],[1,0,1,1,1]]]",
+      "output": "61",
+      "expectedOutput": "61",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0]]]",
+      "output": "24",
+      "expectedOutput": "24",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1,0,1,1,0,1,0,0,1],[1,1,0,0,1,1,0,1,0],[0,0,0,0,0,0,0,0,0],[0,0,0,1,1,1,0,0,0],[0,1,1,1,1,1,0,1,1],[0,0,1,1,0,1,1,1,0],[0,0,0,0,1,1,1,0,0],[0,1,0,0,0,1,1,1,1],[1,0,1,1,1,1,0,1,1]]]",
+      "output": "46",
+      "expectedOutput": "46",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,0,1,1,1,1],[1,0,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,0,1,1,1,1,0],[1,1,1,1,1,1,1,0,1,1,0],[1,1,1,1,1,1,1,1,1,0,1],[1,1,1,1,0,1,1,1,1,1,1],[1,0,1,1,0,1,1,1,1,1,0],[1,1,1,1,0,1,1,1,0,1,1],[1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1]]]",
+      "output": "188",
+      "expectedOutput": "188",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[0,1,0,1,0],[1,1,1,1,1],[0,1,1,1,0],[1,1,1,1,1],[0,1,0,1,0]]]",
+      "output": "22",
+      "expectedOutput": "22",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "matrix = [[0,1,1,1],[1,1,1,1],[0,1,1,1]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "explanation": "There are 10 squares of size 1x1, 4 of size 2x2, and 1 of size 3x3, totaling 15."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "matrix = [[1,0,1],[1,1,0],[1,1,0]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": "There are 6 squares of size 1x1 and 1 of size 2x2, totaling 7."
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "matrix = [[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,1,1,1],[1,1,1,1],[0,1,1,1]]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,0,1],[1,1,0],[1,1,0]]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1,1],[1,1,1]]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0,0,0],[0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,1,1,1,1]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1],[1],[1],[1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,1,1,1,1,1,0,1],[1,1,1,1,1,1,1,1],[1,1,0,1,0,1,1,1],[0,1,1,1,0,1,0,1],[1,0,1,1,0,1,0,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,0,1,1],[1,1,1,1,0,1,1,1]]]",
+        "output": "74",
+        "expectedOutput": "74",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,0,1,1,1,1,1,0,0,1],[0,1,0,1,1,1,1,1,1,0],[1,1,0,1,1,1,1,0,0,1],[1,1,0,1,0,0,1,0,0,1],[1,0,1,1,1,0,0,1,1,1],[0,0,1,0,0,1,0,1,0,1],[1,1,1,0,0,0,1,1,0,0],[1,1,1,0,0,1,1,1,1,0],[1,1,1,0,1,1,0,0,1,1],[1,1,1,1,1,1,1,0,1,0]]]",
+        "output": "82",
+        "expectedOutput": "82",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,1,1,1,1,1,0,1,1],[1,0,1,1,1,1,1,1,1],[0,1,1,1,0,1,1,1,1],[1,1,0,1,0,1,1,0,0],[0,0,0,1,1,1,1,1,1],[0,1,1,1,1,0,0,1,1],[1,1,0,1,1,1,1,1,1],[0,1,0,1,1,1,1,1,1],[0,1,1,1,1,1,1,0,1],[1,1,1,1,1,1,1,1,1],[0,0,1,1,1,0,0,0,1],[1,0,1,1,0,1,1,0,1]]]",
+        "output": "116",
+        "expectedOutput": "116",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1]]]",
+        "output": "385",
+        "expectedOutput": "385",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,0,1,1,1,1,1,1,0,1,1,1,1,0,0],[1,1,1,1,0,1,1,0,1,1,1,1,0,0,1],[0,1,1,1,1,0,0,0,0,1,1,1,0,0,1],[1,1,0,0,0,0,0,1,0,1,0,0,0,0,1],[0,1,0,0,1,0,1,1,0,1,1,1,1,0,0]]]",
+        "output": "51",
+        "expectedOutput": "51",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,1,1,0,1],[0,1,0,1,0],[1,1,1,0,1],[1,1,1,1,1],[0,1,0,1,0],[0,0,1,1,0],[1,1,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,1,1,1],[1,0,0,1,1],[1,1,1,0,0],[0,1,1,1,1],[1,0,1,1,1]]]",
+        "output": "61",
+        "expectedOutput": "61",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0]]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,0,1,1,0,1,0,0,1],[1,1,0,0,1,1,0,1,0],[0,0,0,0,0,0,0,0,0],[0,0,0,1,1,1,0,0,0],[0,1,1,1,1,1,0,1,1],[0,0,1,1,0,1,1,1,0],[0,0,0,0,1,1,1,0,0],[0,1,0,0,0,1,1,1,1],[1,0,1,1,1,1,0,1,1]]]",
+        "output": "46",
+        "expectedOutput": "46",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,0,1,1,1,1],[1,0,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,0,1,1,1,1,0],[1,1,1,1,1,1,1,0,1,1,0],[1,1,1,1,1,1,1,1,1,0,1],[1,1,1,1,0,1,1,1,1,1,1],[1,0,1,1,0,1,1,1,1,1,0],[1,1,1,1,0,1,1,1,0,1,1],[1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1]]]",
+        "output": "188",
+        "expectedOutput": "188",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,1,0,1,0],[1,1,1,1,1],[0,1,1,1,0],[1,1,1,1,1],[0,1,0,1,0]]]",
+        "output": "22",
+        "expectedOutput": "22",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def countSquares(self, matrix):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countSquares(vector<vector<int>>& matrix) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countSquares(int[][] matrix) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countSquares(matrix: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countSquares(matrix) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def countSquares(self, matrix):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countSquares(vector<vector<int>>& matrix) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countSquares(int[][] matrix) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countSquares(matrix: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countSquares(matrix) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def countSquares(self, matrix):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countSquares(vector<vector<int>>& matrix) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countSquares(int[][] matrix) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countSquares(matrix: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countSquares(matrix) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def countSquares(self, matrix):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countSquares(vector<vector<int>>& matrix) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countSquares(int[][] matrix) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countSquares(matrix: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countSquares(matrix) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(m * n)",
+      "space": "O(m * n), reducible to O(n)",
+      "pattern": "2D dynamic programming where each cell stores the largest square ending there, and every unit of that value is itself a valid square"
+    },
+    "bruteForce": {
+      "approach": "for every cell that is 1, try every possible square size starting there and check the raw matrix directly to see how large a square of 1s can be formed, summing valid squares found",
+      "time": "O((m*n)^2) in the worst case",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "2D dynamic programming where each cell stores the largest square ending there, and every unit of that value is itself a valid square",
+    "time": "O(m * n)",
+    "space": "O(m * n), reducible to O(n)",
+    "hint_ladder": [
+      "this is closely related to finding the single largest square of 1s - what does the largest-square-ending-here value at a cell actually tell you about how many total squares end at that cell?",
+      "define dp[i][j] as the side length of the largest all-1s square whose bottom-right corner is cell (i, j), same as in the maximal square problem",
+      "if matrix[i][j] == 1, dp[i][j] = 1 + min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]); if matrix[i][j] == 0, dp[i][j] = 0",
+      "here's the key insight: if dp[i][j] = k, that means there are exactly k distinct squares (of sizes 1x1, 2x2, ..., kxk) that all end with their bottom-right corner at (i, j)",
+      "so instead of just tracking the maximum dp value, sum up every dp[i][j] across the whole table - that sum is the total count of square submatrices of all sizes containing only 1s"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every cell that is 1, try every possible square size starting there and check the raw matrix directly to see how large a square of 1s can be formed, summing valid squares found",
+    "time": "O((m*n)^2) in the worst case",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

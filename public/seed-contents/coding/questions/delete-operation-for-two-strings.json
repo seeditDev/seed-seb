@@ -1,0 +1,630 @@
+{
+  "id": "delete-operation-for-two-strings",
+  "questionId": "delete-operation-for-two-strings",
+  "slug": "delete-operation-for-two-strings",
+  "title": "Delete Operation for Two Strings",
+  "difficulty": "Medium",
+  "category": "Dp 2d",
+  "patterns": [
+    "dynamic programming",
+    "strings"
+  ],
+  "lists": [],
+  "hints": [
+    "whatever characters remain after deleting the minimum number from both strings must form a common subsequence of the two - and to minimize deletions, you want to keep as much as possible",
+    "so the real question becomes: what's the longest common subsequence (LCS) between word1 and word2? every character not in that LCS must be deleted from its string",
+    "define dp[i][j] as the length of the LCS between the first i characters of word1 and the first j characters of word2, using the standard LCS recurrence",
+    "once you have the LCS length L, the answer is (word1.length - L) + (word2.length - L), since those are exactly the characters in each string that aren't part of the shared subsequence",
+    "fill the LCS table with dp[i][j] = 1 + dp[i-1][j-1] when characters match, else max(dp[i-1][j], dp[i][j-1]), then apply the deletion formula"
+  ],
+  "commonMistakes": [
+    "trying to directly define a 'deletions' DP from scratch instead of recognizing this reduces cleanly to longest common subsequence",
+    "forgetting to subtract the LCS length from BOTH string lengths, only accounting for deletions from one side",
+    "off-by-one errors in the standard LCS table indexing"
+  ],
+  "content": {
+    "problemStatement": "You're given two strings, `word1` and `word2`.\n\n**Find the minimum total number of characters you must delete, from either string, one at a time, so that the two strings become identical.**\n",
+    "constraints": [
+      "1 <= word1.length, word2.length <= 500",
+      "words consist of lowercase English letters"
+    ],
+    "notes": [
+      "the two strings are already identical (zero deletions needed)",
+      "the two strings share no characters at all (delete everything from both)",
+      "one string is a subsequence of the other"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "word1 = \"sea\", word2 = \"eat\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "Delete 's' from \"sea\" and 't' from \"eat\" to get \"ea\" from both."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "word1 = \"leetcode\", word2 = \"etco\"",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "word1 = \"abc\", word2 = \"abc\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"sea\",\"eat\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"leetcode\",\"etco\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"abc\",\"abc\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a\",\"b\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"abc\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"\",\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"kitten\",\"sitting\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"park\",\"spake\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"aaaaaaaaaa\",\"aaaaa\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"ebbbdceeecab\",\"cbcbcaebca\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"ababaabbbbbaabb\",\"aabbaaaabaaabab\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"xyz\",\"xyz\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abcdefgh\",\"hgfedcba\"]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"bbbcbbccaccaacabcaaa\",\"acaaabbc\"]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"a\",\"aa\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"\",\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"edcabcfcfgd\",\"afbcggfefgbda\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"abcabcabc\",\"cba\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"zzzz\",\"z\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"xxyxxxxyy\",\"yxyyyyyyx\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "word1 = \"sea\", word2 = \"eat\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "Delete 's' from \"sea\" and 't' from \"eat\" to get \"ea\" from both."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "word1 = \"leetcode\", word2 = \"etco\"",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "word1 = \"abc\", word2 = \"abc\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "word1 = \"sea\", word2 = \"eat\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "Delete 's' from \"sea\" and 't' from \"eat\" to get \"ea\" from both."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "word1 = \"leetcode\", word2 = \"etco\"",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "word1 = \"abc\", word2 = \"abc\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"sea\",\"eat\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"leetcode\",\"etco\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"abc\",\"abc\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"a\",\"b\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"\",\"abc\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"\",\"\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"kitten\",\"sitting\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"park\",\"spake\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"aaaaaaaaaa\",\"aaaaa\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"ebbbdceeecab\",\"cbcbcaebca\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"ababaabbbbbaabb\",\"aabbaaaabaaabab\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"xyz\",\"xyz\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"abcdefgh\",\"hgfedcba\"]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"bbbcbbccaccaacabcaaa\",\"acaaabbc\"]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"a\",\"aa\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"\",\"a\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"edcabcfcfgd\",\"afbcggfefgbda\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"abcabcabc\",\"cba\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"zzzz\",\"z\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"xxyxxxxyy\",\"yxyyyyyyx\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "word1 = \"sea\", word2 = \"eat\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "Delete 's' from \"sea\" and 't' from \"eat\" to get \"ea\" from both."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "word1 = \"leetcode\", word2 = \"etco\"",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "word1 = \"abc\", word2 = \"abc\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"sea\",\"eat\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"leetcode\",\"etco\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"abc\",\"abc\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a\",\"b\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"abc\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"\",\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"kitten\",\"sitting\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"park\",\"spake\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"aaaaaaaaaa\",\"aaaaa\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"ebbbdceeecab\",\"cbcbcaebca\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"ababaabbbbbaabb\",\"aabbaaaabaaabab\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"xyz\",\"xyz\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abcdefgh\",\"hgfedcba\"]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"bbbcbbccaccaacabcaaa\",\"acaaabbc\"]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"a\",\"aa\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"\",\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"edcabcfcfgd\",\"afbcggfefgbda\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"abcabcabc\",\"cba\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"zzzz\",\"z\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"xxyxxxxyy\",\"yxyyyyyyx\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minDistance(self, word1, word2):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minDistance(string word1, string word2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minDistance(String word1, String word2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minDistance(word1: String, word2: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minDistance(word1, word2) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minDistance(self, word1, word2):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minDistance(string word1, string word2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minDistance(String word1, String word2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minDistance(word1: String, word2: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minDistance(word1, word2) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minDistance(self, word1, word2):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minDistance(string word1, string word2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minDistance(String word1, String word2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minDistance(word1: String, word2: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minDistance(word1, word2) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minDistance(self, word1, word2):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minDistance(string word1, string word2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minDistance(String word1, String word2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minDistance(word1: String, word2: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minDistance(word1, word2) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(m * n)",
+      "space": "O(m * n), reducible to O(min(m, n))",
+      "pattern": "2D dynamic programming over two string indices, built on longest common subsequence"
+    },
+    "bruteForce": {
+      "approach": "recursively try, at each position, deleting the current character from word1, deleting from word2, or keeping both if they match, taking the minimum deletions over all branches",
+      "time": "O(2^(m+n))",
+      "space": "O(m + n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "2D dynamic programming over two string indices, built on longest common subsequence",
+    "time": "O(m * n)",
+    "space": "O(m * n), reducible to O(min(m, n))",
+    "hint_ladder": [
+      "whatever characters remain after deleting the minimum number from both strings must form a common subsequence of the two - and to minimize deletions, you want to keep as much as possible",
+      "so the real question becomes: what's the longest common subsequence (LCS) between word1 and word2? every character not in that LCS must be deleted from its string",
+      "define dp[i][j] as the length of the LCS between the first i characters of word1 and the first j characters of word2, using the standard LCS recurrence",
+      "once you have the LCS length L, the answer is (word1.length - L) + (word2.length - L), since those are exactly the characters in each string that aren't part of the shared subsequence",
+      "fill the LCS table with dp[i][j] = 1 + dp[i-1][j-1] when characters match, else max(dp[i-1][j], dp[i][j-1]), then apply the deletion formula"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try, at each position, deleting the current character from word1, deleting from word2, or keeping both if they match, taking the minimum deletions over all branches",
+    "time": "O(2^(m+n))",
+    "space": "O(m + n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

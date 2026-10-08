@@ -1,0 +1,631 @@
+{
+  "id": "longest-common-prefix",
+  "questionId": "longest-common-prefix",
+  "slug": "longest-common-prefix",
+  "title": "Longest Common Prefix",
+  "difficulty": "Easy",
+  "category": "Trie",
+  "patterns": [
+    "trie",
+    "string"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "the common prefix is exactly the path from the root that every single word shares - what structure naturally represents shared paths between words?",
+    "insert every word into a trie one character at a time",
+    "starting at the root, walk down as long as the current node has exactly one child - that means every word inserted so far agrees on this next character",
+    "stop walking the moment you hit a node with more than one child, or a node where some word actually ends (its prefix can't be extended further without losing that word) - the characters collected so far are the answer"
+  ],
+  "commonMistakes": [
+    "forgetting the branch-stopping rule when a shorter word ends exactly where longer words continue, e.g. 'ab' and 'abc' should stop the prefix at 'ab'",
+    "not handling the single-word case, where the whole word is trivially the answer",
+    "comparing words pairwise instead of tracking a single shrinking candidate, which is correct but easy to get the indices wrong on"
+  ],
+  "content": {
+    "problemStatement": "You're given a single space-delimited string of lowercase words.\n\n**Find the longest string that is a prefix of every word in the\nlist.**\n\nIf the words share no common starting characters, return an empty\nstring.\n",
+    "constraints": [
+      "1 <= number of words <= 200",
+      "0 <= words[i].length <= 200",
+      "words[i] consists of lowercase English letters only"
+    ],
+    "notes": [
+      "only one word in the list (the answer is that word itself)",
+      "one word is a complete prefix of all the others, e.g. 'ab abc abcd'",
+      "no shared prefix at all, not even one character"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"flower flow flight\"",
+        "output": "\"fl\"",
+        "expectedOutput": "\"fl\"",
+        "explanation": "all three words start with f, then l, then diverge (o vs i)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"dog racecar car\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": "the words do not even share a first character"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"interspecies interstellar interstate\"",
+        "output": "\"inters\"",
+        "expectedOutput": "\"inters\"",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"flower flow flight\"]",
+        "output": "fl",
+        "expectedOutput": "fl",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"dog racecar car\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"interspecies interstellar interstate\"]",
+        "output": "inters",
+        "expectedOutput": "inters",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"single\"]",
+        "output": "single",
+        "expectedOutput": "single",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"ab abc abcd\"]",
+        "output": "ab",
+        "expectedOutput": "ab",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aa aa aa\"]",
+        "output": "aa",
+        "expectedOutput": "aa",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abc abd abe\"]",
+        "output": "ab",
+        "expectedOutput": "ab",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"prefix pref pre\"]",
+        "output": "pre",
+        "expectedOutput": "pre",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"same same same\"]",
+        "output": "same",
+        "expectedOutput": "same",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"z zz zzz zzzz\"]",
+        "output": "z",
+        "expectedOutput": "z",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"cat car cart\"]",
+        "output": "ca",
+        "expectedOutput": "ca",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"one two\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"a a a a a a a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"test testing tester\"]",
+        "output": "test",
+        "expectedOutput": "test",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abcdef abcxyz abcpqr\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"hello world\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"xy xy\"]",
+        "output": "xy",
+        "expectedOutput": "xy",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"abc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"flow flower flew\"]",
+        "output": "fl",
+        "expectedOutput": "fl",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"commonprefix commonpref common\"]",
+        "output": "common",
+        "expectedOutput": "common",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"flower flow flight\"",
+      "output": "\"fl\"",
+      "expectedOutput": "\"fl\"",
+      "explanation": "all three words start with f, then l, then diverge (o vs i)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"dog racecar car\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": "the words do not even share a first character"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"interspecies interstellar interstate\"",
+      "output": "\"inters\"",
+      "expectedOutput": "\"inters\"",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"flower flow flight\"",
+      "output": "\"fl\"",
+      "expectedOutput": "\"fl\"",
+      "explanation": "all three words start with f, then l, then diverge (o vs i)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"dog racecar car\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": "the words do not even share a first character"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"interspecies interstellar interstate\"",
+      "output": "\"inters\"",
+      "expectedOutput": "\"inters\"",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"flower flow flight\"]",
+      "output": "fl",
+      "expectedOutput": "fl",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"dog racecar car\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"interspecies interstellar interstate\"]",
+      "output": "inters",
+      "expectedOutput": "inters",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"single\"]",
+      "output": "single",
+      "expectedOutput": "single",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"ab abc abcd\"]",
+      "output": "ab",
+      "expectedOutput": "ab",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"aa aa aa\"]",
+      "output": "aa",
+      "expectedOutput": "aa",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"abc abd abe\"]",
+      "output": "ab",
+      "expectedOutput": "ab",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"prefix pref pre\"]",
+      "output": "pre",
+      "expectedOutput": "pre",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"same same same\"]",
+      "output": "same",
+      "expectedOutput": "same",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"z zz zzz zzzz\"]",
+      "output": "z",
+      "expectedOutput": "z",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"cat car cart\"]",
+      "output": "ca",
+      "expectedOutput": "ca",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"one two\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"a a a a a a a\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"test testing tester\"]",
+      "output": "test",
+      "expectedOutput": "test",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"abcdef abcxyz abcpqr\"]",
+      "output": "abc",
+      "expectedOutput": "abc",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"hello world\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"xy xy\"]",
+      "output": "xy",
+      "expectedOutput": "xy",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"abc\"]",
+      "output": "abc",
+      "expectedOutput": "abc",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"flow flower flew\"]",
+      "output": "fl",
+      "expectedOutput": "fl",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"commonprefix commonpref common\"]",
+      "output": "common",
+      "expectedOutput": "common",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"flower flow flight\"",
+        "output": "\"fl\"",
+        "expectedOutput": "\"fl\"",
+        "explanation": "all three words start with f, then l, then diverge (o vs i)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"dog racecar car\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": "the words do not even share a first character"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"interspecies interstellar interstate\"",
+        "output": "\"inters\"",
+        "expectedOutput": "\"inters\"",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"flower flow flight\"]",
+        "output": "fl",
+        "expectedOutput": "fl",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"dog racecar car\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"interspecies interstellar interstate\"]",
+        "output": "inters",
+        "expectedOutput": "inters",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"single\"]",
+        "output": "single",
+        "expectedOutput": "single",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"ab abc abcd\"]",
+        "output": "ab",
+        "expectedOutput": "ab",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aa aa aa\"]",
+        "output": "aa",
+        "expectedOutput": "aa",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abc abd abe\"]",
+        "output": "ab",
+        "expectedOutput": "ab",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"prefix pref pre\"]",
+        "output": "pre",
+        "expectedOutput": "pre",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"same same same\"]",
+        "output": "same",
+        "expectedOutput": "same",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"z zz zzz zzzz\"]",
+        "output": "z",
+        "expectedOutput": "z",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"cat car cart\"]",
+        "output": "ca",
+        "expectedOutput": "ca",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"one two\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"a a a a a a a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"test testing tester\"]",
+        "output": "test",
+        "expectedOutput": "test",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abcdef abcxyz abcpqr\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"hello world\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"xy xy\"]",
+        "output": "xy",
+        "expectedOutput": "xy",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"abc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"flow flower flew\"]",
+        "output": "fl",
+        "expectedOutput": "fl",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"commonprefix commonpref common\"]",
+        "output": "common",
+        "expectedOutput": "common",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def longestCommonPrefix(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string longestCommonPrefix(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String longestCommonPrefix(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestCommonPrefix(words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestCommonPrefix(words) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def longestCommonPrefix(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string longestCommonPrefix(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String longestCommonPrefix(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestCommonPrefix(words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestCommonPrefix(words) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def longestCommonPrefix(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string longestCommonPrefix(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String longestCommonPrefix(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestCommonPrefix(words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestCommonPrefix(words) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def longestCommonPrefix(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string longestCommonPrefix(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String longestCommonPrefix(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestCommonPrefix(words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestCommonPrefix(words) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n * m) to build the trie, same as brute force but frames the problem as a shared-path walk",
+      "space": "O(n * m) for the trie nodes",
+      "pattern": "insert every word into a trie, then walk down from the root while there is exactly one child at each node and no word ends there yet"
+    },
+    "bruteForce": {
+      "approach": "take the first word as a candidate, and for each other word trim the candidate down to the longest matching prefix character by character",
+      "time": "O(n * m) where n is word count and m is the shortest word length",
+      "space": "O(m) for the candidate prefix"
+    }
+  },
+  "optimal": {
+    "pattern": "insert every word into a trie, then walk down from the root while there is exactly one child at each node and no word ends there yet",
+    "time": "O(n * m) to build the trie, same as brute force but frames the problem as a shared-path walk",
+    "space": "O(n * m) for the trie nodes",
+    "hint_ladder": [
+      "the common prefix is exactly the path from the root that every single word shares - what structure naturally represents shared paths between words?",
+      "insert every word into a trie one character at a time",
+      "starting at the root, walk down as long as the current node has exactly one child - that means every word inserted so far agrees on this next character",
+      "stop walking the moment you hit a node with more than one child, or a node where some word actually ends (its prefix can't be extended further without losing that word) - the characters collected so far are the answer"
+    ]
+  },
+  "bruteForce": {
+    "approach": "take the first word as a candidate, and for each other word trim the candidate down to the longest matching prefix character by character",
+    "time": "O(n * m) where n is word count and m is the shortest word length",
+    "space": "O(m) for the candidate prefix"
+  },
+  "isIndex0": true,
+  "level": null
+}

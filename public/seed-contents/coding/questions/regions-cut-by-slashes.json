@@ -1,0 +1,633 @@
+{
+  "id": "regions-cut-by-slashes",
+  "questionId": "regions-cut-by-slashes",
+  "slug": "regions-cut-by-slashes",
+  "title": "Regions Cut By Diagonals",
+  "difficulty": "Hard",
+  "category": "Union find",
+  "patterns": [
+    "union find",
+    "grid"
+  ],
+  "lists": [],
+  "hints": [
+    "split every cell into 4 triangles: top, right, bottom, left - a diagonal cut only separates some of these from each other, it doesn't touch neighboring cells directly",
+    "for an empty cell (code 0), union all 4 of its triangles together since nothing separates them",
+    "for a forward cut (code 1), union top with left, and separately union right with bottom - the cut itself keeps those two pairs apart",
+    "for a backward cut (code 2), union top with right, and separately union left with bottom",
+    "then handle the connections BETWEEN cells: union each cell's right triangle with its right neighbor's left triangle, and each cell's bottom triangle with its neighbor-below's top triangle",
+    "the final answer is the number of distinct components across all 4 * n * n triangle nodes"
+  ],
+  "commonMistakes": [
+    "trying to reason about the grid at the cell level instead of splitting each cell into 4 triangular nodes, which can't represent a cut correctly",
+    "getting the top/right/bottom/left pairing backwards for '/' versus '\\', which silently produces a plausible-looking but wrong region count",
+    "forgetting the cross-cell unions (right-to-left-neighbor, bottom-to-top-of-neighbor-below), which are what let separate cells' triangles merge into one region"
+  ],
+  "content": {
+    "problemStatement": "You're given an n x n grid where each cell holds a code:\n\n- 0 means the cell is empty\n- 1 means the cell contains a forward diagonal cut (like a '/' running from its bottom-left corner to its top-right corner)\n- 2 means the cell contains a backward diagonal cut (like a '\\' running from its top-left corner to its bottom-right corner)\n\nTogether the cells form an n x n square, and the diagonal cuts divide that square into regions.\n\n**Return the total number of regions.**\n",
+    "constraints": [
+      "1 <= n <= 30",
+      "grid[i][j] is 0, 1, or 2"
+    ],
+    "notes": [
+      "a grid with no cuts at all (one single region)",
+      "a single cell with one diagonal cut (splits into exactly 2 regions)",
+      "cuts that line up across cell boundaries to form one long dividing line",
+      "cuts that meet in the middle of the grid from four different cells"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "grid = [[0,1],[1,0]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the two diagonal cuts line up to slice the square into 2 regions"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[0,1],[0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "a single diagonal cut in one corner cell is not enough to fully separate any region from the rest"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "grid = [[1,2],[2,1]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "the four diagonal cuts meet in the middle like an X, carving out 5 separate regions"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,1],[1,0]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0,1],[0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,2],[2,1]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[2,2],[2,2]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[2]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,0,2,1,2],[0,2,2,0,1],[1,0,2,1,0],[2,2,2,1,0],[0,1,1,1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[2,0,0,1,0,1,0,1],[0,2,1,2,1,0,2,1],[0,1,0,0,1,1,1,1],[2,2,2,0,2,0,0,2],[1,1,2,0,2,0,0,2],[0,0,0,2,1,0,1,2],[2,2,0,0,0,0,0,2],[0,2,0,0,1,1,2,1]]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,1,2,2,1,1,1,1,2,1],[2,1,1,1,1,0,1,1,2,1],[2,0,2,1,0,2,1,1,0,0],[2,0,0,2,2,2,1,1,1,1],[0,2,1,0,1,0,2,2,1,0],[0,2,0,0,2,1,1,2,2,1],[1,2,0,1,0,2,1,0,0,0],[0,2,1,0,2,2,2,2,0,2],[1,2,2,0,0,2,2,2,1,1],[1,0,0,0,0,2,1,2,0,0]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,2,0,1,0,1,2,0,1,0,1,0],[1,2,2,2,2,0,2,1,1,0,2,0],[1,1,2,0,1,1,1,2,1,0,2,0],[0,1,2,2,2,0,1,0,2,0,1,0],[2,2,0,2,1,2,0,1,2,2,0,0],[2,1,2,1,1,2,1,0,2,0,1,1],[0,2,2,2,1,1,1,0,0,1,2,2],[0,1,0,2,0,1,2,2,2,1,0,0],[2,0,0,1,0,2,1,2,0,0,1,1],[0,2,2,0,1,2,2,2,2,2,2,0],[0,1,0,0,1,0,0,0,2,0,1,0],[2,0,1,2,1,2,1,0,0,2,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,2,2,0,2,0,0,2,0,1,0,2,1,2,2],[1,1,1,1,2,0,1,1,0,1,1,1,0,1,0],[0,2,0,0,2,2,2,2,0,2,0,0,0,0,2],[0,0,0,2,2,2,0,1,2,0,1,2,1,1,0],[2,2,2,0,2,0,0,0,1,2,1,1,2,1,0],[2,2,0,0,0,2,2,2,0,1,2,0,0,0,2],[1,2,0,0,2,0,0,2,2,1,1,2,1,1,1],[1,0,0,0,1,2,1,2,0,1,2,0,0,1,0],[0,2,0,0,0,2,1,1,0,1,1,1,0,0,2],[1,0,1,1,2,1,2,0,2,0,2,1,0,2,0],[1,0,2,1,2,0,0,1,2,0,2,0,2,2,1],[1,0,0,2,2,1,2,0,0,0,0,2,2,1,2],[1,2,0,0,1,2,1,0,2,0,0,1,2,0,0],[2,0,2,2,0,1,1,1,2,1,2,2,0,1,2],[0,0,2,0,1,1,0,0,0,2,0,0,1,2,0]]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,0,2],[0,1,0],[2,0,1]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[2,2,2],[2,2,2],[2,2,2]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,2,0,1,0,1,0,1,0,0,1,0,0,1,1,2,1,1,0,0],[0,0,1,0,0,2,1,2,0,1,1,1,0,0,2,2,1,0,0,2],[2,1,0,2,1,2,2,1,0,1,2,0,0,0,0,0,0,2,1,0],[1,2,2,2,2,2,0,0,0,0,2,2,2,1,0,1,2,2,1,0],[1,0,1,0,2,1,1,0,1,1,2,1,2,2,2,0,1,1,2,2],[0,1,0,2,1,0,2,2,1,1,2,2,1,0,2,2,1,2,1,2],[0,1,0,0,2,0,0,2,0,1,0,1,0,2,2,1,2,1,1,1],[1,1,1,1,1,2,2,1,2,0,1,1,2,2,2,0,2,1,0,2],[1,0,0,0,2,0,2,1,1,1,2,2,1,1,1,0,1,2,2,0],[0,2,2,1,0,1,0,2,2,1,0,0,1,1,1,1,1,2,0,0],[1,1,1,0,1,0,2,0,0,0,1,0,2,1,0,2,1,2,0,0],[0,2,2,0,1,1,1,2,1,2,2,2,0,0,1,2,2,2,2,2],[2,0,1,1,0,1,1,0,1,1,1,0,2,2,0,1,1,2,1,0],[2,1,0,2,1,2,0,0,1,0,0,2,0,2,2,1,1,2,2,2],[2,0,0,0,2,2,2,0,0,1,2,2,0,2,0,2,1,2,0,2],[0,1,1,0,1,0,1,0,1,0,0,0,1,0,0,2,2,0,1,2],[0,1,0,1,2,0,1,0,2,0,0,1,2,1,0,1,0,2,2,0],[1,0,0,0,2,0,1,1,0,0,2,1,0,1,0,0,1,1,2,2],[2,2,1,0,2,1,2,1,2,1,2,2,0,1,2,0,0,2,2,1],[0,2,2,0,2,1,1,0,0,0,0,0,1,2,1,2,2,0,2,0]]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,2,1,2],[2,1,2,1],[1,2,1,2],[2,1,2,1]]]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "grid = [[0,1],[1,0]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the two diagonal cuts line up to slice the square into 2 regions"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "grid = [[0,1],[0,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "a single diagonal cut in one corner cell is not enough to fully separate any region from the rest"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "grid = [[1,2],[2,1]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "the four diagonal cuts meet in the middle like an X, carving out 5 separate regions"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "grid = [[0,1],[1,0]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the two diagonal cuts line up to slice the square into 2 regions"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "grid = [[0,1],[0,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "a single diagonal cut in one corner cell is not enough to fully separate any region from the rest"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "grid = [[1,2],[2,1]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "the four diagonal cuts meet in the middle like an X, carving out 5 separate regions"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[0,1],[1,0]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[0,1],[0,0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1,2],[2,1]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[0,0],[0,0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[0,0],[0,0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1,1],[1,1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[2,2],[2,2]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[2]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[0,0,2,1,2],[0,2,2,0,1],[1,0,2,1,0],[2,2,2,1,0],[0,1,1,1,1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[2,0,0,1,0,1,0,1],[0,2,1,2,1,0,2,1],[0,1,0,0,1,1,1,1],[2,2,2,0,2,0,0,2],[1,1,2,0,2,0,0,2],[0,0,0,2,1,0,1,2],[2,2,0,0,0,0,0,2],[0,2,0,0,1,1,2,1]]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[0,1,2,2,1,1,1,1,2,1],[2,1,1,1,1,0,1,1,2,1],[2,0,2,1,0,2,1,1,0,0],[2,0,0,2,2,2,1,1,1,1],[0,2,1,0,1,0,2,2,1,0],[0,2,0,0,2,1,1,2,2,1],[1,2,0,1,0,2,1,0,0,0],[0,2,1,0,2,2,2,2,0,2],[1,2,2,0,0,2,2,2,1,1],[1,0,0,0,0,2,1,2,0,0]]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,2,0,1,0,1,2,0,1,0,1,0],[1,2,2,2,2,0,2,1,1,0,2,0],[1,1,2,0,1,1,1,2,1,0,2,0],[0,1,2,2,2,0,1,0,2,0,1,0],[2,2,0,2,1,2,0,1,2,2,0,0],[2,1,2,1,1,2,1,0,2,0,1,1],[0,2,2,2,1,1,1,0,0,1,2,2],[0,1,0,2,0,1,2,2,2,1,0,0],[2,0,0,1,0,2,1,2,0,0,1,1],[0,2,2,0,1,2,2,2,2,2,2,0],[0,1,0,0,1,0,0,0,2,0,1,0],[2,0,1,2,1,2,1,0,0,2,1,1]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[0,2,2,0,2,0,0,2,0,1,0,2,1,2,2],[1,1,1,1,2,0,1,1,0,1,1,1,0,1,0],[0,2,0,0,2,2,2,2,0,2,0,0,0,0,2],[0,0,0,2,2,2,0,1,2,0,1,2,1,1,0],[2,2,2,0,2,0,0,0,1,2,1,1,2,1,0],[2,2,0,0,0,2,2,2,0,1,2,0,0,0,2],[1,2,0,0,2,0,0,2,2,1,1,2,1,1,1],[1,0,0,0,1,2,1,2,0,1,2,0,0,1,0],[0,2,0,0,0,2,1,1,0,1,1,1,0,0,2],[1,0,1,1,2,1,2,0,2,0,2,1,0,2,0],[1,0,2,1,2,0,0,1,2,0,2,0,2,2,1],[1,0,0,2,2,1,2,0,0,0,0,2,2,1,2],[1,2,0,0,1,2,1,0,2,0,0,1,2,0,0],[2,0,2,2,0,1,1,1,2,1,2,2,0,1,2],[0,0,2,0,1,1,0,0,0,2,0,0,1,2,0]]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[1,0,2],[0,1,0],[2,0,1]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[2,2,2],[2,2,2],[2,2,2]]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,2,0,1,0,1,0,1,0,0,1,0,0,1,1,2,1,1,0,0],[0,0,1,0,0,2,1,2,0,1,1,1,0,0,2,2,1,0,0,2],[2,1,0,2,1,2,2,1,0,1,2,0,0,0,0,0,0,2,1,0],[1,2,2,2,2,2,0,0,0,0,2,2,2,1,0,1,2,2,1,0],[1,0,1,0,2,1,1,0,1,1,2,1,2,2,2,0,1,1,2,2],[0,1,0,2,1,0,2,2,1,1,2,2,1,0,2,2,1,2,1,2],[0,1,0,0,2,0,0,2,0,1,0,1,0,2,2,1,2,1,1,1],[1,1,1,1,1,2,2,1,2,0,1,1,2,2,2,0,2,1,0,2],[1,0,0,0,2,0,2,1,1,1,2,2,1,1,1,0,1,2,2,0],[0,2,2,1,0,1,0,2,2,1,0,0,1,1,1,1,1,2,0,0],[1,1,1,0,1,0,2,0,0,0,1,0,2,1,0,2,1,2,0,0],[0,2,2,0,1,1,1,2,1,2,2,2,0,0,1,2,2,2,2,2],[2,0,1,1,0,1,1,0,1,1,1,0,2,2,0,1,1,2,1,0],[2,1,0,2,1,2,0,0,1,0,0,2,0,2,2,1,1,2,2,2],[2,0,0,0,2,2,2,0,0,1,2,2,0,2,0,2,1,2,0,2],[0,1,1,0,1,0,1,0,1,0,0,0,1,0,0,2,2,0,1,2],[0,1,0,1,2,0,1,0,2,0,0,1,2,1,0,1,0,2,2,0],[1,0,0,0,2,0,1,1,0,0,2,1,0,1,0,0,1,1,2,2],[2,2,1,0,2,1,2,1,2,1,2,2,0,1,2,0,0,2,2,1],[0,2,2,0,2,1,1,0,0,0,0,0,1,2,1,2,2,0,2,0]]]",
+      "output": "19",
+      "expectedOutput": "19",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,2,1,2],[2,1,2,1],[1,2,1,2],[2,1,2,1]]]",
+      "output": "13",
+      "expectedOutput": "13",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "grid = [[0,1],[1,0]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the two diagonal cuts line up to slice the square into 2 regions"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[0,1],[0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "a single diagonal cut in one corner cell is not enough to fully separate any region from the rest"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "grid = [[1,2],[2,1]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "the four diagonal cuts meet in the middle like an X, carving out 5 separate regions"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,1],[1,0]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0,1],[0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,2],[2,1]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[2,2],[2,2]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[2]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,0,2,1,2],[0,2,2,0,1],[1,0,2,1,0],[2,2,2,1,0],[0,1,1,1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[2,0,0,1,0,1,0,1],[0,2,1,2,1,0,2,1],[0,1,0,0,1,1,1,1],[2,2,2,0,2,0,0,2],[1,1,2,0,2,0,0,2],[0,0,0,2,1,0,1,2],[2,2,0,0,0,0,0,2],[0,2,0,0,1,1,2,1]]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,1,2,2,1,1,1,1,2,1],[2,1,1,1,1,0,1,1,2,1],[2,0,2,1,0,2,1,1,0,0],[2,0,0,2,2,2,1,1,1,1],[0,2,1,0,1,0,2,2,1,0],[0,2,0,0,2,1,1,2,2,1],[1,2,0,1,0,2,1,0,0,0],[0,2,1,0,2,2,2,2,0,2],[1,2,2,0,0,2,2,2,1,1],[1,0,0,0,0,2,1,2,0,0]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,2,0,1,0,1,2,0,1,0,1,0],[1,2,2,2,2,0,2,1,1,0,2,0],[1,1,2,0,1,1,1,2,1,0,2,0],[0,1,2,2,2,0,1,0,2,0,1,0],[2,2,0,2,1,2,0,1,2,2,0,0],[2,1,2,1,1,2,1,0,2,0,1,1],[0,2,2,2,1,1,1,0,0,1,2,2],[0,1,0,2,0,1,2,2,2,1,0,0],[2,0,0,1,0,2,1,2,0,0,1,1],[0,2,2,0,1,2,2,2,2,2,2,0],[0,1,0,0,1,0,0,0,2,0,1,0],[2,0,1,2,1,2,1,0,0,2,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,2,2,0,2,0,0,2,0,1,0,2,1,2,2],[1,1,1,1,2,0,1,1,0,1,1,1,0,1,0],[0,2,0,0,2,2,2,2,0,2,0,0,0,0,2],[0,0,0,2,2,2,0,1,2,0,1,2,1,1,0],[2,2,2,0,2,0,0,0,1,2,1,1,2,1,0],[2,2,0,0,0,2,2,2,0,1,2,0,0,0,2],[1,2,0,0,2,0,0,2,2,1,1,2,1,1,1],[1,0,0,0,1,2,1,2,0,1,2,0,0,1,0],[0,2,0,0,0,2,1,1,0,1,1,1,0,0,2],[1,0,1,1,2,1,2,0,2,0,2,1,0,2,0],[1,0,2,1,2,0,0,1,2,0,2,0,2,2,1],[1,0,0,2,2,1,2,0,0,0,0,2,2,1,2],[1,2,0,0,1,2,1,0,2,0,0,1,2,0,0],[2,0,2,2,0,1,1,1,2,1,2,2,0,1,2],[0,0,2,0,1,1,0,0,0,2,0,0,1,2,0]]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,0,2],[0,1,0],[2,0,1]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[2,2,2],[2,2,2],[2,2,2]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,2,0,1,0,1,0,1,0,0,1,0,0,1,1,2,1,1,0,0],[0,0,1,0,0,2,1,2,0,1,1,1,0,0,2,2,1,0,0,2],[2,1,0,2,1,2,2,1,0,1,2,0,0,0,0,0,0,2,1,0],[1,2,2,2,2,2,0,0,0,0,2,2,2,1,0,1,2,2,1,0],[1,0,1,0,2,1,1,0,1,1,2,1,2,2,2,0,1,1,2,2],[0,1,0,2,1,0,2,2,1,1,2,2,1,0,2,2,1,2,1,2],[0,1,0,0,2,0,0,2,0,1,0,1,0,2,2,1,2,1,1,1],[1,1,1,1,1,2,2,1,2,0,1,1,2,2,2,0,2,1,0,2],[1,0,0,0,2,0,2,1,1,1,2,2,1,1,1,0,1,2,2,0],[0,2,2,1,0,1,0,2,2,1,0,0,1,1,1,1,1,2,0,0],[1,1,1,0,1,0,2,0,0,0,1,0,2,1,0,2,1,2,0,0],[0,2,2,0,1,1,1,2,1,2,2,2,0,0,1,2,2,2,2,2],[2,0,1,1,0,1,1,0,1,1,1,0,2,2,0,1,1,2,1,0],[2,1,0,2,1,2,0,0,1,0,0,2,0,2,2,1,1,2,2,2],[2,0,0,0,2,2,2,0,0,1,2,2,0,2,0,2,1,2,0,2],[0,1,1,0,1,0,1,0,1,0,0,0,1,0,0,2,2,0,1,2],[0,1,0,1,2,0,1,0,2,0,0,1,2,1,0,1,0,2,2,0],[1,0,0,0,2,0,1,1,0,0,2,1,0,1,0,0,1,1,2,2],[2,2,1,0,2,1,2,1,2,1,2,2,0,1,2,0,0,2,2,1],[0,2,2,0,2,1,1,0,0,0,0,0,1,2,1,2,2,0,2,0]]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,2,1,2],[2,1,2,1],[1,2,1,2],[2,1,2,1]]]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def countRegions(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countRegions(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countRegions(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countRegions(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countRegions(grid) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def countRegions(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countRegions(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countRegions(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countRegions(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countRegions(grid) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def countRegions(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countRegions(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countRegions(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countRegions(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countRegions(grid) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def countRegions(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countRegions(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countRegions(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countRegions(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countRegions(grid) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n^2 * alpha(n^2))",
+      "space": "O(n^2)",
+      "pattern": "union find over 4 triangular sub-regions per cell"
+    },
+    "bruteForce": {
+      "approach": "upscale the grid into a much finer pixel grid, physically 'draw' each diagonal cut by marking pixels along it, then flood-fill count the connected empty-pixel regions",
+      "time": "O((n * k)^2) for an upscale factor k",
+      "space": "O((n * k)^2)"
+    }
+  },
+  "optimal": {
+    "pattern": "union find over 4 triangular sub-regions per cell",
+    "time": "O(n^2 * alpha(n^2))",
+    "space": "O(n^2)",
+    "hint_ladder": [
+      "split every cell into 4 triangles: top, right, bottom, left - a diagonal cut only separates some of these from each other, it doesn't touch neighboring cells directly",
+      "for an empty cell (code 0), union all 4 of its triangles together since nothing separates them",
+      "for a forward cut (code 1), union top with left, and separately union right with bottom - the cut itself keeps those two pairs apart",
+      "for a backward cut (code 2), union top with right, and separately union left with bottom",
+      "then handle the connections BETWEEN cells: union each cell's right triangle with its right neighbor's left triangle, and each cell's bottom triangle with its neighbor-below's top triangle",
+      "the final answer is the number of distinct components across all 4 * n * n triangle nodes"
+    ]
+  },
+  "bruteForce": {
+    "approach": "upscale the grid into a much finer pixel grid, physically 'draw' each diagonal cut by marking pixels along it, then flood-fill count the connected empty-pixel regions",
+    "time": "O((n * k)^2) for an upscale factor k",
+    "space": "O((n * k)^2)"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,631 @@
+{
+  "id": "maximum-product-subarray",
+  "questionId": "maximum-product-subarray",
+  "slug": "maximum-product-subarray",
+  "title": "Maximum Product Subarray",
+  "difficulty": "Medium",
+  "category": "Dp 1d",
+  "patterns": [
+    "dynamic programming",
+    "kadane's algorithm"
+  ],
+  "lists": [
+    "blind-75"
+  ],
+  "hints": [
+    "Maximum Subarray only needed a running max, because adding a number never flips the sign of a good running sum - does multiplying behave the same way?",
+    "what happens to the best running product so far if the next number is negative and the running product was also negative?",
+    "at each element, the best product ending here could come from extending the previous max, extending the previous min (if this number is negative), or starting fresh at this element",
+    "track both cur_max and cur_min at each step: new_max = max(num, num*cur_max, num*cur_min), new_min = min(num, num*cur_max, num*cur_min), and update the global best from new_max"
+  ],
+  "commonMistakes": [
+    "only tracking a running max product, missing that a very negative running min can become the new max when multiplied by another negative",
+    "forgetting to reset both running max and min to the current number when a zero is encountered",
+    "updating cur_max using the already-updated cur_min (or vice versa) instead of computing both from the previous step's values"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of integers `nums`, which may include negative\nnumbers and zeros.\n\n**Find the contiguous subarray of `nums` (at least one element) whose product is the largest possible, and return that product.**\n",
+    "constraints": [
+      "1 <= nums.length <= 2 * 10^4",
+      "-10 <= nums[i] <= 10",
+      "the product of any prefix or suffix of nums fits in a 32-bit integer"
+    ],
+    "notes": [
+      "a single negative number that flips the running max/min when multiplied by another negative",
+      "a zero in the middle of the array that should reset the running product",
+      "all negative numbers with an odd count (the best slice must drop one negative from an end)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [2, 3, -2, 4]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "the slice [2, 3] has the largest product, 6"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-2, 0, -1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "the only nonzero slices contain a single -2 or -1, both worse than the slice [0]"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [-2, 3, -4]",
+        "output": "24",
+        "expectedOutput": "24",
+        "explanation": "the entire array multiplies to (-2) * 3 * (-4) = 24, since the two negatives cancel out"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[2,3,-2,4]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-2,0,-1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[-2,3,-4]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[-2]]",
+        "output": "-2",
+        "expectedOutput": "-2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-1]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,-5,-2,-4,3]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-2,-3,-4]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[0,-3,-2]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[3,-1,4]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-1,-2,-3,0,4,5,-6]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,0,-1,2,3,-5,-2]]",
+        "output": "60",
+        "expectedOutput": "60",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,3,-2,4,-1]]",
+        "output": "48",
+        "expectedOutput": "48",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-4,-3,-2,-1,0,1,2,3,4]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "3628800",
+        "expectedOutput": "3628800",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-1,-1,-1,-1,-1,-1,-1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[6,-3,-10,0,2]]",
+        "output": "180",
+        "expectedOutput": "180",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-2,3,-4,0,5,-6,7,-8]]",
+        "output": "1680",
+        "expectedOutput": "1680",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [2, 3, -2, 4]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "the slice [2, 3] has the largest product, 6"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-2, 0, -1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "the only nonzero slices contain a single -2 or -1, both worse than the slice [0]"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [-2, 3, -4]",
+      "output": "24",
+      "expectedOutput": "24",
+      "explanation": "the entire array multiplies to (-2) * 3 * (-4) = 24, since the two negatives cancel out"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [2, 3, -2, 4]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "the slice [2, 3] has the largest product, 6"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-2, 0, -1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "the only nonzero slices contain a single -2 or -1, both worse than the slice [0]"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [-2, 3, -4]",
+      "output": "24",
+      "expectedOutput": "24",
+      "explanation": "the entire array multiplies to (-2) * 3 * (-4) = 24, since the two negatives cancel out"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[2,3,-2,4]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[-2,0,-1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[-2,3,-4]]",
+      "output": "24",
+      "expectedOutput": "24",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[0,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[-2]]",
+      "output": "-2",
+      "expectedOutput": "-2",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[-1]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[2,-5,-2,-4,3]]",
+      "output": "24",
+      "expectedOutput": "24",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[-2,-3,-4]]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[0,-3,-2]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[3,-1,4]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[-1,-2,-3,0,4,5,-6]]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,0,-1,2,3,-5,-2]]",
+      "output": "60",
+      "expectedOutput": "60",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[2,3,-2,4,-1]]",
+      "output": "48",
+      "expectedOutput": "48",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[-4,-3,-2,-1,0,1,2,3,4]]",
+      "output": "24",
+      "expectedOutput": "24",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+      "output": "3628800",
+      "expectedOutput": "3628800",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[-1,-1,-1,-1,-1,-1,-1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[6,-3,-10,0,2]]",
+      "output": "180",
+      "expectedOutput": "180",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[-2,3,-4,0,5,-6,7,-8]]",
+      "output": "1680",
+      "expectedOutput": "1680",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [2, 3, -2, 4]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "the slice [2, 3] has the largest product, 6"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-2, 0, -1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "the only nonzero slices contain a single -2 or -1, both worse than the slice [0]"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [-2, 3, -4]",
+        "output": "24",
+        "expectedOutput": "24",
+        "explanation": "the entire array multiplies to (-2) * 3 * (-4) = 24, since the two negatives cancel out"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[2,3,-2,4]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-2,0,-1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[-2,3,-4]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[-2]]",
+        "output": "-2",
+        "expectedOutput": "-2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-1]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,-5,-2,-4,3]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-2,-3,-4]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[0,-3,-2]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[3,-1,4]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-1,-2,-3,0,4,5,-6]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,0,-1,2,3,-5,-2]]",
+        "output": "60",
+        "expectedOutput": "60",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,3,-2,4,-1]]",
+        "output": "48",
+        "expectedOutput": "48",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-4,-3,-2,-1,0,1,2,3,4]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "3628800",
+        "expectedOutput": "3628800",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-1,-1,-1,-1,-1,-1,-1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[6,-3,-10,0,2]]",
+        "output": "180",
+        "expectedOutput": "180",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-2,3,-4,0,5,-6,7,-8]]",
+        "output": "1680",
+        "expectedOutput": "1680",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def maxProduct(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxProduct(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxProduct(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxProduct(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxProduct(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def maxProduct(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxProduct(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxProduct(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxProduct(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxProduct(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def maxProduct(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxProduct(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxProduct(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxProduct(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxProduct(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def maxProduct(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxProduct(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxProduct(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxProduct(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxProduct(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "dynamic programming (Kadane's algorithm variant) - track both a running max and a running min product"
+    },
+    "bruteForce": {
+      "approach": "for every start index, extend the subarray one element at a time and track the running product, keeping the max seen",
+      "time": "O(n^2)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "dynamic programming (Kadane's algorithm variant) - track both a running max and a running min product",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "Maximum Subarray only needed a running max, because adding a number never flips the sign of a good running sum - does multiplying behave the same way?",
+      "what happens to the best running product so far if the next number is negative and the running product was also negative?",
+      "at each element, the best product ending here could come from extending the previous max, extending the previous min (if this number is negative), or starting fresh at this element",
+      "track both cur_max and cur_min at each step: new_max = max(num, num*cur_max, num*cur_min), new_min = min(num, num*cur_max, num*cur_min), and update the global best from new_max"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every start index, extend the subarray one element at a time and track the running product, keeping the max seen",
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

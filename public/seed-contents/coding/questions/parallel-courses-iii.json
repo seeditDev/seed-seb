@@ -1,0 +1,635 @@
+{
+  "id": "parallel-courses-iii",
+  "questionId": "parallel-courses-iii",
+  "slug": "parallel-courses-iii",
+  "title": "Parallel Courses III",
+  "difficulty": "Hard",
+  "category": "Topological sort",
+  "patterns": [
+    "topological sort",
+    "graph",
+    "dag",
+    "dynamic programming"
+  ],
+  "lists": [],
+  "hints": [
+    "a course can't start until every one of its prerequisites is fully done - which prerequisite determines when it can actually start, the fastest one or the slowest one?",
+    "you need each course's finish time, and a course's finish time depends only on its prerequisites' finish times - so compute them in an order where every prerequisite is finished before you compute its dependents",
+    "that's a topological order - process courses in topological order, and for each one, its finish time is its own duration plus the LARGEST finish time among its direct prerequisites",
+    "a course with no prerequisites simply finishes at its own duration",
+    "the overall answer is the maximum finish time across every course, since the whole plan isn't done until the slowest chain completes"
+  ],
+  "commonMistakes": [
+    "taking the minimum or the sum of prerequisite finish times instead of the maximum",
+    "forgetting a course still takes its own time[i] months in addition to waiting for prerequisites",
+    "processing courses in an arbitrary order instead of topological order, computing a dependent's finish time before all of its prerequisites are finalized"
+  ],
+  "content": {
+    "problemStatement": "There are n courses, labeled 0 to n - 1, and a list of prerequisite pairs `relations`, where each pair `[a, b]` means course a must be fully completed before course b can start. You're also given `time`, where `time[i]` is the number of months it takes to complete course i. You may take any number of courses at the same time, as long as each one's prerequisites are already fully completed, and a course, once started, always takes exactly `time[i]` months to finish.\n\n**Return the minimum number of months needed to complete all n courses.**\n",
+    "constraints": [
+      "1 <= n <= 5 * 10^4",
+      "each pair [a, b] has 0 <= a, b < n",
+      "the relations are guaranteed to form a DAG (no cycles)",
+      "1 <= time[i] <= 10^4"
+    ],
+    "notes": [
+      "no relations at all - the answer is just the single longest individual course duration",
+      "a single course with no relations",
+      "a long chain where the answer equals the sum of every course's time along that chain",
+      "a course with multiple prerequisites that finish at different times - it must wait for the LATEST one, not the first"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 4, relations = [[0, 2], [1, 2], [2, 3]], time = [3, 2, 5, 4]",
+        "output": "12",
+        "expectedOutput": "12",
+        "explanation": "courses 0 and 1 start immediately (finishing at month 3 and 2); course 2 needs both done, so it starts at month 3 and finishes at 3 + 5 = 8; course 3 then starts at 8 and finishes at 8 + 4 = 12"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 2, relations = [], time = [1, 1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "with no prerequisites, both courses start immediately and run in parallel, finishing after 1 month"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 5, relations = [[0, 1], [0, 2], [1, 3], [2, 3], [3, 4]], time = [1, 2, 3, 4, 5]",
+        "output": "13",
+        "expectedOutput": "13",
+        "explanation": "course 3 must wait for the later of its two prerequisites (course 2 finishes at month 4, later than course 1's month 3), so 3 starts at 4 and finishes at 8; course 4 then finishes at 8 + 5 = 13"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[4,[[0,2],[1,2],[2,3]],[3,2,5,4]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[2,[],[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[5,[[0,1],[0,2],[1,3],[2,3],[3,4]],[1,2,3,4,5]]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[1,[],[7]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[3,[[0,1],[1,2]],[2,2,2]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[8,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]],[1,2,3,4,5,6,7,8]]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[6,[[0,2],[1,2],[2,3],[2,4],[3,5],[4,5]],[5,3,2,4,6,1]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[10,[],[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[5,[[0,1],[0,2],[0,3],[0,4]],[10,1,1,1,1]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[15,[[0,1],[0,2],[1,2],[0,3],[2,3],[1,4],[3,4],[0,5],[4,5],[5,6],[1,6],[6,7],[5,7],[4,8],[3,8],[4,9],[0,9],[0,10],[8,10],[5,11],[9,11],[10,12],[9,12],[7,13],[9,13],[8,14],[11,14]],[8,4,3,1,1,1,9,1,7,3,4,3,1,2,1]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[4,[[0,3],[1,3],[2,3]],[1,100,1,1]]",
+        "output": "101",
+        "expectedOutput": "101",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[1,[],[42]]",
+        "output": "42",
+        "expectedOutput": "42",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[7,[[0,1],[0,2],[1,3],[2,3],[3,4],[3,5],[4,6],[5,6]],[2,4,3,1,5,2,6]]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[3,[[0,1],[1,2]],[1,1,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[9,[[0,3],[1,3],[2,3],[3,4],[3,5],[4,6],[5,6],[6,7],[6,8]],[1,2,3,4,5,6,7,8,9]]",
+        "output": "29",
+        "expectedOutput": "29",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[5,[[0,1],[0,2],[0,3],[0,4]],[1,1,1,1,100]]",
+        "output": "101",
+        "expectedOutput": "101",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[20,[[0,1],[1,2],[0,2],[0,3],[1,3],[1,4],[2,4],[0,5],[2,5],[5,6],[4,6],[5,7],[3,7],[7,8],[5,8],[4,9],[0,9],[0,10],[9,10],[0,11],[10,11],[10,12],[11,12],[9,13],[1,13],[6,14],[4,14],[4,15],[11,15],[5,16],[13,16],[15,17],[1,17],[10,18],[11,18],[18,19],[14,19]],[8,11,3,3,13,2,6,11,3,11,13,7,8,7,13,13,8,5,13,13]]",
+        "output": "92",
+        "expectedOutput": "92",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[4,[[0,1],[1,2],[2,3]],[10,10,10,10]]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[6,[],[3,5,1,9,2,7]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[2,[[0,1]],[5,5]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 4, relations = [[0, 2], [1, 2], [2, 3]], time = [3, 2, 5, 4]",
+      "output": "12",
+      "expectedOutput": "12",
+      "explanation": "courses 0 and 1 start immediately (finishing at month 3 and 2); course 2 needs both done, so it starts at month 3 and finishes at 3 + 5 = 8; course 3 then starts at 8 and finishes at 8 + 4 = 12"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 2, relations = [], time = [1, 1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "with no prerequisites, both courses start immediately and run in parallel, finishing after 1 month"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 5, relations = [[0, 1], [0, 2], [1, 3], [2, 3], [3, 4]], time = [1, 2, 3, 4, 5]",
+      "output": "13",
+      "expectedOutput": "13",
+      "explanation": "course 3 must wait for the later of its two prerequisites (course 2 finishes at month 4, later than course 1's month 3), so 3 starts at 4 and finishes at 8; course 4 then finishes at 8 + 5 = 13"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 4, relations = [[0, 2], [1, 2], [2, 3]], time = [3, 2, 5, 4]",
+      "output": "12",
+      "expectedOutput": "12",
+      "explanation": "courses 0 and 1 start immediately (finishing at month 3 and 2); course 2 needs both done, so it starts at month 3 and finishes at 3 + 5 = 8; course 3 then starts at 8 and finishes at 8 + 4 = 12"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 2, relations = [], time = [1, 1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "with no prerequisites, both courses start immediately and run in parallel, finishing after 1 month"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 5, relations = [[0, 1], [0, 2], [1, 3], [2, 3], [3, 4]], time = [1, 2, 3, 4, 5]",
+      "output": "13",
+      "expectedOutput": "13",
+      "explanation": "course 3 must wait for the later of its two prerequisites (course 2 finishes at month 4, later than course 1's month 3), so 3 starts at 4 and finishes at 8; course 4 then finishes at 8 + 5 = 13"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[4,[[0,2],[1,2],[2,3]],[3,2,5,4]]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[2,[],[1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[5,[[0,1],[0,2],[1,3],[2,3],[3,4]],[1,2,3,4,5]]",
+      "output": "13",
+      "expectedOutput": "13",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[1,[],[7]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[3,[[0,1],[1,2]],[2,2,2]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[8,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]],[1,2,3,4,5,6,7,8]]",
+      "output": "36",
+      "expectedOutput": "36",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[6,[[0,2],[1,2],[2,3],[2,4],[3,5],[4,5]],[5,3,2,4,6,1]]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[10,[],[1,2,3,4,5,6,7,8,9,10]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[5,[[0,1],[0,2],[0,3],[0,4]],[10,1,1,1,1]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[15,[[0,1],[0,2],[1,2],[0,3],[2,3],[1,4],[3,4],[0,5],[4,5],[5,6],[1,6],[6,7],[5,7],[4,8],[3,8],[4,9],[0,9],[0,10],[8,10],[5,11],[9,11],[10,12],[9,12],[7,13],[9,13],[8,14],[11,14]],[8,4,3,1,1,1,9,1,7,3,4,3,1,2,1]]",
+      "output": "30",
+      "expectedOutput": "30",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[4,[[0,3],[1,3],[2,3]],[1,100,1,1]]",
+      "output": "101",
+      "expectedOutput": "101",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[1,[],[42]]",
+      "output": "42",
+      "expectedOutput": "42",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[7,[[0,1],[0,2],[1,3],[2,3],[3,4],[3,5],[4,6],[5,6]],[2,4,3,1,5,2,6]]",
+      "output": "18",
+      "expectedOutput": "18",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[3,[[0,1],[1,2]],[1,1,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[9,[[0,3],[1,3],[2,3],[3,4],[3,5],[4,6],[5,6],[6,7],[6,8]],[1,2,3,4,5,6,7,8,9]]",
+      "output": "29",
+      "expectedOutput": "29",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[5,[[0,1],[0,2],[0,3],[0,4]],[1,1,1,1,100]]",
+      "output": "101",
+      "expectedOutput": "101",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[20,[[0,1],[1,2],[0,2],[0,3],[1,3],[1,4],[2,4],[0,5],[2,5],[5,6],[4,6],[5,7],[3,7],[7,8],[5,8],[4,9],[0,9],[0,10],[9,10],[0,11],[10,11],[10,12],[11,12],[9,13],[1,13],[6,14],[4,14],[4,15],[11,15],[5,16],[13,16],[15,17],[1,17],[10,18],[11,18],[18,19],[14,19]],[8,11,3,3,13,2,6,11,3,11,13,7,8,7,13,13,8,5,13,13]]",
+      "output": "92",
+      "expectedOutput": "92",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[4,[[0,1],[1,2],[2,3]],[10,10,10,10]]",
+      "output": "40",
+      "expectedOutput": "40",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[6,[],[3,5,1,9,2,7]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[2,[[0,1]],[5,5]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 4, relations = [[0, 2], [1, 2], [2, 3]], time = [3, 2, 5, 4]",
+        "output": "12",
+        "expectedOutput": "12",
+        "explanation": "courses 0 and 1 start immediately (finishing at month 3 and 2); course 2 needs both done, so it starts at month 3 and finishes at 3 + 5 = 8; course 3 then starts at 8 and finishes at 8 + 4 = 12"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 2, relations = [], time = [1, 1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "with no prerequisites, both courses start immediately and run in parallel, finishing after 1 month"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 5, relations = [[0, 1], [0, 2], [1, 3], [2, 3], [3, 4]], time = [1, 2, 3, 4, 5]",
+        "output": "13",
+        "expectedOutput": "13",
+        "explanation": "course 3 must wait for the later of its two prerequisites (course 2 finishes at month 4, later than course 1's month 3), so 3 starts at 4 and finishes at 8; course 4 then finishes at 8 + 5 = 13"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[4,[[0,2],[1,2],[2,3]],[3,2,5,4]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[2,[],[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[5,[[0,1],[0,2],[1,3],[2,3],[3,4]],[1,2,3,4,5]]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[1,[],[7]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[3,[[0,1],[1,2]],[2,2,2]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[8,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]],[1,2,3,4,5,6,7,8]]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[6,[[0,2],[1,2],[2,3],[2,4],[3,5],[4,5]],[5,3,2,4,6,1]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[10,[],[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[5,[[0,1],[0,2],[0,3],[0,4]],[10,1,1,1,1]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[15,[[0,1],[0,2],[1,2],[0,3],[2,3],[1,4],[3,4],[0,5],[4,5],[5,6],[1,6],[6,7],[5,7],[4,8],[3,8],[4,9],[0,9],[0,10],[8,10],[5,11],[9,11],[10,12],[9,12],[7,13],[9,13],[8,14],[11,14]],[8,4,3,1,1,1,9,1,7,3,4,3,1,2,1]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[4,[[0,3],[1,3],[2,3]],[1,100,1,1]]",
+        "output": "101",
+        "expectedOutput": "101",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[1,[],[42]]",
+        "output": "42",
+        "expectedOutput": "42",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[7,[[0,1],[0,2],[1,3],[2,3],[3,4],[3,5],[4,6],[5,6]],[2,4,3,1,5,2,6]]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[3,[[0,1],[1,2]],[1,1,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[9,[[0,3],[1,3],[2,3],[3,4],[3,5],[4,6],[5,6],[6,7],[6,8]],[1,2,3,4,5,6,7,8,9]]",
+        "output": "29",
+        "expectedOutput": "29",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[5,[[0,1],[0,2],[0,3],[0,4]],[1,1,1,1,100]]",
+        "output": "101",
+        "expectedOutput": "101",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[20,[[0,1],[1,2],[0,2],[0,3],[1,3],[1,4],[2,4],[0,5],[2,5],[5,6],[4,6],[5,7],[3,7],[7,8],[5,8],[4,9],[0,9],[0,10],[9,10],[0,11],[10,11],[10,12],[11,12],[9,13],[1,13],[6,14],[4,14],[4,15],[11,15],[5,16],[13,16],[15,17],[1,17],[10,18],[11,18],[18,19],[14,19]],[8,11,3,3,13,2,6,11,3,11,13,7,8,7,13,13,8,5,13,13]]",
+        "output": "92",
+        "expectedOutput": "92",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[4,[[0,1],[1,2],[2,3]],[10,10,10,10]]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[6,[],[3,5,1,9,2,7]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[2,[[0,1]],[5,5]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minimumTime(self, n, relations, time):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumTime(int n, vector<vector<int>>& relations, vector<int>& time) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumTime(int n, int[][] relations, int[] time) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumTime(n: Int, relations: Array<IntArray>, time: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumTime(n, relations, time) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minimumTime(self, n, relations, time):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumTime(int n, vector<vector<int>>& relations, vector<int>& time) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumTime(int n, int[][] relations, int[] time) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumTime(n: Int, relations: Array<IntArray>, time: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumTime(n, relations, time) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minimumTime(self, n, relations, time):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumTime(int n, vector<vector<int>>& relations, vector<int>& time) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumTime(int n, int[][] relations, int[] time) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumTime(n: Int, relations: Array<IntArray>, time: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumTime(n, relations, time) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minimumTime(self, n, relations, time):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumTime(int n, vector<vector<int>>& relations, vector<int>& time) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumTime(int n, int[][] relations, int[] time) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumTime(n: Int, relations: Array<IntArray>, time: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumTime(n, relations, time) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(V + E)",
+      "space": "O(V + E)",
+      "pattern": "process courses in topological order and compute finish[v] = time[v] + max(finish[u] for every prerequisite u), tracking the overall maximum"
+    },
+    "bruteForce": {
+      "approach": "recompute the finish time for each course by recursively finding the max finish time of all its prerequisites, without memoization, redoing shared subtrees repeatedly",
+      "time": "O(V * E) or worse without memoization",
+      "space": "O(V)"
+    }
+  },
+  "optimal": {
+    "pattern": "process courses in topological order and compute finish[v] = time[v] + max(finish[u] for every prerequisite u), tracking the overall maximum",
+    "time": "O(V + E)",
+    "space": "O(V + E)",
+    "hint_ladder": [
+      "a course can't start until every one of its prerequisites is fully done - which prerequisite determines when it can actually start, the fastest one or the slowest one?",
+      "you need each course's finish time, and a course's finish time depends only on its prerequisites' finish times - so compute them in an order where every prerequisite is finished before you compute its dependents",
+      "that's a topological order - process courses in topological order, and for each one, its finish time is its own duration plus the LARGEST finish time among its direct prerequisites",
+      "a course with no prerequisites simply finishes at its own duration",
+      "the overall answer is the maximum finish time across every course, since the whole plan isn't done until the slowest chain completes"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recompute the finish time for each course by recursively finding the max finish time of all its prerequisites, without memoization, redoing shared subtrees repeatedly",
+    "time": "O(V * E) or worse without memoization",
+    "space": "O(V)"
+  },
+  "isIndex0": true,
+  "level": null
+}

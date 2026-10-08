@@ -1,0 +1,632 @@
+{
+  "id": "dungeon-game",
+  "questionId": "dungeon-game",
+  "slug": "dungeon-game",
+  "title": "Dungeon Game",
+  "difficulty": "Hard",
+  "category": "Dp 2d",
+  "patterns": [
+    "dynamic programming",
+    "grid"
+  ],
+  "lists": [],
+  "hints": [
+    "working forward from the top-left is tricky because the health requirement at a cell depends on the whole rest of the path ahead of it - what if you worked backward from the princess instead?",
+    "define dp[i][j] as the minimum health the knight must have upon ENTERING cell (i, j) to survive from there to the princess",
+    "at the destination cell, the knight needs enough health to survive that cell's value and still have at least 1 left: dp[m-1][n-1] = max(1, 1 - dungeon[m-1][n-1])",
+    "for any other cell, the knight will move to whichever neighbor (right or down) requires less incoming health, then that path's requirement gets reduced by the current cell's value: dp[i][j] = max(1, min(dp[i+1][j], dp[i][j+1]) - dungeon[i][j])",
+    "fill the table from the bottom-right corner backward to the top-left, and the answer is dp[0][0]"
+  ],
+  "commonMistakes": [
+    "forgetting the max(1, ...) clamp, which is needed because health must always stay strictly positive, even on cells that heal a lot",
+    "working forward from the start instead of backward from the destination, which doesn't correctly account for future health requirements",
+    "off-by-one in health accounting - the knight needs health > 0 AFTER the cell's effect is applied, not just >= 0"
+  ],
+  "content": {
+    "problemStatement": "A knight needs to rescue a princess held in the bottom-right cell of a\n`dungeon` laid out as a grid. The knight starts in the top-left cell and\ncan only move right or down at each step. Each cell contains a number\nthat either adds to the knight's health (positive) or subtracts from it\n(negative or zero). The knight dies the instant its health drops to 0 or\nbelow, so it must have strictly positive health before entering every\ncell along its path, including the very first one.\n\n**Return the minimum initial health the knight needs to guarantee reaching the princess.**\n",
+    "constraints": [
+      "1 <= rows, cols <= 200",
+      "-1000 <= dungeon[i][j] <= 1000",
+      "the knight can only move right or down",
+      "health must stay strictly positive (> 0) before entering any cell"
+    ],
+    "notes": [
+      "a single cell grid, whether positive, negative, or zero",
+      "a grid where every cell is positive (minimum health is still at least 1)",
+      "a path where health would dip very low in the middle even though the total sum is positive"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "dungeon = [[-2,-3,3],[-5,-10,1],[10,30,-5]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": "Starting with 7 health and taking the path right, down, down, right keeps health at 1 or above at every cell."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "dungeon = [[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "The knight needs at least 1 health to be alive when entering the only cell."
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "dungeon = [[100]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "Even though the cell heals the knight, it still needs at least 1 health to begin with."
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[-2,-3,3],[-5,-10,1],[10,30,-5]]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[100]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[-5]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,-3,3],[0,-2,0],[-3,-3,-3]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[-1,-1],[-1,-1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[0,0,0],[0,0,0],[0,0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[100,-100,100],[-100,100,-100],[100,-100,100]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[5,-3,4,7,-6,2,-4,9],[6,-6,-8,-2,3,0,6,-2],[-10,-1,-1,8,8,5,-6,4],[7,5,1,0,7,7,2,4],[0,-4,-3,8,2,-3,3,-9],[0,5,2,2,10,-6,5,-9],[-6,6,8,0,-7,4,-7,6],[4,-10,-6,3,10,-6,-8,5]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[5,-12,-10,-1,2,-8,0,-18,-10,1],[-3,-8,-10,0,2,4,-5,-3,-19,-1],[-18,-13,0,1,-11,-13,3,-18,-7,-17],[4,0,2,-17,-6,-15,2,-11,-20,-19],[-10,5,-19,-11,-9,-9,-7,-16,-13,-4],[-7,-2,1,5,-15,-15,-15,-18,-1,-8],[-1,1,-13,-5,-2,-16,-13,-6,0,-12],[-6,-12,1,-20,5,-6,-11,1,-3,-15],[-18,-6,-9,-2,-11,0,-7,2,-12,-6],[-11,-14,-8,-5,-17,-13,-8,-2,-9,-2]]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[-13,39,-13,-48,34,0],[-15,-49,22,37,49,45],[-44,27,45,13,-14,49],[-21,27,-5,-22,31,-26],[29,-18,36,46,42,48],[34,37,-33,30,-38,30],[32,-45,-11,50,6,-46],[24,-4,43,-34,-39,-13],[-9,45,3,-28,-25,-34],[50,19,-4,17,14,-16],[-29,-18,11,-13,45,-7],[-36,9,-41,-32,46,-22]]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[5,-30,5,5],[5,5,5,-30],[-30,5,5,5],[5,5,-30,5]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[12,6,8,6,-3,15,12,10,2,-4,-13,10],[-3,-15,-7,2,-12,-1,-4,6,8,6,-7,3],[-3,11,5,15,-4,-12,6,-8,0,-15,4,13],[15,2,-5,14,4,-8,5,-13,5,11,-1,14],[7,-6,5,-2,-12,-11,-14,15,-14,-6,0,-12],[-12,-8,13,2,-11,-3,-1,-4,6,15,8,7]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1000,1000],[1000,1000]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[-1000,-1000],[-1000,-1000]]]",
+        "output": "3001",
+        "expectedOutput": "3001",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[3,1,4,-3,1,5,-4,2,4],[1,-1,-5,0,-2,2,2,-2,0],[-4,5,0,3,5,0,-5,1,-1],[-2,-4,2,-4,5,-2,5,5,4],[-5,-5,0,-2,-3,4,-2,-4,3],[-2,4,-2,-2,0,-3,4,-5,-1],[-3,-3,3,-1,-3,-4,5,-5,-3],[-5,0,-2,4,0,-5,-3,-1,-5],[-3,1,3,-4,-4,2,2,0,3]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[51,-73,15,28,-44,57,-89],[86,100,68,33,-23,17,64],[-93,-85,22,2,9,75,-73],[25,82,13,-82,-80,-18,55],[-63,-84,-68,-30,59,62,49],[40,82,-17,-3,52,35,-25],[16,29,54,10,-75,79,-71]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "dungeon = [[-2,-3,3],[-5,-10,1],[10,30,-5]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": "Starting with 7 health and taking the path right, down, down, right keeps health at 1 or above at every cell."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "dungeon = [[0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "The knight needs at least 1 health to be alive when entering the only cell."
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "dungeon = [[100]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "Even though the cell heals the knight, it still needs at least 1 health to begin with."
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "dungeon = [[-2,-3,3],[-5,-10,1],[10,30,-5]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": "Starting with 7 health and taking the path right, down, down, right keeps health at 1 or above at every cell."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "dungeon = [[0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "The knight needs at least 1 health to be alive when entering the only cell."
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "dungeon = [[100]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "Even though the cell heals the knight, it still needs at least 1 health to begin with."
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[-2,-3,3],[-5,-10,1],[10,30,-5]]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[100]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[-5]]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,-3,3],[0,-2,0],[-3,-3,-3]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[-1,-1],[-1,-1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[0,0,0],[0,0,0],[0,0,0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[100,-100,100],[-100,100,-100],[100,-100,100]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[5,-3,4,7,-6,2,-4,9],[6,-6,-8,-2,3,0,6,-2],[-10,-1,-1,8,8,5,-6,4],[7,5,1,0,7,7,2,4],[0,-4,-3,8,2,-3,3,-9],[0,5,2,2,10,-6,5,-9],[-6,6,8,0,-7,4,-7,6],[4,-10,-6,3,10,-6,-8,5]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[5,-12,-10,-1,2,-8,0,-18,-10,1],[-3,-8,-10,0,2,4,-5,-3,-19,-1],[-18,-13,0,1,-11,-13,3,-18,-7,-17],[4,0,2,-17,-6,-15,2,-11,-20,-19],[-10,5,-19,-11,-9,-9,-7,-16,-13,-4],[-7,-2,1,5,-15,-15,-15,-18,-1,-8],[-1,1,-13,-5,-2,-16,-13,-6,0,-12],[-6,-12,1,-20,5,-6,-11,1,-3,-15],[-18,-6,-9,-2,-11,0,-7,2,-12,-6],[-11,-14,-8,-5,-17,-13,-8,-2,-9,-2]]]",
+      "output": "30",
+      "expectedOutput": "30",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[-13,39,-13,-48,34,0],[-15,-49,22,37,49,45],[-44,27,45,13,-14,49],[-21,27,-5,-22,31,-26],[29,-18,36,46,42,48],[34,37,-33,30,-38,30],[32,-45,-11,50,6,-46],[24,-4,43,-34,-39,-13],[-9,45,3,-28,-25,-34],[50,19,-4,17,14,-16],[-29,-18,11,-13,45,-7],[-36,9,-41,-32,46,-22]]]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[5,-30,5,5],[5,5,5,-30],[-30,5,5,5],[5,5,-30,5]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[12,6,8,6,-3,15,12,10,2,-4,-13,10],[-3,-15,-7,2,-12,-1,-4,6,8,6,-7,3],[-3,11,5,15,-4,-12,6,-8,0,-15,4,13],[15,2,-5,14,4,-8,5,-13,5,11,-1,14],[7,-6,5,-2,-12,-11,-14,15,-14,-6,0,-12],[-12,-8,13,2,-11,-3,-1,-4,6,15,8,7]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1000,1000],[1000,1000]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[-1000,-1000],[-1000,-1000]]]",
+      "output": "3001",
+      "expectedOutput": "3001",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[3,1,4,-3,1,5,-4,2,4],[1,-1,-5,0,-2,2,2,-2,0],[-4,5,0,3,5,0,-5,1,-1],[-2,-4,2,-4,5,-2,5,5,4],[-5,-5,0,-2,-3,4,-2,-4,3],[-2,4,-2,-2,0,-3,4,-5,-1],[-3,-3,3,-1,-3,-4,5,-5,-3],[-5,0,-2,4,0,-5,-3,-1,-5],[-3,1,3,-4,-4,2,2,0,3]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[51,-73,15,28,-44,57,-89],[86,100,68,33,-23,17,64],[-93,-85,22,2,9,75,-73],[25,82,13,-82,-80,-18,55],[-63,-84,-68,-30,59,62,49],[40,82,-17,-3,52,35,-25],[16,29,54,10,-75,79,-71]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "dungeon = [[-2,-3,3],[-5,-10,1],[10,30,-5]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": "Starting with 7 health and taking the path right, down, down, right keeps health at 1 or above at every cell."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "dungeon = [[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "The knight needs at least 1 health to be alive when entering the only cell."
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "dungeon = [[100]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "Even though the cell heals the knight, it still needs at least 1 health to begin with."
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[-2,-3,3],[-5,-10,1],[10,30,-5]]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[100]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[-5]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,-3,3],[0,-2,0],[-3,-3,-3]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[-1,-1],[-1,-1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[0,0,0],[0,0,0],[0,0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[100,-100,100],[-100,100,-100],[100,-100,100]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[5,-3,4,7,-6,2,-4,9],[6,-6,-8,-2,3,0,6,-2],[-10,-1,-1,8,8,5,-6,4],[7,5,1,0,7,7,2,4],[0,-4,-3,8,2,-3,3,-9],[0,5,2,2,10,-6,5,-9],[-6,6,8,0,-7,4,-7,6],[4,-10,-6,3,10,-6,-8,5]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[5,-12,-10,-1,2,-8,0,-18,-10,1],[-3,-8,-10,0,2,4,-5,-3,-19,-1],[-18,-13,0,1,-11,-13,3,-18,-7,-17],[4,0,2,-17,-6,-15,2,-11,-20,-19],[-10,5,-19,-11,-9,-9,-7,-16,-13,-4],[-7,-2,1,5,-15,-15,-15,-18,-1,-8],[-1,1,-13,-5,-2,-16,-13,-6,0,-12],[-6,-12,1,-20,5,-6,-11,1,-3,-15],[-18,-6,-9,-2,-11,0,-7,2,-12,-6],[-11,-14,-8,-5,-17,-13,-8,-2,-9,-2]]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[-13,39,-13,-48,34,0],[-15,-49,22,37,49,45],[-44,27,45,13,-14,49],[-21,27,-5,-22,31,-26],[29,-18,36,46,42,48],[34,37,-33,30,-38,30],[32,-45,-11,50,6,-46],[24,-4,43,-34,-39,-13],[-9,45,3,-28,-25,-34],[50,19,-4,17,14,-16],[-29,-18,11,-13,45,-7],[-36,9,-41,-32,46,-22]]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[5,-30,5,5],[5,5,5,-30],[-30,5,5,5],[5,5,-30,5]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[12,6,8,6,-3,15,12,10,2,-4,-13,10],[-3,-15,-7,2,-12,-1,-4,6,8,6,-7,3],[-3,11,5,15,-4,-12,6,-8,0,-15,4,13],[15,2,-5,14,4,-8,5,-13,5,11,-1,14],[7,-6,5,-2,-12,-11,-14,15,-14,-6,0,-12],[-12,-8,13,2,-11,-3,-1,-4,6,15,8,7]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1000,1000],[1000,1000]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[-1000,-1000],[-1000,-1000]]]",
+        "output": "3001",
+        "expectedOutput": "3001",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[3,1,4,-3,1,5,-4,2,4],[1,-1,-5,0,-2,2,2,-2,0],[-4,5,0,3,5,0,-5,1,-1],[-2,-4,2,-4,5,-2,5,5,4],[-5,-5,0,-2,-3,4,-2,-4,3],[-2,4,-2,-2,0,-3,4,-5,-1],[-3,-3,3,-1,-3,-4,5,-5,-3],[-5,0,-2,4,0,-5,-3,-1,-5],[-3,1,3,-4,-4,2,2,0,3]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[51,-73,15,28,-44,57,-89],[86,100,68,33,-23,17,64],[-93,-85,22,2,9,75,-73],[25,82,13,-82,-80,-18,55],[-63,-84,-68,-30,59,62,49],[40,82,-17,-3,52,35,-25],[16,29,54,10,-75,79,-71]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def calculateMinimumHP(self, dungeon):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int calculateMinimumHP(vector<vector<int>>& dungeon) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int calculateMinimumHP(int[][] dungeon) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun calculateMinimumHP(dungeon: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    calculateMinimumHP(dungeon) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def calculateMinimumHP(self, dungeon):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int calculateMinimumHP(vector<vector<int>>& dungeon) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int calculateMinimumHP(int[][] dungeon) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun calculateMinimumHP(dungeon: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    calculateMinimumHP(dungeon) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def calculateMinimumHP(self, dungeon):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int calculateMinimumHP(vector<vector<int>>& dungeon) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int calculateMinimumHP(int[][] dungeon) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun calculateMinimumHP(dungeon: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    calculateMinimumHP(dungeon) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def calculateMinimumHP(self, dungeon):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int calculateMinimumHP(vector<vector<int>>& dungeon) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int calculateMinimumHP(int[][] dungeon) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun calculateMinimumHP(dungeon: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    calculateMinimumHP(dungeon) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(m * n)",
+      "space": "O(m * n), reducible to O(n)",
+      "pattern": "2D dynamic programming worked backwards from the destination"
+    },
+    "bruteForce": {
+      "approach": "recursively try every right/down path from the start, simulating health along each and finding the minimum starting health that keeps health positive throughout, over all paths",
+      "time": "O(2^(m+n))",
+      "space": "O(m + n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "2D dynamic programming worked backwards from the destination",
+    "time": "O(m * n)",
+    "space": "O(m * n), reducible to O(n)",
+    "hint_ladder": [
+      "working forward from the top-left is tricky because the health requirement at a cell depends on the whole rest of the path ahead of it - what if you worked backward from the princess instead?",
+      "define dp[i][j] as the minimum health the knight must have upon ENTERING cell (i, j) to survive from there to the princess",
+      "at the destination cell, the knight needs enough health to survive that cell's value and still have at least 1 left: dp[m-1][n-1] = max(1, 1 - dungeon[m-1][n-1])",
+      "for any other cell, the knight will move to whichever neighbor (right or down) requires less incoming health, then that path's requirement gets reduced by the current cell's value: dp[i][j] = max(1, min(dp[i+1][j], dp[i][j+1]) - dungeon[i][j])",
+      "fill the table from the bottom-right corner backward to the top-left, and the answer is dp[0][0]"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try every right/down path from the start, simulating health along each and finding the minimum starting health that keeps health positive throughout, over all paths",
+    "time": "O(2^(m+n))",
+    "space": "O(m + n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

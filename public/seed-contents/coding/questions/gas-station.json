@@ -1,0 +1,602 @@
+{
+  "id": "gas-station",
+  "questionId": "gas-station",
+  "slug": "gas-station",
+  "title": "Gas Station",
+  "difficulty": "Medium",
+  "category": "Greedy",
+  "patterns": [
+    "greedy",
+    "single pass"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "first check: is a solution even possible? compare total gas to total cost",
+    "if you simulate starting from station 0 and your tank goes negative at station k, could any station between 0 and k have been a valid start?",
+    "no - if station 0 could not reach station k+1 with a full tank, no station after 0 and before k+1 could either, since they'd arrive at k with even less surplus fuel than starting from 0 would have",
+    "so whenever the running tank drops below 0, discard every station tried so far as a candidate start and try the very next station, resetting the tank to 0",
+    "if total gas >= total cost, the station where you last reset the candidate start is guaranteed to be the unique valid answer - you never need to double check it separately"
+  ],
+  "commonMistakes": [
+    "restarting the search from station 0 again after a failure instead of just moving the candidate start forward by one and continuing the same pass",
+    "assuming a station with gas[i] < cost[i] can never be the start, when actually the deciding factor is the running total, not any single station's local balance",
+    "forgetting the upfront feasibility check and returning a station index even when total gas is less than total cost"
+  ],
+  "content": {
+    "problemStatement": "There are `n` gas stations arranged in a circle. `gas[i]` is the amount\nof fuel available at station `i`, and `cost[i]` is the fuel needed to\ndrive from station `i` to station `(i+1) mod n`. You start with an empty\ntank at some station of your choosing and drive around the circle in\none direction.\n\n**Return the index of the starting station that lets you complete the full circuit without running out of fuel, or -1 if none does.**\n\nYou can assume that if a solution exists, exactly one starting station works.\n",
+    "constraints": [
+      "n == gas.length == cost.length",
+      "1 <= n <= 10^5",
+      "0 <= gas[i], cost[i] <= 10^4"
+    ],
+    "notes": [
+      "total gas exactly equals total cost (a solution must exist)",
+      "total gas is less than total cost (answer is -1)",
+      "a single station (trivially the answer if gas[0] >= cost[0])",
+      "the valid starting index is the last one in the array"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "gas = [1,2,3,4,5], cost = [3,4,5,1,2]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "starting at station 3: tank goes 0+4-1=3, then 3+5-2=6, then 6+1-3=4, then 4+2-4=2, then 2+3-5=0, completing the loop"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "gas = [2,3,4], cost = [3,4,3]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "total gas (9) is less than total cost (10), so no starting point can complete the circuit"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5],[3,4,5,1,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2,3,4],[3,4,3]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[5,1,2,3,4],[4,4,1,5,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,8,2,8],[6,5,6,6]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[5],[4]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[3],[5]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1],[1,1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[4,5,1,2],[1,2,2,4]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[6,7,1,10,7,5,2,8,10,6,4,8,5,8,10,10,6,4,8,9],[6,4,3,7,1,7,7,9,5,3,9,7,6,2,5,2,5,9,10,6]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[19,9,11,2,6,4,1,14,16,5,16,18,2,16,18,5,11,12,8,20,2,15,17,20,10],[19,1,11,13,8,3,9,10,6,14,12,14,2,20,1,16,6,7,2,9,17,6,17,7,10]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[2],[2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5],[5,4,3,2,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[3,3,4],[3,4,4]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,0,0,0,5],[1,1,1,1,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[6,3,7,3,4,4,5,6,2,4,7,3,2,4,5],[5,4,3,6,2,4,5,3,6,7,1,4,2,3,5]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10,0,0,0],[0,0,0,10]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0,0,0,10],[10,0,0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[2,2,2,2,2,2],[3,1,3,1,3,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "gas = [1,2,3,4,5], cost = [3,4,5,1,2]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "starting at station 3: tank goes 0+4-1=3, then 3+5-2=6, then 6+1-3=4, then 4+2-4=2, then 2+3-5=0, completing the loop"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "gas = [2,3,4], cost = [3,4,3]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "total gas (9) is less than total cost (10), so no starting point can complete the circuit"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "gas = [1,2,3,4,5], cost = [3,4,5,1,2]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "starting at station 3: tank goes 0+4-1=3, then 3+5-2=6, then 6+1-3=4, then 4+2-4=2, then 2+3-5=0, completing the loop"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "gas = [2,3,4], cost = [3,4,3]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "total gas (9) is less than total cost (10), so no starting point can complete the circuit"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,4,5],[3,4,5,1,2]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[2,3,4],[3,4,3]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[5,1,2,3,4],[4,4,1,5,1]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[5,8,2,8],[6,5,6,6]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[5],[4]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[3],[5]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,1,1,1],[1,1,1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[4,5,1,2],[1,2,2,4]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[6,7,1,10,7,5,2,8,10,6,4,8,5,8,10,10,6,4,8,9],[6,4,3,7,1,7,7,9,5,3,9,7,6,2,5,2,5,9,10,6]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[19,9,11,2,6,4,1,14,16,5,16,18,2,16,18,5,11,12,8,20,2,15,17,20,10],[19,1,11,13,8,3,9,10,6,14,12,14,2,20,1,16,6,7,2,9,17,6,17,7,10]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[2],[2]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,5],[5,4,3,2,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[3,3,4],[3,4,4]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[0,0,0,0,5],[1,1,1,1,1]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[6,3,7,3,4,4,5,6,2,4,7,3,2,4,5],[5,4,3,6,2,4,5,3,6,7,1,4,2,3,5]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[10,0,0,0],[0,0,0,10]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[0,0,0,10],[10,0,0,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[2,2,2,2,2,2],[3,1,3,1,3,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "gas = [1,2,3,4,5], cost = [3,4,5,1,2]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "starting at station 3: tank goes 0+4-1=3, then 3+5-2=6, then 6+1-3=4, then 4+2-4=2, then 2+3-5=0, completing the loop"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "gas = [2,3,4], cost = [3,4,3]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "total gas (9) is less than total cost (10), so no starting point can complete the circuit"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5],[3,4,5,1,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2,3,4],[3,4,3]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[5,1,2,3,4],[4,4,1,5,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,8,2,8],[6,5,6,6]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[5],[4]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[3],[5]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1],[1,1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[4,5,1,2],[1,2,2,4]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[6,7,1,10,7,5,2,8,10,6,4,8,5,8,10,10,6,4,8,9],[6,4,3,7,1,7,7,9,5,3,9,7,6,2,5,2,5,9,10,6]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[19,9,11,2,6,4,1,14,16,5,16,18,2,16,18,5,11,12,8,20,2,15,17,20,10],[19,1,11,13,8,3,9,10,6,14,12,14,2,20,1,16,6,7,2,9,17,6,17,7,10]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[2],[2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5],[5,4,3,2,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[3,3,4],[3,4,4]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,0,0,0,5],[1,1,1,1,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[6,3,7,3,4,4,5,6,2,4,7,3,2,4,5],[5,4,3,6,2,4,5,3,6,7,1,4,2,3,5]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10,0,0,0],[0,0,0,10]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0,0,0,10],[10,0,0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[2,2,2,2,2,2],[3,1,3,1,3,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def canCompleteCircuit(self, gas, cost):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int canCompleteCircuit(vector<int>& gas, vector<int>& cost) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int canCompleteCircuit(int[] gas, int[] cost) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canCompleteCircuit(gas: IntArray, cost: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canCompleteCircuit(gas, cost) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def canCompleteCircuit(self, gas, cost):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int canCompleteCircuit(vector<int>& gas, vector<int>& cost) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int canCompleteCircuit(int[] gas, int[] cost) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canCompleteCircuit(gas: IntArray, cost: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canCompleteCircuit(gas, cost) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def canCompleteCircuit(self, gas, cost):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int canCompleteCircuit(vector<int>& gas, vector<int>& cost) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int canCompleteCircuit(int[] gas, int[] cost) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canCompleteCircuit(gas: IntArray, cost: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canCompleteCircuit(gas, cost) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def canCompleteCircuit(self, gas, cost):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int canCompleteCircuit(vector<int>& gas, vector<int>& cost) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int canCompleteCircuit(int[] gas, int[] cost) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canCompleteCircuit(gas: IntArray, cost: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canCompleteCircuit(gas, cost) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "single pass tracking a running tank, resetting the candidate start whenever the tank goes negative"
+    },
+    "bruteForce": {
+      "approach": "try every station as a starting point, simulate the full loop from there, and check if the tank ever goes negative",
+      "time": "O(n^2)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "single pass tracking a running tank, resetting the candidate start whenever the tank goes negative",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "first check: is a solution even possible? compare total gas to total cost",
+      "if you simulate starting from station 0 and your tank goes negative at station k, could any station between 0 and k have been a valid start?",
+      "no - if station 0 could not reach station k+1 with a full tank, no station after 0 and before k+1 could either, since they'd arrive at k with even less surplus fuel than starting from 0 would have",
+      "so whenever the running tank drops below 0, discard every station tried so far as a candidate start and try the very next station, resetting the tank to 0",
+      "if total gas >= total cost, the station where you last reset the candidate start is guaranteed to be the unique valid answer - you never need to double check it separately"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every station as a starting point, simulate the full loop from there, and check if the tank ever goes negative",
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

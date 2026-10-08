@@ -1,0 +1,638 @@
+{
+  "id": "minimum-genetic-mutation",
+  "questionId": "minimum-genetic-mutation",
+  "slug": "minimum-genetic-mutation",
+  "title": "Minimum Genetic Mutation",
+  "difficulty": "Medium",
+  "category": "Graphs",
+  "patterns": [
+    "graph",
+    "bfs",
+    "shortest path"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "this is a shortest-path problem in disguise - what are the 'nodes' and what connects two nodes with an edge?",
+    "two genes are connected by an edge if they differ in exactly one character position, and the destination gene must be in the bank",
+    "BFS naturally finds the shortest number of edges (mutations) between a start node and a target node - what would you enqueue first?",
+    "start a BFS from startGene, and at each gene try all L positions times 4 letters as candidate mutations, only enqueueing ones that are in the bank and haven't been visited yet",
+    "track the number of mutations as the BFS depth, and return it as soon as you dequeue endGene; if the queue empties first, return -1"
+  ],
+  "commonMistakes": [
+    "requiring startGene itself to be present in the bank, when only intermediate and final genes along the path need to be",
+    "using DFS without tracking the minimum across all paths, which can return a longer path than necessary",
+    "not marking genes as visited, causing infinite loops or redundant re-exploration in the BFS",
+    "forgetting to check that endGene is actually reachable/in the bank before or during the search, and returning 0 or an incorrect fallback instead of -1"
+  ],
+  "content": {
+    "problemStatement": "A gene string is represented as an 8-character string made only of the\nletters A, C, G, and T. A single mutation changes exactly one character\nin the gene string to a different one of those four letters. You're given\na starting gene `startGene`, a target gene `endGene`, and a `bank` of\nvalid intermediate genes (a single space-delimited string). Every gene\nthat appears along the path from `startGene` to `endGene`, except\n`startGene` itself, must be present in the bank.\n\n**Return the minimum number of mutations needed to transform `startGene` into `endGene`, changing one character per mutation and passing only through genes in the bank, or -1 if there's no such sequence of mutations.**\n\n`startGene` itself is not required to be in the bank.\n",
+    "constraints": [
+      "startGene.length == endGene.length == 8",
+      "startGene, endGene, and every gene in bank consist only of the characters A, C, G, T",
+      "0 <= number of genes in bank <= 10",
+      "genes in bank are distinct",
+      "startGene != endGene"
+    ],
+    "notes": [
+      "endGene is not present in the bank at all (impossible, return -1)",
+      "bank is empty",
+      "a valid path exists but requires passing through several intermediate mutations",
+      "startGene already differs from endGene by exactly one character and that one mutation lands directly in the bank"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "startGene = \"AACCGGTT\", endGene = \"AACCGGTA\", bank = \"AACCGGTA\"",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "changing the last character T to A directly reaches endGene, and AACCGGTA is in the bank"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "startGene = \"AACCGGTT\", endGene = \"AAACGGTA\", bank = \"AACCGGTA AACCGCTA AAACGGTA\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "AACCGGTT -> AACCGGTA -> AAACGGTA, two mutations, both intermediate/final genes are in the bank"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "startGene = \"AAAAACCC\", endGene = \"AACCCCCC\", bank = \"AAAACCCC AAACCCCC AACCCCCC\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "AAAAACCC -> AAAACCCC -> AAACCCCC -> AACCCCCC, each step changes one character and each result is in the bank"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"AACCGGTT\",\"AACCGGTA\",\"AACCGGTA\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"AACCGGTT\",\"AAACGGTA\",\"AACCGGTA AACCGCTA AAACGGTA\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"AAAAACCC\",\"AACCCCCC\",\"AAAACCCC AAACCCCC AACCCCCC\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"AACCGGTT\",\"AACCGGTA\",\"\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"AACCGGTT\",\"AAACGGTA\",\"AACCGGTA AAACGGTA\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"AAAAAAAA\",\"AAAAAAAT\",\"AAAAAAAT\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"AAAAAAAA\",\"TTTTTTTT\",\"AAAAAAAT AAAAAATT AAAAATTT AAAATTTT AAATTTTT AATTTTTT ATTTTTTT TTTTTTTT\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"AAAAAAAA\",\"CCCCCCCC\",\"AAAAAAAC AAAAAACC AAAAACCC AAAACCCC AAACCCCC AACCCCCC ACCCCCCC CCCCCCCC\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"AACCGGTT\",\"AACCGGTA\",\"AACCGGTC AACCGGTG AACCGGTA\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"AACCGGTA\",\"AACCGGTT\",\"AACCGGTT\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"AAAAACCC\",\"AACCCCCC\",\"AAAACCCC AACCCCCC\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"GAAAAAAA\",\"AAAAAAAA\",\"AAAAAAAA\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"AACCGGTT\",\"AACCGGTA\",\"AACCGGTA AAACGGTA AACCGCTA\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"AAAAAAAA\",\"AAAAAAAG\",\"AAAAAAAC AAAAAAAG\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"ACGTACGT\",\"TGCATGCA\",\"TCGTACGT ACGTACGT\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"AAAAAAAA\",\"AAAACCCC\",\"AAAAACCC AAAAACCA AAAACACC AAAACCAC AAAACCCA AAAACCCC AAAAAACC AAAACACA\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"AAAAAAAA\",\"AAAACCCC\",\"AAAAAAAC AAAAAACC AAAAACCC AAAACCCC\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"CCCCCCCC\",\"GGGGGGGG\",\"CCCCCCCG CCCCCCGG CCCCCGGG CCCCGGGG CCCGGGGG CCGGGGGG CGGGGGGG GGGGGGGG\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"AACCGGTT\",\"AACCGGTA\",\"AACCGGTA AACCGGTT\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"TTTTTTTT\",\"AAAAAAAA\",\"TTTTTTTA TTTTTTAA TTTTTAAA TTTTAAAA TTTAAAAA TTAAAAAA TAAAAAAA AAAAAAAA\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "startGene = \"AACCGGTT\", endGene = \"AACCGGTA\", bank = \"AACCGGTA\"",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "changing the last character T to A directly reaches endGene, and AACCGGTA is in the bank"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "startGene = \"AACCGGTT\", endGene = \"AAACGGTA\", bank = \"AACCGGTA AACCGCTA AAACGGTA\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "AACCGGTT -> AACCGGTA -> AAACGGTA, two mutations, both intermediate/final genes are in the bank"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "startGene = \"AAAAACCC\", endGene = \"AACCCCCC\", bank = \"AAAACCCC AAACCCCC AACCCCCC\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "AAAAACCC -> AAAACCCC -> AAACCCCC -> AACCCCCC, each step changes one character and each result is in the bank"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "startGene = \"AACCGGTT\", endGene = \"AACCGGTA\", bank = \"AACCGGTA\"",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "changing the last character T to A directly reaches endGene, and AACCGGTA is in the bank"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "startGene = \"AACCGGTT\", endGene = \"AAACGGTA\", bank = \"AACCGGTA AACCGCTA AAACGGTA\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "AACCGGTT -> AACCGGTA -> AAACGGTA, two mutations, both intermediate/final genes are in the bank"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "startGene = \"AAAAACCC\", endGene = \"AACCCCCC\", bank = \"AAAACCCC AAACCCCC AACCCCCC\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "AAAAACCC -> AAAACCCC -> AAACCCCC -> AACCCCCC, each step changes one character and each result is in the bank"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"AACCGGTT\",\"AACCGGTA\",\"AACCGGTA\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"AACCGGTT\",\"AAACGGTA\",\"AACCGGTA AACCGCTA AAACGGTA\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"AAAAACCC\",\"AACCCCCC\",\"AAAACCCC AAACCCCC AACCCCCC\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"AACCGGTT\",\"AACCGGTA\",\"\"]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"AACCGGTT\",\"AAACGGTA\",\"AACCGGTA AAACGGTA\"]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"AAAAAAAA\",\"AAAAAAAT\",\"AAAAAAAT\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"AAAAAAAA\",\"TTTTTTTT\",\"AAAAAAAT AAAAAATT AAAAATTT AAAATTTT AAATTTTT AATTTTTT ATTTTTTT TTTTTTTT\"]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"AAAAAAAA\",\"CCCCCCCC\",\"AAAAAAAC AAAAAACC AAAAACCC AAAACCCC AAACCCCC AACCCCCC ACCCCCCC CCCCCCCC\"]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"AACCGGTT\",\"AACCGGTA\",\"AACCGGTC AACCGGTG AACCGGTA\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"AACCGGTA\",\"AACCGGTT\",\"AACCGGTT\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"AAAAACCC\",\"AACCCCCC\",\"AAAACCCC AACCCCCC\"]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"GAAAAAAA\",\"AAAAAAAA\",\"AAAAAAAA\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"AACCGGTT\",\"AACCGGTA\",\"AACCGGTA AAACGGTA AACCGCTA\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"AAAAAAAA\",\"AAAAAAAG\",\"AAAAAAAC AAAAAAAG\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"ACGTACGT\",\"TGCATGCA\",\"TCGTACGT ACGTACGT\"]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"AAAAAAAA\",\"AAAACCCC\",\"AAAAACCC AAAAACCA AAAACACC AAAACCAC AAAACCCA AAAACCCC AAAAAACC AAAACACA\"]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"AAAAAAAA\",\"AAAACCCC\",\"AAAAAAAC AAAAAACC AAAAACCC AAAACCCC\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"CCCCCCCC\",\"GGGGGGGG\",\"CCCCCCCG CCCCCCGG CCCCCGGG CCCCGGGG CCCGGGGG CCGGGGGG CGGGGGGG GGGGGGGG\"]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"AACCGGTT\",\"AACCGGTA\",\"AACCGGTA AACCGGTT\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"TTTTTTTT\",\"AAAAAAAA\",\"TTTTTTTA TTTTTTAA TTTTTAAA TTTTAAAA TTTAAAAA TTAAAAAA TAAAAAAA AAAAAAAA\"]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "startGene = \"AACCGGTT\", endGene = \"AACCGGTA\", bank = \"AACCGGTA\"",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "changing the last character T to A directly reaches endGene, and AACCGGTA is in the bank"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "startGene = \"AACCGGTT\", endGene = \"AAACGGTA\", bank = \"AACCGGTA AACCGCTA AAACGGTA\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "AACCGGTT -> AACCGGTA -> AAACGGTA, two mutations, both intermediate/final genes are in the bank"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "startGene = \"AAAAACCC\", endGene = \"AACCCCCC\", bank = \"AAAACCCC AAACCCCC AACCCCCC\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "AAAAACCC -> AAAACCCC -> AAACCCCC -> AACCCCCC, each step changes one character and each result is in the bank"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"AACCGGTT\",\"AACCGGTA\",\"AACCGGTA\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"AACCGGTT\",\"AAACGGTA\",\"AACCGGTA AACCGCTA AAACGGTA\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"AAAAACCC\",\"AACCCCCC\",\"AAAACCCC AAACCCCC AACCCCCC\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"AACCGGTT\",\"AACCGGTA\",\"\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"AACCGGTT\",\"AAACGGTA\",\"AACCGGTA AAACGGTA\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"AAAAAAAA\",\"AAAAAAAT\",\"AAAAAAAT\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"AAAAAAAA\",\"TTTTTTTT\",\"AAAAAAAT AAAAAATT AAAAATTT AAAATTTT AAATTTTT AATTTTTT ATTTTTTT TTTTTTTT\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"AAAAAAAA\",\"CCCCCCCC\",\"AAAAAAAC AAAAAACC AAAAACCC AAAACCCC AAACCCCC AACCCCCC ACCCCCCC CCCCCCCC\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"AACCGGTT\",\"AACCGGTA\",\"AACCGGTC AACCGGTG AACCGGTA\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"AACCGGTA\",\"AACCGGTT\",\"AACCGGTT\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"AAAAACCC\",\"AACCCCCC\",\"AAAACCCC AACCCCCC\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"GAAAAAAA\",\"AAAAAAAA\",\"AAAAAAAA\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"AACCGGTT\",\"AACCGGTA\",\"AACCGGTA AAACGGTA AACCGCTA\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"AAAAAAAA\",\"AAAAAAAG\",\"AAAAAAAC AAAAAAAG\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"ACGTACGT\",\"TGCATGCA\",\"TCGTACGT ACGTACGT\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"AAAAAAAA\",\"AAAACCCC\",\"AAAAACCC AAAAACCA AAAACACC AAAACCAC AAAACCCA AAAACCCC AAAAAACC AAAACACA\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"AAAAAAAA\",\"AAAACCCC\",\"AAAAAAAC AAAAAACC AAAAACCC AAAACCCC\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"CCCCCCCC\",\"GGGGGGGG\",\"CCCCCCCG CCCCCCGG CCCCCGGG CCCCGGGG CCCGGGGG CCGGGGGG CGGGGGGG GGGGGGGG\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"AACCGGTT\",\"AACCGGTA\",\"AACCGGTA AACCGGTT\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"TTTTTTTT\",\"AAAAAAAA\",\"TTTTTTTA TTTTTTAA TTTTTAAA TTTTAAAA TTTAAAAA TTAAAAAA TAAAAAAA AAAAAAAA\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minMutation(self, startGene, endGene, bank):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\n#include <unordered_set>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minMutation(string startGene, string endGene, string bank) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minMutation(String startGene, String endGene, String bank) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minMutation(startGene: String, endGene: String, bank: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minMutation(startGene, endGene, bank) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minMutation(self, startGene, endGene, bank):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\n#include <unordered_set>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minMutation(string startGene, string endGene, string bank) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minMutation(String startGene, String endGene, String bank) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minMutation(startGene: String, endGene: String, bank: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minMutation(startGene, endGene, bank) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minMutation(self, startGene, endGene, bank):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\n#include <unordered_set>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minMutation(string startGene, string endGene, string bank) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minMutation(String startGene, String endGene, String bank) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minMutation(startGene: String, endGene: String, bank: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minMutation(startGene, endGene, bank) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minMutation(self, startGene, endGene, bank):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\n#include <unordered_set>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minMutation(string startGene, string endGene, string bank) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minMutation(String startGene, String endGene, String bank) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minMutation(startGene: String, endGene: String, bank: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minMutation(startGene, endGene, bank) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(b * L * 4) where b is bank size and L is gene length (8), since each BFS step tries changing each of L positions to each of 4 letters and checks bank membership",
+      "space": "O(b) for the bank set and visited set",
+      "pattern": "BFS shortest path over an implicit graph where nodes are genes and edges connect genes that differ by exactly one character, restricted to genes present in the bank"
+    },
+    "bruteForce": {
+      "approach": "explore every possible sequence of mutations from startGene via DFS/backtracking, trying all valid single-character changes at each step and checking membership in the bank, tracking the best (shortest) sequence found",
+      "time": "O(4^L * b) in the worst case, where L is gene length and b is bank size, due to redundant re-exploration of the same states",
+      "space": "O(L) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "BFS shortest path over an implicit graph where nodes are genes and edges connect genes that differ by exactly one character, restricted to genes present in the bank",
+    "time": "O(b * L * 4) where b is bank size and L is gene length (8), since each BFS step tries changing each of L positions to each of 4 letters and checks bank membership",
+    "space": "O(b) for the bank set and visited set",
+    "hint_ladder": [
+      "this is a shortest-path problem in disguise - what are the 'nodes' and what connects two nodes with an edge?",
+      "two genes are connected by an edge if they differ in exactly one character position, and the destination gene must be in the bank",
+      "BFS naturally finds the shortest number of edges (mutations) between a start node and a target node - what would you enqueue first?",
+      "start a BFS from startGene, and at each gene try all L positions times 4 letters as candidate mutations, only enqueueing ones that are in the bank and haven't been visited yet",
+      "track the number of mutations as the BFS depth, and return it as soon as you dequeue endGene; if the queue empties first, return -1"
+    ]
+  },
+  "bruteForce": {
+    "approach": "explore every possible sequence of mutations from startGene via DFS/backtracking, trying all valid single-character changes at each step and checking membership in the bank, tracking the best (shortest) sequence found",
+    "time": "O(4^L * b) in the worst case, where L is gene length and b is bank size, due to redundant re-exploration of the same states",
+    "space": "O(L) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

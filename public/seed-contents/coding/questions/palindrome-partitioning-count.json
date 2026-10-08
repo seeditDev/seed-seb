@@ -1,0 +1,628 @@
+{
+  "id": "palindrome-partitioning-count",
+  "questionId": "palindrome-partitioning-count",
+  "slug": "palindrome-partitioning-count",
+  "title": "Count of Palindrome Partitions",
+  "difficulty": "Medium",
+  "category": "Backtracking",
+  "patterns": [
+    "backtracking"
+  ],
+  "lists": [],
+  "hints": [
+    "instead of cutting everywhere and checking afterward, only ever try a cut that makes the current piece a palindrome - this prunes huge parts of the search early",
+    "recurse with a start index; at each call, try every end position from start+1 to the end of the string, and only recurse further if s[start:end] is a palindrome",
+    "when start reaches the end of the string, you've completed one valid partition - increase your count by 1 and let that branch end (no explicit list needed since you're counting, not collecting)",
+    "precomputing which (i, j) substrings are palindromes with a small DP table avoids re-checking palindrome-ness from scratch on every recursive call"
+  ],
+  "commonMistakes": [
+    "checking palindrome-ness only at the end, on a wide range of arbitrary cuts, instead of pruning as soon as a piece fails to be a palindrome",
+    "off-by-one errors on substring bounds when trying each possible end position",
+    "forgetting the base case (start reaches string length counts as one valid completed partition, not zero)"
+  ],
+  "content": {
+    "problemStatement": "You're given a string `s`.\n\n**Count how many different ways you can cut `s` into a sequence of contiguous, non-empty pieces such that every piece, read on its own, is a palindrome.**\n\nTwo ways are different if they cut the string at different positions.\n",
+    "constraints": [
+      "s consists only of lowercase English letters",
+      "1 <= length of s <= 16",
+      "every piece in a partition must be non-empty and must itself read the same forwards and backwards"
+    ],
+    "notes": [
+      "single character string (always exactly 1 way)",
+      "string where every character is identical (many valid partitions)",
+      "string with no palindromic substring longer than 1 character, other than the whole string possibly not being one either"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"aab\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the two valid partitions are \"a\"|\"a\"|\"b\" and \"aa\"|\"b\""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"aaa\"",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "\"a\"|\"a\"|\"a\", \"a\"|\"aa\", \"aa\"|\"a\", and \"aaa\" are all valid since any substring of identical characters is a palindrome"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"ab\"",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "only \"a\"|\"b\" works, since \"ab\" itself is not a palindrome"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"aab\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"aaa\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"ab\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"aba\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"abcba\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aaaa\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aaaaaa\"]",
+        "output": "32",
+        "expectedOutput": "32",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"racecar\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abab\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"noonracecar\"]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"aabbaa\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"z\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abcde\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aabaa\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"bb\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abcdefg\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"aaabaaa\"]",
+        "output": "22",
+        "expectedOutput": "22",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"xyzzyx\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"level\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"aab\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the two valid partitions are \"a\"|\"a\"|\"b\" and \"aa\"|\"b\""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"aaa\"",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "\"a\"|\"a\"|\"a\", \"a\"|\"aa\", \"aa\"|\"a\", and \"aaa\" are all valid since any substring of identical characters is a palindrome"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"ab\"",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "only \"a\"|\"b\" works, since \"ab\" itself is not a palindrome"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"aab\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the two valid partitions are \"a\"|\"a\"|\"b\" and \"aa\"|\"b\""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"aaa\"",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "\"a\"|\"a\"|\"a\", \"a\"|\"aa\", \"aa\"|\"a\", and \"aaa\" are all valid since any substring of identical characters is a palindrome"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"ab\"",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "only \"a\"|\"b\" works, since \"ab\" itself is not a palindrome"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"aab\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"aaa\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"ab\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"a\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"aba\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"abcba\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"aaaa\"]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"aaaaaa\"]",
+      "output": "32",
+      "expectedOutput": "32",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"racecar\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"abab\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"noonracecar\"]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"aabbaa\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"z\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"abcde\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"aabaa\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"bb\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"abcdefg\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"aaabaaa\"]",
+      "output": "22",
+      "expectedOutput": "22",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"xyzzyx\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"level\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"aab\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the two valid partitions are \"a\"|\"a\"|\"b\" and \"aa\"|\"b\""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"aaa\"",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "\"a\"|\"a\"|\"a\", \"a\"|\"aa\", \"aa\"|\"a\", and \"aaa\" are all valid since any substring of identical characters is a palindrome"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"ab\"",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "only \"a\"|\"b\" works, since \"ab\" itself is not a palindrome"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"aab\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"aaa\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"ab\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"aba\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"abcba\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aaaa\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aaaaaa\"]",
+        "output": "32",
+        "expectedOutput": "32",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"racecar\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abab\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"noonracecar\"]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"aabbaa\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"z\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abcde\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aabaa\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"bb\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abcdefg\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"aaabaaa\"]",
+        "output": "22",
+        "expectedOutput": "22",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"xyzzyx\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"level\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def countPalindromePartitions(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countPalindromePartitions(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countPalindromePartitions(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countPalindromePartitions(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countPalindromePartitions(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def countPalindromePartitions(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countPalindromePartitions(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countPalindromePartitions(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countPalindromePartitions(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countPalindromePartitions(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def countPalindromePartitions(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countPalindromePartitions(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countPalindromePartitions(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countPalindromePartitions(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countPalindromePartitions(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def countPalindromePartitions(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countPalindromePartitions(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countPalindromePartitions(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countPalindromePartitions(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countPalindromePartitions(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(2^n * n) worst case, but with much of the tree pruned since non-palindromic prefixes are cut off immediately",
+      "space": "O(n) recursion depth, plus O(n^2) if you precompute palindrome checks",
+      "pattern": "backtracking that only ever extends the current cut with a piece already confirmed to be a palindrome, pruning invalid pieces immediately"
+    },
+    "bruteForce": {
+      "approach": "try every one of the 2^(n-1) ways to place cuts between characters, and for each, check whether every resulting piece is a palindrome",
+      "time": "O(2^n * n) (checking each piece for palindrome-ness costs up to O(n))",
+      "space": "O(n) extra beyond enumeration"
+    }
+  },
+  "optimal": {
+    "pattern": "backtracking that only ever extends the current cut with a piece already confirmed to be a palindrome, pruning invalid pieces immediately",
+    "time": "O(2^n * n) worst case, but with much of the tree pruned since non-palindromic prefixes are cut off immediately",
+    "space": "O(n) recursion depth, plus O(n^2) if you precompute palindrome checks",
+    "hint_ladder": [
+      "instead of cutting everywhere and checking afterward, only ever try a cut that makes the current piece a palindrome - this prunes huge parts of the search early",
+      "recurse with a start index; at each call, try every end position from start+1 to the end of the string, and only recurse further if s[start:end] is a palindrome",
+      "when start reaches the end of the string, you've completed one valid partition - increase your count by 1 and let that branch end (no explicit list needed since you're counting, not collecting)",
+      "precomputing which (i, j) substrings are palindromes with a small DP table avoids re-checking palindrome-ness from scratch on every recursive call"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every one of the 2^(n-1) ways to place cuts between characters, and for each, check whether every resulting piece is a palindrome",
+    "time": "O(2^n * n) (checking each piece for palindrome-ness costs up to O(n))",
+    "space": "O(n) extra beyond enumeration"
+  },
+  "isIndex0": true,
+  "level": null
+}

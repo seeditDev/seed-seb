@@ -1,0 +1,628 @@
+{
+  "id": "first-unique-character-in-a-string",
+  "questionId": "first-unique-character-in-a-string",
+  "slug": "first-unique-character-in-a-string",
+  "title": "First Unique Character in a String",
+  "difficulty": "Easy",
+  "category": "Hash map",
+  "patterns": [
+    "hash map",
+    "frequency counting"
+  ],
+  "lists": [],
+  "hints": [
+    "checking 'does this character appear again later' by rescanning is wasteful - what if you knew every character's TOTAL count up front?",
+    "count every character's frequency across the whole string in one pass",
+    "then scan the string again, in order, and return the index of the first character whose total count is exactly 1",
+    "two linear passes is still O(n) overall, much better than the nested rescan"
+  ],
+  "commonMistakes": [
+    "returning as soon as a character's count reaches 1 during the FIRST (counting) pass, instead of waiting until the count is final",
+    "returning the character itself instead of its index",
+    "not handling the case where no unique character exists, forgetting to return -1"
+  ],
+  "content": {
+    "problemStatement": "You're given a string `s`.\n\n**Return the index of the first character that doesn't repeat anywhere else in the string, or -1 if every character repeats.**\n",
+    "constraints": [
+      "0 <= s.length <= 10^5",
+      "s consists of only lowercase English letters"
+    ],
+    "notes": [
+      "every character repeats (return -1)",
+      "a single character string (always index 0)",
+      "the last character is the only unique one"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"leetcode\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "'l' never appears again later in the string"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"loveleetcode\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "'v' at index 2 is the first character with no other occurrence"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"aabb\"",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"leetcode\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"loveleetcode\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"aabb\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"z\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aa\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"ab\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abab\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abcabcx\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"ccc\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"dddccbba\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"xyzxyzxyzq\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"thequickbrownfoxjumpsoverthelazydog\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aabbccddeeffgghhiijjkkllmmnnooz\"]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"zaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaz\"]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"abcdefghijklmnopqrstuvwxyz\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"aabbccddeeffg\"]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"mississippi\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"leetcode\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "'l' never appears again later in the string"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"loveleetcode\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "'v' at index 2 is the first character with no other occurrence"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"aabb\"",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"leetcode\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "'l' never appears again later in the string"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"loveleetcode\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "'v' at index 2 is the first character with no other occurrence"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"aabb\"",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"leetcode\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"loveleetcode\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"aabb\"]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"z\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"\"]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"aa\"]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"ab\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"abab\"]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"abcabcx\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"ccc\"]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"dddccbba\"]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"xyzxyzxyzq\"]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"thequickbrownfoxjumpsoverthelazydog\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"aabbccddeeffgghhiijjkkllmmnnooz\"]",
+      "output": "30",
+      "expectedOutput": "30",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"zaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaz\"]",
+      "output": "30",
+      "expectedOutput": "30",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"abcdefghijklmnopqrstuvwxyz\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"aabbccddeeffg\"]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"mississippi\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"leetcode\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "'l' never appears again later in the string"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"loveleetcode\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "'v' at index 2 is the first character with no other occurrence"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"aabb\"",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"leetcode\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"loveleetcode\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"aabb\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"z\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aa\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"ab\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abab\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abcabcx\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"ccc\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"dddccbba\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"xyzxyzxyzq\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"thequickbrownfoxjumpsoverthelazydog\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aabbccddeeffgghhiijjkkllmmnnooz\"]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"zaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaz\"]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"abcdefghijklmnopqrstuvwxyz\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"aabbccddeeffg\"]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"mississippi\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def firstUniqChar(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int firstUniqChar(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int firstUniqChar(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun firstUniqChar(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    firstUniqChar(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def firstUniqChar(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int firstUniqChar(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int firstUniqChar(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun firstUniqChar(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    firstUniqChar(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def firstUniqChar(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int firstUniqChar(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int firstUniqChar(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun firstUniqChar(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    firstUniqChar(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def firstUniqChar(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int firstUniqChar(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int firstUniqChar(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun firstUniqChar(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    firstUniqChar(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) (26 letters)",
+      "pattern": "hash map counting every character's total frequency first, then a second pass to find the first count-of-1"
+    },
+    "bruteForce": {
+      "approach": "for each character, scan the rest of the string to check if it appears again, stopping at the first one that doesn't",
+      "time": "O(n^2)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "hash map counting every character's total frequency first, then a second pass to find the first count-of-1",
+    "time": "O(n)",
+    "space": "O(1) (26 letters)",
+    "hint_ladder": [
+      "checking 'does this character appear again later' by rescanning is wasteful - what if you knew every character's TOTAL count up front?",
+      "count every character's frequency across the whole string in one pass",
+      "then scan the string again, in order, and return the index of the first character whose total count is exactly 1",
+      "two linear passes is still O(n) overall, much better than the nested rescan"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each character, scan the rest of the string to check if it appears again, stopping at the first one that doesn't",
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

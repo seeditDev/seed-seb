@@ -1,0 +1,629 @@
+{
+  "id": "counting-bits",
+  "questionId": "counting-bits",
+  "slug": "counting-bits",
+  "title": "Counting Bits",
+  "difficulty": "Medium",
+  "category": "Bit manipulation",
+  "patterns": [
+    "bit manipulation",
+    "dynamic programming"
+  ],
+  "lists": [
+    "blind-75"
+  ],
+  "hints": [
+    "computing each i's set-bit count from scratch repeats a lot of work - can popcount(i) be expressed in terms of popcount of some smaller number you've already computed?",
+    "look at i in binary versus i >> 1 (i with its lowest bit dropped) - how do their set-bit counts relate?",
+    "popcount(i) = popcount(i >> 1) + (i & 1) - the count for i is the count for i with the last bit chopped off, plus whether that last bit was a 1",
+    "build the answer array bottom-up: dp[0] = 0, and for i from 1 to n, dp[i] = dp[i >> 1] + (i & 1)"
+  ],
+  "commonMistakes": [
+    "recomputing popcount for every i independently instead of reusing dp[i >> 1], turning an O(n) problem into O(n log n)",
+    "using i >> 1 but forgetting to also add (i & 1) for the bit that got shifted off",
+    "off-by-one on the array size - the result needs n + 1 entries, for i = 0 through n inclusive"
+  ],
+  "content": {
+    "problemStatement": "You're given a non-negative integer `n`.\n\n**For every integer i from 0 to `n` (inclusive), compute the number of set bits in i's binary representation, and return the results as an array, ordered by i.**\n",
+    "constraints": [
+      "0 <= n <= 10^5"
+    ],
+    "notes": [
+      "n = 0 (result is just [0])",
+      "n is a power of two",
+      "n is one less than a power of two (e.g. 7), which has the most set bits for its size"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 2",
+        "output": "[0, 1, 1]",
+        "expectedOutput": "[0, 1, 1]",
+        "explanation": "0 has 0 set bits, 1 has 1, 2 (10) has 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 5",
+        "output": "[0, 1, 1, 2, 1, 2]",
+        "expectedOutput": "[0, 1, 1, 2, 1, 2]",
+        "explanation": "3 (11) has 2, 4 (100) has 1, 5 (101) has 2"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 0",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[2]",
+        "output": "[0,1,1]",
+        "expectedOutput": "[0,1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[5]",
+        "output": "[0,1,1,2,1,2]",
+        "expectedOutput": "[0,1,1,2,1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[0]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[8]",
+        "output": "[0,1,1,2,1,2,2,3,1]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3]",
+        "output": "[0,1,1,2]",
+        "expectedOutput": "[0,1,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[7]",
+        "output": "[0,1,1,2,1,2,2,3]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[10]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[15]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[16]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[20]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[31]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[32]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[33]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[63]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[64]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[65]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[127]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[128]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,1]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[129]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,1,2]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,1,2]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 2",
+      "output": "[0, 1, 1]",
+      "expectedOutput": "[0, 1, 1]",
+      "explanation": "0 has 0 set bits, 1 has 1, 2 (10) has 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 5",
+      "output": "[0, 1, 1, 2, 1, 2]",
+      "expectedOutput": "[0, 1, 1, 2, 1, 2]",
+      "explanation": "3 (11) has 2, 4 (100) has 1, 5 (101) has 2"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 0",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 2",
+      "output": "[0, 1, 1]",
+      "expectedOutput": "[0, 1, 1]",
+      "explanation": "0 has 0 set bits, 1 has 1, 2 (10) has 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 5",
+      "output": "[0, 1, 1, 2, 1, 2]",
+      "expectedOutput": "[0, 1, 1, 2, 1, 2]",
+      "explanation": "3 (11) has 2, 4 (100) has 1, 5 (101) has 2"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 0",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[2]",
+      "output": "[0,1,1]",
+      "expectedOutput": "[0,1,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[5]",
+      "output": "[0,1,1,2,1,2]",
+      "expectedOutput": "[0,1,1,2,1,2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[0]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[8]",
+      "output": "[0,1,1,2,1,2,2,3,1]",
+      "expectedOutput": "[0,1,1,2,1,2,2,3,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[1]",
+      "output": "[0,1]",
+      "expectedOutput": "[0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[3]",
+      "output": "[0,1,1,2]",
+      "expectedOutput": "[0,1,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[7]",
+      "output": "[0,1,1,2,1,2,2,3]",
+      "expectedOutput": "[0,1,1,2,1,2,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[10]",
+      "output": "[0,1,1,2,1,2,2,3,1,2,2]",
+      "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[15]",
+      "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]",
+      "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[16]",
+      "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1]",
+      "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[20]",
+      "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2]",
+      "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[31]",
+      "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5]",
+      "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[32]",
+      "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1]",
+      "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[33]",
+      "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2]",
+      "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[63]",
+      "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6]",
+      "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[64]",
+      "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1]",
+      "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[65]",
+      "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2]",
+      "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[127]",
+      "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7]",
+      "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[128]",
+      "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,1]",
+      "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[129]",
+      "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,1,2]",
+      "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,1,2]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 2",
+        "output": "[0, 1, 1]",
+        "expectedOutput": "[0, 1, 1]",
+        "explanation": "0 has 0 set bits, 1 has 1, 2 (10) has 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 5",
+        "output": "[0, 1, 1, 2, 1, 2]",
+        "expectedOutput": "[0, 1, 1, 2, 1, 2]",
+        "explanation": "3 (11) has 2, 4 (100) has 1, 5 (101) has 2"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 0",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[2]",
+        "output": "[0,1,1]",
+        "expectedOutput": "[0,1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[5]",
+        "output": "[0,1,1,2,1,2]",
+        "expectedOutput": "[0,1,1,2,1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[0]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[8]",
+        "output": "[0,1,1,2,1,2,2,3,1]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3]",
+        "output": "[0,1,1,2]",
+        "expectedOutput": "[0,1,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[7]",
+        "output": "[0,1,1,2,1,2,2,3]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[10]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[15]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[16]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[20]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[31]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[32]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[33]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[63]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[64]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[65]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[127]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[128]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,1]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[129]",
+        "output": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,1,2]",
+        "expectedOutput": "[0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,1,2]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def countBits(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> countBits(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] countBits(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countBits(n: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countBits(n) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def countBits(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> countBits(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] countBits(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countBits(n: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countBits(n) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def countBits(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> countBits(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] countBits(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countBits(n: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countBits(n) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def countBits(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> countBits(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] countBits(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countBits(n: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countBits(n) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the output (O(1) extra beyond it)",
+      "pattern": "dynamic programming built on a bit trick (each count reuses a smaller, already-computed count)"
+    },
+    "bruteForce": {
+      "approach": "for each i from 0 to n, run Brian Kernighan's algorithm (or a 32-iteration bit check) independently to count its set bits",
+      "time": "O(n log n) (or O(32n))",
+      "space": "O(n) for the output"
+    }
+  },
+  "optimal": {
+    "pattern": "dynamic programming built on a bit trick (each count reuses a smaller, already-computed count)",
+    "time": "O(n)",
+    "space": "O(n) for the output (O(1) extra beyond it)",
+    "hint_ladder": [
+      "computing each i's set-bit count from scratch repeats a lot of work - can popcount(i) be expressed in terms of popcount of some smaller number you've already computed?",
+      "look at i in binary versus i >> 1 (i with its lowest bit dropped) - how do their set-bit counts relate?",
+      "popcount(i) = popcount(i >> 1) + (i & 1) - the count for i is the count for i with the last bit chopped off, plus whether that last bit was a 1",
+      "build the answer array bottom-up: dp[0] = 0, and for i from 1 to n, dp[i] = dp[i >> 1] + (i & 1)"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each i from 0 to n, run Brian Kernighan's algorithm (or a 32-iteration bit check) independently to count its set bits",
+    "time": "O(n log n) (or O(32n))",
+    "space": "O(n) for the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

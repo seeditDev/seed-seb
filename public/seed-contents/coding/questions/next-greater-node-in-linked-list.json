@@ -1,0 +1,629 @@
+{
+  "id": "next-greater-node-in-linked-list",
+  "questionId": "next-greater-node-in-linked-list",
+  "slug": "next-greater-node-in-linked-list",
+  "title": "Next Greater Node in Linked List",
+  "difficulty": "Medium",
+  "category": "Linked list",
+  "patterns": [
+    "linked list",
+    "monotonic stack"
+  ],
+  "lists": [],
+  "hints": [
+    "the brute force rescans the rest of the list for every node - can earlier nodes 'remember' that they're still waiting for a greater value?",
+    "what if you kept a stack of indices whose next-greater value you haven't found yet?",
+    "as you scan left to right, whenever the current value is greater than the value at the index on top of the stack, that stack index has found its answer - pop it and record the current value",
+    "keep popping and recording while the current value beats the stack top, then push the current index (it's now waiting for its own next greater value); anything left on the stack at the end gets 0"
+  ],
+  "commonMistakes": [
+    "using greater-or-equal instead of strictly greater, which incorrectly matches equal values",
+    "pushing values onto the stack instead of indices, losing the ability to write results back to the correct position",
+    "forgetting to default unresolved stack entries to 0 at the end"
+  ],
+  "content": {
+    "problemStatement": "A singly linked list is given to you as an array `nums`, where `nums[i]` is the value of the i-th node in order.\n\n**For each node, find the value of the first node that comes after it in the list with a strictly greater value, using 0 if no such node exists, and return these results as an array in the same order as the original list.**\n",
+    "constraints": [
+      "1 <= nums.length <= 10^4",
+      "1 <= nums[i] <= 10^9"
+    ],
+    "notes": [
+      "a single-node list",
+      "strictly decreasing values (every result is 0)",
+      "strictly increasing values (every result is the next value except the last, which is 0)",
+      "duplicate values (a next greater node must be strictly greater, so equal values don't count)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [2, 1, 5]",
+        "output": "[5, 5, 0]",
+        "expectedOutput": "[5, 5, 0]",
+        "explanation": "node 0 (value 2) and node 1 (value 1) both find node 2 (value 5) as their next greater node; node 2 has nothing after it"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [2, 7, 4, 3, 5]",
+        "output": "[7, 0, 5, 5, 0]",
+        "expectedOutput": "[7, 0, 5, 5, 0]",
+        "explanation": "value 2's next greater is 7; value 7 has nothing greater after it; both 4 and 3 find 5 later on"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "explanation": "a single node has nothing after it"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[2,1,5]]",
+        "output": "[5,5,0]",
+        "expectedOutput": "[5,5,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2,7,4,3,5]]",
+        "output": "[7,0,5,5,0]",
+        "expectedOutput": "[7,0,5,5,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,7,5,1,9,2,5,1]]",
+        "output": "[7,9,9,9,0,5,0,0]",
+        "expectedOutput": "[7,9,9,9,0,5,0,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4]]",
+        "output": "[2,3,4,0]",
+        "expectedOutput": "[2,3,4,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[4,4,4,4,5]]",
+        "output": "[5,5,5,5,0]",
+        "expectedOutput": "[5,5,5,5,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,1,2,1,2,1,2]]",
+        "output": "[2,0,2,0,2,0,2,0]",
+        "expectedOutput": "[2,0,2,0,2,0,2,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[50,40,30,60,20,10,70]]",
+        "output": "[60,60,60,70,70,70,0]",
+        "expectedOutput": "[60,60,60,70,70,70,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1000000000,1,1000000000]]",
+        "output": "[0,1000000000,0]",
+        "expectedOutput": "[0,1000000000,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[6,5,4,3,2,1,7]]",
+        "output": "[7,7,7,7,7,7,0]",
+        "expectedOutput": "[7,7,7,7,7,7,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,4,2,5,3,6,4,7]]",
+        "output": "[4,5,5,6,6,7,7,0]",
+        "expectedOutput": "[4,5,5,6,6,7,7,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[10,10,9,9,8,8,11]]",
+        "output": "[11,11,11,11,11,11,0]",
+        "expectedOutput": "[11,11,11,11,11,11,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[2,3,4,5,6,7,8,9,10,0]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[0,0,0,0,0,0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[5]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[5,5]]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2]]",
+        "output": "[2,0]",
+        "expectedOutput": "[2,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,1]]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,3,3,4,4,4,2,2,2,5]]",
+        "output": "[4,4,4,5,5,5,5,5,5,0]",
+        "expectedOutput": "[4,4,4,5,5,5,5,5,5,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [2, 1, 5]",
+      "output": "[5, 5, 0]",
+      "expectedOutput": "[5, 5, 0]",
+      "explanation": "node 0 (value 2) and node 1 (value 1) both find node 2 (value 5) as their next greater node; node 2 has nothing after it"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [2, 7, 4, 3, 5]",
+      "output": "[7, 0, 5, 5, 0]",
+      "expectedOutput": "[7, 0, 5, 5, 0]",
+      "explanation": "value 2's next greater is 7; value 7 has nothing greater after it; both 4 and 3 find 5 later on"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "explanation": "a single node has nothing after it"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [2, 1, 5]",
+      "output": "[5, 5, 0]",
+      "expectedOutput": "[5, 5, 0]",
+      "explanation": "node 0 (value 2) and node 1 (value 1) both find node 2 (value 5) as their next greater node; node 2 has nothing after it"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [2, 7, 4, 3, 5]",
+      "output": "[7, 0, 5, 5, 0]",
+      "expectedOutput": "[7, 0, 5, 5, 0]",
+      "explanation": "value 2's next greater is 7; value 7 has nothing greater after it; both 4 and 3 find 5 later on"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "explanation": "a single node has nothing after it"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[2,1,5]]",
+      "output": "[5,5,0]",
+      "expectedOutput": "[5,5,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[2,7,4,3,5]]",
+      "output": "[7,0,5,5,0]",
+      "expectedOutput": "[7,0,5,5,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,7,5,1,9,2,5,1]]",
+      "output": "[7,9,9,9,0,5,0,0]",
+      "expectedOutput": "[7,9,9,9,0,5,0,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,2,3,4]]",
+      "output": "[2,3,4,0]",
+      "expectedOutput": "[2,3,4,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[4,4,4,4,5]]",
+      "output": "[5,5,5,5,0]",
+      "expectedOutput": "[5,5,5,5,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,1,2,1,2,1,2]]",
+      "output": "[2,0,2,0,2,0,2,0]",
+      "expectedOutput": "[2,0,2,0,2,0,2,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+      "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]",
+      "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[50,40,30,60,20,10,70]]",
+      "output": "[60,60,60,70,70,70,0]",
+      "expectedOutput": "[60,60,60,70,70,70,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1000000000,1,1000000000]]",
+      "output": "[0,1000000000,0]",
+      "expectedOutput": "[0,1000000000,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[6,5,4,3,2,1,7]]",
+      "output": "[7,7,7,7,7,7,0]",
+      "expectedOutput": "[7,7,7,7,7,7,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,4,2,5,3,6,4,7]]",
+      "output": "[4,5,5,6,6,7,7,0]",
+      "expectedOutput": "[4,5,5,6,6,7,7,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[10,10,9,9,8,8,11]]",
+      "output": "[11,11,11,11,11,11,0]",
+      "expectedOutput": "[11,11,11,11,11,11,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+      "output": "[2,3,4,5,6,7,8,9,10,0]",
+      "expectedOutput": "[2,3,4,5,6,7,8,9,10,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[10,9,8,7,6,5,4,3,2,1]]",
+      "output": "[0,0,0,0,0,0,0,0,0,0]",
+      "expectedOutput": "[0,0,0,0,0,0,0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[5]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[5,5]]",
+      "output": "[0,0]",
+      "expectedOutput": "[0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2]]",
+      "output": "[2,0]",
+      "expectedOutput": "[2,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[2,1]]",
+      "output": "[0,0]",
+      "expectedOutput": "[0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[3,3,3,4,4,4,2,2,2,5]]",
+      "output": "[4,4,4,5,5,5,5,5,5,0]",
+      "expectedOutput": "[4,4,4,5,5,5,5,5,5,0]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [2, 1, 5]",
+        "output": "[5, 5, 0]",
+        "expectedOutput": "[5, 5, 0]",
+        "explanation": "node 0 (value 2) and node 1 (value 1) both find node 2 (value 5) as their next greater node; node 2 has nothing after it"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [2, 7, 4, 3, 5]",
+        "output": "[7, 0, 5, 5, 0]",
+        "expectedOutput": "[7, 0, 5, 5, 0]",
+        "explanation": "value 2's next greater is 7; value 7 has nothing greater after it; both 4 and 3 find 5 later on"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "explanation": "a single node has nothing after it"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[2,1,5]]",
+        "output": "[5,5,0]",
+        "expectedOutput": "[5,5,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2,7,4,3,5]]",
+        "output": "[7,0,5,5,0]",
+        "expectedOutput": "[7,0,5,5,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,7,5,1,9,2,5,1]]",
+        "output": "[7,9,9,9,0,5,0,0]",
+        "expectedOutput": "[7,9,9,9,0,5,0,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4]]",
+        "output": "[2,3,4,0]",
+        "expectedOutput": "[2,3,4,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[4,4,4,4,5]]",
+        "output": "[5,5,5,5,0]",
+        "expectedOutput": "[5,5,5,5,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,1,2,1,2,1,2]]",
+        "output": "[2,0,2,0,2,0,2,0]",
+        "expectedOutput": "[2,0,2,0,2,0,2,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[50,40,30,60,20,10,70]]",
+        "output": "[60,60,60,70,70,70,0]",
+        "expectedOutput": "[60,60,60,70,70,70,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1000000000,1,1000000000]]",
+        "output": "[0,1000000000,0]",
+        "expectedOutput": "[0,1000000000,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[6,5,4,3,2,1,7]]",
+        "output": "[7,7,7,7,7,7,0]",
+        "expectedOutput": "[7,7,7,7,7,7,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,4,2,5,3,6,4,7]]",
+        "output": "[4,5,5,6,6,7,7,0]",
+        "expectedOutput": "[4,5,5,6,6,7,7,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[10,10,9,9,8,8,11]]",
+        "output": "[11,11,11,11,11,11,0]",
+        "expectedOutput": "[11,11,11,11,11,11,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[2,3,4,5,6,7,8,9,10,0]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[0,0,0,0,0,0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[5]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[5,5]]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2]]",
+        "output": "[2,0]",
+        "expectedOutput": "[2,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,1]]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,3,3,4,4,4,2,2,2,5]]",
+        "output": "[4,4,4,5,5,5,5,5,5,0]",
+        "expectedOutput": "[4,4,4,5,5,5,5,5,5,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def nextLargerNodes(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> nextLargerNodes(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] nextLargerNodes(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun nextLargerNodes(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    nextLargerNodes(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def nextLargerNodes(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> nextLargerNodes(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] nextLargerNodes(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun nextLargerNodes(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    nextLargerNodes(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def nextLargerNodes(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> nextLargerNodes(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] nextLargerNodes(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun nextLargerNodes(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    nextLargerNodes(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def nextLargerNodes(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> nextLargerNodes(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] nextLargerNodes(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun nextLargerNodes(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    nextLargerNodes(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the stack and output",
+      "pattern": "monotonic decreasing stack of pending indices"
+    },
+    "bruteForce": {
+      "approach": "for each node, scan every node after it until a strictly greater value is found (or the list ends)",
+      "time": "O(n^2)",
+      "space": "O(n) for the output"
+    }
+  },
+  "optimal": {
+    "pattern": "monotonic decreasing stack of pending indices",
+    "time": "O(n)",
+    "space": "O(n) for the stack and output",
+    "hint_ladder": [
+      "the brute force rescans the rest of the list for every node - can earlier nodes 'remember' that they're still waiting for a greater value?",
+      "what if you kept a stack of indices whose next-greater value you haven't found yet?",
+      "as you scan left to right, whenever the current value is greater than the value at the index on top of the stack, that stack index has found its answer - pop it and record the current value",
+      "keep popping and recording while the current value beats the stack top, then push the current index (it's now waiting for its own next greater value); anything left on the stack at the end gets 0"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each node, scan every node after it until a strictly greater value is found (or the list ends)",
+    "time": "O(n^2)",
+    "space": "O(n) for the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,653 @@
+{
+  "id": "ransom-note",
+  "questionId": "ransom-note",
+  "slug": "ransom-note",
+  "title": "Ransom Note",
+  "difficulty": "Easy",
+  "category": "Hash map",
+  "patterns": [
+    "hash map",
+    "frequency counting"
+  ],
+  "lists": [
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "re-scanning magazine for every letter of ransomNote wastes work. what if you counted magazine's letters just once, up front?",
+    "build a frequency map of magazine's letters",
+    "walk through ransomNote, and for each letter, check if the map still has at least one available - if so, use it up (decrement); if not, it's impossible",
+    "you can stop as soon as any letter runs out, without needing to build a frequency map of ransomNote itself"
+  ],
+  "commonMistakes": [
+    "counting ransomNote's letters and comparing to magazine's total count without checking per-letter availability",
+    "not decrementing the count as letters are used, allowing the same magazine letter to be reused too many times",
+    "rescanning magazine from scratch for each letter of ransomNote instead of counting once up front"
+  ],
+  "content": {
+    "problemStatement": "You're given two strings, `ransomNote` and `magazine`.\n\n**Determine whether you can construct `ransomNote` using only the letters available in `magazine`.**\n\nEach letter in `magazine` can only be used once.\n",
+    "constraints": [
+      "0 <= ransomNote.length, magazine.length <= 10^5",
+      "ransomNote and magazine consist of lowercase English letters only",
+      "each letter in magazine can be used at most once"
+    ],
+    "notes": [
+      "ransomNote is longer than magazine (always false)",
+      "ransomNote is empty (always true)",
+      "magazine has enough total letters but not enough of a specific one"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ransomNote = \"a\", magazine = \"b\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ransomNote = \"aa\", magazine = \"ab\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "magazine only has one a, but ransomNote needs two"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ransomNote = \"aa\", magazine = \"aab\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"a\",\"b\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"aa\",\"ab\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"aa\",\"aab\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"\",\"abc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"a\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abc\",\"cba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aab\",\"aab\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"aabbcc\",\"abc\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaaa\",\"aaa\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"thequickbrownfox\",\"thequickbrownfoxjumpsoverthelazydog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"zzzzz\",\"abcdefghijklmnopqrstuvwxyz\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"hello\",\"world\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"programming\",\"grammarprintingoo\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaa\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"mississippi\",\"ppmiissiissii\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"note\",\"ransomnotealphabet\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"xy\",\"\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"abcdefghijklmnop\",\"ponmlkjihgfedcba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"aabbccddeeff\",\"abcdefabcdefabcdef\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ransomNote = \"a\", magazine = \"b\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ransomNote = \"aa\", magazine = \"ab\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "magazine only has one a, but ransomNote needs two"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ransomNote = \"aa\", magazine = \"aab\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ransomNote = \"a\", magazine = \"b\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ransomNote = \"aa\", magazine = \"ab\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "magazine only has one a, but ransomNote needs two"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ransomNote = \"aa\", magazine = \"aab\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"a\",\"b\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"aa\",\"ab\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"aa\",\"aab\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"\",\"abc\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"\",\"\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\",\"a\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"abc\",\"cba\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"aab\",\"aab\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"aabbcc\",\"abc\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"aaaa\",\"aaa\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"thequickbrownfox\",\"thequickbrownfoxjumpsoverthelazydog\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"zzzzz\",\"abcdefghijklmnopqrstuvwxyz\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"hello\",\"world\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"programming\",\"grammarprintingoo\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaa\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaaa\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"mississippi\",\"ppmiissiissii\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"note\",\"ransomnotealphabet\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"xy\",\"\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"abcdefghijklmnop\",\"ponmlkjihgfedcba\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"aabbccddeeff\",\"abcdefabcdefabcdef\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ransomNote = \"a\", magazine = \"b\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ransomNote = \"aa\", magazine = \"ab\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "magazine only has one a, but ransomNote needs two"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ransomNote = \"aa\", magazine = \"aab\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"a\",\"b\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"aa\",\"ab\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"aa\",\"aab\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"\",\"abc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"a\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abc\",\"cba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aab\",\"aab\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"aabbcc\",\"abc\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaaa\",\"aaa\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"thequickbrownfox\",\"thequickbrownfoxjumpsoverthelazydog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"zzzzz\",\"abcdefghijklmnopqrstuvwxyz\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"hello\",\"world\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"programming\",\"grammarprintingoo\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaa\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"mississippi\",\"ppmiissiissii\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"note\",\"ransomnotealphabet\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"xy\",\"\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"abcdefghijklmnop\",\"ponmlkjihgfedcba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"aabbccddeeff\",\"abcdefabcdefabcdef\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def canConstruct(self, ransomNote, magazine):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canConstruct(string ransomNote, string magazine) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canConstruct(String ransomNote, String magazine) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canConstruct(ransomNote: String, magazine: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canConstruct(ransomNote, magazine) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def canConstruct(self, ransomNote, magazine):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canConstruct(string ransomNote, string magazine) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canConstruct(String ransomNote, String magazine) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canConstruct(ransomNote: String, magazine: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canConstruct(ransomNote, magazine) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def canConstruct(self, ransomNote, magazine):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canConstruct(string ransomNote, string magazine) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canConstruct(String ransomNote, String magazine) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canConstruct(ransomNote: String, magazine: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canConstruct(ransomNote, magazine) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def canConstruct(self, ransomNote, magazine):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canConstruct(string ransomNote, string magazine) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canConstruct(String ransomNote, String magazine) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canConstruct(ransomNote: String, magazine: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canConstruct(ransomNote, magazine) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n + m)",
+      "space": "O(1) (26 letters)",
+      "pattern": "hash map (or fixed-size array) of letter counts from magazine, then subtract as you check ransomNote"
+    },
+    "bruteForce": {
+      "approach": "for each letter needed in ransomNote, count how many times it appears there and search/count matches in magazine each time",
+      "time": "O(n * m) if re-scanning magazine for every letter",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "hash map (or fixed-size array) of letter counts from magazine, then subtract as you check ransomNote",
+    "time": "O(n + m)",
+    "space": "O(1) (26 letters)",
+    "hint_ladder": [
+      "re-scanning magazine for every letter of ransomNote wastes work. what if you counted magazine's letters just once, up front?",
+      "build a frequency map of magazine's letters",
+      "walk through ransomNote, and for each letter, check if the map still has at least one available - if so, use it up (decrement); if not, it's impossible",
+      "you can stop as soon as any letter runs out, without needing to build a frequency map of ransomNote itself"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each letter needed in ransomNote, count how many times it appears there and search/count matches in magazine each time",
+    "time": "O(n * m) if re-scanning magazine for every letter",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

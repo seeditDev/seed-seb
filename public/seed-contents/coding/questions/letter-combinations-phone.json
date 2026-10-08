@@ -1,0 +1,651 @@
+{
+  "id": "letter-combinations-phone",
+  "questionId": "letter-combinations-phone",
+  "slug": "letter-combinations-phone",
+  "title": "Letter Combinations of a Phone Number",
+  "difficulty": "Medium",
+  "category": "Backtracking",
+  "patterns": [
+    "backtracking"
+  ],
+  "lists": [
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "if digits is empty, there are no combinations to build - handle that as a base case up front",
+    "recurse with an index into digits and a 'current combination so far' string or character list",
+    "at each call, look up the letters for digits[index], and for each letter, append it to the current combination, recurse on index + 1, then remove that letter before trying the next one",
+    "when index reaches the end of digits, the current combination is complete - add it to your results; since you always try letters in the keypad's natural a-b-c order, the results come out already sorted lexicographically"
+  ],
+  "commonMistakes": [
+    "not handling the empty-string input as a special case, which can produce a spurious single empty combination instead of no output at all",
+    "forgetting to remove the last appended character before trying the next letter, which corrupts the current combination for later branches",
+    "hardcoding the digit-to-letters mapping incorrectly (7 and 9 have 4 letters, not 3, unlike the other digits)"
+  ],
+  "content": {
+    "problemStatement": "You're given a string of digits from 2 to 9, using the classic phone\nkeypad mapping (2 = abc, 3 = def, 4 = ghi, 5 = jkl, 6 = mno, 7 = pqrs,\n8 = tuv, 9 = wxyz).\n\n**Return every letter combination that the digits could represent, as\na single space-delimited string, with the combinations sorted in\nlexicographic (alphabetical) order.**\n\nIf the input is empty, return an empty string.\n",
+    "constraints": [
+      "0 <= digits.length <= 4",
+      "digits[i] is a digit in the range ['2', '9']"
+    ],
+    "notes": [
+      "empty input string (output is an empty string)",
+      "a single digit (no cross product needed)",
+      "digits mapping to keys with different letter counts, e.g. 7 and 9 which have 4 letters each versus keys with 3"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "digits = \"23\"",
+        "output": "\"ad ae af bd be bf cd ce cf\"",
+        "expectedOutput": "\"ad ae af bd be bf cd ce cf\"",
+        "explanation": "2 maps to a/b/c and 3 maps to d/e/f, so there are 3*3 = 9 combinations"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "digits = \"2\"",
+        "output": "\"a b c\"",
+        "expectedOutput": "\"a b c\"",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "digits = \"\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"23\"]",
+        "output": "ad ae af bd be bf cd ce cf",
+        "expectedOutput": "ad ae af bd be bf cd ce cf",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"2\"]",
+        "output": "a b c",
+        "expectedOutput": "a b c",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"79\"]",
+        "output": "pw px py pz qw qx qy qz rw rx ry rz sw sx sy sz",
+        "expectedOutput": "pw px py pz qw qx qy qz rw rx ry rz sw sx sy sz",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"9\"]",
+        "output": "w x y z",
+        "expectedOutput": "w x y z",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"22\"]",
+        "output": "aa ab ac ba bb bc ca cb cc",
+        "expectedOutput": "aa ab ac ba bb bc ca cb cc",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"77\"]",
+        "output": "pp pq pr ps qp qq qr qs rp rq rr rs sp sq sr ss",
+        "expectedOutput": "pp pq pr ps qp qq qr qs rp rq rr rs sp sq sr ss",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"234\"]",
+        "output": "adg adh adi aeg aeh aei afg afh afi bdg bdh bdi beg beh bei bfg bfh bfi cdg cdh cdi ceg ceh cei cfg cfh cfi",
+        "expectedOutput": "adg adh adi aeg aeh aei afg afh afi bdg bdh bdi beg beh bei bfg bfh bfi cdg cdh cdi ceg ceh cei cfg cfh cfi",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"999\"]",
+        "output": "www wwx wwy wwz wxw wxx wxy wxz wyw wyx wyy wyz wzw wzx wzy wzz xww xwx xwy xwz xxw xxx xxy xxz xyw xyx xyy xyz xzw xzx xzy xzz yww ywx ywy ywz yxw yxx yxy yxz yyw yyx yyy yyz yzw yzx yzy yzz zww zwx zwy zwz zxw zxx zxy zxz zyw zyx zyy zyz zzw zzx zzy zzz",
+        "expectedOutput": "www wwx wwy wwz wxw wxx wxy wxz wyw wyx wyy wyz wzw wzx wzy wzz xww xwx xwy xwz xxw xxx xxy xxz xyw xyx xyy xyz xzw xzx xzy xzz yww ywx ywy ywz yxw yxx yxy yxz yyw yyx yyy yyz yzw yzx yzy yzz zww zwx zwy zwz zxw zxx zxy zxz zyw zyx zyy zyz zzw zzx zzy zzz",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"567\"]",
+        "output": "jmp jmq jmr jms jnp jnq jnr jns jop joq jor jos kmp kmq kmr kms knp knq knr kns kop koq kor kos lmp lmq lmr lms lnp lnq lnr lns lop loq lor los",
+        "expectedOutput": "jmp jmq jmr jms jnp jnq jnr jns jop joq jor jos kmp kmq kmr kms knp knq knr kns kop koq kor kos lmp lmq lmr lms lnp lnq lnr lns lop loq lor los",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"456\"]",
+        "output": "gjm gjn gjo gkm gkn gko glm gln glo hjm hjn hjo hkm hkn hko hlm hln hlo ijm ijn ijo ikm ikn iko ilm iln ilo",
+        "expectedOutput": "gjm gjn gjo gkm gkn gko glm gln glo hjm hjn hjo hkm hkn hko hlm hln hlo ijm ijn ijo ikm ikn iko ilm iln ilo",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"8\"]",
+        "output": "t u v",
+        "expectedOutput": "t u v",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"59\"]",
+        "output": "jw jx jy jz kw kx ky kz lw lx ly lz",
+        "expectedOutput": "jw jx jy jz kw kx ky kz lw lx ly lz",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"46\"]",
+        "output": "gm gn go hm hn ho im in io",
+        "expectedOutput": "gm gn go hm hn ho im in io",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"34\"]",
+        "output": "dg dh di eg eh ei fg fh fi",
+        "expectedOutput": "dg dh di eg eh ei fg fh fi",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"6\"]",
+        "output": "m n o",
+        "expectedOutput": "m n o",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"3\"]",
+        "output": "d e f",
+        "expectedOutput": "d e f",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"89\"]",
+        "output": "tw tx ty tz uw ux uy uz vw vx vy vz",
+        "expectedOutput": "tw tx ty tz uw ux uy uz vw vx vy vz",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"4\"]",
+        "output": "g h i",
+        "expectedOutput": "g h i",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"258\"]",
+        "output": "ajt aju ajv akt aku akv alt alu alv bjt bju bjv bkt bku bkv blt blu blv cjt cju cjv ckt cku ckv clt clu clv",
+        "expectedOutput": "ajt aju ajv akt aku akv alt alu alv bjt bju bjv bkt bku bkv blt blu blv cjt cju cjv ckt cku ckv clt clu clv",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"7\"]",
+        "output": "p q r s",
+        "expectedOutput": "p q r s",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "digits = \"23\"",
+      "output": "\"ad ae af bd be bf cd ce cf\"",
+      "expectedOutput": "\"ad ae af bd be bf cd ce cf\"",
+      "explanation": "2 maps to a/b/c and 3 maps to d/e/f, so there are 3*3 = 9 combinations"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "digits = \"2\"",
+      "output": "\"a b c\"",
+      "expectedOutput": "\"a b c\"",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "digits = \"\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "digits = \"23\"",
+      "output": "\"ad ae af bd be bf cd ce cf\"",
+      "expectedOutput": "\"ad ae af bd be bf cd ce cf\"",
+      "explanation": "2 maps to a/b/c and 3 maps to d/e/f, so there are 3*3 = 9 combinations"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "digits = \"2\"",
+      "output": "\"a b c\"",
+      "expectedOutput": "\"a b c\"",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "digits = \"\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"23\"]",
+      "output": "ad ae af bd be bf cd ce cf",
+      "expectedOutput": "ad ae af bd be bf cd ce cf",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"2\"]",
+      "output": "a b c",
+      "expectedOutput": "a b c",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"79\"]",
+      "output": "pw px py pz qw qx qy qz rw rx ry rz sw sx sy sz",
+      "expectedOutput": "pw px py pz qw qx qy qz rw rx ry rz sw sx sy sz",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"9\"]",
+      "output": "w x y z",
+      "expectedOutput": "w x y z",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"22\"]",
+      "output": "aa ab ac ba bb bc ca cb cc",
+      "expectedOutput": "aa ab ac ba bb bc ca cb cc",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"77\"]",
+      "output": "pp pq pr ps qp qq qr qs rp rq rr rs sp sq sr ss",
+      "expectedOutput": "pp pq pr ps qp qq qr qs rp rq rr rs sp sq sr ss",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"234\"]",
+      "output": "adg adh adi aeg aeh aei afg afh afi bdg bdh bdi beg beh bei bfg bfh bfi cdg cdh cdi ceg ceh cei cfg cfh cfi",
+      "expectedOutput": "adg adh adi aeg aeh aei afg afh afi bdg bdh bdi beg beh bei bfg bfh bfi cdg cdh cdi ceg ceh cei cfg cfh cfi",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"999\"]",
+      "output": "www wwx wwy wwz wxw wxx wxy wxz wyw wyx wyy wyz wzw wzx wzy wzz xww xwx xwy xwz xxw xxx xxy xxz xyw xyx xyy xyz xzw xzx xzy xzz yww ywx ywy ywz yxw yxx yxy yxz yyw yyx yyy yyz yzw yzx yzy yzz zww zwx zwy zwz zxw zxx zxy zxz zyw zyx zyy zyz zzw zzx zzy zzz",
+      "expectedOutput": "www wwx wwy wwz wxw wxx wxy wxz wyw wyx wyy wyz wzw wzx wzy wzz xww xwx xwy xwz xxw xxx xxy xxz xyw xyx xyy xyz xzw xzx xzy xzz yww ywx ywy ywz yxw yxx yxy yxz yyw yyx yyy yyz yzw yzx yzy yzz zww zwx zwy zwz zxw zxx zxy zxz zyw zyx zyy zyz zzw zzx zzy zzz",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"567\"]",
+      "output": "jmp jmq jmr jms jnp jnq jnr jns jop joq jor jos kmp kmq kmr kms knp knq knr kns kop koq kor kos lmp lmq lmr lms lnp lnq lnr lns lop loq lor los",
+      "expectedOutput": "jmp jmq jmr jms jnp jnq jnr jns jop joq jor jos kmp kmq kmr kms knp knq knr kns kop koq kor kos lmp lmq lmr lms lnp lnq lnr lns lop loq lor los",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"456\"]",
+      "output": "gjm gjn gjo gkm gkn gko glm gln glo hjm hjn hjo hkm hkn hko hlm hln hlo ijm ijn ijo ikm ikn iko ilm iln ilo",
+      "expectedOutput": "gjm gjn gjo gkm gkn gko glm gln glo hjm hjn hjo hkm hkn hko hlm hln hlo ijm ijn ijo ikm ikn iko ilm iln ilo",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"8\"]",
+      "output": "t u v",
+      "expectedOutput": "t u v",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"59\"]",
+      "output": "jw jx jy jz kw kx ky kz lw lx ly lz",
+      "expectedOutput": "jw jx jy jz kw kx ky kz lw lx ly lz",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"46\"]",
+      "output": "gm gn go hm hn ho im in io",
+      "expectedOutput": "gm gn go hm hn ho im in io",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"34\"]",
+      "output": "dg dh di eg eh ei fg fh fi",
+      "expectedOutput": "dg dh di eg eh ei fg fh fi",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"6\"]",
+      "output": "m n o",
+      "expectedOutput": "m n o",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"3\"]",
+      "output": "d e f",
+      "expectedOutput": "d e f",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"89\"]",
+      "output": "tw tx ty tz uw ux uy uz vw vx vy vz",
+      "expectedOutput": "tw tx ty tz uw ux uy uz vw vx vy vz",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"4\"]",
+      "output": "g h i",
+      "expectedOutput": "g h i",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"258\"]",
+      "output": "ajt aju ajv akt aku akv alt alu alv bjt bju bjv bkt bku bkv blt blu blv cjt cju cjv ckt cku ckv clt clu clv",
+      "expectedOutput": "ajt aju ajv akt aku akv alt alu alv bjt bju bjv bkt bku bkv blt blu blv cjt cju cjv ckt cku ckv clt clu clv",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"7\"]",
+      "output": "p q r s",
+      "expectedOutput": "p q r s",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "digits = \"23\"",
+        "output": "\"ad ae af bd be bf cd ce cf\"",
+        "expectedOutput": "\"ad ae af bd be bf cd ce cf\"",
+        "explanation": "2 maps to a/b/c and 3 maps to d/e/f, so there are 3*3 = 9 combinations"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "digits = \"2\"",
+        "output": "\"a b c\"",
+        "expectedOutput": "\"a b c\"",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "digits = \"\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"23\"]",
+        "output": "ad ae af bd be bf cd ce cf",
+        "expectedOutput": "ad ae af bd be bf cd ce cf",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"2\"]",
+        "output": "a b c",
+        "expectedOutput": "a b c",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"79\"]",
+        "output": "pw px py pz qw qx qy qz rw rx ry rz sw sx sy sz",
+        "expectedOutput": "pw px py pz qw qx qy qz rw rx ry rz sw sx sy sz",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"9\"]",
+        "output": "w x y z",
+        "expectedOutput": "w x y z",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"22\"]",
+        "output": "aa ab ac ba bb bc ca cb cc",
+        "expectedOutput": "aa ab ac ba bb bc ca cb cc",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"77\"]",
+        "output": "pp pq pr ps qp qq qr qs rp rq rr rs sp sq sr ss",
+        "expectedOutput": "pp pq pr ps qp qq qr qs rp rq rr rs sp sq sr ss",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"234\"]",
+        "output": "adg adh adi aeg aeh aei afg afh afi bdg bdh bdi beg beh bei bfg bfh bfi cdg cdh cdi ceg ceh cei cfg cfh cfi",
+        "expectedOutput": "adg adh adi aeg aeh aei afg afh afi bdg bdh bdi beg beh bei bfg bfh bfi cdg cdh cdi ceg ceh cei cfg cfh cfi",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"999\"]",
+        "output": "www wwx wwy wwz wxw wxx wxy wxz wyw wyx wyy wyz wzw wzx wzy wzz xww xwx xwy xwz xxw xxx xxy xxz xyw xyx xyy xyz xzw xzx xzy xzz yww ywx ywy ywz yxw yxx yxy yxz yyw yyx yyy yyz yzw yzx yzy yzz zww zwx zwy zwz zxw zxx zxy zxz zyw zyx zyy zyz zzw zzx zzy zzz",
+        "expectedOutput": "www wwx wwy wwz wxw wxx wxy wxz wyw wyx wyy wyz wzw wzx wzy wzz xww xwx xwy xwz xxw xxx xxy xxz xyw xyx xyy xyz xzw xzx xzy xzz yww ywx ywy ywz yxw yxx yxy yxz yyw yyx yyy yyz yzw yzx yzy yzz zww zwx zwy zwz zxw zxx zxy zxz zyw zyx zyy zyz zzw zzx zzy zzz",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"567\"]",
+        "output": "jmp jmq jmr jms jnp jnq jnr jns jop joq jor jos kmp kmq kmr kms knp knq knr kns kop koq kor kos lmp lmq lmr lms lnp lnq lnr lns lop loq lor los",
+        "expectedOutput": "jmp jmq jmr jms jnp jnq jnr jns jop joq jor jos kmp kmq kmr kms knp knq knr kns kop koq kor kos lmp lmq lmr lms lnp lnq lnr lns lop loq lor los",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"456\"]",
+        "output": "gjm gjn gjo gkm gkn gko glm gln glo hjm hjn hjo hkm hkn hko hlm hln hlo ijm ijn ijo ikm ikn iko ilm iln ilo",
+        "expectedOutput": "gjm gjn gjo gkm gkn gko glm gln glo hjm hjn hjo hkm hkn hko hlm hln hlo ijm ijn ijo ikm ikn iko ilm iln ilo",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"8\"]",
+        "output": "t u v",
+        "expectedOutput": "t u v",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"59\"]",
+        "output": "jw jx jy jz kw kx ky kz lw lx ly lz",
+        "expectedOutput": "jw jx jy jz kw kx ky kz lw lx ly lz",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"46\"]",
+        "output": "gm gn go hm hn ho im in io",
+        "expectedOutput": "gm gn go hm hn ho im in io",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"34\"]",
+        "output": "dg dh di eg eh ei fg fh fi",
+        "expectedOutput": "dg dh di eg eh ei fg fh fi",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"6\"]",
+        "output": "m n o",
+        "expectedOutput": "m n o",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"3\"]",
+        "output": "d e f",
+        "expectedOutput": "d e f",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"89\"]",
+        "output": "tw tx ty tz uw ux uy uz vw vx vy vz",
+        "expectedOutput": "tw tx ty tz uw ux uy uz vw vx vy vz",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"4\"]",
+        "output": "g h i",
+        "expectedOutput": "g h i",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"258\"]",
+        "output": "ajt aju ajv akt aku akv alt alu alv bjt bju bjv bkt bku bkv blt blu blv cjt cju cjv ckt cku ckv clt clu clv",
+        "expectedOutput": "ajt aju ajv akt aku akv alt alu alv bjt bju bjv bkt bku bkv blt blu blv cjt cju cjv ckt cku ckv clt clu clv",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"7\"]",
+        "output": "p q r s",
+        "expectedOutput": "p q r s",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def letterCombinations(self, digits):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string letterCombinations(string digits) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String letterCombinations(String digits) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun letterCombinations(digits: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    letterCombinations(digits) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def letterCombinations(self, digits):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string letterCombinations(string digits) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String letterCombinations(String digits) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun letterCombinations(digits: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    letterCombinations(digits) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def letterCombinations(self, digits):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string letterCombinations(string digits) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String letterCombinations(String digits) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun letterCombinations(digits: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    letterCombinations(digits) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def letterCombinations(self, digits):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string letterCombinations(string digits) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String letterCombinations(String digits) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun letterCombinations(digits: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    letterCombinations(digits) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(4^n * n)",
+      "space": "O(n) recursion depth, excluding output",
+      "pattern": "backtracking, building one combination character by character and undoing the last character before trying the next"
+    },
+    "bruteForce": {
+      "approach": "build the full cross product of letters iteratively, one digit at a time, expanding a list of partial strings by appending every letter of the next digit's key to every existing partial string",
+      "time": "O(4^n * n) where n is the number of digits (up to 4 letters per key)",
+      "space": "O(4^n * n) for the intermediate lists"
+    }
+  },
+  "optimal": {
+    "pattern": "backtracking, building one combination character by character and undoing the last character before trying the next",
+    "time": "O(4^n * n)",
+    "space": "O(n) recursion depth, excluding output",
+    "hint_ladder": [
+      "if digits is empty, there are no combinations to build - handle that as a base case up front",
+      "recurse with an index into digits and a 'current combination so far' string or character list",
+      "at each call, look up the letters for digits[index], and for each letter, append it to the current combination, recurse on index + 1, then remove that letter before trying the next one",
+      "when index reaches the end of digits, the current combination is complete - add it to your results; since you always try letters in the keypad's natural a-b-c order, the results come out already sorted lexicographically"
+    ]
+  },
+  "bruteForce": {
+    "approach": "build the full cross product of letters iteratively, one digit at a time, expanding a list of partial strings by appending every letter of the next digit's key to every existing partial string",
+    "time": "O(4^n * n) where n is the number of digits (up to 4 letters per key)",
+    "space": "O(4^n * n) for the intermediate lists"
+  },
+  "isIndex0": true,
+  "level": null
+}

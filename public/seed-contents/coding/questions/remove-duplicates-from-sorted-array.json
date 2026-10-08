@@ -1,0 +1,631 @@
+{
+  "id": "remove-duplicates-from-sorted-array",
+  "questionId": "remove-duplicates-from-sorted-array",
+  "slug": "remove-duplicates-from-sorted-array",
+  "title": "Remove Duplicates from Sorted Array",
+  "difficulty": "Easy",
+  "category": "Two pointers",
+  "patterns": [
+    "two pointers",
+    "in-place array"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "since the array is sorted, any duplicate of a value sits right next to it. do you actually need a set to know if you've seen a value before?",
+    "what if one pointer tracked 'the last unique value I've kept' and another scanned forward looking for something different?",
+    "keep a slow pointer at the last written unique value; move a fast pointer through the array, and whenever it finds a value different from the slow pointer's, write it and advance slow",
+    "by the end, everything up to and including the slow pointer is your deduplicated result"
+  ],
+  "commonMistakes": [
+    "using a hash set anyway, missing the point of the sorted-array shortcut",
+    "comparing the fast pointer to the wrong thing (e.g. the previous fast position instead of the last kept value)",
+    "off-by-one when building the final result from the slow pointer's position"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of numbers sorted in ascending order, possibly with\nrepeats.\n\n**Return the list of unique values, in the same order, with every duplicate removed.**\n\nDo it by scanning the array once, without sorting it again or using extra data structures to track what you've seen.\n",
+    "constraints": [
+      "0 <= nums.length <= 3 * 10^4",
+      "-100 <= nums[i] <= 100",
+      "nums is sorted in non-decreasing order"
+    ],
+    "notes": [
+      "every element is the same",
+      "no duplicates at all",
+      "a single element"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 1, 2]",
+        "output": "[1, 2]",
+        "expectedOutput": "[1, 2]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 0, 1, 1, 1, 2, 2, 3, 3, 4]",
+        "output": "[0, 1, 2, 3, 4]",
+        "expectedOutput": "[0, 1, 2, 3, 4]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 1, 1]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,1,2]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,0,1,1,1,2,2,3,3,4]]",
+        "output": "[0,1,2,3,4]",
+        "expectedOutput": "[0,1,2,3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,1,1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[7]]",
+        "output": "[7]",
+        "expectedOutput": "[7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-3,-3,-1,0,0,2]]",
+        "output": "[-3,-1,0,2]",
+        "expectedOutput": "[-3,-1,0,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5]]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-5,-5,-4,-3,-3,-3,-2,-1,0,0,1]]",
+        "output": "[-5,-4,-3,-2,-1,0,1]",
+        "expectedOutput": "[-5,-4,-3,-2,-1,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+        "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[5,5]]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[5,6]]",
+        "output": "[5,6]",
+        "expectedOutput": "[5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-2,-1,-1,-1,-1,0,0,1,2,2,2,3]]",
+        "output": "[-2,-1,0,1,2,3]",
+        "expectedOutput": "[-2,-1,0,1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13,14,14]]",
+        "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+        "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-1,-1]]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-100,-50,-50,0,0,0,50,100]]",
+        "output": "[-100,-50,0,50,100]",
+        "expectedOutput": "[-100,-50,0,50,100]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 1, 2]",
+      "output": "[1, 2]",
+      "expectedOutput": "[1, 2]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 0, 1, 1, 1, 2, 2, 3, 3, 4]",
+      "output": "[0, 1, 2, 3, 4]",
+      "expectedOutput": "[0, 1, 2, 3, 4]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 1, 1]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 1, 2]",
+      "output": "[1, 2]",
+      "expectedOutput": "[1, 2]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 0, 1, 1, 1, 2, 2, 3, 3, 4]",
+      "output": "[0, 1, 2, 3, 4]",
+      "expectedOutput": "[0, 1, 2, 3, 4]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 1, 1]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,1,2]]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0,0,1,1,1,2,2,3,3,4]]",
+      "output": "[0,1,2,3,4]",
+      "expectedOutput": "[0,1,2,3,4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,1,1]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[7]]",
+      "output": "[7]",
+      "expectedOutput": "[7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[-3,-3,-1,0,0,2]]",
+      "output": "[-3,-1,0,2]",
+      "expectedOutput": "[-3,-1,0,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3,4,5]]",
+      "output": "[1,2,3,4,5]",
+      "expectedOutput": "[1,2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-5,-5,-4,-3,-3,-3,-2,-1,0,0,1]]",
+      "output": "[-5,-4,-3,-2,-1,0,1]",
+      "expectedOutput": "[-5,-4,-3,-2,-1,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+      "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+      "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10]]",
+      "output": "[1,2,3,4,5,6,7,8,9,10]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[5,5]]",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[5,6]]",
+      "output": "[5,6]",
+      "expectedOutput": "[5,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-2,-1,-1,-1,-1,0,0,1,2,2,2,3]]",
+      "output": "[-2,-1,0,1,2,3]",
+      "expectedOutput": "[-2,-1,0,1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3]]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13,14,14]]",
+      "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+      "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[-1,-1]]",
+      "output": "[-1]",
+      "expectedOutput": "[-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[-100,-50,-50,0,0,0,50,100]]",
+      "output": "[-100,-50,0,50,100]",
+      "expectedOutput": "[-100,-50,0,50,100]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 1, 2]",
+        "output": "[1, 2]",
+        "expectedOutput": "[1, 2]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 0, 1, 1, 1, 2, 2, 3, 3, 4]",
+        "output": "[0, 1, 2, 3, 4]",
+        "expectedOutput": "[0, 1, 2, 3, 4]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 1, 1]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,1,2]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,0,1,1,1,2,2,3,3,4]]",
+        "output": "[0,1,2,3,4]",
+        "expectedOutput": "[0,1,2,3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,1,1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[7]]",
+        "output": "[7]",
+        "expectedOutput": "[7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-3,-3,-1,0,0,2]]",
+        "output": "[-3,-1,0,2]",
+        "expectedOutput": "[-3,-1,0,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5]]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-5,-5,-4,-3,-3,-3,-2,-1,0,0,1]]",
+        "output": "[-5,-4,-3,-2,-1,0,1]",
+        "expectedOutput": "[-5,-4,-3,-2,-1,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+        "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[5,5]]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[5,6]]",
+        "output": "[5,6]",
+        "expectedOutput": "[5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-2,-1,-1,-1,-1,0,0,1,2,2,2,3]]",
+        "output": "[-2,-1,0,1,2,3]",
+        "expectedOutput": "[-2,-1,0,1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13,14,14]]",
+        "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+        "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-1,-1]]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-100,-50,-50,0,0,0,50,100]]",
+        "output": "[-100,-50,0,50,100]",
+        "expectedOutput": "[-100,-50,0,50,100]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def removeDuplicates(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeDuplicates(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeDuplicates(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeDuplicates(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeDuplicates(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def removeDuplicates(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeDuplicates(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeDuplicates(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeDuplicates(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeDuplicates(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def removeDuplicates(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeDuplicates(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeDuplicates(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeDuplicates(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeDuplicates(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def removeDuplicates(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeDuplicates(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeDuplicates(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeDuplicates(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeDuplicates(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra, beyond the output",
+      "pattern": "two pointers: a slow pointer for the last unique value written, a fast pointer scanning ahead"
+    },
+    "bruteForce": {
+      "approach": "build a set of seen values while scanning, then collect the ones seen for the first time, in order",
+      "time": "O(n) average, but uses a hash set the sorted order makes unnecessary",
+      "space": "O(n) for the set"
+    }
+  },
+  "optimal": {
+    "pattern": "two pointers: a slow pointer for the last unique value written, a fast pointer scanning ahead",
+    "time": "O(n)",
+    "space": "O(1) extra, beyond the output",
+    "hint_ladder": [
+      "since the array is sorted, any duplicate of a value sits right next to it. do you actually need a set to know if you've seen a value before?",
+      "what if one pointer tracked 'the last unique value I've kept' and another scanned forward looking for something different?",
+      "keep a slow pointer at the last written unique value; move a fast pointer through the array, and whenever it finds a value different from the slow pointer's, write it and advance slow",
+      "by the end, everything up to and including the slow pointer is your deduplicated result"
+    ]
+  },
+  "bruteForce": {
+    "approach": "build a set of seen values while scanning, then collect the ones seen for the first time, in order",
+    "time": "O(n) average, but uses a hash set the sorted order makes unnecessary",
+    "space": "O(n) for the set"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,634 @@
+{
+  "id": "ipo-maximize-capital",
+  "questionId": "ipo-maximize-capital",
+  "slug": "ipo-maximize-capital",
+  "title": "IPO - Maximize Capital",
+  "difficulty": "Hard",
+  "category": "Heap",
+  "patterns": [
+    "heap",
+    "max-heap",
+    "greedy"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "at any moment, the best move is always to take the highest-profit project you can currently afford - but 'currently affordable' changes as your capital grows",
+    "sort all projects by their required capital ascending, and keep a pointer that only ever moves forward as your capital increases",
+    "maintain a max-heap of profits for every project that has become affordable so far (pointer has passed it); each time your capital grows, advance the pointer to add newly affordable projects to the heap",
+    "repeat k times: advance the pointer for any newly affordable projects, pop the max-profit project from the heap and add its profit to your capital. if the heap is ever empty, no more projects can be taken, so stop early"
+  ],
+  "commonMistakes": [
+    "rescanning all projects for affordability every round instead of using a sorted pointer that only moves forward, which is much slower",
+    "forgetting to advance the pointer again after capital grows within the same round before checking the heap",
+    "not stopping early when the heap is empty and no more projects are affordable, continuing to loop k times unnecessarily"
+  ],
+  "content": {
+    "problemStatement": "You're running a company that can take on at most `k` projects before\ngoing public, and you currently have `w` units of capital. You're given\ntwo lists of the same length, `profits` and `capital`, where project i\nrequires at least `capital[i]` units of capital to start, and once\ncompleted adds `profits[i]` units to your capital permanently.\n\n**Choose which projects to take (up to `k` total, never repeating one)\nto maximize your final capital, and return that maximum final\ncapital.**\n\nYou may only work on one project at a time and cannot start a project\nyou can't currently afford, but once a project is completed its profit\nbecomes available capital for starting later projects.\n",
+    "constraints": [
+      "1 <= k <= 100000",
+      "0 <= w <= 10^9",
+      "profits.length == capital.length, 1 <= profits.length <= 100000",
+      "0 <= profits[i], capital[i] <= 10^9"
+    ],
+    "notes": [
+      "starting capital too low to afford any project at all",
+      "k = 0, taking no projects, returning the starting capital unchanged",
+      "k larger than the number of available projects, so all of them eventually get taken",
+      "multiple projects requiring exactly the same capital"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "k = 2, w = 0, profits = [1, 2, 3], capital = [0, 1, 1]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "start with capital 0, so only project 0 (needs 0) is affordable; completing it gives capital 1; now projects 1 and 2 (each needing 1) are affordable, so take project 2 for the higher profit of 3, ending at capital 1 + 3 = 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "k = 3, w = 0, profits = [1, 2, 3], capital = [0, 1, 2]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "take project 0 (capital 0 -> 1), then project 1 becomes affordable (capital 1 -> 3), then project 2 becomes affordable (capital 3 -> 6); all three projects fit within k = 3"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "k = 1, w = 0, profits = [1, 2, 3], capital = [1, 1, 2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "every project requires at least 1 unit of capital to start, but you begin with 0, so no project is ever affordable and your capital stays at 0"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[2,0,[1,2,3],[0,1,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,0,[1,2,3],[0,1,2]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[1,0,[1,2,3],[1,1,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[0,5,[1,2,3],[0,0,0]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,0,[1],[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[5,0,[1,1,1],[1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[2,0,[5,5,5],[0,0,0]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[100,0,[1,2,3,4,5],[0,1,2,3,4]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[2,10,[1,2,3],[0,1,2]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[3,1,[10,20,5,8],[1,1,2,3]]",
+        "output": "39",
+        "expectedOutput": "39",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[0,100,[1,2,3],[0,0,0]]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[4,0,[2,3,5,7,11,13],[0,1,2,3,4,5]]",
+        "output": "31",
+        "expectedOutput": "31",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[10,0,[1,2,3,4,5,6,7,8,9,10],[0,1,2,3,4,5,6,7,8,9]]",
+        "output": "55",
+        "expectedOutput": "55",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[3,2,[3,6,2,8,1],[2,3,6,4,5]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[1,1000000000,[1000000000],[1000000000]]",
+        "output": "2000000000",
+        "expectedOutput": "2000000000",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[2,0,[1000000000,1000000000],[1000000000,1000000000]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[5,0,[4,4,4,4],[0,0,0,0]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[3,5,[1,1,1,1,1],[5,5,5,5,5]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[2,3,[10,5,1,20],[3,0,8,15]]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[6,2,[4,8,2,6,1,3],[1,3,5,2,4,6]]",
+        "output": "26",
+        "expectedOutput": "26",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "k = 2, w = 0, profits = [1, 2, 3], capital = [0, 1, 1]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "start with capital 0, so only project 0 (needs 0) is affordable; completing it gives capital 1; now projects 1 and 2 (each needing 1) are affordable, so take project 2 for the higher profit of 3, ending at capital 1 + 3 = 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "k = 3, w = 0, profits = [1, 2, 3], capital = [0, 1, 2]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "take project 0 (capital 0 -> 1), then project 1 becomes affordable (capital 1 -> 3), then project 2 becomes affordable (capital 3 -> 6); all three projects fit within k = 3"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "k = 1, w = 0, profits = [1, 2, 3], capital = [1, 1, 2]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "every project requires at least 1 unit of capital to start, but you begin with 0, so no project is ever affordable and your capital stays at 0"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "k = 2, w = 0, profits = [1, 2, 3], capital = [0, 1, 1]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "start with capital 0, so only project 0 (needs 0) is affordable; completing it gives capital 1; now projects 1 and 2 (each needing 1) are affordable, so take project 2 for the higher profit of 3, ending at capital 1 + 3 = 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "k = 3, w = 0, profits = [1, 2, 3], capital = [0, 1, 2]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "take project 0 (capital 0 -> 1), then project 1 becomes affordable (capital 1 -> 3), then project 2 becomes affordable (capital 3 -> 6); all three projects fit within k = 3"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "k = 1, w = 0, profits = [1, 2, 3], capital = [1, 1, 2]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "every project requires at least 1 unit of capital to start, but you begin with 0, so no project is ever affordable and your capital stays at 0"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[2,0,[1,2,3],[0,1,1]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[3,0,[1,2,3],[0,1,2]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[1,0,[1,2,3],[1,1,2]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[0,5,[1,2,3],[0,0,0]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[1,0,[1],[0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[5,0,[1,1,1],[1,1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[2,0,[5,5,5],[0,0,0]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[100,0,[1,2,3,4,5],[0,1,2,3,4]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[2,10,[1,2,3],[0,1,2]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[3,1,[10,20,5,8],[1,1,2,3]]",
+      "output": "39",
+      "expectedOutput": "39",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[0,100,[1,2,3],[0,0,0]]",
+      "output": "100",
+      "expectedOutput": "100",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[4,0,[2,3,5,7,11,13],[0,1,2,3,4,5]]",
+      "output": "31",
+      "expectedOutput": "31",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[10,0,[1,2,3,4,5,6,7,8,9,10],[0,1,2,3,4,5,6,7,8,9]]",
+      "output": "55",
+      "expectedOutput": "55",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[3,2,[3,6,2,8,1],[2,3,6,4,5]]",
+      "output": "19",
+      "expectedOutput": "19",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[1,1000000000,[1000000000],[1000000000]]",
+      "output": "2000000000",
+      "expectedOutput": "2000000000",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[2,0,[1000000000,1000000000],[1000000000,1000000000]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[5,0,[4,4,4,4],[0,0,0,0]]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[3,5,[1,1,1,1,1],[5,5,5,5,5]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[2,3,[10,5,1,20],[3,0,8,15]]",
+      "output": "18",
+      "expectedOutput": "18",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[6,2,[4,8,2,6,1,3],[1,3,5,2,4,6]]",
+      "output": "26",
+      "expectedOutput": "26",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "k = 2, w = 0, profits = [1, 2, 3], capital = [0, 1, 1]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "start with capital 0, so only project 0 (needs 0) is affordable; completing it gives capital 1; now projects 1 and 2 (each needing 1) are affordable, so take project 2 for the higher profit of 3, ending at capital 1 + 3 = 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "k = 3, w = 0, profits = [1, 2, 3], capital = [0, 1, 2]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "take project 0 (capital 0 -> 1), then project 1 becomes affordable (capital 1 -> 3), then project 2 becomes affordable (capital 3 -> 6); all three projects fit within k = 3"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "k = 1, w = 0, profits = [1, 2, 3], capital = [1, 1, 2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "every project requires at least 1 unit of capital to start, but you begin with 0, so no project is ever affordable and your capital stays at 0"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[2,0,[1,2,3],[0,1,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,0,[1,2,3],[0,1,2]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[1,0,[1,2,3],[1,1,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[0,5,[1,2,3],[0,0,0]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,0,[1],[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[5,0,[1,1,1],[1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[2,0,[5,5,5],[0,0,0]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[100,0,[1,2,3,4,5],[0,1,2,3,4]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[2,10,[1,2,3],[0,1,2]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[3,1,[10,20,5,8],[1,1,2,3]]",
+        "output": "39",
+        "expectedOutput": "39",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[0,100,[1,2,3],[0,0,0]]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[4,0,[2,3,5,7,11,13],[0,1,2,3,4,5]]",
+        "output": "31",
+        "expectedOutput": "31",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[10,0,[1,2,3,4,5,6,7,8,9,10],[0,1,2,3,4,5,6,7,8,9]]",
+        "output": "55",
+        "expectedOutput": "55",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[3,2,[3,6,2,8,1],[2,3,6,4,5]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[1,1000000000,[1000000000],[1000000000]]",
+        "output": "2000000000",
+        "expectedOutput": "2000000000",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[2,0,[1000000000,1000000000],[1000000000,1000000000]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[5,0,[4,4,4,4],[0,0,0,0]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[3,5,[1,1,1,1,1],[5,5,5,5,5]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[2,3,[10,5,1,20],[3,0,8,15]]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[6,2,[4,8,2,6,1,3],[1,3,5,2,4,6]]",
+        "output": "26",
+        "expectedOutput": "26",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findMaximizedCapital(self, k, w, profits, capital):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMaximizedCapital(int k, int w, vector<int>& profits, vector<int>& capital) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findMaximizedCapital(int k, int w, int[] profits, int[] capital) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMaximizedCapital(k: Int, w: Int, profits: IntArray, capital: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMaximizedCapital(k, w, profits, capital) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findMaximizedCapital(self, k, w, profits, capital):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMaximizedCapital(int k, int w, vector<int>& profits, vector<int>& capital) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findMaximizedCapital(int k, int w, int[] profits, int[] capital) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMaximizedCapital(k: Int, w: Int, profits: IntArray, capital: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMaximizedCapital(k, w, profits, capital) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findMaximizedCapital(self, k, w, profits, capital):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMaximizedCapital(int k, int w, vector<int>& profits, vector<int>& capital) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findMaximizedCapital(int k, int w, int[] profits, int[] capital) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMaximizedCapital(k: Int, w: Int, profits: IntArray, capital: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMaximizedCapital(k, w, profits, capital) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findMaximizedCapital(self, k, w, profits, capital):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMaximizedCapital(int k, int w, vector<int>& profits, vector<int>& capital) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findMaximizedCapital(int k, int w, int[] profits, int[] capital) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMaximizedCapital(k: Int, w: Int, profits: IntArray, capital: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMaximizedCapital(k, w, profits, capital) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log n + k log n)",
+      "space": "O(n)",
+      "pattern": "sort projects by required capital, then use a max-heap of profits among currently affordable projects"
+    },
+    "bruteForce": {
+      "approach": "for each of the k rounds, scan every remaining project to find all currently affordable ones and pick the one with the highest profit, redoing the full scan every round",
+      "time": "O(k * n)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "sort projects by required capital, then use a max-heap of profits among currently affordable projects",
+    "time": "O(n log n + k log n)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "at any moment, the best move is always to take the highest-profit project you can currently afford - but 'currently affordable' changes as your capital grows",
+      "sort all projects by their required capital ascending, and keep a pointer that only ever moves forward as your capital increases",
+      "maintain a max-heap of profits for every project that has become affordable so far (pointer has passed it); each time your capital grows, advance the pointer to add newly affordable projects to the heap",
+      "repeat k times: advance the pointer for any newly affordable projects, pop the max-profit project from the heap and add its profit to your capital. if the heap is ever empty, no more projects can be taken, so stop early"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each of the k rounds, scan every remaining project to find all currently affordable ones and pick the one with the highest profit, redoing the full scan every round",
+    "time": "O(k * n)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

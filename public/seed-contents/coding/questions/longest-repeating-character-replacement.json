@@ -1,0 +1,599 @@
+{
+  "id": "longest-repeating-character-replacement",
+  "questionId": "longest-repeating-character-replacement",
+  "slug": "longest-repeating-character-replacement",
+  "title": "Longest Repeating Character Replacement",
+  "difficulty": "Medium",
+  "category": "Sliding window",
+  "patterns": [
+    "sliding window",
+    "variable-size window"
+  ],
+  "lists": [
+    "blind-75"
+  ],
+  "hints": [
+    "a window is 'valid' (achievable with at most k replacements) exactly when window length minus the count of its most common letter is at most k. what does that tell you about when to grow vs shrink the window?",
+    "grow the window by moving the right edge forward, updating letter counts as you go",
+    "if the window ever becomes invalid (length - most-frequent-count > k), shrink from the left by one, updating counts",
+    "track the max window length seen - it never needs to shrink below its previous best, so you don't need to recheck validity after every single shrink"
+  ],
+  "commonMistakes": [
+    "recomputing the most-frequent-letter count from scratch for every window instead of maintaining it incrementally",
+    "shrinking the window more than necessary, or shrinking when the window is still valid",
+    "forgetting that the 'most frequent count so far' doesn't need to be perfectly accurate after shrinks, since it only ever needs to be a safe upper bound for tracking the max length"
+  ],
+  "content": {
+    "problemStatement": "You're given a string of uppercase letters and a number `k`. You may\nchange up to `k` characters in the string to any other uppercase\nletter.\n\n**Return the length of the longest substring you can make consist of a\nsingle repeated letter after doing so.**\n",
+    "constraints": [
+      "1 <= s.length <= 10^5",
+      "s consists of only uppercase English letters",
+      "0 <= k <= s.length"
+    ],
+    "notes": [
+      "k = 0 (no replacements allowed, answer is the longest existing run)",
+      "k is large enough to replace almost the whole string",
+      "the string already consists of a single repeated letter"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"ABAB\", k = 2",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "change both A's to B's (or both B's to A's) to get a 4-letter run"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"AABABBA\", k = 1",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "change one letter to turn a 4-letter stretch into a single repeated letter"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"ABAB\",2]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"AABABBA\",1]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"ABCDE\",1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"AAAA\",2]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"A\",0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"A\",5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"AAAA\",0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"ABAB\",0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"AABCDE\",2]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"BBBBBBB\",3]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"ABCDEFGH\",7]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"AAABBBCCCDDD\",2]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"XYZXYZXYZXYZ\",4]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"AAAAAAAAAAAAAAA\",0]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"AAAAAAAAAABBBBBBBBBB\",5]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"QWERTYUIOPASDFGHJK\",3]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"AABABBABAABABBABAA\",2]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"ZZZZAAAABBBBCCCC\",4]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"KRSCDCSMSMKKDCKAKRDKC\",4]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"ABAB\", k = 2",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "change both A's to B's (or both B's to A's) to get a 4-letter run"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"AABABBA\", k = 1",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "change one letter to turn a 4-letter stretch into a single repeated letter"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"ABAB\", k = 2",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "change both A's to B's (or both B's to A's) to get a 4-letter run"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"AABABBA\", k = 1",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "change one letter to turn a 4-letter stretch into a single repeated letter"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"ABAB\",2]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"AABABBA\",1]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"ABCDE\",1]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"AAAA\",2]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"\",0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"A\",0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"A\",5]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"AAAA\",0]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"ABAB\",0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"AABCDE\",2]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"BBBBBBB\",3]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"ABCDEFGH\",7]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"AAABBBCCCDDD\",2]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"XYZXYZXYZXYZ\",4]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"AAAAAAAAAAAAAAA\",0]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"AAAAAAAAAABBBBBBBBBB\",5]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"QWERTYUIOPASDFGHJK\",3]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"AABABBABAABABBABAA\",2]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"ZZZZAAAABBBBCCCC\",4]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"KRSCDCSMSMKKDCKAKRDKC\",4]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"ABAB\", k = 2",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "change both A's to B's (or both B's to A's) to get a 4-letter run"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"AABABBA\", k = 1",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "change one letter to turn a 4-letter stretch into a single repeated letter"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"ABAB\",2]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"AABABBA\",1]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"ABCDE\",1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"AAAA\",2]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"A\",0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"A\",5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"AAAA\",0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"ABAB\",0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"AABCDE\",2]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"BBBBBBB\",3]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"ABCDEFGH\",7]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"AAABBBCCCDDD\",2]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"XYZXYZXYZXYZ\",4]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"AAAAAAAAAAAAAAA\",0]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"AAAAAAAAAABBBBBBBBBB\",5]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"QWERTYUIOPASDFGHJK\",3]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"AABABBABAABABBABAA\",2]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"ZZZZAAAABBBBCCCC\",4]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"KRSCDCSMSMKKDCKAKRDKC\",4]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def characterReplacement(self, s, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int characterReplacement(string s, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int characterReplacement(String s, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun characterReplacement(s: String, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    characterReplacement(s, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def characterReplacement(self, s, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int characterReplacement(string s, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int characterReplacement(String s, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun characterReplacement(s: String, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    characterReplacement(s, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def characterReplacement(self, s, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int characterReplacement(string s, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int characterReplacement(String s, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun characterReplacement(s: String, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    characterReplacement(s, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def characterReplacement(self, s, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int characterReplacement(string s, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int characterReplacement(String s, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun characterReplacement(s: String, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    characterReplacement(s, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) (26 letters)",
+      "pattern": "variable-size sliding window, tracking the count of the most frequent letter currently in the window"
+    },
+    "bruteForce": {
+      "approach": "for every substring, count the most frequent letter in it and check if (length - that count) <= k, tracking the longest valid one",
+      "time": "O(n^2) or O(n^3) depending on how the frequency count is recomputed",
+      "space": "O(1) per substring (26 letters)"
+    }
+  },
+  "optimal": {
+    "pattern": "variable-size sliding window, tracking the count of the most frequent letter currently in the window",
+    "time": "O(n)",
+    "space": "O(1) (26 letters)",
+    "hint_ladder": [
+      "a window is 'valid' (achievable with at most k replacements) exactly when window length minus the count of its most common letter is at most k. what does that tell you about when to grow vs shrink the window?",
+      "grow the window by moving the right edge forward, updating letter counts as you go",
+      "if the window ever becomes invalid (length - most-frequent-count > k), shrink from the left by one, updating counts",
+      "track the max window length seen - it never needs to shrink below its previous best, so you don't need to recheck validity after every single shrink"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every substring, count the most frequent letter in it and check if (length - that count) <= k, tracking the longest valid one",
+    "time": "O(n^2) or O(n^3) depending on how the frequency count is recomputed",
+    "space": "O(1) per substring (26 letters)"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,627 @@
+{
+  "id": "permutations-ii-count",
+  "questionId": "permutations-ii-count",
+  "slug": "permutations-ii-count",
+  "title": "Count of Unique Permutations",
+  "difficulty": "Medium",
+  "category": "Backtracking",
+  "patterns": [
+    "backtracking"
+  ],
+  "lists": [],
+  "hints": [
+    "instead of tracking which array positions are used, track how many of each distinct value are still available to place",
+    "build a count map of value -> how many copies remain; at each position in the permutation, try placing each value that still has remaining count > 0",
+    "decrement the count when you place a value and recurse to fill the next position; increment it back (undo) after that recursive branch returns",
+    "count a complete permutation once every position is filled (remaining length reaches 0) - since each distinct value is only tried once per position, you never generate the same ordering twice"
+  ],
+  "commonMistakes": [
+    "using a 'used[index]' boolean array like plain Permutations, which still produces duplicate orderings when values repeat",
+    "forgetting to restore (increment) the count after backtracking out of a branch, which corrupts later counts",
+    "trying to sort-and-skip-adjacent-duplicates the way Subsets II does, which is trickier to get right for permutations and easy to mess up compared to the frequency-map approach"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of integers that may contain duplicate values.\n\n**Count how many distinct orderings (permutations) of the list exist.**\n\nTwo orderings that look identical (same value at every position) only count once, even if they come from swapping equal-valued elements.\n",
+    "constraints": [
+      "nums may contain duplicate values",
+      "1 <= length of nums <= 9"
+    ],
+    "notes": [
+      "all elements identical (answer is always 1)",
+      "no duplicates at all (answer is length!)",
+      "exactly one pair of duplicates among otherwise distinct values"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 1, 2]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "the 3 distinct orderings are [1,1,2], [1,2,1], [2,1,1]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "no duplicates, so all 3! orderings are distinct"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [7, 7, 7]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "every arrangement looks identical"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,1,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[7,7,7]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[2,2,1,1]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,2,3]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,1,2,2]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,5,5,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1,2,2,3,3]]",
+        "output": "90",
+        "expectedOutput": "90",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[9,9,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5]]",
+        "output": "120",
+        "expectedOutput": "120",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[2,2,2,3,3]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,1,1,1,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,2,2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6]]",
+        "output": "720",
+        "expectedOutput": "720",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,3,3,3,3,3,3,3,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[6,7]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 1, 2]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "the 3 distinct orderings are [1,1,2], [1,2,1], [2,1,1]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "no duplicates, so all 3! orderings are distinct"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [7, 7, 7]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "every arrangement looks identical"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 1, 2]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "the 3 distinct orderings are [1,1,2], [1,2,1], [2,1,1]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "no duplicates, so all 3! orderings are distinct"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [7, 7, 7]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "every arrangement looks identical"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,1,2]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[7,7,7]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[2,2,1,1]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,2,3]]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,1,1,2,2]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[5,5,5,5]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3,4]]",
+      "output": "24",
+      "expectedOutput": "24",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,1,2,2,3,3]]",
+      "output": "90",
+      "expectedOutput": "90",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[9,9,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,5]]",
+      "output": "120",
+      "expectedOutput": "120",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[2,2,2,3,3]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,1,1,1,1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,2,2]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,3,4,5,6]]",
+      "output": "720",
+      "expectedOutput": "720",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[3,3,3,3,3,3,3,3,3]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,1,1,2]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[6,7]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 1, 2]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "the 3 distinct orderings are [1,1,2], [1,2,1], [2,1,1]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "no duplicates, so all 3! orderings are distinct"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [7, 7, 7]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "every arrangement looks identical"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,1,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[7,7,7]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[2,2,1,1]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,2,3]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,1,2,2]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,5,5,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1,2,2,3,3]]",
+        "output": "90",
+        "expectedOutput": "90",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[9,9,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5]]",
+        "output": "120",
+        "expectedOutput": "120",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[2,2,2,3,3]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,1,1,1,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,2,2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6]]",
+        "output": "720",
+        "expectedOutput": "720",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,3,3,3,3,3,3,3,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[6,7]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def countUniquePermutations(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countUniquePermutations(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countUniquePermutations(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countUniquePermutations(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countUniquePermutations(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def countUniquePermutations(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countUniquePermutations(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countUniquePermutations(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countUniquePermutations(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countUniquePermutations(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def countUniquePermutations(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countUniquePermutations(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countUniquePermutations(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countUniquePermutations(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countUniquePermutations(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def countUniquePermutations(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countUniquePermutations(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countUniquePermutations(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countUniquePermutations(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countUniquePermutations(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n! * n) in the worst case (no duplicates), much better when there are many duplicates",
+      "space": "O(n) for the frequency map and recursion depth",
+      "pattern": "backtracking with a frequency map, choosing each distinct value at most 'remaining count' times per position"
+    },
+    "bruteForce": {
+      "approach": "generate every permutation by backtracking without dedup, collect them as tuples in a set, then return the set's size",
+      "time": "O(n! * n)",
+      "space": "O(n! * n) for storing all permutations before dedup"
+    }
+  },
+  "optimal": {
+    "pattern": "backtracking with a frequency map, choosing each distinct value at most 'remaining count' times per position",
+    "time": "O(n! * n) in the worst case (no duplicates), much better when there are many duplicates",
+    "space": "O(n) for the frequency map and recursion depth",
+    "hint_ladder": [
+      "instead of tracking which array positions are used, track how many of each distinct value are still available to place",
+      "build a count map of value -> how many copies remain; at each position in the permutation, try placing each value that still has remaining count > 0",
+      "decrement the count when you place a value and recurse to fill the next position; increment it back (undo) after that recursive branch returns",
+      "count a complete permutation once every position is filled (remaining length reaches 0) - since each distinct value is only tried once per position, you never generate the same ordering twice"
+    ]
+  },
+  "bruteForce": {
+    "approach": "generate every permutation by backtracking without dedup, collect them as tuples in a set, then return the set's size",
+    "time": "O(n! * n)",
+    "space": "O(n! * n) for storing all permutations before dedup"
+  },
+  "isIndex0": true,
+  "level": null
+}

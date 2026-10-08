@@ -1,0 +1,630 @@
+{
+  "id": "linked-list-components",
+  "questionId": "linked-list-components",
+  "slug": "linked-list-components",
+  "title": "Linked List Components",
+  "difficulty": "Medium",
+  "category": "Linked list",
+  "patterns": [
+    "linked list",
+    "hash set"
+  ],
+  "lists": [],
+  "hints": [
+    "checking 'is this value in subset' repeatedly - can you make that check O(1) instead of scanning subset every time?",
+    "put every value of subset into a hash set first",
+    "walk nums once, and count a new component every time you transition from 'not in subset' (or the very start) into 'in subset'",
+    "a component starts whenever the current node's value is in the set AND the previous node's value was not (or there was no previous node) - count those transitions"
+  ],
+  "commonMistakes": [
+    "counting every in-subset node as its own component instead of merging consecutive runs",
+    "using linear search through subset for each node instead of a hash set, which is correct but slow",
+    "miscounting the boundary at the very start or end of the list"
+  ],
+  "content": {
+    "problemStatement": "A singly linked list is given to you as an array `nums`, containing\nevery node's value in order (all values are unique). You're also given\n`subset`, a set of values of interest. A group of nodes forms a\n\"component\" if their values are all in `subset` and they are\nconsecutive in the linked list (that is, they form an unbroken run of\nneighboring nodes).\n\n**Return the number of such components.**\n",
+    "constraints": [
+      "1 <= nums.length <= 10^4",
+      "0 <= nums[i] < nums.length, all values in nums are unique",
+      "1 <= subset.length <= nums.length",
+      "all values in subset appear in nums"
+    ],
+    "notes": [
+      "subset is empty",
+      "every value in nums is in subset (one big component)",
+      "no two subset values are ever adjacent in nums (every match is its own component)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [0, 1, 2, 3], subset = [0, 1, 3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "nodes 0 and 1 are consecutive and both in subset, forming one component; node 3 is in subset but isolated (node 2 breaks the run), forming a second component"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 1, 2, 3, 4], subset = [0, 3, 1, 4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "0 and 1 form one component; 3 and 4 form another; 2 is not in subset and separates them"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [0], subset = [0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[0,1,2,3],[0,1,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,1,2,3,4],[0,3,1,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[0],[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,4,3,2,1],[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4],[1,2,3,4]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5],[2,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5],[1,5]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29],[0,3,6,9,12,15,18,21,24,27]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,1],[0,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[9,3,7,1,8,2,6,4,0,5],[3,7,1,8,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11],[0,1,2,10,11]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11],[6]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11],[0,11]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,1,2,3,4,5,6,7],[1,3,5,7]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,1,2,3,4,5,6,7],[0,2,4,6]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],[1,2,3,4,5,6,7,8,9,10,11,12,13,14]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[0],[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0,1],[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],[5,6,7,8,9,10,11,12,13,14]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[0,1,2,3,4,5],[0,1,2,3,4,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [0, 1, 2, 3], subset = [0, 1, 3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "nodes 0 and 1 are consecutive and both in subset, forming one component; node 3 is in subset but isolated (node 2 breaks the run), forming a second component"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 1, 2, 3, 4], subset = [0, 3, 1, 4]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "0 and 1 form one component; 3 and 4 form another; 2 is not in subset and separates them"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [0], subset = [0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [0, 1, 2, 3], subset = [0, 1, 3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "nodes 0 and 1 are consecutive and both in subset, forming one component; node 3 is in subset but isolated (node 2 breaks the run), forming a second component"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 1, 2, 3, 4], subset = [0, 3, 1, 4]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "0 and 1 form one component; 3 and 4 form another; 2 is not in subset and separates them"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [0], subset = [0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[0,1,2,3],[0,1,3]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0,1,2,3,4],[0,3,1,4]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[0],[0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[5,4,3,2,1],[]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,2,3,4],[1,2,3,4]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,3,4,5],[2,4]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3,4,5],[1,5]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29],[0,3,6,9,12,15,18,21,24,27]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[0,1],[0,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[9,3,7,1,8,2,6,4,0,5],[3,7,1,8,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[0,1,2,3,4,5,6,7,8,9,10,11],[0,1,2,10,11]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[0,1,2,3,4,5,6,7,8,9,10,11],[6]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[0,1,2,3,4,5,6,7,8,9,10,11],[0,11]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[0,1,2,3,4,5,6,7],[1,3,5,7]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[0,1,2,3,4,5,6,7],[0,2,4,6]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],[1,2,3,4,5,6,7,8,9,10,11,12,13,14]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[0],[0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[0,1],[]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],[5,6,7,8,9,10,11,12,13,14]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[0,1,2,3,4,5],[0,1,2,3,4,5]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [0, 1, 2, 3], subset = [0, 1, 3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "nodes 0 and 1 are consecutive and both in subset, forming one component; node 3 is in subset but isolated (node 2 breaks the run), forming a second component"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 1, 2, 3, 4], subset = [0, 3, 1, 4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "0 and 1 form one component; 3 and 4 form another; 2 is not in subset and separates them"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [0], subset = [0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[0,1,2,3],[0,1,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,1,2,3,4],[0,3,1,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[0],[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,4,3,2,1],[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4],[1,2,3,4]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5],[2,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5],[1,5]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29],[0,3,6,9,12,15,18,21,24,27]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,1],[0,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[9,3,7,1,8,2,6,4,0,5],[3,7,1,8,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11],[0,1,2,10,11]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11],[6]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11],[0,11]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,1,2,3,4,5,6,7],[1,3,5,7]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,1,2,3,4,5,6,7],[0,2,4,6]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],[1,2,3,4,5,6,7,8,9,10,11,12,13,14]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[0],[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0,1],[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],[5,6,7,8,9,10,11,12,13,14]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[0,1,2,3,4,5],[0,1,2,3,4,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def numComponents(self, nums, subset):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numComponents(vector<int>& nums, vector<int>& subset) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numComponents(int[] nums, int[] subset) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numComponents(nums: IntArray, subset: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numComponents(nums, subset) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def numComponents(self, nums, subset):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numComponents(vector<int>& nums, vector<int>& subset) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numComponents(int[] nums, int[] subset) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numComponents(nums: IntArray, subset: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numComponents(nums, subset) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def numComponents(self, nums, subset):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numComponents(vector<int>& nums, vector<int>& subset) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numComponents(int[] nums, int[] subset) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numComponents(nums: IntArray, subset: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numComponents(nums, subset) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def numComponents(self, nums, subset):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numComponents(vector<int>& nums, vector<int>& subset) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numComponents(int[] nums, int[] subset) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numComponents(nums: IntArray, subset: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numComponents(nums, subset) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n + m)",
+      "space": "O(m) for the set",
+      "pattern": "hash set membership plus a single pass tracking whether you're currently inside a run"
+    },
+    "bruteForce": {
+      "approach": "for every node, check membership of its value in subset by scanning subset each time, and count the number of runs of consecutive in-subset nodes",
+      "time": "O(n * m) where m is the size of subset",
+      "space": "O(1) extra besides bookkeeping"
+    }
+  },
+  "optimal": {
+    "pattern": "hash set membership plus a single pass tracking whether you're currently inside a run",
+    "time": "O(n + m)",
+    "space": "O(m) for the set",
+    "hint_ladder": [
+      "checking 'is this value in subset' repeatedly - can you make that check O(1) instead of scanning subset every time?",
+      "put every value of subset into a hash set first",
+      "walk nums once, and count a new component every time you transition from 'not in subset' (or the very start) into 'in subset'",
+      "a component starts whenever the current node's value is in the set AND the previous node's value was not (or there was no previous node) - count those transitions"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every node, check membership of its value in subset by scanning subset each time, and count the number of runs of consecutive in-subset nodes",
+    "time": "O(n * m) where m is the size of subset",
+    "space": "O(1) extra besides bookkeeping"
+  },
+  "isIndex0": true,
+  "level": null
+}

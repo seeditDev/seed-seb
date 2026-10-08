@@ -1,0 +1,631 @@
+{
+  "id": "is-graph-bipartite",
+  "questionId": "is-graph-bipartite",
+  "slug": "is-graph-bipartite",
+  "title": "Is Graph Bipartite",
+  "difficulty": "Medium",
+  "category": "Graphs",
+  "patterns": [
+    "graph dfs/bfs",
+    "coloring",
+    "adjacency list"
+  ],
+  "lists": [],
+  "hints": [
+    "bipartite means you can color every node with one of two colors so no edge connects two same-colored nodes",
+    "run BFS or DFS from any unvisited node, assigning it a color, then assign every neighbor the opposite color",
+    "if you ever reach a neighbor that already has a color, and it matches the current node's color, the graph is not bipartite",
+    "remember to check every connected component separately, since a disconnected graph can have several"
+  ],
+  "commonMistakes": [
+    "only checking one connected component and missing that others might contain an odd cycle",
+    "not detecting a conflict when a neighbor was already colored the same as the current node",
+    "assuming a graph with no cycles at all needs checking - trees are always bipartite, but you still must run the coloring correctly"
+  ],
+  "content": {
+    "problemStatement": "You're given an undirected graph with n nodes labeled 0 to n-1, described\nby an adjacency list `graph` where `graph[i]` is the list of nodes\nadjacent to node i (there are no self loops or repeated edges). A graph\nis bipartite if its nodes can be split into two groups such that every\nedge connects a node in one group to a node in the other group (no edge\nstays within a group).\n\n**Return true if the graph is bipartite.**\n",
+    "constraints": [
+      "1 <= n <= 100",
+      "0 <= graph[i][j] <= n - 1",
+      "graph[i] does not contain i and has no duplicate entries"
+    ],
+    "notes": [
+      "graph with no edges",
+      "graph containing an odd-length cycle (not bipartite)",
+      "graph containing only even-length cycles (bipartite)",
+      "disconnected graph where one component is bipartite and you must still check all components"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "graph = [[1,3],[0,2],[1,3],[0,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "nodes {0,2} can go in one group and {1,3} in the other, every edge crosses groups"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "graph = [[1,2,3],[0,2],[0,1,3],[0,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "0-1-2-0 forms a triangle (odd cycle), which can never be 2-colored"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "graph = [[],[]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "no edges at all, trivially bipartite"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,3],[0,2],[1,3],[0,2]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,2,3],[0,2],[0,1,3],[0,2]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1],[0,2],[1]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,4],[0,2],[1,3],[2,4],[3,0]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,5],[0,2],[1,3],[2,4],[3,5],[4,0]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1],[0],[3],[2],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[3,4,5],[3,4,5],[3,4,5],[0,1,2],[0,1,2],[0,1,2]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[6,1],[0,2],[1,3],[2,4],[3,5],[4,6],[5,0]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,2],[0,2],[0,1],[4,5],[3,5],[3,4]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,2],[0,3,4],[0,5,6],[1],[1],[2],[2],[],[],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,3],[0,2],[1,3],[0,2]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[6,7,8,9,10,11],[6,7,8,9,10,11],[6,7,8,9,10,11],[6,7,8,9,10,11],[6,7,8,9,10,11],[6,7,8,9,10,11],[0,1,2,3,4,5],[0,1,2,3,4,5],[0,1,2,3,4,5],[0,1,2,3,4,5],[0,1,2,3,4,5],[0,1,2,3,4,5]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[8,1],[0,2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7,0]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,2],[0,2],[0,1],[4],[3]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1],[0,2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7,9],[8]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1],[0]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,2,3,4,5,6],[0],[0],[0],[0],[0],[0]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "graph = [[1,3],[0,2],[1,3],[0,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "nodes {0,2} can go in one group and {1,3} in the other, every edge crosses groups"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "graph = [[1,2,3],[0,2],[0,1,3],[0,2]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "0-1-2-0 forms a triangle (odd cycle), which can never be 2-colored"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "graph = [[],[]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "no edges at all, trivially bipartite"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "graph = [[1,3],[0,2],[1,3],[0,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "nodes {0,2} can go in one group and {1,3} in the other, every edge crosses groups"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "graph = [[1,2,3],[0,2],[0,1,3],[0,2]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "0-1-2-0 forms a triangle (odd cycle), which can never be 2-colored"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "graph = [[],[]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "no edges at all, trivially bipartite"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,3],[0,2],[1,3],[0,2]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,2,3],[0,2],[0,1,3],[0,2]]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[],[]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1],[0,2],[1]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[],[]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,4],[0,2],[1,3],[2,4],[3,0]]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1,5],[0,2],[1,3],[2,4],[3,5],[4,0]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1],[0],[3],[2],[]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[3,4,5],[3,4,5],[3,4,5],[0,1,2],[0,1,2],[0,1,2]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[6,1],[0,2],[1,3],[2,4],[3,5],[4,6],[5,0]]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[1,2],[0,2],[0,1],[4,5],[3,5],[3,4]]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1,2],[0,3,4],[0,5,6],[1],[1],[2],[2],[],[],[]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,3],[0,2],[1,3],[0,2]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[6,7,8,9,10,11],[6,7,8,9,10,11],[6,7,8,9,10,11],[6,7,8,9,10,11],[6,7,8,9,10,11],[6,7,8,9,10,11],[0,1,2,3,4,5],[0,1,2,3,4,5],[0,1,2,3,4,5],[0,1,2,3,4,5],[0,1,2,3,4,5],[0,1,2,3,4,5]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[8,1],[0,2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7,0]]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,2],[0,2],[0,1],[4],[3]]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1],[0,2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7,9],[8]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1],[0]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,2,3,4,5,6],[0],[0],[0],[0],[0],[0]]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "graph = [[1,3],[0,2],[1,3],[0,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "nodes {0,2} can go in one group and {1,3} in the other, every edge crosses groups"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "graph = [[1,2,3],[0,2],[0,1,3],[0,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "0-1-2-0 forms a triangle (odd cycle), which can never be 2-colored"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "graph = [[],[]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "no edges at all, trivially bipartite"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,3],[0,2],[1,3],[0,2]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,2,3],[0,2],[0,1,3],[0,2]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1],[0,2],[1]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,4],[0,2],[1,3],[2,4],[3,0]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,5],[0,2],[1,3],[2,4],[3,5],[4,0]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1],[0],[3],[2],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[3,4,5],[3,4,5],[3,4,5],[0,1,2],[0,1,2],[0,1,2]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[6,1],[0,2],[1,3],[2,4],[3,5],[4,6],[5,0]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,2],[0,2],[0,1],[4,5],[3,5],[3,4]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,2],[0,3,4],[0,5,6],[1],[1],[2],[2],[],[],[]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,3],[0,2],[1,3],[0,2]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[6,7,8,9,10,11],[6,7,8,9,10,11],[6,7,8,9,10,11],[6,7,8,9,10,11],[6,7,8,9,10,11],[6,7,8,9,10,11],[0,1,2,3,4,5],[0,1,2,3,4,5],[0,1,2,3,4,5],[0,1,2,3,4,5],[0,1,2,3,4,5],[0,1,2,3,4,5]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[8,1],[0,2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7,0]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,2],[0,2],[0,1],[4],[3]]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1],[0,2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7,9],[8]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1],[0]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,2,3,4,5,6],[0],[0],[0],[0],[0],[0]]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def isBipartite(self, graph):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isBipartite(vector<vector<int>>& graph) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isBipartite(int[][] graph) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isBipartite(graph: Array<IntArray>): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isBipartite(graph) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def isBipartite(self, graph):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isBipartite(vector<vector<int>>& graph) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isBipartite(int[][] graph) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isBipartite(graph: Array<IntArray>): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isBipartite(graph) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def isBipartite(self, graph):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isBipartite(vector<vector<int>>& graph) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isBipartite(int[][] graph) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isBipartite(graph: Array<IntArray>): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isBipartite(graph) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def isBipartite(self, graph):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isBipartite(vector<vector<int>>& graph) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isBipartite(int[][] graph) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isBipartite(graph: Array<IntArray>): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isBipartite(graph) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(nodes + edges)",
+      "space": "O(nodes)",
+      "pattern": "graph dfs/bfs with 2-coloring"
+    },
+    "bruteForce": {
+      "approach": "try every possible 2-coloring assignment of nodes and check if any satisfies all edges",
+      "time": "O(2^n * edges)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "graph dfs/bfs with 2-coloring",
+    "time": "O(nodes + edges)",
+    "space": "O(nodes)",
+    "hint_ladder": [
+      "bipartite means you can color every node with one of two colors so no edge connects two same-colored nodes",
+      "run BFS or DFS from any unvisited node, assigning it a color, then assign every neighbor the opposite color",
+      "if you ever reach a neighbor that already has a color, and it matches the current node's color, the graph is not bipartite",
+      "remember to check every connected component separately, since a disconnected graph can have several"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every possible 2-coloring assignment of nodes and check if any satisfies all edges",
+    "time": "O(2^n * edges)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

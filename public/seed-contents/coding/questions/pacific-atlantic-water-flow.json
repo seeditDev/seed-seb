@@ -1,0 +1,633 @@
+{
+  "id": "pacific-atlantic-water-flow",
+  "questionId": "pacific-atlantic-water-flow",
+  "slug": "pacific-atlantic-water-flow",
+  "title": "Pacific Atlantic Water Flow",
+  "difficulty": "Hard",
+  "category": "Graphs",
+  "patterns": [
+    "graph dfs/bfs",
+    "multi-source bfs",
+    "grid traversal"
+  ],
+  "lists": [
+    "blind-75"
+  ],
+  "hints": [
+    "instead of asking 'can this cell reach the ocean', flip the question: starting from the ocean's border cells, which cells could water have flowed FROM to get there?",
+    "reverse flow means moving to a neighbor whose height is greater than or equal to the current cell (the opposite direction of the original flow rule)",
+    "run one multi-source traversal starting from all Pacific-border cells, and a separate one starting from all Atlantic-border cells, each marking every cell it can reach",
+    "a cell belongs in the answer exactly when it was reached by both traversals"
+  ],
+  "commonMistakes": [
+    "running a traversal per cell instead of two multi-source traversals from the borders, which is far slower on large grids",
+    "using the forward flow condition (neighbor height <= current) instead of reversing it when starting from the ocean borders",
+    "forgetting that corner cells touch both oceans directly through the border definition alone, without needing any flow at all"
+  ],
+  "content": {
+    "problemStatement": "You're given a grid of `heights` representing an island. Water can flow\nfrom a cell to a horizontally or vertically adjacent cell only if that\nneighbor's height is less than or equal to the current cell's height.\n\nThe Pacific ocean touches the top row and left column of the grid; the\nAtlantic ocean touches the bottom row and right column:\n\n```\n Pacific ~ ~ ~ ~\n~        .  .  .  .\n~        .  .  .  .  } Atlantic\n~        .  .  .  .\n```\n\n**Return the list of `[row, col]` cells from which water can reach both oceans.**\n",
+    "constraints": [
+      "1 <= rows, cols <= 200",
+      "0 <= heights[r][c] <= 10^5",
+      "rows == heights.length and cols == heights[r].length for every row"
+    ],
+    "notes": [
+      "single cell grid (trivially touches both oceans)",
+      "single row or single column grid, where every cell touches both oceans",
+      "flat grid where every height is equal",
+      "a peak cell that can flow downhill toward one ocean but not the other"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "heights = [[1]]",
+        "output": "[[0, 0]]",
+        "expectedOutput": "[[0, 0]]",
+        "explanation": "the single cell touches both the top/left border and the bottom/right border at once"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "heights = [[1,1],[1,1]]",
+        "output": "[[0,0],[0,1],[1,0],[1,1]]",
+        "expectedOutput": "[[0,0],[0,1],[1,0],[1,1]]",
+        "explanation": "with all heights equal, water can flow freely between every cell, and every cell can reach both oceans"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "heights = [[1,2,3],[4,5,1]]",
+        "output": "[[1,0],[1,1],[0,2]]",
+        "expectedOutput": "[[1,0],[1,1],[0,2]]",
+        "explanation": "(1,0) and (0,2) are corners that directly touch both oceans; (1,1) has height 5, so water flowing out of it (downhill) can reach (0,1) and (1,0) toward Pacific, and it's on the bottom row so it touches Atlantic directly"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1]]]",
+        "output": "[[0,0]]",
+        "expectedOutput": "[[0,0]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "[[0,0],[0,1],[1,0],[1,1]]",
+        "expectedOutput": "[[0,0],[0,1],[1,0],[1,1]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,2,3],[4,5,1]]]",
+        "output": "[[1,0],[1,1],[0,2]]",
+        "expectedOutput": "[[1,0],[1,1],[0,2]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[3,3,3],[3,1,3],[3,3,3]]]",
+        "output": "[[0,0],[0,1],[0,2],[1,0],[1,2],[2,0],[2,1],[2,2]]",
+        "expectedOutput": "[[0,0],[0,1],[0,2],[1,0],[1,2],[2,0],[2,1],[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[5]]]",
+        "output": "[[0,0]]",
+        "expectedOutput": "[[0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,2,3,4,5]]]",
+        "output": "[[0,0],[0,1],[0,2],[0,3],[0,4]]",
+        "expectedOutput": "[[0,0],[0,1],[0,2],[0,3],[0,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1],[2],[3],[4]]]",
+        "output": "[[0,0],[1,0],[2,0],[3,0]]",
+        "expectedOutput": "[[0,0],[1,0],[2,0],[3,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[2,2,2],[2,2,2],[2,2,2]]]",
+        "output": "[[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]]",
+        "expectedOutput": "[[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[9,9,9],[9,1,9],[9,9,9]]]",
+        "output": "[[0,0],[0,1],[0,2],[1,0],[1,2],[2,0],[2,1],[2,2]]",
+        "expectedOutput": "[[0,0],[0,1],[0,2],[1,0],[1,2],[2,0],[2,1],[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[3,8,8,2,3,3],[8,4,6,8,7,8],[8,5,9,5,6,4],[6,0,1,0,8,4],[0,7,2,5,9,4],[5,7,3,0,7,2]]]",
+        "output": "[[0,4],[0,5],[1,3],[1,4],[1,5],[4,1],[5,0],[5,1]]",
+        "expectedOutput": "[[0,4],[0,5],[1,3],[1,4],[1,5],[4,1],[5,0],[5,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[15,5,17,6,10,9,10,0],[15,11,11,2,12,14,10,5],[10,20,0,16,2,20,5,10],[0,13,4,4,12,9,9,10],[14,10,19,11,20,20,5,19],[8,13,13,7,4,5,1,17],[11,15,0,17,12,2,9,0],[13,5,3,14,11,2,12,6]]]",
+        "output": "[[0,6],[0,7],[1,5],[1,6],[1,7],[2,5],[2,7],[3,7],[4,7],[6,1],[7,0]]",
+        "expectedOutput": "[[0,6],[0,7],[1,5],[1,6],[1,7],[2,5],[2,7],[3,7],[4,7],[6,1],[7,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,1,2,3,4],[1,2,3,4,5],[2,3,4,5,6],[3,4,5,6,7],[4,5,6,7,8]]]",
+        "output": "[[0,4],[1,4],[2,4],[3,4],[4,0],[4,1],[4,2],[4,3],[4,4]]",
+        "expectedOutput": "[[0,4],[1,4],[2,4],[3,4],[4,0],[4,1],[4,2],[4,3],[4,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[6,7,8,7,6],[7,8,9,8,7],[8,9,10,9,8],[7,8,9,8,7],[6,7,8,7,6]]]",
+        "output": "[[0,2],[0,3],[0,4],[1,2],[1,3],[1,4],[2,0],[2,1],[2,2],[2,3],[2,4],[3,0],[3,1],[3,2],[4,0],[4,1],[4,2]]",
+        "expectedOutput": "[[0,2],[0,3],[0,4],[1,2],[1,3],[1,4],[2,0],[2,1],[2,2],[2,3],[2,4],[3,0],[3,1],[3,2],[4,0],[4,1],[4,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,1]]]",
+        "output": "[[0,0],[0,1]]",
+        "expectedOutput": "[[0,0],[0,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1],[1]]]",
+        "output": "[[0,0],[1,0]]",
+        "expectedOutput": "[[0,0],[1,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[14,10,12,15,0,5,4,14,0,10],[9,11,7,9,4,2,6,9,5,10],[5,12,7,14,7,14,0,13,11,9],[11,8,11,3,5,1,13,9,8,5],[7,14,3,7,6,3,5,9,12,1],[0,12,5,4,3,12,12,7,1,11],[0,7,11,14,13,9,3,13,1,13],[6,3,0,15,6,11,9,0,15,12],[10,6,8,12,8,13,4,1,1,5],[2,7,8,1,9,6,5,14,5,2]]]",
+        "output": "[[0,9],[1,9],[2,7],[2,8],[7,3],[8,0],[8,2],[8,3],[9,0],[9,1],[9,2]]",
+        "expectedOutput": "[[0,9],[1,9],[2,7],[2,8],[7,3],[8,0],[8,2],[8,3],[9,0],[9,1],[9,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,2],[3,4]]]",
+        "output": "[[0,1],[1,0],[1,1]]",
+        "expectedOutput": "[[0,1],[1,0],[1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0,4,1,5,5,1,3],[3,5,3,3,3,2,1],[1,4,2,3,1,1,3],[0,0,5,3,5,4,5],[2,3,4,2,3,5,5],[5,4,3,1,2,1,3],[5,2,5,4,1,2,0]]]",
+        "output": "[[0,3],[0,4],[0,6],[1,1],[1,2],[1,3],[1,4],[1,5],[2,3],[3,2],[3,3],[3,4],[5,0],[5,1],[6,0]]",
+        "expectedOutput": "[[0,3],[0,4],[0,6],[1,1],[1,2],[1,3],[1,4],[1,5],[2,3],[3,2],[3,3],[3,4],[5,0],[5,1],[6,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[0]]]",
+        "output": "[[0,0]]",
+        "expectedOutput": "[[0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[5,4,3,2,1]]]",
+        "output": "[[0,0],[0,1],[0,2],[0,3],[0,4]]",
+        "expectedOutput": "[[0,0],[0,1],[0,2],[0,3],[0,4]]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "heights = [[1]]",
+      "output": "[[0, 0]]",
+      "expectedOutput": "[[0, 0]]",
+      "explanation": "the single cell touches both the top/left border and the bottom/right border at once"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "heights = [[1,1],[1,1]]",
+      "output": "[[0,0],[0,1],[1,0],[1,1]]",
+      "expectedOutput": "[[0,0],[0,1],[1,0],[1,1]]",
+      "explanation": "with all heights equal, water can flow freely between every cell, and every cell can reach both oceans"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "heights = [[1,2,3],[4,5,1]]",
+      "output": "[[1,0],[1,1],[0,2]]",
+      "expectedOutput": "[[1,0],[1,1],[0,2]]",
+      "explanation": "(1,0) and (0,2) are corners that directly touch both oceans; (1,1) has height 5, so water flowing out of it (downhill) can reach (0,1) and (1,0) toward Pacific, and it's on the bottom row so it touches Atlantic directly"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "heights = [[1]]",
+      "output": "[[0, 0]]",
+      "expectedOutput": "[[0, 0]]",
+      "explanation": "the single cell touches both the top/left border and the bottom/right border at once"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "heights = [[1,1],[1,1]]",
+      "output": "[[0,0],[0,1],[1,0],[1,1]]",
+      "expectedOutput": "[[0,0],[0,1],[1,0],[1,1]]",
+      "explanation": "with all heights equal, water can flow freely between every cell, and every cell can reach both oceans"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "heights = [[1,2,3],[4,5,1]]",
+      "output": "[[1,0],[1,1],[0,2]]",
+      "expectedOutput": "[[1,0],[1,1],[0,2]]",
+      "explanation": "(1,0) and (0,2) are corners that directly touch both oceans; (1,1) has height 5, so water flowing out of it (downhill) can reach (0,1) and (1,0) toward Pacific, and it's on the bottom row so it touches Atlantic directly"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1]]]",
+      "output": "[[0,0]]",
+      "expectedOutput": "[[0,0]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,1],[1,1]]]",
+      "output": "[[0,0],[0,1],[1,0],[1,1]]",
+      "expectedOutput": "[[0,0],[0,1],[1,0],[1,1]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1,2,3],[4,5,1]]]",
+      "output": "[[1,0],[1,1],[0,2]]",
+      "expectedOutput": "[[1,0],[1,1],[0,2]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[3,3,3],[3,1,3],[3,3,3]]]",
+      "output": "[[0,0],[0,1],[0,2],[1,0],[1,2],[2,0],[2,1],[2,2]]",
+      "expectedOutput": "[[0,0],[0,1],[0,2],[1,0],[1,2],[2,0],[2,1],[2,2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[5]]]",
+      "output": "[[0,0]]",
+      "expectedOutput": "[[0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,2,3,4,5]]]",
+      "output": "[[0,0],[0,1],[0,2],[0,3],[0,4]]",
+      "expectedOutput": "[[0,0],[0,1],[0,2],[0,3],[0,4]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1],[2],[3],[4]]]",
+      "output": "[[0,0],[1,0],[2,0],[3,0]]",
+      "expectedOutput": "[[0,0],[1,0],[2,0],[3,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[2,2,2],[2,2,2],[2,2,2]]]",
+      "output": "[[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]]",
+      "expectedOutput": "[[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[9,9,9],[9,1,9],[9,9,9]]]",
+      "output": "[[0,0],[0,1],[0,2],[1,0],[1,2],[2,0],[2,1],[2,2]]",
+      "expectedOutput": "[[0,0],[0,1],[0,2],[1,0],[1,2],[2,0],[2,1],[2,2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[3,8,8,2,3,3],[8,4,6,8,7,8],[8,5,9,5,6,4],[6,0,1,0,8,4],[0,7,2,5,9,4],[5,7,3,0,7,2]]]",
+      "output": "[[0,4],[0,5],[1,3],[1,4],[1,5],[4,1],[5,0],[5,1]]",
+      "expectedOutput": "[[0,4],[0,5],[1,3],[1,4],[1,5],[4,1],[5,0],[5,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[15,5,17,6,10,9,10,0],[15,11,11,2,12,14,10,5],[10,20,0,16,2,20,5,10],[0,13,4,4,12,9,9,10],[14,10,19,11,20,20,5,19],[8,13,13,7,4,5,1,17],[11,15,0,17,12,2,9,0],[13,5,3,14,11,2,12,6]]]",
+      "output": "[[0,6],[0,7],[1,5],[1,6],[1,7],[2,5],[2,7],[3,7],[4,7],[6,1],[7,0]]",
+      "expectedOutput": "[[0,6],[0,7],[1,5],[1,6],[1,7],[2,5],[2,7],[3,7],[4,7],[6,1],[7,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[0,1,2,3,4],[1,2,3,4,5],[2,3,4,5,6],[3,4,5,6,7],[4,5,6,7,8]]]",
+      "output": "[[0,4],[1,4],[2,4],[3,4],[4,0],[4,1],[4,2],[4,3],[4,4]]",
+      "expectedOutput": "[[0,4],[1,4],[2,4],[3,4],[4,0],[4,1],[4,2],[4,3],[4,4]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[6,7,8,7,6],[7,8,9,8,7],[8,9,10,9,8],[7,8,9,8,7],[6,7,8,7,6]]]",
+      "output": "[[0,2],[0,3],[0,4],[1,2],[1,3],[1,4],[2,0],[2,1],[2,2],[2,3],[2,4],[3,0],[3,1],[3,2],[4,0],[4,1],[4,2]]",
+      "expectedOutput": "[[0,2],[0,3],[0,4],[1,2],[1,3],[1,4],[2,0],[2,1],[2,2],[2,3],[2,4],[3,0],[3,1],[3,2],[4,0],[4,1],[4,2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,1]]]",
+      "output": "[[0,0],[0,1]]",
+      "expectedOutput": "[[0,0],[0,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[1],[1]]]",
+      "output": "[[0,0],[1,0]]",
+      "expectedOutput": "[[0,0],[1,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[14,10,12,15,0,5,4,14,0,10],[9,11,7,9,4,2,6,9,5,10],[5,12,7,14,7,14,0,13,11,9],[11,8,11,3,5,1,13,9,8,5],[7,14,3,7,6,3,5,9,12,1],[0,12,5,4,3,12,12,7,1,11],[0,7,11,14,13,9,3,13,1,13],[6,3,0,15,6,11,9,0,15,12],[10,6,8,12,8,13,4,1,1,5],[2,7,8,1,9,6,5,14,5,2]]]",
+      "output": "[[0,9],[1,9],[2,7],[2,8],[7,3],[8,0],[8,2],[8,3],[9,0],[9,1],[9,2]]",
+      "expectedOutput": "[[0,9],[1,9],[2,7],[2,8],[7,3],[8,0],[8,2],[8,3],[9,0],[9,1],[9,2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,2],[3,4]]]",
+      "output": "[[0,1],[1,0],[1,1]]",
+      "expectedOutput": "[[0,1],[1,0],[1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[0,4,1,5,5,1,3],[3,5,3,3,3,2,1],[1,4,2,3,1,1,3],[0,0,5,3,5,4,5],[2,3,4,2,3,5,5],[5,4,3,1,2,1,3],[5,2,5,4,1,2,0]]]",
+      "output": "[[0,3],[0,4],[0,6],[1,1],[1,2],[1,3],[1,4],[1,5],[2,3],[3,2],[3,3],[3,4],[5,0],[5,1],[6,0]]",
+      "expectedOutput": "[[0,3],[0,4],[0,6],[1,1],[1,2],[1,3],[1,4],[1,5],[2,3],[3,2],[3,3],[3,4],[5,0],[5,1],[6,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[0]]]",
+      "output": "[[0,0]]",
+      "expectedOutput": "[[0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[5,4,3,2,1]]]",
+      "output": "[[0,0],[0,1],[0,2],[0,3],[0,4]]",
+      "expectedOutput": "[[0,0],[0,1],[0,2],[0,3],[0,4]]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "heights = [[1]]",
+        "output": "[[0, 0]]",
+        "expectedOutput": "[[0, 0]]",
+        "explanation": "the single cell touches both the top/left border and the bottom/right border at once"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "heights = [[1,1],[1,1]]",
+        "output": "[[0,0],[0,1],[1,0],[1,1]]",
+        "expectedOutput": "[[0,0],[0,1],[1,0],[1,1]]",
+        "explanation": "with all heights equal, water can flow freely between every cell, and every cell can reach both oceans"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "heights = [[1,2,3],[4,5,1]]",
+        "output": "[[1,0],[1,1],[0,2]]",
+        "expectedOutput": "[[1,0],[1,1],[0,2]]",
+        "explanation": "(1,0) and (0,2) are corners that directly touch both oceans; (1,1) has height 5, so water flowing out of it (downhill) can reach (0,1) and (1,0) toward Pacific, and it's on the bottom row so it touches Atlantic directly"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1]]]",
+        "output": "[[0,0]]",
+        "expectedOutput": "[[0,0]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "[[0,0],[0,1],[1,0],[1,1]]",
+        "expectedOutput": "[[0,0],[0,1],[1,0],[1,1]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,2,3],[4,5,1]]]",
+        "output": "[[1,0],[1,1],[0,2]]",
+        "expectedOutput": "[[1,0],[1,1],[0,2]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[3,3,3],[3,1,3],[3,3,3]]]",
+        "output": "[[0,0],[0,1],[0,2],[1,0],[1,2],[2,0],[2,1],[2,2]]",
+        "expectedOutput": "[[0,0],[0,1],[0,2],[1,0],[1,2],[2,0],[2,1],[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[5]]]",
+        "output": "[[0,0]]",
+        "expectedOutput": "[[0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,2,3,4,5]]]",
+        "output": "[[0,0],[0,1],[0,2],[0,3],[0,4]]",
+        "expectedOutput": "[[0,0],[0,1],[0,2],[0,3],[0,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1],[2],[3],[4]]]",
+        "output": "[[0,0],[1,0],[2,0],[3,0]]",
+        "expectedOutput": "[[0,0],[1,0],[2,0],[3,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[2,2,2],[2,2,2],[2,2,2]]]",
+        "output": "[[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]]",
+        "expectedOutput": "[[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[9,9,9],[9,1,9],[9,9,9]]]",
+        "output": "[[0,0],[0,1],[0,2],[1,0],[1,2],[2,0],[2,1],[2,2]]",
+        "expectedOutput": "[[0,0],[0,1],[0,2],[1,0],[1,2],[2,0],[2,1],[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[3,8,8,2,3,3],[8,4,6,8,7,8],[8,5,9,5,6,4],[6,0,1,0,8,4],[0,7,2,5,9,4],[5,7,3,0,7,2]]]",
+        "output": "[[0,4],[0,5],[1,3],[1,4],[1,5],[4,1],[5,0],[5,1]]",
+        "expectedOutput": "[[0,4],[0,5],[1,3],[1,4],[1,5],[4,1],[5,0],[5,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[15,5,17,6,10,9,10,0],[15,11,11,2,12,14,10,5],[10,20,0,16,2,20,5,10],[0,13,4,4,12,9,9,10],[14,10,19,11,20,20,5,19],[8,13,13,7,4,5,1,17],[11,15,0,17,12,2,9,0],[13,5,3,14,11,2,12,6]]]",
+        "output": "[[0,6],[0,7],[1,5],[1,6],[1,7],[2,5],[2,7],[3,7],[4,7],[6,1],[7,0]]",
+        "expectedOutput": "[[0,6],[0,7],[1,5],[1,6],[1,7],[2,5],[2,7],[3,7],[4,7],[6,1],[7,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,1,2,3,4],[1,2,3,4,5],[2,3,4,5,6],[3,4,5,6,7],[4,5,6,7,8]]]",
+        "output": "[[0,4],[1,4],[2,4],[3,4],[4,0],[4,1],[4,2],[4,3],[4,4]]",
+        "expectedOutput": "[[0,4],[1,4],[2,4],[3,4],[4,0],[4,1],[4,2],[4,3],[4,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[6,7,8,7,6],[7,8,9,8,7],[8,9,10,9,8],[7,8,9,8,7],[6,7,8,7,6]]]",
+        "output": "[[0,2],[0,3],[0,4],[1,2],[1,3],[1,4],[2,0],[2,1],[2,2],[2,3],[2,4],[3,0],[3,1],[3,2],[4,0],[4,1],[4,2]]",
+        "expectedOutput": "[[0,2],[0,3],[0,4],[1,2],[1,3],[1,4],[2,0],[2,1],[2,2],[2,3],[2,4],[3,0],[3,1],[3,2],[4,0],[4,1],[4,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,1]]]",
+        "output": "[[0,0],[0,1]]",
+        "expectedOutput": "[[0,0],[0,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1],[1]]]",
+        "output": "[[0,0],[1,0]]",
+        "expectedOutput": "[[0,0],[1,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[14,10,12,15,0,5,4,14,0,10],[9,11,7,9,4,2,6,9,5,10],[5,12,7,14,7,14,0,13,11,9],[11,8,11,3,5,1,13,9,8,5],[7,14,3,7,6,3,5,9,12,1],[0,12,5,4,3,12,12,7,1,11],[0,7,11,14,13,9,3,13,1,13],[6,3,0,15,6,11,9,0,15,12],[10,6,8,12,8,13,4,1,1,5],[2,7,8,1,9,6,5,14,5,2]]]",
+        "output": "[[0,9],[1,9],[2,7],[2,8],[7,3],[8,0],[8,2],[8,3],[9,0],[9,1],[9,2]]",
+        "expectedOutput": "[[0,9],[1,9],[2,7],[2,8],[7,3],[8,0],[8,2],[8,3],[9,0],[9,1],[9,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,2],[3,4]]]",
+        "output": "[[0,1],[1,0],[1,1]]",
+        "expectedOutput": "[[0,1],[1,0],[1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0,4,1,5,5,1,3],[3,5,3,3,3,2,1],[1,4,2,3,1,1,3],[0,0,5,3,5,4,5],[2,3,4,2,3,5,5],[5,4,3,1,2,1,3],[5,2,5,4,1,2,0]]]",
+        "output": "[[0,3],[0,4],[0,6],[1,1],[1,2],[1,3],[1,4],[1,5],[2,3],[3,2],[3,3],[3,4],[5,0],[5,1],[6,0]]",
+        "expectedOutput": "[[0,3],[0,4],[0,6],[1,1],[1,2],[1,3],[1,4],[1,5],[2,3],[3,2],[3,3],[3,4],[5,0],[5,1],[6,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[0]]]",
+        "output": "[[0,0]]",
+        "expectedOutput": "[[0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[5,4,3,2,1]]]",
+        "output": "[[0,0],[0,1],[0,2],[0,3],[0,4]]",
+        "expectedOutput": "[[0,0],[0,1],[0,2],[0,3],[0,4]]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def pacificAtlantic(self, heights):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> pacificAtlantic(vector<vector<int>>& heights) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] pacificAtlantic(int[][] heights) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun pacificAtlantic(heights: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    pacificAtlantic(heights) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def pacificAtlantic(self, heights):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> pacificAtlantic(vector<vector<int>>& heights) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] pacificAtlantic(int[][] heights) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun pacificAtlantic(heights: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    pacificAtlantic(heights) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def pacificAtlantic(self, heights):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> pacificAtlantic(vector<vector<int>>& heights) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] pacificAtlantic(int[][] heights) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun pacificAtlantic(heights: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    pacificAtlantic(heights) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def pacificAtlantic(self, heights):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> pacificAtlantic(vector<vector<int>>& heights) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] pacificAtlantic(int[][] heights) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun pacificAtlantic(heights: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    pacificAtlantic(heights) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(rows * cols)",
+      "space": "O(rows * cols)",
+      "pattern": "multi-source graph dfs/bfs run in reverse, starting from each ocean's border"
+    },
+    "bruteForce": {
+      "approach": "for every single cell, run a separate DFS or BFS following valid downhill moves to see if it can reach the Pacific border and, separately, the Atlantic border",
+      "time": "O((rows * cols)^2) since each of the rows*cols cells triggers its own traversal",
+      "space": "O(rows * cols)"
+    }
+  },
+  "optimal": {
+    "pattern": "multi-source graph dfs/bfs run in reverse, starting from each ocean's border",
+    "time": "O(rows * cols)",
+    "space": "O(rows * cols)",
+    "hint_ladder": [
+      "instead of asking 'can this cell reach the ocean', flip the question: starting from the ocean's border cells, which cells could water have flowed FROM to get there?",
+      "reverse flow means moving to a neighbor whose height is greater than or equal to the current cell (the opposite direction of the original flow rule)",
+      "run one multi-source traversal starting from all Pacific-border cells, and a separate one starting from all Atlantic-border cells, each marking every cell it can reach",
+      "a cell belongs in the answer exactly when it was reached by both traversals"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every single cell, run a separate DFS or BFS following valid downhill moves to see if it can reach the Pacific border and, separately, the Atlantic border",
+    "time": "O((rows * cols)^2) since each of the rows*cols cells triggers its own traversal",
+    "space": "O(rows * cols)"
+  },
+  "isIndex0": true,
+  "level": null
+}

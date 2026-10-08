@@ -1,0 +1,633 @@
+{
+  "id": "number-of-matching-subsequences",
+  "questionId": "number-of-matching-subsequences",
+  "slug": "number-of-matching-subsequences",
+  "title": "Number of Matching Subsequences",
+  "difficulty": "Medium",
+  "category": "Trie",
+  "patterns": [
+    "trie",
+    "string",
+    "two pointers"
+  ],
+  "lists": [],
+  "hints": [
+    "checking each word against s independently rescans s over and over - what if many words could advance through s together in a single pass?",
+    "think of each word as a pointer sitting at some position in itself, waiting for its next required character to show up in s",
+    "group all these waiting pointers into buckets keyed by 'the character they're currently waiting for'",
+    "scan s once, character by character; at each character c, take every pointer waiting for c, advance it by one position, and re-bucket it under its new next-required character (or mark it complete if it just consumed its word's last character)",
+    "a trie isn't strictly required here, but it helps you avoid re-deriving each word's next character from scratch by walking shared prefixes together - insert words into a trie and let 'waiting pointers' be trie node references instead of raw string indices"
+  ],
+  "commonMistakes": [
+    "resetting a word's progress instead of resuming from where it left off when its character appears again later in s",
+    "not counting duplicate words in the list separately",
+    "off-by-one when checking whether a word's pointer has fully consumed the word (completion check)"
+  ],
+  "content": {
+    "problemStatement": "You're given a space-delimited string of lowercase `words` and a separate base string `s`.\n\n**Count how many entries in the word list are a subsequence of `s`, meaning their characters appear in the same relative order in `s`, not necessarily contiguous.**\n\nCount each entry separately, so a word appearing twice in the list that matches counts twice.\n",
+    "constraints": [
+      "1 <= s.length <= 5 * 10^4",
+      "1 <= number of words <= 5000",
+      "1 <= length of each word <= 50",
+      "s and every word consist only of lowercase English letters"
+    ],
+    "notes": [
+      "a word longer than s (can never be a subsequence)",
+      "the same word repeated multiple times in the list",
+      "a word that uses every character of s in order (an exact match)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"a bb acd ace\", s = \"abcde\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "\"a\" is a subsequence (trivially); \"bb\" is not (s only has one b); \"acd\" and \"ace\" both are"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"abc abc\", s = \"abc\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "both entries match, counted separately"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"xyz\", s = \"abc\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"a bb acd ace\",\"abcde\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"abc abc\",\"abc\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"xyz\",\"abc\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a a a\",\"a\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"ab ba\",\"aabb\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abc\",\"abc\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"a b c\",\"abc\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abc abd abe\",\"abcde\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaa\",\"aaaa\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"z\",\"abcdefghijklmnopqrstuvwxyz\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"ace ade abc bde\",\"abcde\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"xy yx\",\"xyxy\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"aaaaa\",\"aaaa\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"a b c d e\",\"edcba\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"abcdefgh\",\"abcdefgh\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"longword\",\"shortstring\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"aabb bbaa abab baba\",\"aabbabba\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"qqq q qq\",\"qqqq\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"ab cd ef\",\"aabcdef\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"a bb acd ace\", s = \"abcde\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "\"a\" is a subsequence (trivially); \"bb\" is not (s only has one b); \"acd\" and \"ace\" both are"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"abc abc\", s = \"abc\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "both entries match, counted separately"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"xyz\", s = \"abc\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"a bb acd ace\", s = \"abcde\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "\"a\" is a subsequence (trivially); \"bb\" is not (s only has one b); \"acd\" and \"ace\" both are"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"abc abc\", s = \"abc\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "both entries match, counted separately"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"xyz\", s = \"abc\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"a bb acd ace\",\"abcde\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"abc abc\",\"abc\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"xyz\",\"abc\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"a a a\",\"a\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"ab ba\",\"aabb\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\",\"a\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"abc\",\"abc\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"a b c\",\"abc\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"abc abd abe\",\"abcde\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"aaa\",\"aaaa\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"z\",\"abcdefghijklmnopqrstuvwxyz\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"ace ade abc bde\",\"abcde\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"xy yx\",\"xyxy\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"aaaaa\",\"aaaa\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"a b c d e\",\"edcba\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"abcdefgh\",\"abcdefgh\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"longword\",\"shortstring\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"aabb bbaa abab baba\",\"aabbabba\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"qqq q qq\",\"qqqq\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"ab cd ef\",\"aabcdef\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"a bb acd ace\", s = \"abcde\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "\"a\" is a subsequence (trivially); \"bb\" is not (s only has one b); \"acd\" and \"ace\" both are"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"abc abc\", s = \"abc\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "both entries match, counted separately"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"xyz\", s = \"abc\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"a bb acd ace\",\"abcde\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"abc abc\",\"abc\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"xyz\",\"abc\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a a a\",\"a\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"ab ba\",\"aabb\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abc\",\"abc\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"a b c\",\"abc\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abc abd abe\",\"abcde\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaa\",\"aaaa\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"z\",\"abcdefghijklmnopqrstuvwxyz\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"ace ade abc bde\",\"abcde\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"xy yx\",\"xyxy\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"aaaaa\",\"aaaa\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"a b c d e\",\"edcba\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"abcdefgh\",\"abcdefgh\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"longword\",\"shortstring\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"aabb bbaa abab baba\",\"aabbabba\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"qqq q qq\",\"qqqq\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"ab cd ef\",\"aabcdef\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def countMatchingSubsequences(self, words, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countMatchingSubsequences(string words, string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countMatchingSubsequences(String words, String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countMatchingSubsequences(words: String, s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countMatchingSubsequences(words, s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def countMatchingSubsequences(self, words, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countMatchingSubsequences(string words, string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countMatchingSubsequences(String words, String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countMatchingSubsequences(words: String, s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countMatchingSubsequences(words, s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def countMatchingSubsequences(self, words, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countMatchingSubsequences(string words, string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countMatchingSubsequences(String words, String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countMatchingSubsequences(words: String, s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countMatchingSubsequences(words, s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def countMatchingSubsequences(self, words, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countMatchingSubsequences(string words, string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countMatchingSubsequences(String words, String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countMatchingSubsequences(words: String, s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countMatchingSubsequences(words, s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(total word characters + len(s) * 26) roughly, a big improvement over rescanning s per word when there are many words",
+      "space": "O(total word characters)",
+      "pattern": "insert all words into a trie annotated with which words end at each node; scan s once, and at each character, advance every 'active' trie pointer that has a matching child (bucket pointers by the next character they're waiting for, similar to the classic multi-pointer/queue solution but framed via trie structure)"
+    },
+    "bruteForce": {
+      "approach": "for each word, use a two-pointer scan over s to check if the word is a subsequence",
+      "time": "O(n * len(s)) where n is the number of words",
+      "space": "O(1) beyond the split word list"
+    }
+  },
+  "optimal": {
+    "pattern": "insert all words into a trie annotated with which words end at each node; scan s once, and at each character, advance every 'active' trie pointer that has a matching child (bucket pointers by the next character they're waiting for, similar to the classic multi-pointer/queue solution but framed via trie structure)",
+    "time": "O(total word characters + len(s) * 26) roughly, a big improvement over rescanning s per word when there are many words",
+    "space": "O(total word characters)",
+    "hint_ladder": [
+      "checking each word against s independently rescans s over and over - what if many words could advance through s together in a single pass?",
+      "think of each word as a pointer sitting at some position in itself, waiting for its next required character to show up in s",
+      "group all these waiting pointers into buckets keyed by 'the character they're currently waiting for'",
+      "scan s once, character by character; at each character c, take every pointer waiting for c, advance it by one position, and re-bucket it under its new next-required character (or mark it complete if it just consumed its word's last character)",
+      "a trie isn't strictly required here, but it helps you avoid re-deriving each word's next character from scratch by walking shared prefixes together - insert words into a trie and let 'waiting pointers' be trie node references instead of raw string indices"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each word, use a two-pointer scan over s to check if the word is a subsequence",
+    "time": "O(n * len(s)) where n is the number of words",
+    "space": "O(1) beyond the split word list"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,599 @@
+{
+  "id": "corporate-flight-bookings",
+  "questionId": "corporate-flight-bookings",
+  "slug": "corporate-flight-bookings",
+  "title": "Corporate Flight Bookings",
+  "difficulty": "Medium",
+  "category": "Prefix sum",
+  "patterns": [
+    "prefix sum",
+    "difference array"
+  ],
+  "lists": [],
+  "hints": [
+    "adding the same value to an entire range, many times, is expensive if done range by range. what if you only marked where a range's effect BEGINS and ENDS?",
+    "for a booking [first, last, seats], add seats at position first-1, and subtract seats at position last (just past the range, 0-indexed)",
+    "do this for every booking into a difference array of length n, without touching the interior of any range",
+    "finally, take a running prefix sum over the difference array - each position accumulates exactly the seats that apply to it"
+  ],
+  "commonMistakes": [
+    "off-by-one converting between the 1-indexed booking range and a 0-indexed array",
+    "forgetting to subtract at last (not last - 1), since the subtraction should take effect the flight AFTER the range ends",
+    "applying the seats directly to every flight in the range instead of using the start/end marking trick, missing the efficiency gain"
+  ],
+  "content": {
+    "problemStatement": "There are `n` flights, numbered 1 to `n`. You're given a list of\n`bookings`, where each booking is [first, last, seats] meaning seats\nseats were reserved on every flight from first to last, inclusive\n(1-indexed).\n\n**Return an array of length `n` where position i holds the total number of seats reserved on flight i+1.**\n",
+    "constraints": [
+      "1 <= n <= 2 * 10^4",
+      "1 <= bookings.length <= 2 * 10^4",
+      "bookings[i].length == 3",
+      "1 <= first_i <= last_i <= n",
+      "1 <= seats_i <= 10^6"
+    ],
+    "notes": [
+      "a single booking covering the entire range",
+      "many bookings overlapping the same flight",
+      "a booking covering only one flight (first equals last)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "bookings = [[1, 2, 10], [2, 3, 20], [2, 5, 25]], n = 5",
+        "output": "[10, 55, 45, 25, 25]",
+        "expectedOutput": "[10, 55, 45, 25, 25]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "bookings = [[1, 2, 10], [2, 2, 15]], n = 2",
+        "output": "[10, 25]",
+        "expectedOutput": "[10, 25]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,2,10],[2,3,20],[2,5,25]],5]",
+        "output": "[10,55,45,25,25]",
+        "expectedOutput": "[10,55,45,25,25]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,2,10],[2,2,15]],2]",
+        "output": "[10,25]",
+        "expectedOutput": "[10,25]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,1,5]],3]",
+        "output": "[5,0,0]",
+        "expectedOutput": "[5,0,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1,1]],1]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,3,5],[1,3,5],[1,3,5]],3]",
+        "output": "[15,15,15]",
+        "expectedOutput": "[15,15,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,5,3],[2,4,2],[3,3,1]],5]",
+        "output": "[3,5,6,5,3]",
+        "expectedOutput": "[3,5,6,5,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,10,1]],10]",
+        "output": "[1,1,1,1,1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,4,10],[5,8,20]],8]",
+        "output": "[10,10,10,10,20,20,20,20]",
+        "expectedOutput": "[10,10,10,10,20,20,20,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,2,4],[2,3,5],[3,4,6],[4,5,7]],5]",
+        "output": "[4,9,11,13,7]",
+        "expectedOutput": "[4,9,11,13,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,1,100],[1,1,100],[1,1,100]],1]",
+        "output": "[300]",
+        "expectedOutput": "[300]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[2,2,5]],3]",
+        "output": "[0,5,0]",
+        "expectedOutput": "[0,5,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,3,2],[2,5,3],[4,6,1]],6]",
+        "output": "[2,5,5,4,4,1]",
+        "expectedOutput": "[2,5,5,4,4,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,20,1]],20]",
+        "output": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,5,10],[3,8,5],[6,12,3],[10,15,7]],15]",
+        "output": "[10,10,15,15,15,8,8,8,3,10,10,10,7,7,7]",
+        "expectedOutput": "[10,10,15,15,15,8,8,8,3,10,10,10,7,7,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,2,10],[1,2,20],[1,2,5]],2]",
+        "output": "[35,35]",
+        "expectedOutput": "[35,35]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,1,1000000]],1]",
+        "output": "[1000000]",
+        "expectedOutput": "[1000000]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,4,1],[2,5,1],[3,6,1],[4,7,1],[5,8,1]],8]",
+        "output": "[1,2,3,4,4,3,2,1]",
+        "expectedOutput": "[1,2,3,4,4,3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,3,1],[4,6,2],[7,9,3]],9]",
+        "output": "[1,1,1,2,2,2,3,3,3]",
+        "expectedOutput": "[1,1,1,2,2,2,3,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,10,5],[2,9,5],[3,8,5],[4,7,5],[5,6,5]],10]",
+        "output": "[5,10,15,20,25,25,20,15,10,5]",
+        "expectedOutput": "[5,10,15,20,25,25,20,15,10,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,15,2],[5,10,3],[8,12,1]],15]",
+        "output": "[2,2,2,2,5,5,5,6,6,6,3,3,2,2,2]",
+        "expectedOutput": "[2,2,2,2,5,5,5,6,6,6,3,3,2,2,2]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "bookings = [[1, 2, 10], [2, 3, 20], [2, 5, 25]], n = 5",
+      "output": "[10, 55, 45, 25, 25]",
+      "expectedOutput": "[10, 55, 45, 25, 25]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "bookings = [[1, 2, 10], [2, 2, 15]], n = 2",
+      "output": "[10, 25]",
+      "expectedOutput": "[10, 25]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "bookings = [[1, 2, 10], [2, 3, 20], [2, 5, 25]], n = 5",
+      "output": "[10, 55, 45, 25, 25]",
+      "expectedOutput": "[10, 55, 45, 25, 25]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "bookings = [[1, 2, 10], [2, 2, 15]], n = 2",
+      "output": "[10, 25]",
+      "expectedOutput": "[10, 25]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,2,10],[2,3,20],[2,5,25]],5]",
+      "output": "[10,55,45,25,25]",
+      "expectedOutput": "[10,55,45,25,25]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,2,10],[2,2,15]],2]",
+      "output": "[10,25]",
+      "expectedOutput": "[10,25]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1,1,5]],3]",
+      "output": "[5,0,0]",
+      "expectedOutput": "[5,0,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1,1,1]],1]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,3,5],[1,3,5],[1,3,5]],3]",
+      "output": "[15,15,15]",
+      "expectedOutput": "[15,15,15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,5,3],[2,4,2],[3,3,1]],5]",
+      "output": "[3,5,6,5,3]",
+      "expectedOutput": "[3,5,6,5,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1,10,1]],10]",
+      "output": "[1,1,1,1,1,1,1,1,1,1]",
+      "expectedOutput": "[1,1,1,1,1,1,1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,4,10],[5,8,20]],8]",
+      "output": "[10,10,10,10,20,20,20,20]",
+      "expectedOutput": "[10,10,10,10,20,20,20,20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1,2,4],[2,3,5],[3,4,6],[4,5,7]],5]",
+      "output": "[4,9,11,13,7]",
+      "expectedOutput": "[4,9,11,13,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1,1,100],[1,1,100],[1,1,100]],1]",
+      "output": "[300]",
+      "expectedOutput": "[300]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[2,2,5]],3]",
+      "output": "[0,5,0]",
+      "expectedOutput": "[0,5,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[1,3,2],[2,5,3],[4,6,1]],6]",
+      "output": "[2,5,5,4,4,1]",
+      "expectedOutput": "[2,5,5,4,4,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1,20,1]],20]",
+      "output": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+      "expectedOutput": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,5,10],[3,8,5],[6,12,3],[10,15,7]],15]",
+      "output": "[10,10,15,15,15,8,8,8,3,10,10,10,7,7,7]",
+      "expectedOutput": "[10,10,15,15,15,8,8,8,3,10,10,10,7,7,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[1,2,10],[1,2,20],[1,2,5]],2]",
+      "output": "[35,35]",
+      "expectedOutput": "[35,35]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[1,1,1000000]],1]",
+      "output": "[1000000]",
+      "expectedOutput": "[1000000]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,4,1],[2,5,1],[3,6,1],[4,7,1],[5,8,1]],8]",
+      "output": "[1,2,3,4,4,3,2,1]",
+      "expectedOutput": "[1,2,3,4,4,3,2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1,3,1],[4,6,2],[7,9,3]],9]",
+      "output": "[1,1,1,2,2,2,3,3,3]",
+      "expectedOutput": "[1,1,1,2,2,2,3,3,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,10,5],[2,9,5],[3,8,5],[4,7,5],[5,6,5]],10]",
+      "output": "[5,10,15,20,25,25,20,15,10,5]",
+      "expectedOutput": "[5,10,15,20,25,25,20,15,10,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,15,2],[5,10,3],[8,12,1]],15]",
+      "output": "[2,2,2,2,5,5,5,6,6,6,3,3,2,2,2]",
+      "expectedOutput": "[2,2,2,2,5,5,5,6,6,6,3,3,2,2,2]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "bookings = [[1, 2, 10], [2, 3, 20], [2, 5, 25]], n = 5",
+        "output": "[10, 55, 45, 25, 25]",
+        "expectedOutput": "[10, 55, 45, 25, 25]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "bookings = [[1, 2, 10], [2, 2, 15]], n = 2",
+        "output": "[10, 25]",
+        "expectedOutput": "[10, 25]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,2,10],[2,3,20],[2,5,25]],5]",
+        "output": "[10,55,45,25,25]",
+        "expectedOutput": "[10,55,45,25,25]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,2,10],[2,2,15]],2]",
+        "output": "[10,25]",
+        "expectedOutput": "[10,25]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,1,5]],3]",
+        "output": "[5,0,0]",
+        "expectedOutput": "[5,0,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1,1]],1]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,3,5],[1,3,5],[1,3,5]],3]",
+        "output": "[15,15,15]",
+        "expectedOutput": "[15,15,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,5,3],[2,4,2],[3,3,1]],5]",
+        "output": "[3,5,6,5,3]",
+        "expectedOutput": "[3,5,6,5,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,10,1]],10]",
+        "output": "[1,1,1,1,1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,4,10],[5,8,20]],8]",
+        "output": "[10,10,10,10,20,20,20,20]",
+        "expectedOutput": "[10,10,10,10,20,20,20,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,2,4],[2,3,5],[3,4,6],[4,5,7]],5]",
+        "output": "[4,9,11,13,7]",
+        "expectedOutput": "[4,9,11,13,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,1,100],[1,1,100],[1,1,100]],1]",
+        "output": "[300]",
+        "expectedOutput": "[300]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[2,2,5]],3]",
+        "output": "[0,5,0]",
+        "expectedOutput": "[0,5,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,3,2],[2,5,3],[4,6,1]],6]",
+        "output": "[2,5,5,4,4,1]",
+        "expectedOutput": "[2,5,5,4,4,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,20,1]],20]",
+        "output": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,5,10],[3,8,5],[6,12,3],[10,15,7]],15]",
+        "output": "[10,10,15,15,15,8,8,8,3,10,10,10,7,7,7]",
+        "expectedOutput": "[10,10,15,15,15,8,8,8,3,10,10,10,7,7,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,2,10],[1,2,20],[1,2,5]],2]",
+        "output": "[35,35]",
+        "expectedOutput": "[35,35]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,1,1000000]],1]",
+        "output": "[1000000]",
+        "expectedOutput": "[1000000]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,4,1],[2,5,1],[3,6,1],[4,7,1],[5,8,1]],8]",
+        "output": "[1,2,3,4,4,3,2,1]",
+        "expectedOutput": "[1,2,3,4,4,3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,3,1],[4,6,2],[7,9,3]],9]",
+        "output": "[1,1,1,2,2,2,3,3,3]",
+        "expectedOutput": "[1,1,1,2,2,2,3,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,10,5],[2,9,5],[3,8,5],[4,7,5],[5,6,5]],10]",
+        "output": "[5,10,15,20,25,25,20,15,10,5]",
+        "expectedOutput": "[5,10,15,20,25,25,20,15,10,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,15,2],[5,10,3],[8,12,1]],15]",
+        "output": "[2,2,2,2,5,5,5,6,6,6,3,3,2,2,2]",
+        "expectedOutput": "[2,2,2,2,5,5,5,6,6,6,3,3,2,2,2]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def corpFlightBookings(self, bookings, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> corpFlightBookings(vector<vector<int>>& bookings, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] corpFlightBookings(int[][] bookings, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun corpFlightBookings(bookings: Array<IntArray>, n: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    corpFlightBookings(bookings, n) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def corpFlightBookings(self, bookings, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> corpFlightBookings(vector<vector<int>>& bookings, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] corpFlightBookings(int[][] bookings, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun corpFlightBookings(bookings: Array<IntArray>, n: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    corpFlightBookings(bookings, n) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def corpFlightBookings(self, bookings, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> corpFlightBookings(vector<vector<int>>& bookings, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] corpFlightBookings(int[][] bookings, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun corpFlightBookings(bookings: Array<IntArray>, n: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    corpFlightBookings(bookings, n) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def corpFlightBookings(self, bookings, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> corpFlightBookings(vector<vector<int>>& bookings, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] corpFlightBookings(int[][] bookings, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun corpFlightBookings(bookings: Array<IntArray>, n: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    corpFlightBookings(bookings, n) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n + bookings)",
+      "space": "O(n) for the difference array",
+      "pattern": "difference array - record only the start and end+1 of each range's effect, then take a prefix sum once at the end to get final totals"
+    },
+    "bruteForce": {
+      "approach": "for each booking, loop over every flight from first to last and add seats to it directly",
+      "time": "O(n * bookings) in the worst case",
+      "space": "O(n) for the output"
+    }
+  },
+  "optimal": {
+    "pattern": "difference array - record only the start and end+1 of each range's effect, then take a prefix sum once at the end to get final totals",
+    "time": "O(n + bookings)",
+    "space": "O(n) for the difference array",
+    "hint_ladder": [
+      "adding the same value to an entire range, many times, is expensive if done range by range. what if you only marked where a range's effect BEGINS and ENDS?",
+      "for a booking [first, last, seats], add seats at position first-1, and subtract seats at position last (just past the range, 0-indexed)",
+      "do this for every booking into a difference array of length n, without touching the interior of any range",
+      "finally, take a running prefix sum over the difference array - each position accumulates exactly the seats that apply to it"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each booking, loop over every flight from first to last and add seats to it directly",
+    "time": "O(n * bookings) in the worst case",
+    "space": "O(n) for the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,631 @@
+{
+  "id": "longest-word-in-dictionary",
+  "questionId": "longest-word-in-dictionary",
+  "slug": "longest-word-in-dictionary",
+  "title": "Longest Word Built One Letter at a Time",
+  "difficulty": "Medium",
+  "category": "Trie",
+  "patterns": [
+    "trie",
+    "string"
+  ],
+  "lists": [],
+  "hints": [
+    "a word is buildable exactly when there's an unbroken chain of complete words from length 1 up to its own length - which structure lets you check 'is this whole path made of complete words' without repeatedly re-scanning?",
+    "insert every word into a trie, marking end-of-word nodes as usual",
+    "do a traversal (DFS works well) starting at the root, but only step into a child if that child node is itself marked end-of-word - stepping into a non-word node would break the chain",
+    "track the best word found so far during the traversal: prefer longer length, and break ties by lexicographically smaller",
+    "visiting children in sorted (alphabetical) order during the DFS makes the tie-break easy, since the first longest word you find at maximum depth is automatically the smallest"
+  ],
+  "commonMistakes": [
+    "forgetting that length-1 words are always trivially buildable, since they need no shorter prefix",
+    "breaking ties by insertion order or by the largest word instead of lexicographically smallest",
+    "checking prefixes against the word itself (off-by-one) instead of strictly shorter prefixes"
+  ],
+  "content": {
+    "problemStatement": "You're given a space-delimited string of lowercase `words`. A word can be\n\"built one character at a time\" if every one of its non-empty prefixes\n(not counting the full word itself, but including single-character\nprefixes) also appears somewhere in the list.\n\n**Find the longest word in the list that can be built one character at a time, breaking ties by returning the lexicographically smallest one.**\n\nA word of length 1 is always considered buildable, since it has no shorter\nprefix to require. If no word can be built, return an empty string.\n",
+    "constraints": [
+      "1 <= number of words <= 1000",
+      "1 <= words[i].length <= 30",
+      "words[i] consists of lowercase English letters, words separated by single spaces"
+    ],
+    "notes": [
+      "no word in the list is buildable and there's no single-character word (answer is empty string)",
+      "a tie in length between two buildable words, resolved lexicographically",
+      "a single-character word present with no longer buildable word (that character is the answer)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"w wo wor worl world\"",
+        "output": "\"world\"",
+        "expectedOutput": "\"world\"",
+        "explanation": "every prefix of \"world\" (\"w\", \"wo\", \"wor\", \"worl\") is present in the list"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"a banana app appl ap apply apple\"",
+        "output": "\"apple\"",
+        "expectedOutput": "\"apple\"",
+        "explanation": "\"apple\" and \"apply\" are both fully buildable and tie at length 5; \"apple\" is lexicographically smaller"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"abc bcd\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": "neither word is buildable (\"ab\" is missing for \"abc\", \"b\" and \"bc\" are missing for \"bcd\"), and there is no single-character word either"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"w wo wor worl world\"]",
+        "output": "world",
+        "expectedOutput": "world",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a banana app appl ap apply apple\"]",
+        "output": "apple",
+        "expectedOutput": "apple",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"abc bcd\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a bb\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"y yo bird\"]",
+        "output": "yo",
+        "expectedOutput": "yo",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a ab abc abd\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"b ba baa baaa baaab\"]",
+        "output": "baaab",
+        "expectedOutput": "baaab",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"x xy xyz xyzz xyzzz\"]",
+        "output": "xyzzz",
+        "expectedOutput": "xyzzz",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"ab abc\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"a b c ab bc ac abc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"z zz zzz zy zyz\"]",
+        "output": "zyz",
+        "expectedOutput": "zyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"cat ca c\"]",
+        "output": "cat",
+        "expectedOutput": "cat",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"dog do d dog\"]",
+        "output": "dog",
+        "expectedOutput": "dog",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"m mo mon mont month\"]",
+        "output": "month",
+        "expectedOutput": "month",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"p pa pal pale palet palett palette\"]",
+        "output": "palette",
+        "expectedOutput": "palette",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"aaa aa a\"]",
+        "output": "aaa",
+        "expectedOutput": "aaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"no words match at all here so\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"i in inn\"]",
+        "output": "inn",
+        "expectedOutput": "inn",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"e ex exi exit exits\"]",
+        "output": "exits",
+        "expectedOutput": "exits",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"w wo wor worl world\"",
+      "output": "\"world\"",
+      "expectedOutput": "\"world\"",
+      "explanation": "every prefix of \"world\" (\"w\", \"wo\", \"wor\", \"worl\") is present in the list"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"a banana app appl ap apply apple\"",
+      "output": "\"apple\"",
+      "expectedOutput": "\"apple\"",
+      "explanation": "\"apple\" and \"apply\" are both fully buildable and tie at length 5; \"apple\" is lexicographically smaller"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"abc bcd\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": "neither word is buildable (\"ab\" is missing for \"abc\", \"b\" and \"bc\" are missing for \"bcd\"), and there is no single-character word either"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"w wo wor worl world\"",
+      "output": "\"world\"",
+      "expectedOutput": "\"world\"",
+      "explanation": "every prefix of \"world\" (\"w\", \"wo\", \"wor\", \"worl\") is present in the list"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"a banana app appl ap apply apple\"",
+      "output": "\"apple\"",
+      "expectedOutput": "\"apple\"",
+      "explanation": "\"apple\" and \"apply\" are both fully buildable and tie at length 5; \"apple\" is lexicographically smaller"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"abc bcd\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": "neither word is buildable (\"ab\" is missing for \"abc\", \"b\" and \"bc\" are missing for \"bcd\"), and there is no single-character word either"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"w wo wor worl world\"]",
+      "output": "world",
+      "expectedOutput": "world",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"a banana app appl ap apply apple\"]",
+      "output": "apple",
+      "expectedOutput": "apple",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"abc bcd\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"a bb\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"y yo bird\"]",
+      "output": "yo",
+      "expectedOutput": "yo",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"a ab abc abd\"]",
+      "output": "abc",
+      "expectedOutput": "abc",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"b ba baa baaa baaab\"]",
+      "output": "baaab",
+      "expectedOutput": "baaab",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"x xy xyz xyzz xyzzz\"]",
+      "output": "xyzzz",
+      "expectedOutput": "xyzzz",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"ab abc\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"a b c ab bc ac abc\"]",
+      "output": "abc",
+      "expectedOutput": "abc",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"z zz zzz zy zyz\"]",
+      "output": "zyz",
+      "expectedOutput": "zyz",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"cat ca c\"]",
+      "output": "cat",
+      "expectedOutput": "cat",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"dog do d dog\"]",
+      "output": "dog",
+      "expectedOutput": "dog",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"m mo mon mont month\"]",
+      "output": "month",
+      "expectedOutput": "month",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"p pa pal pale palet palett palette\"]",
+      "output": "palette",
+      "expectedOutput": "palette",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"aaa aa a\"]",
+      "output": "aaa",
+      "expectedOutput": "aaa",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"no words match at all here so\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"i in inn\"]",
+      "output": "inn",
+      "expectedOutput": "inn",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"e ex exi exit exits\"]",
+      "output": "exits",
+      "expectedOutput": "exits",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"w wo wor worl world\"",
+        "output": "\"world\"",
+        "expectedOutput": "\"world\"",
+        "explanation": "every prefix of \"world\" (\"w\", \"wo\", \"wor\", \"worl\") is present in the list"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"a banana app appl ap apply apple\"",
+        "output": "\"apple\"",
+        "expectedOutput": "\"apple\"",
+        "explanation": "\"apple\" and \"apply\" are both fully buildable and tie at length 5; \"apple\" is lexicographically smaller"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"abc bcd\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": "neither word is buildable (\"ab\" is missing for \"abc\", \"b\" and \"bc\" are missing for \"bcd\"), and there is no single-character word either"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"w wo wor worl world\"]",
+        "output": "world",
+        "expectedOutput": "world",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a banana app appl ap apply apple\"]",
+        "output": "apple",
+        "expectedOutput": "apple",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"abc bcd\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a bb\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"y yo bird\"]",
+        "output": "yo",
+        "expectedOutput": "yo",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a ab abc abd\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"b ba baa baaa baaab\"]",
+        "output": "baaab",
+        "expectedOutput": "baaab",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"x xy xyz xyzz xyzzz\"]",
+        "output": "xyzzz",
+        "expectedOutput": "xyzzz",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"ab abc\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"a b c ab bc ac abc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"z zz zzz zy zyz\"]",
+        "output": "zyz",
+        "expectedOutput": "zyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"cat ca c\"]",
+        "output": "cat",
+        "expectedOutput": "cat",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"dog do d dog\"]",
+        "output": "dog",
+        "expectedOutput": "dog",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"m mo mon mont month\"]",
+        "output": "month",
+        "expectedOutput": "month",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"p pa pal pale palet palett palette\"]",
+        "output": "palette",
+        "expectedOutput": "palette",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"aaa aa a\"]",
+        "output": "aaa",
+        "expectedOutput": "aaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"no words match at all here so\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"i in inn\"]",
+        "output": "inn",
+        "expectedOutput": "inn",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"e ex exi exit exits\"]",
+        "output": "exits",
+        "expectedOutput": "exits",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def longestBuildableWord(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    string longestBuildableWord(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String longestBuildableWord(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestBuildableWord(words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestBuildableWord(words) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def longestBuildableWord(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    string longestBuildableWord(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String longestBuildableWord(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestBuildableWord(words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestBuildableWord(words) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def longestBuildableWord(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    string longestBuildableWord(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String longestBuildableWord(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestBuildableWord(words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestBuildableWord(words) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def longestBuildableWord(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    string longestBuildableWord(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String longestBuildableWord(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestBuildableWord(words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestBuildableWord(words) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(total characters) to build and traverse",
+      "space": "O(total characters)",
+      "pattern": "insert all words into a trie, then run a DFS/BFS from the root that only continues through nodes marked as end-of-word, tracking the longest (then lexicographically smallest) word reached"
+    },
+    "bruteForce": {
+      "approach": "put all words in a set; for each word, check whether every one of its prefixes (of length 1 up to length-1) is also in the set, then track the best buildable word seen",
+      "time": "O(n * m^2) where n is word count and m is max word length, due to substring creation per prefix check",
+      "space": "O(n * m)"
+    }
+  },
+  "optimal": {
+    "pattern": "insert all words into a trie, then run a DFS/BFS from the root that only continues through nodes marked as end-of-word, tracking the longest (then lexicographically smallest) word reached",
+    "time": "O(total characters) to build and traverse",
+    "space": "O(total characters)",
+    "hint_ladder": [
+      "a word is buildable exactly when there's an unbroken chain of complete words from length 1 up to its own length - which structure lets you check 'is this whole path made of complete words' without repeatedly re-scanning?",
+      "insert every word into a trie, marking end-of-word nodes as usual",
+      "do a traversal (DFS works well) starting at the root, but only step into a child if that child node is itself marked end-of-word - stepping into a non-word node would break the chain",
+      "track the best word found so far during the traversal: prefer longer length, and break ties by lexicographically smaller",
+      "visiting children in sorted (alphabetical) order during the DFS makes the tie-break easy, since the first longest word you find at maximum depth is automatically the smallest"
+    ]
+  },
+  "bruteForce": {
+    "approach": "put all words in a set; for each word, check whether every one of its prefixes (of length 1 up to length-1) is also in the set, then track the best buildable word seen",
+    "time": "O(n * m^2) where n is word count and m is max word length, due to substring creation per prefix check",
+    "space": "O(n * m)"
+  },
+  "isIndex0": true,
+  "level": null
+}

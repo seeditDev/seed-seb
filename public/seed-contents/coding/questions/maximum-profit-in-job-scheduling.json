@@ -1,0 +1,679 @@
+{
+  "id": "maximum-profit-in-job-scheduling",
+  "questionId": "maximum-profit-in-job-scheduling",
+  "slug": "maximum-profit-in-job-scheduling",
+  "title": "Maximum Profit in Job Scheduling",
+  "difficulty": "Hard",
+  "category": "Dp 1d",
+  "patterns": [
+    "dynamic programming",
+    "binary search",
+    "sorting"
+  ],
+  "lists": [
+    "grind-75"
+  ],
+  "hints": [
+    "if you sort jobs by end time, then for any job you decide to take, all jobs compatible with it (that ended by the time it starts) come from a contiguous prefix of that sorted order",
+    "define dp[i] as the max profit achievable using only the first i jobs (in end-time sorted order); dp[i] = max(dp[i-1], profit[i-1] + dp[j]) where j is the count of jobs that end at or before job i-1's start time",
+    "finding j - the number of earlier jobs compatible with the current one - is a search for the rightmost end time <= this job's start time, which is exactly what binary search over the sorted end times gives you in O(log n)",
+    "dp[i-1] represents 'skip job i-1', and profit[i-1] + dp[j] represents 'take job i-1 and combine with the best compatible earlier subset' - the answer is dp[n]",
+    "keep the end times of the sorted jobs in a separate array so you can binary search over them directly"
+  ],
+  "commonMistakes": [
+    "sorting by start time instead of end time, which breaks the 'compatible jobs form a prefix' property the DP relies on",
+    "using a strict less-than instead of less-than-or-equal in the binary search, which would wrongly forbid a job that starts exactly when another ends",
+    "forgetting the dp[i-1] (skip this job) branch and only ever taking jobs, which misses cases where skipping a low-profit job leads to a better combination later",
+    "recomputing the best compatible subset with a linear scan instead of binary search, degrading to O(n^2) when O(n log n) is achievable",
+    "off-by-one between the job index and the dp array index after sorting"
+  ],
+  "content": {
+    "problemStatement": "You're given n jobs, where job `i` starts at `startTime[i]`, ends at\n`endTime[i]`, and pays `profit[i]`. You can only work on one job at a\ntime, but if a job ends at time X, you may immediately start a different\njob that begins at time X.\n\n**Return the maximum total profit obtainable by choosing a subset of non-overlapping jobs.**\n\nEnding and starting at the same instant is not a conflict.\n",
+    "constraints": [
+      "1 <= startTime.length == endTime.length == profit.length <= 5 * 10^4",
+      "1 <= startTime[i] < endTime[i] <= 10^9",
+      "1 <= profit[i] <= 5 * 10^4"
+    ],
+    "notes": [
+      "a single job (answer is just its profit)",
+      "every job mutually overlaps, so at most one can ever be picked",
+      "every job is already non-overlapping, so the answer is the sum of all profits",
+      "a job ends exactly when another begins, which is allowed and not a conflict"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "startTime = [1,2,3,3], endTime = [3,4,5,6], profit = [50,10,40,70]",
+        "output": "120",
+        "expectedOutput": "120",
+        "explanation": "take the job from 1 to 3 (profit 50) and the job from 3 to 6 (profit 70)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "startTime = [1,2,3,4,6], endTime = [3,5,10,6,9], profit = [20,20,100,70,60]",
+        "output": "150",
+        "expectedOutput": "150",
+        "explanation": "take the jobs from 1 to 3 (profit 20), 4 to 6 (profit 70), and 6 to 9 (profit 60): 20 + 70 + 60 = 150, which beats taking the single 3 to 10 job worth 100"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "startTime = [1,1,1], endTime = [2,3,4], profit = [5,6,4]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "all three jobs overlap with each other at time 1, so you can only take one; the best single job pays 6"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,3],[3,4,5,6],[50,10,40,70]]",
+        "output": "120",
+        "expectedOutput": "120",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,6],[3,5,10,6,9],[20,20,100,70,60]]",
+        "output": "150",
+        "expectedOutput": "150",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,1,1],[2,3,4],[5,6,4]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],[2],[10]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,3],[3,5],[5,6]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3],[2,3,4],[4,5,6]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,10],[2,20],[100,1]]",
+        "output": "101",
+        "expectedOutput": "101",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,5,5],[10,10,10],[1,2,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4],[5,6,7,8],[10,20,30,40]]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2],[100,200],[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,4,6,8],[3,5,7,9],[50,10,40,30]]",
+        "output": "130",
+        "expectedOutput": "130",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,4,6,8],[3,5,7,9],[1,100,1,100]]",
+        "output": "202",
+        "expectedOutput": "202",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,1,2],[4,3,4],[5,3,4]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3],[3,3,4],[5,6,4]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1],[1000000],[1000000]]",
+        "output": "1000000",
+        "expectedOutput": "1000000",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,4,5],[6,6,6,6,6],[1,2,3,4,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,3,5,7],[2,4,6,8],[10,20,30,40]]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2],[3,3],[10,20]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3],[10,10,10],[5,5,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,5],[5,10],[7,7]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,2,4],[3,5,6],[5,6,4]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[10,20,30],[20,30,40],[100,100,100]]",
+        "output": "300",
+        "expectedOutput": "300",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "startTime = [1,2,3,3], endTime = [3,4,5,6], profit = [50,10,40,70]",
+      "output": "120",
+      "expectedOutput": "120",
+      "explanation": "take the job from 1 to 3 (profit 50) and the job from 3 to 6 (profit 70)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "startTime = [1,2,3,4,6], endTime = [3,5,10,6,9], profit = [20,20,100,70,60]",
+      "output": "150",
+      "expectedOutput": "150",
+      "explanation": "take the jobs from 1 to 3 (profit 20), 4 to 6 (profit 70), and 6 to 9 (profit 60): 20 + 70 + 60 = 150, which beats taking the single 3 to 10 job worth 100"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "startTime = [1,1,1], endTime = [2,3,4], profit = [5,6,4]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "all three jobs overlap with each other at time 1, so you can only take one; the best single job pays 6"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "startTime = [1,2,3,3], endTime = [3,4,5,6], profit = [50,10,40,70]",
+      "output": "120",
+      "expectedOutput": "120",
+      "explanation": "take the job from 1 to 3 (profit 50) and the job from 3 to 6 (profit 70)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "startTime = [1,2,3,4,6], endTime = [3,5,10,6,9], profit = [20,20,100,70,60]",
+      "output": "150",
+      "expectedOutput": "150",
+      "explanation": "take the jobs from 1 to 3 (profit 20), 4 to 6 (profit 70), and 6 to 9 (profit 60): 20 + 70 + 60 = 150, which beats taking the single 3 to 10 job worth 100"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "startTime = [1,1,1], endTime = [2,3,4], profit = [5,6,4]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "all three jobs overlap with each other at time 1, so you can only take one; the best single job pays 6"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,3],[3,4,5,6],[50,10,40,70]]",
+      "output": "120",
+      "expectedOutput": "120",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3,4,6],[3,5,10,6,9],[20,20,100,70,60]]",
+      "output": "150",
+      "expectedOutput": "150",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,1,1],[2,3,4],[5,6,4]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1],[2],[10]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,3],[3,5],[5,6]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,3],[2,3,4],[4,5,6]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,10],[2,20],[100,1]]",
+      "output": "101",
+      "expectedOutput": "101",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[5,5,5],[10,10,10],[1,2,3]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4],[5,6,7,8],[10,20,30,40]]",
+      "output": "40",
+      "expectedOutput": "40",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2],[100,200],[1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,4,6,8],[3,5,7,9],[50,10,40,30]]",
+      "output": "130",
+      "expectedOutput": "130",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,4,6,8],[3,5,7,9],[1,100,1,100]]",
+      "output": "202",
+      "expectedOutput": "202",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[3,1,2],[4,3,4],[5,3,4]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3],[3,3,4],[5,6,4]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1],[1000000],[1000000]]",
+      "output": "1000000",
+      "expectedOutput": "1000000",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,3,4,5],[6,6,6,6,6],[1,2,3,4,5]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,3,5,7],[2,4,6,8],[10,20,30,40]]",
+      "output": "100",
+      "expectedOutput": "100",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2],[3,3],[10,20]]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3],[10,10,10],[5,5,5]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,5],[5,10],[7,7]]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[1,2,4],[3,5,6],[5,6,4]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[[10,20,30],[20,30,40],[100,100,100]]",
+      "output": "300",
+      "expectedOutput": "300",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "startTime = [1,2,3,3], endTime = [3,4,5,6], profit = [50,10,40,70]",
+        "output": "120",
+        "expectedOutput": "120",
+        "explanation": "take the job from 1 to 3 (profit 50) and the job from 3 to 6 (profit 70)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "startTime = [1,2,3,4,6], endTime = [3,5,10,6,9], profit = [20,20,100,70,60]",
+        "output": "150",
+        "expectedOutput": "150",
+        "explanation": "take the jobs from 1 to 3 (profit 20), 4 to 6 (profit 70), and 6 to 9 (profit 60): 20 + 70 + 60 = 150, which beats taking the single 3 to 10 job worth 100"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "startTime = [1,1,1], endTime = [2,3,4], profit = [5,6,4]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "all three jobs overlap with each other at time 1, so you can only take one; the best single job pays 6"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,3],[3,4,5,6],[50,10,40,70]]",
+        "output": "120",
+        "expectedOutput": "120",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,6],[3,5,10,6,9],[20,20,100,70,60]]",
+        "output": "150",
+        "expectedOutput": "150",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,1,1],[2,3,4],[5,6,4]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],[2],[10]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,3],[3,5],[5,6]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3],[2,3,4],[4,5,6]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,10],[2,20],[100,1]]",
+        "output": "101",
+        "expectedOutput": "101",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,5,5],[10,10,10],[1,2,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4],[5,6,7,8],[10,20,30,40]]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2],[100,200],[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,4,6,8],[3,5,7,9],[50,10,40,30]]",
+        "output": "130",
+        "expectedOutput": "130",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,4,6,8],[3,5,7,9],[1,100,1,100]]",
+        "output": "202",
+        "expectedOutput": "202",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,1,2],[4,3,4],[5,3,4]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3],[3,3,4],[5,6,4]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1],[1000000],[1000000]]",
+        "output": "1000000",
+        "expectedOutput": "1000000",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,4,5],[6,6,6,6,6],[1,2,3,4,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,3,5,7],[2,4,6,8],[10,20,30,40]]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2],[3,3],[10,20]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3],[10,10,10],[5,5,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,5],[5,10],[7,7]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,2,4],[3,5,6],[5,6,4]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[10,20,30],[20,30,40],[100,100,100]]",
+        "output": "300",
+        "expectedOutput": "300",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def jobScheduling(self, startTime, endTime, profit):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int jobScheduling(vector<int>& startTime, vector<int>& endTime, vector<int>& profit) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int jobScheduling(int[] startTime, int[] endTime, int[] profit) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun jobScheduling(startTime: IntArray, endTime: IntArray, profit: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    jobScheduling(startTime, endTime, profit) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def jobScheduling(self, startTime, endTime, profit):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int jobScheduling(vector<int>& startTime, vector<int>& endTime, vector<int>& profit) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int jobScheduling(int[] startTime, int[] endTime, int[] profit) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun jobScheduling(startTime: IntArray, endTime: IntArray, profit: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    jobScheduling(startTime, endTime, profit) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def jobScheduling(self, startTime, endTime, profit):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int jobScheduling(vector<int>& startTime, vector<int>& endTime, vector<int>& profit) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int jobScheduling(int[] startTime, int[] endTime, int[] profit) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun jobScheduling(startTime: IntArray, endTime: IntArray, profit: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    jobScheduling(startTime, endTime, profit) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def jobScheduling(self, startTime, endTime, profit):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int jobScheduling(vector<int>& startTime, vector<int>& endTime, vector<int>& profit) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int jobScheduling(int[] startTime, int[] endTime, int[] profit) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun jobScheduling(startTime: IntArray, endTime: IntArray, profit: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    jobScheduling(startTime, endTime, profit) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log n) for sorting and the binary searches",
+      "space": "O(n) for the dp array",
+      "pattern": "sort jobs by end time, then dynamic programming where dp[i] is the best profit using only the first i jobs (in sorted order), with binary search to find the last job compatible with job i"
+    },
+    "bruteForce": {
+      "approach": "sort jobs by start time and recursively try, for each job, either skipping it or taking it (jumping ahead to the first job whose start time is >= this job's end time); take the max over both choices, optionally memoized by job index",
+      "time": "O(2^n) without memoization, O(n^2) with memoization (n choices for the next non-overlapping job)",
+      "space": "O(n) recursion depth, O(n^2) with memoization"
+    }
+  },
+  "optimal": {
+    "pattern": "sort jobs by end time, then dynamic programming where dp[i] is the best profit using only the first i jobs (in sorted order), with binary search to find the last job compatible with job i",
+    "time": "O(n log n) for sorting and the binary searches",
+    "space": "O(n) for the dp array",
+    "hint_ladder": [
+      "if you sort jobs by end time, then for any job you decide to take, all jobs compatible with it (that ended by the time it starts) come from a contiguous prefix of that sorted order",
+      "define dp[i] as the max profit achievable using only the first i jobs (in end-time sorted order); dp[i] = max(dp[i-1], profit[i-1] + dp[j]) where j is the count of jobs that end at or before job i-1's start time",
+      "finding j - the number of earlier jobs compatible with the current one - is a search for the rightmost end time <= this job's start time, which is exactly what binary search over the sorted end times gives you in O(log n)",
+      "dp[i-1] represents 'skip job i-1', and profit[i-1] + dp[j] represents 'take job i-1 and combine with the best compatible earlier subset' - the answer is dp[n]",
+      "keep the end times of the sorted jobs in a separate array so you can binary search over them directly"
+    ]
+  },
+  "bruteForce": {
+    "approach": "sort jobs by start time and recursively try, for each job, either skipping it or taking it (jumping ahead to the first job whose start time is >= this job's end time); take the max over both choices, optionally memoized by job index",
+    "time": "O(2^n) without memoization, O(n^2) with memoization (n choices for the next non-overlapping job)",
+    "space": "O(n) recursion depth, O(n^2) with memoization"
+  },
+  "isIndex0": true,
+  "level": null
+}

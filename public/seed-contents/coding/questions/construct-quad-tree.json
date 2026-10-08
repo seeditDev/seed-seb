@@ -1,0 +1,637 @@
+{
+  "id": "construct-quad-tree",
+  "questionId": "construct-quad-tree",
+  "slug": "construct-quad-tree",
+  "title": "Construct Quad Tree",
+  "difficulty": "Medium",
+  "category": "Tree dfs",
+  "patterns": [
+    "tree",
+    "dfs",
+    "recursion",
+    "divide and conquer"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "the recursion needs three things: which sub-square of the grid you're looking at (top-left corner and size), and a way to check whether that sub-square is a single uniform value",
+    "write a helper that checks if every cell in a given r, c, size sub-square equals the same value - if so, emit a leaf immediately without recursing further",
+    "if the sub-square isn't uniform, recurse into the four half-sized sub-squares in top-left, top-right, bottom-left, bottom-right order, and splice their results together after the [0, -1] internal marker",
+    "the top-left corner of each child is (r, c), (r, c+half), (r+half, c), (r+half, c+half) where half = size / 2",
+    "build the output as one flat list, appending [0, -1] or [1, val] then recursively appending each child's flattened output right after, so the final array is a valid preorder serialization"
+  ],
+  "commonMistakes": [
+    "checking only the four corners of a quadrant for uniformity instead of every cell, which misses non-uniform interior cells",
+    "getting the top-left corner offsets wrong for the four children (mixing up which half of size applies to rows vs columns)",
+    "forgetting to emit the [0, -1] marker before the children's serializations, or emitting it after instead of in preorder position",
+    "not handling the base case where size is already 1 (always uniform, always a leaf)"
+  ],
+  "content": {
+    "problemStatement": "You're given an n x n binary grid (n is always a power of 2) of 0s and\n1s. A quad tree represents this grid by recursively splitting it into\nfour equal quadrants whenever the quadrant isn't a single uniform color,\nstopping and forming a leaf whenever every cell in a quadrant already\nholds the same value.\n\nSince there's no tree type in this problem set, return the quad tree as\na flat integer array, built by a preorder walk:\n\n- a leaf quadrant emits the two values `[1, val]` - `1` marks \"leaf\", `val` is the uniform 0 or 1 it represents\n- an internal (split) quadrant emits `[0, -1]` - `0` marks \"internal\", `-1` is a placeholder with no meaning - immediately followed, still within the same flat array and still in preorder, by the four serializations of its children in the order top-left, top-right, bottom-left, bottom-right\n\nFor example, `grid = [[0, 1], [1, 0]]` is not uniform, so the root splits into its four 1x1 quadrants, each trivially uniform:\n\n```\ntop-left=0   top-right=1\nbottom-left=1  bottom-right=0\n```\n\nIt emits `[0, -1]`, then each quadrant's leaf in order: top-left `[1, 0]`, top-right `[1, 1]`, bottom-left `[1, 1]`, bottom-right `[1, 0]`. Concatenated, the full output is `[0, -1, 1, 0, 1, 1, 1, 1, 1, 0]`.\n\n**Given `grid`, build its quad tree and return it as the flat preorder array described above.**\n",
+    "constraints": [
+      "1 <= n <= 64, and n is always a power of 2",
+      "every cell of grid is either 0 or 1",
+      "the recursion always bottoms out at 1x1 quadrants, which are uniform by definition"
+    ],
+    "notes": [
+      "a 1x1 grid (immediately a leaf, no splitting possible)",
+      "a fully uniform grid of any size (a single leaf at the root, no splitting at all)",
+      "a checkerboard pattern, which forces splitting all the way down to 1x1 leaves at every branch",
+      "a grid where only one quadrant needs further splitting while the other three are already uniform"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "grid = [[0, 1], [1, 0]]",
+        "output": "[0, -1, 1, 0, 1, 1, 1, 1, 1, 0]",
+        "expectedOutput": "[0, -1, 1, 0, 1, 1, 1, 1, 1, 0]",
+        "explanation": "the grid is not uniform, so it splits into four 1x1 leaves: 0, 1, 1, 0 in top-left, top-right, bottom-left, bottom-right order"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[1, 1], [1, 1]]",
+        "output": "[1, 1]",
+        "expectedOutput": "[1, 1]",
+        "explanation": "the entire grid is already uniform (all 1s), so it's a single leaf"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "grid = [[0]]",
+        "output": "[1, 0]",
+        "expectedOutput": "[1, 0]",
+        "explanation": "a 1x1 grid is trivially uniform, always a single leaf"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,1],[1,0]]]",
+        "output": "[0,-1,1,0,1,1,1,1,1,0]",
+        "expectedOutput": "[0,-1,1,0,1,1,1,1,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "[1,0]",
+        "expectedOutput": "[1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1,0,0],[1,1,0,0],[0,0,1,1],[0,0,1,1]]]",
+        "output": "[0,-1,1,1,1,0,1,0,1,1]",
+        "expectedOutput": "[0,-1,1,1,1,0,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,0,1,0],[0,1,0,1],[1,0,1,0],[0,1,0,1]]]",
+        "output": "[0,-1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1]",
+        "expectedOutput": "[0,-1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1]]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0]]]",
+        "output": "[1,0]",
+        "expectedOutput": "[1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0,1],[0,1]]]",
+        "output": "[0,-1,1,0,1,1,1,0,1,1]",
+        "expectedOutput": "[0,-1,1,0,1,1,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,0],[1,0]]]",
+        "output": "[0,-1,1,1,1,0,1,1,1,0]",
+        "expectedOutput": "[0,-1,1,1,1,0,1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0]]]",
+        "output": "[0,-1,0,-1,0,-1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0]",
+        "expectedOutput": "[0,-1,0,-1,0,-1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,1,1,1],[1,1,1,1],[0,0,1,0],[0,0,0,1]]]",
+        "output": "[0,-1,1,1,1,1,1,0,0,-1,1,1,1,0,1,0,1,1]",
+        "expectedOutput": "[0,-1,1,1,1,1,1,0,0,-1,1,1,1,0,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,0,1,1],[0,0,1,1],[1,1,0,0],[1,1,0,1]]]",
+        "output": "[0,-1,1,0,1,1,1,1,0,-1,1,0,1,0,1,0,1,1]",
+        "expectedOutput": "[0,-1,1,0,1,1,1,1,0,-1,1,0,1,0,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,0],[0,1]]]",
+        "output": "[0,-1,1,1,1,0,1,0,1,1]",
+        "expectedOutput": "[0,-1,1,1,1,0,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,1,1,1],[1,1,1,1],[1,1,0,0],[1,1,0,0]]]",
+        "output": "[0,-1,1,1,1,1,1,1,1,0]",
+        "expectedOutput": "[0,-1,1,1,1,1,1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,0,0,0],[0,0,0,0],[0,0,1,1],[0,0,1,1]]]",
+        "output": "[0,-1,1,0,1,0,1,0,1,1]",
+        "expectedOutput": "[0,-1,1,0,1,0,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]]]",
+        "output": "[0,-1,0,-1,1,0,1,0,1,0,0,-1,1,0,1,0,1,0,1,1,1,0,1,0,1,0]",
+        "expectedOutput": "[0,-1,0,-1,1,0,1,0,1,0,0,-1,1,0,1,0,1,0,1,1,1,0,1,0,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,0,0,1],[0,1,1,0],[0,1,1,0],[1,0,0,1]]]",
+        "output": "[0,-1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,0,1,1,1,1,1,0,0,-1,1,0,1,1,1,1,1,0,0,-1,1,1,1,0,1,0,1,1]",
+        "expectedOutput": "[0,-1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,0,1,1,1,1,1,0,0,-1,1,0,1,1,1,1,1,0,0,-1,1,1,1,0,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]]]",
+        "output": "[0,-1,1,1,1,0,1,0,1,1]",
+        "expectedOutput": "[0,-1,1,1,1,0,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,0],[1,1]]]",
+        "output": "[0,-1,1,0,1,0,1,1,1,1]",
+        "expectedOutput": "[0,-1,1,0,1,0,1,1,1,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "grid = [[0, 1], [1, 0]]",
+      "output": "[0, -1, 1, 0, 1, 1, 1, 1, 1, 0]",
+      "expectedOutput": "[0, -1, 1, 0, 1, 1, 1, 1, 1, 0]",
+      "explanation": "the grid is not uniform, so it splits into four 1x1 leaves: 0, 1, 1, 0 in top-left, top-right, bottom-left, bottom-right order"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "grid = [[1, 1], [1, 1]]",
+      "output": "[1, 1]",
+      "expectedOutput": "[1, 1]",
+      "explanation": "the entire grid is already uniform (all 1s), so it's a single leaf"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "grid = [[0]]",
+      "output": "[1, 0]",
+      "expectedOutput": "[1, 0]",
+      "explanation": "a 1x1 grid is trivially uniform, always a single leaf"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "grid = [[0, 1], [1, 0]]",
+      "output": "[0, -1, 1, 0, 1, 1, 1, 1, 1, 0]",
+      "expectedOutput": "[0, -1, 1, 0, 1, 1, 1, 1, 1, 0]",
+      "explanation": "the grid is not uniform, so it splits into four 1x1 leaves: 0, 1, 1, 0 in top-left, top-right, bottom-left, bottom-right order"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "grid = [[1, 1], [1, 1]]",
+      "output": "[1, 1]",
+      "expectedOutput": "[1, 1]",
+      "explanation": "the entire grid is already uniform (all 1s), so it's a single leaf"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "grid = [[0]]",
+      "output": "[1, 0]",
+      "expectedOutput": "[1, 0]",
+      "explanation": "a 1x1 grid is trivially uniform, always a single leaf"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[0,1],[1,0]]]",
+      "output": "[0,-1,1,0,1,1,1,1,1,0]",
+      "expectedOutput": "[0,-1,1,0,1,1,1,1,1,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,1],[1,1]]]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[0,0],[0,0]]]",
+      "output": "[1,0]",
+      "expectedOutput": "[1,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1,1,0,0],[1,1,0,0],[0,0,1,1],[0,0,1,1]]]",
+      "output": "[0,-1,1,1,1,0,1,0,1,1]",
+      "expectedOutput": "[0,-1,1,1,1,0,1,0,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,0,1,0],[0,1,0,1],[1,0,1,0],[0,1,0,1]]]",
+      "output": "[0,-1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1]",
+      "expectedOutput": "[0,-1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1]]]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[0]]]",
+      "output": "[1,0]",
+      "expectedOutput": "[1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]]]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[0,1],[0,1]]]",
+      "output": "[0,-1,1,0,1,1,1,0,1,1]",
+      "expectedOutput": "[0,-1,1,0,1,1,1,0,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1,0],[1,0]]]",
+      "output": "[0,-1,1,1,1,0,1,1,1,0]",
+      "expectedOutput": "[0,-1,1,1,1,0,1,1,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[0,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0]]]",
+      "output": "[0,-1,0,-1,0,-1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0]",
+      "expectedOutput": "[0,-1,0,-1,0,-1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[1,1,1,1],[1,1,1,1],[0,0,1,0],[0,0,0,1]]]",
+      "output": "[0,-1,1,1,1,1,1,0,0,-1,1,1,1,0,1,0,1,1]",
+      "expectedOutput": "[0,-1,1,1,1,1,1,0,0,-1,1,1,1,0,1,0,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[0,0,1,1],[0,0,1,1],[1,1,0,0],[1,1,0,1]]]",
+      "output": "[0,-1,1,0,1,1,1,1,0,-1,1,0,1,0,1,0,1,1]",
+      "expectedOutput": "[0,-1,1,0,1,1,1,1,0,-1,1,0,1,0,1,0,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,0],[0,1]]]",
+      "output": "[0,-1,1,1,1,0,1,0,1,1]",
+      "expectedOutput": "[0,-1,1,1,1,0,1,0,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[1,1,1,1],[1,1,1,1],[1,1,0,0],[1,1,0,0]]]",
+      "output": "[0,-1,1,1,1,1,1,1,1,0]",
+      "expectedOutput": "[0,-1,1,1,1,1,1,1,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[0,0,0,0],[0,0,0,0],[0,0,1,1],[0,0,1,1]]]",
+      "output": "[0,-1,1,0,1,0,1,0,1,1]",
+      "expectedOutput": "[0,-1,1,0,1,0,1,0,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]]]",
+      "output": "[0,-1,0,-1,1,0,1,0,1,0,0,-1,1,0,1,0,1,0,1,1,1,0,1,0,1,0]",
+      "expectedOutput": "[0,-1,0,-1,1,0,1,0,1,0,0,-1,1,0,1,0,1,0,1,1,1,0,1,0,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1,0,0,1],[0,1,1,0],[0,1,1,0],[1,0,0,1]]]",
+      "output": "[0,-1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,0,1,1,1,1,1,0,0,-1,1,0,1,1,1,1,1,0,0,-1,1,1,1,0,1,0,1,1]",
+      "expectedOutput": "[0,-1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,0,1,1,1,1,1,0,0,-1,1,0,1,1,1,1,1,0,0,-1,1,1,1,0,1,0,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]]]",
+      "output": "[0,-1,1,1,1,0,1,0,1,1]",
+      "expectedOutput": "[0,-1,1,1,1,0,1,0,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[0,0],[1,1]]]",
+      "output": "[0,-1,1,0,1,0,1,1,1,1]",
+      "expectedOutput": "[0,-1,1,0,1,0,1,1,1,1]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "grid = [[0, 1], [1, 0]]",
+        "output": "[0, -1, 1, 0, 1, 1, 1, 1, 1, 0]",
+        "expectedOutput": "[0, -1, 1, 0, 1, 1, 1, 1, 1, 0]",
+        "explanation": "the grid is not uniform, so it splits into four 1x1 leaves: 0, 1, 1, 0 in top-left, top-right, bottom-left, bottom-right order"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[1, 1], [1, 1]]",
+        "output": "[1, 1]",
+        "expectedOutput": "[1, 1]",
+        "explanation": "the entire grid is already uniform (all 1s), so it's a single leaf"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "grid = [[0]]",
+        "output": "[1, 0]",
+        "expectedOutput": "[1, 0]",
+        "explanation": "a 1x1 grid is trivially uniform, always a single leaf"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,1],[1,0]]]",
+        "output": "[0,-1,1,0,1,1,1,1,1,0]",
+        "expectedOutput": "[0,-1,1,0,1,1,1,1,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "[1,0]",
+        "expectedOutput": "[1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1,0,0],[1,1,0,0],[0,0,1,1],[0,0,1,1]]]",
+        "output": "[0,-1,1,1,1,0,1,0,1,1]",
+        "expectedOutput": "[0,-1,1,1,1,0,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,0,1,0],[0,1,0,1],[1,0,1,0],[0,1,0,1]]]",
+        "output": "[0,-1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1]",
+        "expectedOutput": "[0,-1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,1,1,0,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1]]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0]]]",
+        "output": "[1,0]",
+        "expectedOutput": "[1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0,1],[0,1]]]",
+        "output": "[0,-1,1,0,1,1,1,0,1,1]",
+        "expectedOutput": "[0,-1,1,0,1,1,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,0],[1,0]]]",
+        "output": "[0,-1,1,1,1,0,1,1,1,0]",
+        "expectedOutput": "[0,-1,1,1,1,0,1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0]]]",
+        "output": "[0,-1,0,-1,0,-1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0]",
+        "expectedOutput": "[0,-1,0,-1,0,-1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,1,1,1],[1,1,1,1],[0,0,1,0],[0,0,0,1]]]",
+        "output": "[0,-1,1,1,1,1,1,0,0,-1,1,1,1,0,1,0,1,1]",
+        "expectedOutput": "[0,-1,1,1,1,1,1,0,0,-1,1,1,1,0,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,0,1,1],[0,0,1,1],[1,1,0,0],[1,1,0,1]]]",
+        "output": "[0,-1,1,0,1,1,1,1,0,-1,1,0,1,0,1,0,1,1]",
+        "expectedOutput": "[0,-1,1,0,1,1,1,1,0,-1,1,0,1,0,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,0],[0,1]]]",
+        "output": "[0,-1,1,1,1,0,1,0,1,1]",
+        "expectedOutput": "[0,-1,1,1,1,0,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,1,1,1],[1,1,1,1],[1,1,0,0],[1,1,0,0]]]",
+        "output": "[0,-1,1,1,1,1,1,1,1,0]",
+        "expectedOutput": "[0,-1,1,1,1,1,1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,0,0,0],[0,0,0,0],[0,0,1,1],[0,0,1,1]]]",
+        "output": "[0,-1,1,0,1,0,1,0,1,1]",
+        "expectedOutput": "[0,-1,1,0,1,0,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]]]",
+        "output": "[0,-1,0,-1,1,0,1,0,1,0,0,-1,1,0,1,0,1,0,1,1,1,0,1,0,1,0]",
+        "expectedOutput": "[0,-1,0,-1,1,0,1,0,1,0,0,-1,1,0,1,0,1,0,1,1,1,0,1,0,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,0,0,1],[0,1,1,0],[0,1,1,0],[1,0,0,1]]]",
+        "output": "[0,-1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,0,1,1,1,1,1,0,0,-1,1,0,1,1,1,1,1,0,0,-1,1,1,1,0,1,0,1,1]",
+        "expectedOutput": "[0,-1,0,-1,1,1,1,0,1,0,1,1,0,-1,1,0,1,1,1,1,1,0,0,-1,1,0,1,1,1,1,1,0,0,-1,1,1,1,0,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0],[1,1,1,1,0,0,0,0],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]]]",
+        "output": "[0,-1,1,1,1,0,1,0,1,1]",
+        "expectedOutput": "[0,-1,1,1,1,0,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,0],[1,1]]]",
+        "output": "[0,-1,1,0,1,0,1,1,1,1]",
+        "expectedOutput": "[0,-1,1,0,1,0,1,1,1,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def constructQuadTree(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> constructQuadTree(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] constructQuadTree(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun constructQuadTree(grid: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    constructQuadTree(grid) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def constructQuadTree(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> constructQuadTree(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] constructQuadTree(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun constructQuadTree(grid: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    constructQuadTree(grid) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def constructQuadTree(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> constructQuadTree(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] constructQuadTree(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun constructQuadTree(grid: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    constructQuadTree(grid) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def constructQuadTree(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> constructQuadTree(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] constructQuadTree(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun constructQuadTree(grid: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    constructQuadTree(grid) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n^2) with a uniformity check that can early-exit as soon as a mismatch is found",
+      "space": "O(log n) recursion stack, plus O(n^2) output array in the worst case (a checkerboard, which splits all the way down)",
+      "pattern": "divide and conquer: recursively split into four quadrants, short-circuiting to a leaf as soon as a quadrant is uniform"
+    },
+    "bruteForce": {
+      "approach": "for every quadrant considered, scan all of its cells to check if they're uniform before deciding whether to split - this is what the recursive solution already does at each level, there's no meaningfully different brute force",
+      "time": "O(n^2 log n) since each of the O(log n) levels of recursion re-scans up to n^2 cells in total",
+      "space": "O(log n) recursion stack, plus the output array"
+    }
+  },
+  "optimal": {
+    "pattern": "divide and conquer: recursively split into four quadrants, short-circuiting to a leaf as soon as a quadrant is uniform",
+    "time": "O(n^2) with a uniformity check that can early-exit as soon as a mismatch is found",
+    "space": "O(log n) recursion stack, plus O(n^2) output array in the worst case (a checkerboard, which splits all the way down)",
+    "hint_ladder": [
+      "the recursion needs three things: which sub-square of the grid you're looking at (top-left corner and size), and a way to check whether that sub-square is a single uniform value",
+      "write a helper that checks if every cell in a given r, c, size sub-square equals the same value - if so, emit a leaf immediately without recursing further",
+      "if the sub-square isn't uniform, recurse into the four half-sized sub-squares in top-left, top-right, bottom-left, bottom-right order, and splice their results together after the [0, -1] internal marker",
+      "the top-left corner of each child is (r, c), (r, c+half), (r+half, c), (r+half, c+half) where half = size / 2",
+      "build the output as one flat list, appending [0, -1] or [1, val] then recursively appending each child's flattened output right after, so the final array is a valid preorder serialization"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every quadrant considered, scan all of its cells to check if they're uniform before deciding whether to split - this is what the recursive solution already does at each level, there's no meaningfully different brute force",
+    "time": "O(n^2 log n) since each of the O(log n) levels of recursion re-scans up to n^2 cells in total",
+    "space": "O(log n) recursion stack, plus the output array"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,633 @@
+{
+  "id": "distinct-subsequences",
+  "questionId": "distinct-subsequences",
+  "slug": "distinct-subsequences",
+  "title": "Distinct Subsequences",
+  "difficulty": "Hard",
+  "category": "Dp 2d",
+  "patterns": [
+    "dynamic programming",
+    "strings",
+    "counting"
+  ],
+  "lists": [],
+  "hints": [
+    "think of building t one character at a time by scanning through s - at each position in s, you either use that character toward matching t, or skip it entirely",
+    "define dp[i][j] as the number of distinct ways the first i characters of s can form the first j characters of t",
+    "you can always skip s[i-1] and keep looking: that contributes dp[i-1][j] ways",
+    "if s[i-1] == t[j-1], you can also choose to use s[i-1] to match t[j-1], contributing dp[i-1][j-1] more ways, so dp[i][j] = dp[i-1][j] + dp[i-1][j-1]; otherwise dp[i][j] = dp[i-1][j]",
+    "base case: dp[i][0] = 1 for all i (there's exactly one way to form an empty t, by using none of s), and dp[0][j] = 0 for j > 0 (an empty s can't form a non-empty t)"
+  ],
+  "commonMistakes": [
+    "forgetting that dp[i][0] should be 1 for every i, not 0, since matching an empty target always has exactly one (trivial) way",
+    "only adding dp[i-1][j-1] when characters match and forgetting to also carry forward dp[i-1][j] (the option to skip s[i-1])",
+    "confusing this with longest common subsequence and taking a max instead of summing counts"
+  ],
+  "content": {
+    "problemStatement": "You're given two strings, `s` and `t`. A subsequence is formed by deleting\nsome (possibly zero) characters from `s` without reordering the rest; two\nways are counted separately if they use different positions of `s`, even\nif the resulting characters look the same.\n\n**Count the number of distinct ways that `t` appears as a subsequence of `s`.**\n",
+    "constraints": [
+      "0 <= s.length, t.length <= 1000",
+      "s and t consist of English letters",
+      "the answer fits within a 32-bit signed integer for the given bounds"
+    ],
+    "notes": [
+      "t is longer than s (answer is always 0)",
+      "t is empty (there is exactly one way, the empty subsequence)",
+      "s and t are identical (exactly one way)",
+      "s has many repeated characters that all match a single character of t"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"rabbbit\", t = \"rabbit\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "There are 3 distinct ways to pick positions in \"rabbbit\" that spell out \"rabbit\", each choosing a different one of the three b's to drop."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"babgbag\", t = \"bag\"",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"abc\", t = \"abcd\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "t is longer than s, so t cannot possibly be a subsequence of s."
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"rabbbit\",\"rabbit\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"babgbag\",\"bag\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"abc\",\"abcd\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abc\",\"\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"aaa\",\"a\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"\",\"\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a\",\"\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"\",\"a\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"aaaaaaaaaa\",\"aaa\"]",
+        "output": "120",
+        "expectedOutput": "120",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaaaaaaaaaaaaa\",\"aaaa\"]",
+        "output": "1001",
+        "expectedOutput": "1001",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"abcabcabc\",\"abc\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"ddddd\",\"ddd\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"bbabbabb\",\"bab\"]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"xxyxxy\",\"xy\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abcde\",\"edcba\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"abababab\",\"ab\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"aaaaaaaaaaaaaaa\",\"aaa\"]",
+        "output": "455",
+        "expectedOutput": "455",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"aabbccdd\",\"abcd\"]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"mississippi\",\"mis\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"ab\",\"ab\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"rabbbit\", t = \"rabbit\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "There are 3 distinct ways to pick positions in \"rabbbit\" that spell out \"rabbit\", each choosing a different one of the three b's to drop."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"babgbag\", t = \"bag\"",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"abc\", t = \"abcd\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "t is longer than s, so t cannot possibly be a subsequence of s."
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"rabbbit\", t = \"rabbit\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "There are 3 distinct ways to pick positions in \"rabbbit\" that spell out \"rabbit\", each choosing a different one of the three b's to drop."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"babgbag\", t = \"bag\"",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"abc\", t = \"abcd\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "t is longer than s, so t cannot possibly be a subsequence of s."
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"rabbbit\",\"rabbit\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"babgbag\",\"bag\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"abc\",\"abcd\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"abc\",\"\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"aaa\",\"a\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"\",\"\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"a\",\"\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"\",\"a\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"aaaaaaaaaa\",\"aaa\"]",
+      "output": "120",
+      "expectedOutput": "120",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"aaaaaaaaaaaaaa\",\"aaaa\"]",
+      "output": "1001",
+      "expectedOutput": "1001",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"abcabcabc\",\"abc\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"ddddd\",\"ddd\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"bbabbabb\",\"bab\"]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"xxyxxy\",\"xy\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"abcde\",\"edcba\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"abababab\",\"ab\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"aaaaaaaaaaaaaaa\",\"aaa\"]",
+      "output": "455",
+      "expectedOutput": "455",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"aabbccdd\",\"abcd\"]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"mississippi\",\"mis\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"ab\",\"ab\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"rabbbit\", t = \"rabbit\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "There are 3 distinct ways to pick positions in \"rabbbit\" that spell out \"rabbit\", each choosing a different one of the three b's to drop."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"babgbag\", t = \"bag\"",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"abc\", t = \"abcd\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "t is longer than s, so t cannot possibly be a subsequence of s."
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"rabbbit\",\"rabbit\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"babgbag\",\"bag\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"abc\",\"abcd\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abc\",\"\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"aaa\",\"a\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"\",\"\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a\",\"\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"\",\"a\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"aaaaaaaaaa\",\"aaa\"]",
+        "output": "120",
+        "expectedOutput": "120",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaaaaaaaaaaaaa\",\"aaaa\"]",
+        "output": "1001",
+        "expectedOutput": "1001",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"abcabcabc\",\"abc\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"ddddd\",\"ddd\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"bbabbabb\",\"bab\"]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"xxyxxy\",\"xy\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abcde\",\"edcba\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"abababab\",\"ab\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"aaaaaaaaaaaaaaa\",\"aaa\"]",
+        "output": "455",
+        "expectedOutput": "455",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"aabbccdd\",\"abcd\"]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"mississippi\",\"mis\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"ab\",\"ab\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def numDistinct(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numDistinct(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numDistinct(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numDistinct(s: String, t: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numDistinct(s, t) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def numDistinct(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numDistinct(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numDistinct(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numDistinct(s: String, t: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numDistinct(s, t) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def numDistinct(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numDistinct(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numDistinct(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numDistinct(s: String, t: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numDistinct(s, t) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def numDistinct(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numDistinct(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numDistinct(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numDistinct(s: String, t: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numDistinct(s, t) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(m * n) where m = s.length, n = t.length",
+      "space": "O(m * n), reducible to O(n)",
+      "pattern": "2D dynamic programming over two string indices, counting matches"
+    },
+    "bruteForce": {
+      "approach": "recursively try, for each character of s, either using it to match the current character of t (if it matches) or skipping it, summing the count of ways over all valid choices",
+      "time": "O(2^n) where n is the length of s",
+      "space": "O(n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "2D dynamic programming over two string indices, counting matches",
+    "time": "O(m * n) where m = s.length, n = t.length",
+    "space": "O(m * n), reducible to O(n)",
+    "hint_ladder": [
+      "think of building t one character at a time by scanning through s - at each position in s, you either use that character toward matching t, or skip it entirely",
+      "define dp[i][j] as the number of distinct ways the first i characters of s can form the first j characters of t",
+      "you can always skip s[i-1] and keep looking: that contributes dp[i-1][j] ways",
+      "if s[i-1] == t[j-1], you can also choose to use s[i-1] to match t[j-1], contributing dp[i-1][j-1] more ways, so dp[i][j] = dp[i-1][j] + dp[i-1][j-1]; otherwise dp[i][j] = dp[i-1][j]",
+      "base case: dp[i][0] = 1 for all i (there's exactly one way to form an empty t, by using none of s), and dp[0][j] = 0 for j > 0 (an empty s can't form a non-empty t)"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try, for each character of s, either using it to match the current character of t (if it matches) or skipping it, summing the count of ways over all valid choices",
+    "time": "O(2^n) where n is the length of s",
+    "space": "O(n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

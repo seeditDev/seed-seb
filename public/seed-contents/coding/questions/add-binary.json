@@ -1,0 +1,679 @@
+{
+  "id": "add-binary",
+  "questionId": "add-binary",
+  "slug": "add-binary",
+  "title": "Add Binary",
+  "difficulty": "Easy",
+  "category": "Greedy",
+  "patterns": [
+    "greedy",
+    "simulation",
+    "bit manipulation"
+  ],
+  "lists": [
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "these strings can be up to 10^4 characters long - far too long to convert to a native integer type, so you need to add them digit by digit like you would on paper",
+    "walk both strings from the rightmost character toward the left, maintaining a running carry",
+    "at each position, sum the two bits (using 0 if a position runs past the start of the shorter string) plus the carry, the result bit is that sum mod 2 and the new carry is that sum divided by 2",
+    "after the last position, if a carry remains, prepend an extra '1' to the result",
+    "build the result from least significant to most significant bit, then reverse it before returning (or prepend at each step)"
+  ],
+  "commonMistakes": [
+    "assuming both strings are the same length and not handling the shorter one running out of digits first",
+    "forgetting to flush a leftover carry after processing the longest string, dropping a leading 1",
+    "converting to a native integer type, which overflows for the 10^4-length constraint",
+    "building the result in the wrong order and forgetting to reverse it"
+  ],
+  "content": {
+    "problemStatement": "You're given two binary strings `a` and `b`, each made up of only the characters '0' and '1', with no leading zeroes unless the string is exactly \"0\".\n\n**Add them together as binary numbers and return the sum as a binary string, also with no leading zeroes.**\n",
+    "constraints": [
+      "1 <= length of a, length of b <= 10^4",
+      "each character of a and b is '0' or '1'",
+      "neither a nor b has leading zeroes, except the single string \"0\""
+    ],
+    "notes": [
+      "both inputs are \"0\"",
+      "the two strings have very different lengths",
+      "the addition produces a carry out of the most significant bit, growing the result by one digit",
+      "no carries occur anywhere (simple digit-by-digit sum)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "a = \"11\", b = \"1\"",
+        "output": "\"100\"",
+        "expectedOutput": "\"100\"",
+        "explanation": "11 in binary is 3, plus 1 is 4, which is 100 in binary"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "a = \"1010\", b = \"1011\"",
+        "output": "\"10101\"",
+        "expectedOutput": "\"10101\"",
+        "explanation": "1010 is 10, 1011 is 11, their sum 21 is 10101 in binary"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "a = \"0\", b = \"0\"",
+        "output": "\"0\"",
+        "expectedOutput": "\"0\"",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"11\",\"1\"]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"1010\",\"1011\"]",
+        "output": "10101",
+        "expectedOutput": "10101",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"0\",\"0\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"1\",\"1\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"0\",\"1\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"1\",\"0\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"111\",\"1\"]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"1111\",\"1111\"]",
+        "output": "11110",
+        "expectedOutput": "11110",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"100\",\"110010\"]",
+        "output": "110110",
+        "expectedOutput": "110110",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"1101\",\"101\"]",
+        "output": "10010",
+        "expectedOutput": "10010",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"11111111\",\"1\"]",
+        "output": "100000000",
+        "expectedOutput": "100000000",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"10\",\"10\"]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"101\",\"110\"]",
+        "output": "1011",
+        "expectedOutput": "1011",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"1\",\"111\"]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"1010101\",\"10101\"]",
+        "output": "1101010",
+        "expectedOutput": "1101010",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"11011010\",\"10101010\"]",
+        "output": "110000100",
+        "expectedOutput": "110000100",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"1\",\"11111111111111111111\"]",
+        "output": "100000000000000000000",
+        "expectedOutput": "100000000000000000000",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"11111111111111111111\",\"11111111111111111111\"]",
+        "output": "111111111111111111110",
+        "expectedOutput": "111111111111111111110",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"1000\",\"1\"]",
+        "output": "1001",
+        "expectedOutput": "1001",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"110\",\"1\"]",
+        "output": "111",
+        "expectedOutput": "111",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"10011\",\"1101\"]",
+        "output": "100000",
+        "expectedOutput": "100000",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"111111\",\"111111\"]",
+        "output": "1111110",
+        "expectedOutput": "1111110",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "a = \"11\", b = \"1\"",
+      "output": "\"100\"",
+      "expectedOutput": "\"100\"",
+      "explanation": "11 in binary is 3, plus 1 is 4, which is 100 in binary"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "a = \"1010\", b = \"1011\"",
+      "output": "\"10101\"",
+      "expectedOutput": "\"10101\"",
+      "explanation": "1010 is 10, 1011 is 11, their sum 21 is 10101 in binary"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "a = \"0\", b = \"0\"",
+      "output": "\"0\"",
+      "expectedOutput": "\"0\"",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "a = \"11\", b = \"1\"",
+      "output": "\"100\"",
+      "expectedOutput": "\"100\"",
+      "explanation": "11 in binary is 3, plus 1 is 4, which is 100 in binary"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "a = \"1010\", b = \"1011\"",
+      "output": "\"10101\"",
+      "expectedOutput": "\"10101\"",
+      "explanation": "1010 is 10, 1011 is 11, their sum 21 is 10101 in binary"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "a = \"0\", b = \"0\"",
+      "output": "\"0\"",
+      "expectedOutput": "\"0\"",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"11\",\"1\"]",
+      "output": "100",
+      "expectedOutput": "100",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"1010\",\"1011\"]",
+      "output": "10101",
+      "expectedOutput": "10101",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"0\",\"0\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"1\",\"1\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"0\",\"1\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"1\",\"0\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"111\",\"1\"]",
+      "output": "1000",
+      "expectedOutput": "1000",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"1111\",\"1111\"]",
+      "output": "11110",
+      "expectedOutput": "11110",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"100\",\"110010\"]",
+      "output": "110110",
+      "expectedOutput": "110110",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"1101\",\"101\"]",
+      "output": "10010",
+      "expectedOutput": "10010",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"11111111\",\"1\"]",
+      "output": "100000000",
+      "expectedOutput": "100000000",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"10\",\"10\"]",
+      "output": "100",
+      "expectedOutput": "100",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"101\",\"110\"]",
+      "output": "1011",
+      "expectedOutput": "1011",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"1\",\"111\"]",
+      "output": "1000",
+      "expectedOutput": "1000",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"1010101\",\"10101\"]",
+      "output": "1101010",
+      "expectedOutput": "1101010",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"11011010\",\"10101010\"]",
+      "output": "110000100",
+      "expectedOutput": "110000100",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"1\",\"11111111111111111111\"]",
+      "output": "100000000000000000000",
+      "expectedOutput": "100000000000000000000",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"11111111111111111111\",\"11111111111111111111\"]",
+      "output": "111111111111111111110",
+      "expectedOutput": "111111111111111111110",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"1000\",\"1\"]",
+      "output": "1001",
+      "expectedOutput": "1001",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"110\",\"1\"]",
+      "output": "111",
+      "expectedOutput": "111",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"10011\",\"1101\"]",
+      "output": "100000",
+      "expectedOutput": "100000",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[\"111111\",\"111111\"]",
+      "output": "1111110",
+      "expectedOutput": "1111110",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "a = \"11\", b = \"1\"",
+        "output": "\"100\"",
+        "expectedOutput": "\"100\"",
+        "explanation": "11 in binary is 3, plus 1 is 4, which is 100 in binary"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "a = \"1010\", b = \"1011\"",
+        "output": "\"10101\"",
+        "expectedOutput": "\"10101\"",
+        "explanation": "1010 is 10, 1011 is 11, their sum 21 is 10101 in binary"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "a = \"0\", b = \"0\"",
+        "output": "\"0\"",
+        "expectedOutput": "\"0\"",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"11\",\"1\"]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"1010\",\"1011\"]",
+        "output": "10101",
+        "expectedOutput": "10101",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"0\",\"0\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"1\",\"1\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"0\",\"1\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"1\",\"0\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"111\",\"1\"]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"1111\",\"1111\"]",
+        "output": "11110",
+        "expectedOutput": "11110",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"100\",\"110010\"]",
+        "output": "110110",
+        "expectedOutput": "110110",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"1101\",\"101\"]",
+        "output": "10010",
+        "expectedOutput": "10010",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"11111111\",\"1\"]",
+        "output": "100000000",
+        "expectedOutput": "100000000",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"10\",\"10\"]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"101\",\"110\"]",
+        "output": "1011",
+        "expectedOutput": "1011",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"1\",\"111\"]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"1010101\",\"10101\"]",
+        "output": "1101010",
+        "expectedOutput": "1101010",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"11011010\",\"10101010\"]",
+        "output": "110000100",
+        "expectedOutput": "110000100",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"1\",\"11111111111111111111\"]",
+        "output": "100000000000000000000",
+        "expectedOutput": "100000000000000000000",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"11111111111111111111\",\"11111111111111111111\"]",
+        "output": "111111111111111111110",
+        "expectedOutput": "111111111111111111110",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"1000\",\"1\"]",
+        "output": "1001",
+        "expectedOutput": "1001",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"110\",\"1\"]",
+        "output": "111",
+        "expectedOutput": "111",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"10011\",\"1101\"]",
+        "output": "100000",
+        "expectedOutput": "100000",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"111111\",\"111111\"]",
+        "output": "1111110",
+        "expectedOutput": "1111110",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def addBinary(self, a, b):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string addBinary(string a, string b) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String addBinary(String a, String b) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun addBinary(a: String, b: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    addBinary(a, b) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def addBinary(self, a, b):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string addBinary(string a, string b) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String addBinary(String a, String b) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun addBinary(a: String, b: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    addBinary(a, b) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def addBinary(self, a, b):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string addBinary(string a, string b) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String addBinary(String a, String b) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun addBinary(a: String, b: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    addBinary(a, b) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def addBinary(self, a, b):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string addBinary(string a, string b) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String addBinary(String a, String b) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun addBinary(a: String, b: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    addBinary(a, b) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(max(length of a, length of b))",
+      "space": "O(max(length of a, length of b)) for the result",
+      "pattern": "simulate elementary-school addition from the least significant bit, tracking a carry"
+    },
+    "bruteForce": {
+      "approach": "convert both strings to integers, add them, convert the sum back to a binary string",
+      "time": "O(n) to convert, but breaks down for inputs longer than native integer width can hold",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "simulate elementary-school addition from the least significant bit, tracking a carry",
+    "time": "O(max(length of a, length of b))",
+    "space": "O(max(length of a, length of b)) for the result",
+    "hint_ladder": [
+      "these strings can be up to 10^4 characters long - far too long to convert to a native integer type, so you need to add them digit by digit like you would on paper",
+      "walk both strings from the rightmost character toward the left, maintaining a running carry",
+      "at each position, sum the two bits (using 0 if a position runs past the start of the shorter string) plus the carry, the result bit is that sum mod 2 and the new carry is that sum divided by 2",
+      "after the last position, if a carry remains, prepend an extra '1' to the result",
+      "build the result from least significant to most significant bit, then reverse it before returning (or prepend at each step)"
+    ]
+  },
+  "bruteForce": {
+    "approach": "convert both strings to integers, add them, convert the sum back to a binary string",
+    "time": "O(n) to convert, but breaks down for inputs longer than native integer width can hold",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

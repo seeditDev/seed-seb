@@ -1,0 +1,650 @@
+{
+  "id": "palindrome-linked-list",
+  "questionId": "palindrome-linked-list",
+  "slug": "palindrome-linked-list",
+  "title": "Palindrome Linked List",
+  "difficulty": "Easy",
+  "category": "Fast slow pointers",
+  "patterns": [
+    "fast & slow pointers",
+    "linked list",
+    "two pointers"
+  ],
+  "lists": [],
+  "hints": [
+    "comparing against a full reversed copy works but uses O(n) extra space - can you avoid copying the whole list?",
+    "you only need to compare the first half against the reversed second half - how would you find where the second half begins without knowing the length up front?",
+    "use fast and slow pointers to locate the middle of the list in one pass",
+    "reverse the second half starting from the middle, then walk it alongside the first half comparing values one by one"
+  ],
+  "commonMistakes": [
+    "getting the middle index wrong for even-length lists and comparing one extra or one fewer element",
+    "reversing the whole list instead of just the second half, which loses the first half's original order",
+    "not handling the single-element list case (should return true immediately)"
+  ],
+  "content": {
+    "problemStatement": "A singly linked list is given to you as an array `nums`, where `nums[i]` is the value of the i-th node in order.\n\n**Determine whether the list's values read the same forwards and backwards, that is, whether they form a palindrome.**\n",
+    "constraints": [
+      "1 <= nums.length <= 10^5",
+      "list values are not necessarily unique"
+    ],
+    "notes": [
+      "a single-node list",
+      "an even-length list vs an odd-length list",
+      "a list that is not a palindrome only in the very last comparison"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 2, 1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "reversed, the list reads the same"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "reversed it would be [3, 2, 1], which differs"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [7]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "a single node is trivially a palindrome"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,2,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[7]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3,2,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4,2,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,0,0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-1,-2,-2,-1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-1,-2,-3,-2,-1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,4,3,2,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,4,5,4,3,2,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[7,7]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[7,8]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,0,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,1,4,1,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[2,2,2,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 2, 1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "reversed, the list reads the same"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "reversed it would be [3, 2, 1], which differs"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [7]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "a single node is trivially a palindrome"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 2, 1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "reversed, the list reads the same"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "reversed it would be [3, 2, 1], which differs"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [7]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "a single node is trivially a palindrome"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,2,1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[7]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2,3,2,1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,2,3,4,2,1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[4]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[0,0,0]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[-1,-2,-2,-1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[-1,-2,-3,-2,-1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,4,3,2,1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,10,9,8,7,6,5,4,3,2,1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,3,4,5,4,3,2,0]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[7,7]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[7,8]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,0,1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[3,1,4,1,5]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[2,2,2,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 2, 1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "reversed, the list reads the same"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "reversed it would be [3, 2, 1], which differs"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [7]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "a single node is trivially a palindrome"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,2,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[7]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3,2,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4,2,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,0,0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-1,-2,-2,-1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-1,-2,-3,-2,-1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,4,3,2,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,4,5,4,3,2,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[7,7]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[7,8]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,0,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,1,4,1,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[2,2,2,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def isPalindromeList(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isPalindromeList(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isPalindromeList(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isPalindromeList(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isPalindromeList(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def isPalindromeList(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isPalindromeList(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isPalindromeList(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isPalindromeList(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isPalindromeList(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def isPalindromeList(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isPalindromeList(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isPalindromeList(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isPalindromeList(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isPalindromeList(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def isPalindromeList(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isPalindromeList(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isPalindromeList(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isPalindromeList(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isPalindromeList(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra, not counting the input",
+      "pattern": "fast & slow pointers to find the middle, then reverse the second half in place and compare"
+    },
+    "bruteForce": {
+      "approach": "copy the values into an array (or just use nums directly) and compare it to its reverse",
+      "time": "O(n)",
+      "space": "O(n) for the copy/reversal"
+    }
+  },
+  "optimal": {
+    "pattern": "fast & slow pointers to find the middle, then reverse the second half in place and compare",
+    "time": "O(n)",
+    "space": "O(1) extra, not counting the input",
+    "hint_ladder": [
+      "comparing against a full reversed copy works but uses O(n) extra space - can you avoid copying the whole list?",
+      "you only need to compare the first half against the reversed second half - how would you find where the second half begins without knowing the length up front?",
+      "use fast and slow pointers to locate the middle of the list in one pass",
+      "reverse the second half starting from the middle, then walk it alongside the first half comparing values one by one"
+    ]
+  },
+  "bruteForce": {
+    "approach": "copy the values into an array (or just use nums directly) and compare it to its reverse",
+    "time": "O(n)",
+    "space": "O(n) for the copy/reversal"
+  },
+  "isIndex0": true,
+  "level": null
+}

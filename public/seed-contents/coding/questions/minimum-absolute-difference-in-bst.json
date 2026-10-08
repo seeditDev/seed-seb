@@ -1,0 +1,635 @@
+{
+  "id": "minimum-absolute-difference-in-bst",
+  "questionId": "minimum-absolute-difference-in-bst",
+  "slug": "minimum-absolute-difference-in-bst",
+  "title": "Minimum Absolute Difference in BST",
+  "difficulty": "Easy",
+  "category": "Tree dfs",
+  "patterns": [
+    "tree",
+    "dfs",
+    "bst",
+    "inorder traversal"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "in a BST, is there a traversal order that visits node values from smallest to largest?",
+    "if you have a sorted list of all values, where must the pair with the smallest difference be relative to each other in that list?",
+    "you don't need to compare every pair - only adjacent values in sorted order can possibly be the closest pair",
+    "do an inorder traversal, keep track of the previous value visited, and update a running minimum with the difference between the current value and the previous one at each step"
+  ],
+  "commonMistakes": [
+    "comparing every pair of values instead of realizing only inorder-adjacent values matter for a BST",
+    "forgetting to initialize the running minimum properly, or comparing before a previous value has been seen",
+    "using a non-inorder traversal (preorder or postorder), which does not visit values in sorted order and gives wrong adjacency"
+  ],
+  "content": {
+    "problemStatement": "Binary trees in these problems are encoded as a flat array named `tree`\nusing complete-binary-tree (heap) indexing:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- either index only counts as a real child if it's within bounds **and** its value isn't the sentinel `-101`\n- `-101` means \"no node here\" and never appears as a real node value\n\nYou're given a valid binary search tree encoded this way, with at least\ntwo nodes.\n\n**Return the smallest absolute difference between the values of any two distinct nodes anywhere in the tree.**\n",
+    "constraints": [
+      "2 <= number of nodes <= 10000",
+      "every real node value is between -100 and 100 inclusive",
+      "all node values are distinct and the tree is a valid binary search tree",
+      "the sentinel value -101 marks a missing node and never appears as a real value"
+    ],
+    "notes": [
+      "a tree with exactly two nodes",
+      "the two closest values are not parent and child, but far apart structurally (e.g. one deep in the left subtree and one deep in the right subtree of some ancestor)",
+      "negative values, zero, and positive values all present in the same tree",
+      "a completely skewed (linear chain) BST"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [4, 2, 6, 1, 3, -101, -101]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the values in order are 1, 2, 3, 4, 6; the closest pair is 2 and 3 (or 3 and 4), a difference of 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [5, 3, 8, 1, 4, 7, 9, 0, 2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "sorted, the values are 0, 1, 2, 3, 4, 5, 7, 8, 9; several adjacent pairs (0 and 1, 1 and 2, 2 and 3, and so on) differ by exactly 1, which is the smallest possible gap here"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [100, -100]",
+        "output": "200",
+        "expectedOutput": "200",
+        "explanation": "there are only two nodes, so the answer is simply the absolute difference between their two values"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[4,2,6,1,3,5,7]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,-101,3,-101,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[90,69,-101,49,89]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,3,8,1,4,7,9,0,2,-101,-101,-101,-101,-101,-101]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[27,-101,34,-101,-101,33,35]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[8,3,10,1,6,-101,14,-101,-101,4,7,13,-101]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,0,-101]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,-101,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[100,-100]]",
+        "output": "200",
+        "expectedOutput": "200",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-100,-101,100]]",
+        "output": "200",
+        "expectedOutput": "200",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[50,25,75,10,30,60,90,5,15,27,35,55,65,80,95]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[10,5,15,3,7,13,18,1,4,6,9,11,14,16,20]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[20,10,30,5,15,25,35]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[3,1,4,-101,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[6,2,8,0,4,7,9,-101,-101,3,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,-101,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-1,-2,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[15,10,20,8,12,17,25,6,9,11,13,16,18,22,30]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,1,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[17,1,25,-101,9,-101,27,-101,-101,7,10]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [4, 2, 6, 1, 3, -101, -101]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the values in order are 1, 2, 3, 4, 6; the closest pair is 2 and 3 (or 3 and 4), a difference of 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [5, 3, 8, 1, 4, 7, 9, 0, 2]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "sorted, the values are 0, 1, 2, 3, 4, 5, 7, 8, 9; several adjacent pairs (0 and 1, 1 and 2, 2 and 3, and so on) differ by exactly 1, which is the smallest possible gap here"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [100, -100]",
+      "output": "200",
+      "expectedOutput": "200",
+      "explanation": "there are only two nodes, so the answer is simply the absolute difference between their two values"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [4, 2, 6, 1, 3, -101, -101]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the values in order are 1, 2, 3, 4, 6; the closest pair is 2 and 3 (or 3 and 4), a difference of 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [5, 3, 8, 1, 4, 7, 9, 0, 2]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "sorted, the values are 0, 1, 2, 3, 4, 5, 7, 8, 9; several adjacent pairs (0 and 1, 1 and 2, 2 and 3, and so on) differ by exactly 1, which is the smallest possible gap here"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [100, -100]",
+      "output": "200",
+      "expectedOutput": "200",
+      "explanation": "there are only two nodes, so the answer is simply the absolute difference between their two values"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[4,2,6,1,3,5,7]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,-101,3,-101,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[90,69,-101,49,89]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[5,3,8,1,4,7,9,0,2,-101,-101,-101,-101,-101,-101]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[27,-101,34,-101,-101,33,35]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[8,3,10,1,6,-101,14,-101,-101,4,7,13,-101]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,0,-101]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,-101,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[100,-100]]",
+      "output": "200",
+      "expectedOutput": "200",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[-100,-101,100]]",
+      "output": "200",
+      "expectedOutput": "200",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[50,25,75,10,30,60,90,5,15,27,35,55,65,80,95]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[10,5,15,3,7,13,18,1,4,6,9,11,14,16,20]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[20,10,30,5,15,25,35]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[3,1,4,-101,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[6,2,8,0,4,7,9,-101,-101,3,5]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[0,-101,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[-1,-2,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[15,10,20,8,12,17,25,6,9,11,13,16,18,22,30]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[2,1,3]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[17,1,25,-101,9,-101,27,-101,-101,7,10]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [4, 2, 6, 1, 3, -101, -101]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the values in order are 1, 2, 3, 4, 6; the closest pair is 2 and 3 (or 3 and 4), a difference of 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [5, 3, 8, 1, 4, 7, 9, 0, 2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "sorted, the values are 0, 1, 2, 3, 4, 5, 7, 8, 9; several adjacent pairs (0 and 1, 1 and 2, 2 and 3, and so on) differ by exactly 1, which is the smallest possible gap here"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [100, -100]",
+        "output": "200",
+        "expectedOutput": "200",
+        "explanation": "there are only two nodes, so the answer is simply the absolute difference between their two values"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[4,2,6,1,3,5,7]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,-101,3,-101,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[90,69,-101,49,89]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,3,8,1,4,7,9,0,2,-101,-101,-101,-101,-101,-101]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[27,-101,34,-101,-101,33,35]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[8,3,10,1,6,-101,14,-101,-101,4,7,13,-101]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,0,-101]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,-101,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[100,-100]]",
+        "output": "200",
+        "expectedOutput": "200",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-100,-101,100]]",
+        "output": "200",
+        "expectedOutput": "200",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[50,25,75,10,30,60,90,5,15,27,35,55,65,80,95]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[10,5,15,3,7,13,18,1,4,6,9,11,14,16,20]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[20,10,30,5,15,25,35]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[3,1,4,-101,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[6,2,8,0,4,7,9,-101,-101,3,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,-101,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-1,-2,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[15,10,20,8,12,17,25,6,9,11,13,16,18,22,30]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,1,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[17,1,25,-101,9,-101,27,-101,-101,7,10]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def getMinimumDifference(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int getMinimumDifference(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int getMinimumDifference(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun getMinimumDifference(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    getMinimumDifference(tree) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def getMinimumDifference(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int getMinimumDifference(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int getMinimumDifference(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun getMinimumDifference(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    getMinimumDifference(tree) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def getMinimumDifference(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int getMinimumDifference(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int getMinimumDifference(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun getMinimumDifference(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    getMinimumDifference(tree) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def getMinimumDifference(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int getMinimumDifference(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int getMinimumDifference(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun getMinimumDifference(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    getMinimumDifference(tree) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n), one inorder pass",
+      "space": "O(h) recursion stack (O(n) if you also store the full sorted list, though you can avoid that by tracking only the previous value)",
+      "pattern": "inorder traversal of a BST visits values in sorted order, so the minimum difference must occur between some pair of consecutive values in that order"
+    },
+    "bruteForce": {
+      "approach": "compare every pair of node values (collected via any traversal) and take the minimum absolute difference",
+      "time": "O(n^2)",
+      "space": "O(n) to store all values"
+    }
+  },
+  "optimal": {
+    "pattern": "inorder traversal of a BST visits values in sorted order, so the minimum difference must occur between some pair of consecutive values in that order",
+    "time": "O(n), one inorder pass",
+    "space": "O(h) recursion stack (O(n) if you also store the full sorted list, though you can avoid that by tracking only the previous value)",
+    "hint_ladder": [
+      "in a BST, is there a traversal order that visits node values from smallest to largest?",
+      "if you have a sorted list of all values, where must the pair with the smallest difference be relative to each other in that list?",
+      "you don't need to compare every pair - only adjacent values in sorted order can possibly be the closest pair",
+      "do an inorder traversal, keep track of the previous value visited, and update a running minimum with the difference between the current value and the previous one at each step"
+    ]
+  },
+  "bruteForce": {
+    "approach": "compare every pair of node values (collected via any traversal) and take the minimum absolute difference",
+    "time": "O(n^2)",
+    "space": "O(n) to store all values"
+  },
+  "isIndex0": true,
+  "level": null
+}

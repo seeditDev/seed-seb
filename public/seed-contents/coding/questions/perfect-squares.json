@@ -1,0 +1,632 @@
+{
+  "id": "perfect-squares",
+  "questionId": "perfect-squares",
+  "slug": "perfect-squares",
+  "title": "Perfect Squares",
+  "difficulty": "Medium",
+  "category": "Knapsack",
+  "patterns": [
+    "knapsack",
+    "unbounded knapsack",
+    "dynamic programming"
+  ],
+  "lists": [],
+  "hints": [
+    "this is exactly coin change, but the 'coin denominations' are the perfect squares less than or equal to n, and they're unlimited",
+    "define dp[i] as the fewest perfect squares summing to i, with dp[0] = 0",
+    "for each i, try every perfect square s*s <= i as the last one used: dp[i] = 1 + dp[i - s*s], minimized over all valid s",
+    "precompute the list of perfect squares up to n first (1, 4, 9, ... up to sqrt(n)), then build dp from 0 up to n using that list, same shape as the coin change recurrence",
+    "dp[n] is your answer - no square root or greedy shortcut is needed once the DP recurrence is set up"
+  ],
+  "commonMistakes": [
+    "assuming a greedy 'always take the largest square first' strategy works - it doesn't in general (e.g. it can miss the optimal count)",
+    "recomputing sqrt(i) repeatedly inside the inner loop instead of precomputing the list of usable squares once",
+    "forgetting dp[0] = 0 as the base case, which breaks every subsequent dp[i] computation"
+  ],
+  "content": {
+    "problemStatement": "You're given a positive integer `n`.\n\n**Return the fewest number of perfect square numbers (1, 4, 9, 16, and so on) that sum up to exactly `n`.**\n\nA perfect square may be used more than once.\n",
+    "constraints": [
+      "1 <= n <= 10^5",
+      "n is a positive integer",
+      "a perfect square may be reused any number of times when summing to n"
+    ],
+    "notes": [
+      "n is itself a perfect square (answer is 1)",
+      "n requires falling back to using only 1s in the worst case (upper bound is n itself)",
+      "small n like 1, 2, or 3"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 12",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "12 = 4 + 4 + 4, using three perfect squares"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 13",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "13 = 4 + 9, using two perfect squares"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "1 is itself a perfect square"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[12]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[13]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[7]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[4]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[5]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[6]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[8]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[9]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[16]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[25]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[23]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[43]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[100]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[99]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[10000]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[12591]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[48]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 12",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "12 = 4 + 4 + 4, using three perfect squares"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 13",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "13 = 4 + 9, using two perfect squares"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "1 is itself a perfect square"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 12",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "12 = 4 + 4 + 4, using three perfect squares"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 13",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "13 = 4 + 9, using two perfect squares"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "1 is itself a perfect square"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[12]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[13]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[7]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[4]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[5]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[6]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[8]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[9]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[16]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[25]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[23]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[43]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[100]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[99]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[10000]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[12591]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[48]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 12",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "12 = 4 + 4 + 4, using three perfect squares"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 13",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "13 = 4 + 9, using two perfect squares"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "1 is itself a perfect square"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[12]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[13]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[7]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[4]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[5]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[6]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[8]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[9]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[16]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[25]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[23]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[43]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[100]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[99]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[10000]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[12591]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[48]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def numSquares(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numSquares(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numSquares(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numSquares(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numSquares(n) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def numSquares(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numSquares(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numSquares(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numSquares(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numSquares(n) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def numSquares(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numSquares(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numSquares(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numSquares(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numSquares(n) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def numSquares(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numSquares(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numSquares(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numSquares(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numSquares(n) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n * sqrt(n))",
+      "space": "O(n)",
+      "pattern": "knapsack (unbounded - the 'items' are perfect squares 1, 4, 9, ..., each reusable, and you're minimizing count to hit an exact target n)"
+    },
+    "bruteForce": {
+      "approach": "recursively try subtracting every perfect square less than or equal to the remaining value, taking the minimum count over all choices",
+      "time": "exponential in n",
+      "space": "O(n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "knapsack (unbounded - the 'items' are perfect squares 1, 4, 9, ..., each reusable, and you're minimizing count to hit an exact target n)",
+    "time": "O(n * sqrt(n))",
+    "space": "O(n)",
+    "hint_ladder": [
+      "this is exactly coin change, but the 'coin denominations' are the perfect squares less than or equal to n, and they're unlimited",
+      "define dp[i] as the fewest perfect squares summing to i, with dp[0] = 0",
+      "for each i, try every perfect square s*s <= i as the last one used: dp[i] = 1 + dp[i - s*s], minimized over all valid s",
+      "precompute the list of perfect squares up to n first (1, 4, 9, ... up to sqrt(n)), then build dp from 0 up to n using that list, same shape as the coin change recurrence",
+      "dp[n] is your answer - no square root or greedy shortcut is needed once the DP recurrence is set up"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try subtracting every perfect square less than or equal to the remaining value, taking the minimum count over all choices",
+    "time": "exponential in n",
+    "space": "O(n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

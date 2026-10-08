@@ -1,0 +1,630 @@
+{
+  "id": "count-words-with-a-given-prefix",
+  "questionId": "count-words-with-a-given-prefix",
+  "slug": "count-words-with-a-given-prefix",
+  "title": "Count Words With a Given Prefix",
+  "difficulty": "Easy",
+  "category": "Trie",
+  "patterns": [
+    "trie",
+    "string"
+  ],
+  "lists": [],
+  "hints": [
+    "checking 'starts with' for every word independently repeats the same prefix comparison work over and over - what if the words that share a prefix also shared the work of checking it?",
+    "insert every word into a trie, and while inserting, increment a counter stored at each node representing how many inserted words pass through that node",
+    "to answer the query, walk the trie one character at a time following pref; if you fall off the trie (a needed character has no child) the count is 0",
+    "if you successfully walk the full length of pref, the counter stored at that final node is exactly your answer"
+  ],
+  "commonMistakes": [
+    "using substring equality instead of a true 'starts with' check, e.g. comparing full string equality",
+    "off-by-one errors when pref is longer than the word being checked (should just not match, not crash)",
+    "forgetting that a word equal to pref itself should still be counted"
+  ],
+  "content": {
+    "problemStatement": "You're given a space-delimited string of lowercase `words`, and a separate\nprefix string, `pref`.\n\n**Count how many of the words start with `pref` exactly.**\n",
+    "constraints": [
+      "1 <= number of words <= 1000",
+      "1 <= each word's length <= 20",
+      "1 <= pref.length <= 20",
+      "words and pref consist only of lowercase English letters"
+    ],
+    "notes": [
+      "pref is longer than some words in the list (those words can't match)",
+      "pref equals an entire word exactly (that word still counts)",
+      "no word in the list starts with pref"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"pay attention practice attend\", pref = \"at\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "\"attention\" and \"attend\" both start with \"at\""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"apple app apricot banana\", pref = \"ap\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"a b c\", pref = \"d\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"pay attention practice attend\",\"at\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"apple app apricot banana\",\"ap\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a b c\",\"d\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"cat cats category\",\"cat\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"hello\",\"hello\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"z\",\"z\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"apple apple apple\",\"apple\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aa ab ac ad ae\",\"a\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"prefix prefixed preface pre\",\"pref\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"banana bandana band bandage\",\"ban\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"abcdefgh abcdef abc ab a\",\"abc\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"x y z\",\"xy\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"aaaa aaa aa a\",\"aaaa\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"test testing tester tests testable\",\"test\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"one two three four five six seven eight nine ten\",\"t\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"cab cabbage cabin cabinet cable\",\"cab\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"m mm mmm mmmm\",\"mm\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"dog cat bird fish\",\"z\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"same same same same\",\"sa\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"q\",\"qq\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"pay attention practice attend\", pref = \"at\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "\"attention\" and \"attend\" both start with \"at\""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"apple app apricot banana\", pref = \"ap\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"a b c\", pref = \"d\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"pay attention practice attend\", pref = \"at\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "\"attention\" and \"attend\" both start with \"at\""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"apple app apricot banana\", pref = \"ap\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"a b c\", pref = \"d\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"pay attention practice attend\",\"at\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"apple app apricot banana\",\"ap\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"a b c\",\"d\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"cat cats category\",\"cat\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"hello\",\"hello\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"z\",\"z\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"apple apple apple\",\"apple\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"aa ab ac ad ae\",\"a\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"prefix prefixed preface pre\",\"pref\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"banana bandana band bandage\",\"ban\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"abcdefgh abcdef abc ab a\",\"abc\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"x y z\",\"xy\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"aaaa aaa aa a\",\"aaaa\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"test testing tester tests testable\",\"test\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"one two three four five six seven eight nine ten\",\"t\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"cab cabbage cabin cabinet cable\",\"cab\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"m mm mmm mmmm\",\"mm\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"dog cat bird fish\",\"z\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"same same same same\",\"sa\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"q\",\"qq\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"pay attention practice attend\", pref = \"at\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "\"attention\" and \"attend\" both start with \"at\""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"apple app apricot banana\", pref = \"ap\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"a b c\", pref = \"d\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"pay attention practice attend\",\"at\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"apple app apricot banana\",\"ap\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a b c\",\"d\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"cat cats category\",\"cat\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"hello\",\"hello\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"z\",\"z\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"apple apple apple\",\"apple\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aa ab ac ad ae\",\"a\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"prefix prefixed preface pre\",\"pref\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"banana bandana band bandage\",\"ban\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"abcdefgh abcdef abc ab a\",\"abc\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"x y z\",\"xy\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"aaaa aaa aa a\",\"aaaa\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"test testing tester tests testable\",\"test\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"one two three four five six seven eight nine ten\",\"t\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"cab cabbage cabin cabinet cable\",\"cab\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"m mm mmm mmmm\",\"mm\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"dog cat bird fish\",\"z\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"same same same same\",\"sa\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"q\",\"qq\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def countWordsWithPrefix(self, words, pref):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countWordsWithPrefix(string words, string pref) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countWordsWithPrefix(String words, String pref) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countWordsWithPrefix(words: String, pref: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countWordsWithPrefix(words, pref) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def countWordsWithPrefix(self, words, pref):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countWordsWithPrefix(string words, string pref) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countWordsWithPrefix(String words, String pref) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countWordsWithPrefix(words: String, pref: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countWordsWithPrefix(words, pref) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def countWordsWithPrefix(self, words, pref):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countWordsWithPrefix(string words, string pref) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countWordsWithPrefix(String words, String pref) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countWordsWithPrefix(words: String, pref: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countWordsWithPrefix(words, pref) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def countWordsWithPrefix(self, words, pref):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countWordsWithPrefix(string words, string pref) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countWordsWithPrefix(String words, String pref) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countWordsWithPrefix(words: String, pref: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countWordsWithPrefix(words, pref) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(total characters) to build, O(len(pref)) per query if you track word-count-at-node during insertion",
+      "space": "O(total characters) for the trie",
+      "pattern": "insert every word into a trie, then walk the trie along pref once and count how many words pass through (or end at) that node"
+    },
+    "bruteForce": {
+      "approach": "split words on spaces, and for each word check if it starts with pref using a substring comparison",
+      "time": "O(n * m) where n is word count and m is the length of pref",
+      "space": "O(1) beyond the split list"
+    }
+  },
+  "optimal": {
+    "pattern": "insert every word into a trie, then walk the trie along pref once and count how many words pass through (or end at) that node",
+    "time": "O(total characters) to build, O(len(pref)) per query if you track word-count-at-node during insertion",
+    "space": "O(total characters) for the trie",
+    "hint_ladder": [
+      "checking 'starts with' for every word independently repeats the same prefix comparison work over and over - what if the words that share a prefix also shared the work of checking it?",
+      "insert every word into a trie, and while inserting, increment a counter stored at each node representing how many inserted words pass through that node",
+      "to answer the query, walk the trie one character at a time following pref; if you fall off the trie (a needed character has no child) the count is 0",
+      "if you successfully walk the full length of pref, the counter stored at that final node is exactly your answer"
+    ]
+  },
+  "bruteForce": {
+    "approach": "split words on spaces, and for each word check if it starts with pref using a substring comparison",
+    "time": "O(n * m) where n is word count and m is the length of pref",
+    "space": "O(1) beyond the split list"
+  },
+  "isIndex0": true,
+  "level": null
+}

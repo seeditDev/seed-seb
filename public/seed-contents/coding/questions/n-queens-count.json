@@ -1,0 +1,630 @@
+{
+  "id": "n-queens-count",
+  "questionId": "n-queens-count",
+  "slug": "n-queens-count",
+  "title": "Count of N-Queens Solutions",
+  "difficulty": "Hard",
+  "category": "Backtracking",
+  "patterns": [
+    "backtracking"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "since no two queens can share a row, you only ever need to decide one column per row - that turns the search into placing queens row by row",
+    "recurse row by row; at each row, try placing the queen in every column that isn't already used by a queen above",
+    "a queen at (row, col) attacks the diagonal where row - col is constant, and the other diagonal where row + col is constant - track used columns and both of these diagonal sums in sets as you go",
+    "when a placement in a row doesn't conflict with any tracked column or diagonal, add it to your tracking sets, recurse to the next row, then remove it from the tracking sets (undo) before trying the next column - count a solution when you successfully place a queen in every row"
+  ],
+  "commonMistakes": [
+    "checking for attacks by rescanning the whole board on every placement instead of maintaining column/diagonal tracking sets, which is correct but much slower",
+    "using row - col and row + col interchangeably or conflating them into a single diagonal check, missing one of the two diagonal directions",
+    "forgetting to undo (remove) the column and diagonal markers after a branch, causing later rows to incorrectly treat squares as attacked"
+  ],
+  "content": {
+    "problemStatement": "You're given an integer n.\n\n**Count how many distinct ways there are to place n queens on an n x n chessboard such that no two queens attack each other, meaning no two queens share a row, a column, or a diagonal.**\n",
+    "constraints": [
+      "1 <= n <= 9",
+      "the board is an n x n grid",
+      "exactly one queen is placed in each row, column, and diagonal in a valid solution"
+    ],
+    "notes": [
+      "n = 1 (trivially 1 solution)",
+      "n = 2 or n = 3 (0 solutions, too small a board for the constraint)",
+      "a larger n where the count grows quickly, to check the search doesn't overcount or undercount"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 4",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the two solutions place queens at (row, col) pairs {(0,1),(1,3),(2,0),(3,2)} and {(0,2),(1,0),(2,3),(3,1)} (0-indexed)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "a single queen on a 1x1 board trivially doesn't attack anything"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 2",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "on a 2x2 or 3x3 board, no arrangement of that many mutually non-attacking queens exists"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[5]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[3]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[6]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[7]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[8]",
+        "output": "92",
+        "expectedOutput": "92",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[9]",
+        "output": "352",
+        "expectedOutput": "352",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[3]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[5]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[6]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[7]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[8]",
+        "output": "92",
+        "expectedOutput": "92",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[9]",
+        "output": "352",
+        "expectedOutput": "352",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[6]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[8]",
+        "output": "92",
+        "expectedOutput": "92",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 4",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the two solutions place queens at (row, col) pairs {(0,1),(1,3),(2,0),(3,2)} and {(0,2),(1,0),(2,3),(3,1)} (0-indexed)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "a single queen on a 1x1 board trivially doesn't attack anything"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 2",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "on a 2x2 or 3x3 board, no arrangement of that many mutually non-attacking queens exists"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 4",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the two solutions place queens at (row, col) pairs {(0,1),(1,3),(2,0),(3,2)} and {(0,2),(1,0),(2,3),(3,1)} (0-indexed)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "a single queen on a 1x1 board trivially doesn't attack anything"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 2",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "on a 2x2 or 3x3 board, no arrangement of that many mutually non-attacking queens exists"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[4]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[2]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[5]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[3]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[6]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[7]",
+      "output": "40",
+      "expectedOutput": "40",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[8]",
+      "output": "92",
+      "expectedOutput": "92",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[9]",
+      "output": "352",
+      "expectedOutput": "352",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[2]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[3]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[4]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[5]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[6]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[7]",
+      "output": "40",
+      "expectedOutput": "40",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[8]",
+      "output": "92",
+      "expectedOutput": "92",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[9]",
+      "output": "352",
+      "expectedOutput": "352",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[6]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[8]",
+      "output": "92",
+      "expectedOutput": "92",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 4",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the two solutions place queens at (row, col) pairs {(0,1),(1,3),(2,0),(3,2)} and {(0,2),(1,0),(2,3),(3,1)} (0-indexed)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "a single queen on a 1x1 board trivially doesn't attack anything"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 2",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "on a 2x2 or 3x3 board, no arrangement of that many mutually non-attacking queens exists"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[5]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[3]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[6]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[7]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[8]",
+        "output": "92",
+        "expectedOutput": "92",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[9]",
+        "output": "352",
+        "expectedOutput": "352",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[3]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[5]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[6]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[7]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[8]",
+        "output": "92",
+        "expectedOutput": "92",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[9]",
+        "output": "352",
+        "expectedOutput": "352",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[6]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[8]",
+        "output": "92",
+        "expectedOutput": "92",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def countNQueens(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countNQueens(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countNQueens(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countNQueens(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countNQueens(n) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def countNQueens(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countNQueens(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countNQueens(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countNQueens(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countNQueens(n) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def countNQueens(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countNQueens(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countNQueens(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countNQueens(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countNQueens(n) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def countNQueens(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countNQueens(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countNQueens(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countNQueens(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countNQueens(n) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n!) roughly, much less in practice due to aggressive pruning",
+      "space": "O(n) for the column/diagonal tracking sets and recursion depth",
+      "pattern": "backtracking one row at a time, tracking used columns and both diagonals to reject conflicts immediately"
+    },
+    "bruteForce": {
+      "approach": "try every way to place n queens into n^2 squares (or every way to choose one square per row) and check the full board for attacks after each complete placement",
+      "time": "O(n^(2n)) placing without any pruning, drastically more if choosing squares freely rather than one per row",
+      "space": "O(n^2) to represent a candidate board"
+    }
+  },
+  "optimal": {
+    "pattern": "backtracking one row at a time, tracking used columns and both diagonals to reject conflicts immediately",
+    "time": "O(n!) roughly, much less in practice due to aggressive pruning",
+    "space": "O(n) for the column/diagonal tracking sets and recursion depth",
+    "hint_ladder": [
+      "since no two queens can share a row, you only ever need to decide one column per row - that turns the search into placing queens row by row",
+      "recurse row by row; at each row, try placing the queen in every column that isn't already used by a queen above",
+      "a queen at (row, col) attacks the diagonal where row - col is constant, and the other diagonal where row + col is constant - track used columns and both of these diagonal sums in sets as you go",
+      "when a placement in a row doesn't conflict with any tracked column or diagonal, add it to your tracking sets, recurse to the next row, then remove it from the tracking sets (undo) before trying the next column - count a solution when you successfully place a queen in every row"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every way to place n queens into n^2 squares (or every way to choose one square per row) and check the full board for attacks after each complete placement",
+    "time": "O(n^(2n)) placing without any pruning, drastically more if choosing squares freely rather than one per row",
+    "space": "O(n^2) to represent a candidate board"
+  },
+  "isIndex0": true,
+  "level": null
+}

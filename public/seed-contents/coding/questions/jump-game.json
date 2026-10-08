@@ -1,0 +1,599 @@
+{
+  "id": "jump-game",
+  "questionId": "jump-game",
+  "slug": "jump-game",
+  "title": "Jump Game",
+  "difficulty": "Medium",
+  "category": "Dp 1d",
+  "patterns": [
+    "dynamic programming",
+    "greedy"
+  ],
+  "lists": [
+    "blind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "do you actually need to know every reachable index, or just the single farthest one reached so far?",
+    "as you scan from left to right, what happens to your answer the moment you reach an index beyond the farthest point you've proven reachable?",
+    "at each index i (as long as i is within your current reach), update the farthest reach to max(farthest, i + nums[i])",
+    "if the farthest reach ever meets or passes the last index, you can stop early and return true"
+  ],
+  "commonMistakes": [
+    "recomputing reachability from scratch at every index instead of tracking a single running 'farthest reach' value",
+    "not detecting early that index i itself is unreachable, and using nums[i] anyway",
+    "off-by-one when comparing the farthest reach against the last valid index"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of integers where `nums[i]` is the farthest number\nof steps you're allowed to jump forward from index i.\n\n**Starting at index 0, determine whether you're able to reach the last\nindex.**\n",
+    "constraints": [
+      "1 <= nums.length <= 10^4",
+      "0 <= nums[i] <= 10^5"
+    ],
+    "notes": [
+      "a single-element array (already at the last index, so true)",
+      "a 0 at an index that every path is forced through",
+      "a jump length large enough to clear the rest of the array in one move"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [2, 3, 1, 1, 4]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "jump 1 step to index 1, then 3 steps to reach index 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [3, 2, 1, 0, 4]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "any path leads to index 3, which has a jump length of 0, stranding you there"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[2,3,1,1,4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[3,2,1,0,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[2,0,0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,0,1,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,0,0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,0,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,2,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[3,0,8,2,0,0,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,0,0,0,0,0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,1,1,1,0,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[2,5,0,0,0,0,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,0,1,0,0,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[4,0,0,0,0,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[0,0,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[2,3,1,1,1,0,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[10,0,0,0,0,0,0,0,0,0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,1,1,0,0,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [2, 3, 1, 1, 4]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "jump 1 step to index 1, then 3 steps to reach index 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [3, 2, 1, 0, 4]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "any path leads to index 3, which has a jump length of 0, stranding you there"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [2, 3, 1, 1, 4]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "jump 1 step to index 1, then 3 steps to reach index 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [3, 2, 1, 0, 4]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "any path leads to index 3, which has a jump length of 0, stranding you there"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[2,3,1,1,4]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[3,2,1,0,4]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[0]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[2,0,0]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,0,1,0]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[2,0,0]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,1,0,1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[0,2,3]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[3,0,8,2,0,0,1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[5,0,0,0,0,0]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,1,1,1,0,1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[2,5,0,0,0,0,1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,0,1,0,0,0]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[4,0,0,0,0,1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[0,0,0]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[2,3,1,1,1,0,0]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[10,0,0,0,0,0,0,0,0,0]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[3,1,1,0,0,5]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [2, 3, 1, 1, 4]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "jump 1 step to index 1, then 3 steps to reach index 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [3, 2, 1, 0, 4]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "any path leads to index 3, which has a jump length of 0, stranding you there"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[2,3,1,1,4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[3,2,1,0,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[2,0,0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,0,1,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,0,0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,0,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,2,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[3,0,8,2,0,0,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,0,0,0,0,0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,1,1,1,0,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[2,5,0,0,0,0,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,0,1,0,0,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[4,0,0,0,0,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[0,0,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[2,3,1,1,1,0,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[10,0,0,0,0,0,0,0,0,0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,1,1,0,0,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def canJump(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canJump(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canJump(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canJump(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canJump(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def canJump(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canJump(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canJump(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canJump(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canJump(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def canJump(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canJump(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canJump(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canJump(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canJump(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def canJump(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canJump(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canJump(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canJump(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canJump(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "greedy / dynamic programming - track the farthest index reachable so far as you scan left to right"
+    },
+    "bruteForce": {
+      "approach": "from index 0, recursively try every reachable next index and see if any path leads to the last index",
+      "time": "O(2^n) in the worst case - many overlapping paths get re-explored",
+      "space": "O(n) recursion stack"
+    }
+  },
+  "optimal": {
+    "pattern": "greedy / dynamic programming - track the farthest index reachable so far as you scan left to right",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "do you actually need to know every reachable index, or just the single farthest one reached so far?",
+      "as you scan from left to right, what happens to your answer the moment you reach an index beyond the farthest point you've proven reachable?",
+      "at each index i (as long as i is within your current reach), update the farthest reach to max(farthest, i + nums[i])",
+      "if the farthest reach ever meets or passes the last index, you can stop early and return true"
+    ]
+  },
+  "bruteForce": {
+    "approach": "from index 0, recursively try every reachable next index and see if any path leads to the last index",
+    "time": "O(2^n) in the worst case - many overlapping paths get re-explored",
+    "space": "O(n) recursion stack"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,629 @@
+{
+  "id": "redundant-connection",
+  "questionId": "redundant-connection",
+  "slug": "redundant-connection",
+  "title": "Redundant Connection",
+  "difficulty": "Easy",
+  "category": "Union find",
+  "patterns": [
+    "union find",
+    "cycle detection"
+  ],
+  "lists": [],
+  "hints": [
+    "process the edges in the given order and union each pair's endpoints",
+    "since the input is a tree plus exactly one extra edge, there is exactly one point where a union would connect two nodes that are already in the same component",
+    "the very first edge where find(u) == find(v) before you union them is the answer - since only one such edge exists, it is automatically both the first and last one encountered",
+    "use path compression so this stays fast even for the maximum input size"
+  ],
+  "commonMistakes": [
+    "unioning the edge that closes the cycle anyway before checking, which hides the detection",
+    "forgetting nodes are 1-indexed here, sizing the union-find array off by one",
+    "assuming you must scan all edges after finding the cycle-closing one - you can return as soon as you find it"
+  ],
+  "content": {
+    "problemStatement": "A graph started out as a tree with `n` nodes, labeled 1 to `n`, connected\nby `n`-1 edges. One extra edge was then added, connecting two nodes that\nwere already connected, which created exactly one cycle. You're given the\nlist of `n` edges in the order they were added (each edge is a pair\n[u, v]).\n\n**Return the edge that can be removed to turn the graph back into a tree.**\n\nIf more than one edge could be removed to achieve this, return the one that appears last in the input list.\n",
+    "constraints": [
+      "n == edges.length, 3 <= n <= 1000",
+      "nodes are labeled 1 to n",
+      "the input describes a tree plus exactly one extra edge"
+    ],
+    "notes": [
+      "the smallest possible input, a triangle of 3 nodes and 3 edges",
+      "the redundant edge is the very last one listed",
+      "the redundant edge closes a cycle spanning every node in the graph"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "edges = [[1,2],[1,3],[2,3]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "explanation": "1-2 and 1-3 already connect all three nodes; 2-3 closes the cycle"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "edges = [[1,2],[2,3],[3,4],[1,4],[1,5]]",
+        "output": "[1,4]",
+        "expectedOutput": "[1,4]",
+        "explanation": "1-2-3-4 already forms a path; adding 1-4 closes it into a cycle"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "edges = [[1,2],[1,3],[1,4],[3,4]]",
+        "output": "[3,4]",
+        "expectedOutput": "[3,4]",
+        "explanation": "1 is already connected to 2, 3, and 4; adding 3-4 closes a cycle"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,2],[1,3],[2,3]]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,2],[2,3],[3,4],[1,4],[1,5]]]",
+        "output": "[1,4]",
+        "expectedOutput": "[1,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,2],[1,3],[1,4],[3,4]]]",
+        "output": "[3,4]",
+        "expectedOutput": "[3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,2],[2,3],[1,3]]]",
+        "output": "[1,3]",
+        "expectedOutput": "[1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,2],[2,3],[3,5],[5,4],[4,1]]]",
+        "output": "[4,1]",
+        "expectedOutput": "[4,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,2],[2,3],[3,1],[4,5]]]",
+        "output": "[3,1]",
+        "expectedOutput": "[3,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[5,1],[3,7],[6,4],[9,10],[8,6],[10,2],[1,3],[7,9],[2,8],[7,4]]]",
+        "output": "[7,4]",
+        "expectedOutput": "[7,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[5,4],[14,12],[2,10],[8,6],[15,1],[3,7],[12,13],[1,8],[6,14],[10,9],[4,15],[11,5],[7,2],[9,11],[12,8]]]",
+        "output": "[12,8]",
+        "expectedOutput": "[12,8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[15,14],[14,9],[10,7],[6,15],[11,8],[13,5],[9,12],[20,16],[8,3],[7,17],[17,2],[4,18],[12,11],[1,13],[19,10],[5,4],[3,1],[18,20],[2,6],[19,4]]]",
+        "output": "[19,4]",
+        "expectedOutput": "[19,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[7,8],[8,12],[19,7],[13,17],[6,25],[11,18],[17,4],[20,19],[22,13],[24,21],[21,5],[5,2],[16,20],[23,9],[1,23],[2,11],[4,16],[12,14],[25,1],[18,22],[15,24],[9,15],[10,3],[3,6],[13,17]]]",
+        "output": "[13,17]",
+        "expectedOutput": "[13,17]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[8,9],[22,26],[17,12],[14,29],[5,6],[27,8],[30,19],[29,11],[7,18],[13,4],[9,17],[10,22],[23,28],[15,5],[4,14],[12,1],[25,16],[1,24],[20,23],[24,10],[26,7],[6,2],[18,13],[28,15],[2,27],[3,25],[11,30],[16,20],[19,21],[18,10]]]",
+        "output": "[18,10]",
+        "expectedOutput": "[18,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,2],[1,3],[1,4],[1,5],[2,3]]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,2],[2,3],[3,4],[4,5],[5,1]]]",
+        "output": "[5,1]",
+        "expectedOutput": "[5,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,2],[1,3],[2,4],[2,5],[3,6],[3,7],[6,7]]]",
+        "output": "[6,7]",
+        "expectedOutput": "[6,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[6,1],[11,3],[3,7],[7,9],[2,6],[8,5],[1,8],[5,4],[12,2],[4,10],[9,12],[11,9]]]",
+        "output": "[11,9]",
+        "expectedOutput": "[11,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,2],[2,3],[3,1]]]",
+        "output": "[3,1]",
+        "expectedOutput": "[3,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,3],[2,4],[6,8],[5,2],[3,6],[4,7],[8,5],[3,4]]]",
+        "output": "[3,4]",
+        "expectedOutput": "[3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[16,9],[12,10],[15,14],[8,17],[1,3],[3,2],[13,15],[6,1],[7,16],[4,18],[10,13],[14,5],[5,7],[2,11],[18,8],[11,4],[17,12],[4,7]]]",
+        "output": "[4,7]",
+        "expectedOutput": "[4,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[9,18],[11,14],[15,8],[1,7],[20,3],[12,4],[22,16],[5,19],[21,5],[3,15],[17,22],[14,10],[10,9],[7,11],[6,17],[18,21],[13,6],[16,1],[8,2],[19,20],[4,13],[7,1]]]",
+        "output": "[7,1]",
+        "expectedOutput": "[7,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,2],[2,3],[3,4],[1,4],[4,5],[5,6],[1,6]]]",
+        "output": "[1,4]",
+        "expectedOutput": "[1,4]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "edges = [[1,2],[1,3],[2,3]]",
+      "output": "[2,3]",
+      "expectedOutput": "[2,3]",
+      "explanation": "1-2 and 1-3 already connect all three nodes; 2-3 closes the cycle"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "edges = [[1,2],[2,3],[3,4],[1,4],[1,5]]",
+      "output": "[1,4]",
+      "expectedOutput": "[1,4]",
+      "explanation": "1-2-3-4 already forms a path; adding 1-4 closes it into a cycle"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "edges = [[1,2],[1,3],[1,4],[3,4]]",
+      "output": "[3,4]",
+      "expectedOutput": "[3,4]",
+      "explanation": "1 is already connected to 2, 3, and 4; adding 3-4 closes a cycle"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "edges = [[1,2],[1,3],[2,3]]",
+      "output": "[2,3]",
+      "expectedOutput": "[2,3]",
+      "explanation": "1-2 and 1-3 already connect all three nodes; 2-3 closes the cycle"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "edges = [[1,2],[2,3],[3,4],[1,4],[1,5]]",
+      "output": "[1,4]",
+      "expectedOutput": "[1,4]",
+      "explanation": "1-2-3-4 already forms a path; adding 1-4 closes it into a cycle"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "edges = [[1,2],[1,3],[1,4],[3,4]]",
+      "output": "[3,4]",
+      "expectedOutput": "[3,4]",
+      "explanation": "1 is already connected to 2, 3, and 4; adding 3-4 closes a cycle"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,2],[1,3],[2,3]]]",
+      "output": "[2,3]",
+      "expectedOutput": "[2,3]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,2],[2,3],[3,4],[1,4],[1,5]]]",
+      "output": "[1,4]",
+      "expectedOutput": "[1,4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1,2],[1,3],[1,4],[3,4]]]",
+      "output": "[3,4]",
+      "expectedOutput": "[3,4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1,2],[2,3],[1,3]]]",
+      "output": "[1,3]",
+      "expectedOutput": "[1,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,2],[2,3],[3,5],[5,4],[4,1]]]",
+      "output": "[4,1]",
+      "expectedOutput": "[4,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,2],[2,3],[3,1],[4,5]]]",
+      "output": "[3,1]",
+      "expectedOutput": "[3,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[5,1],[3,7],[6,4],[9,10],[8,6],[10,2],[1,3],[7,9],[2,8],[7,4]]]",
+      "output": "[7,4]",
+      "expectedOutput": "[7,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[5,4],[14,12],[2,10],[8,6],[15,1],[3,7],[12,13],[1,8],[6,14],[10,9],[4,15],[11,5],[7,2],[9,11],[12,8]]]",
+      "output": "[12,8]",
+      "expectedOutput": "[12,8]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[15,14],[14,9],[10,7],[6,15],[11,8],[13,5],[9,12],[20,16],[8,3],[7,17],[17,2],[4,18],[12,11],[1,13],[19,10],[5,4],[3,1],[18,20],[2,6],[19,4]]]",
+      "output": "[19,4]",
+      "expectedOutput": "[19,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[7,8],[8,12],[19,7],[13,17],[6,25],[11,18],[17,4],[20,19],[22,13],[24,21],[21,5],[5,2],[16,20],[23,9],[1,23],[2,11],[4,16],[12,14],[25,1],[18,22],[15,24],[9,15],[10,3],[3,6],[13,17]]]",
+      "output": "[13,17]",
+      "expectedOutput": "[13,17]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[8,9],[22,26],[17,12],[14,29],[5,6],[27,8],[30,19],[29,11],[7,18],[13,4],[9,17],[10,22],[23,28],[15,5],[4,14],[12,1],[25,16],[1,24],[20,23],[24,10],[26,7],[6,2],[18,13],[28,15],[2,27],[3,25],[11,30],[16,20],[19,21],[18,10]]]",
+      "output": "[18,10]",
+      "expectedOutput": "[18,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[1,2],[1,3],[1,4],[1,5],[2,3]]]",
+      "output": "[2,3]",
+      "expectedOutput": "[2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1,2],[2,3],[3,4],[4,5],[5,1]]]",
+      "output": "[5,1]",
+      "expectedOutput": "[5,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,2],[1,3],[2,4],[2,5],[3,6],[3,7],[6,7]]]",
+      "output": "[6,7]",
+      "expectedOutput": "[6,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[6,1],[11,3],[3,7],[7,9],[2,6],[8,5],[1,8],[5,4],[12,2],[4,10],[9,12],[11,9]]]",
+      "output": "[11,9]",
+      "expectedOutput": "[11,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[1,2],[2,3],[3,1]]]",
+      "output": "[3,1]",
+      "expectedOutput": "[3,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,3],[2,4],[6,8],[5,2],[3,6],[4,7],[8,5],[3,4]]]",
+      "output": "[3,4]",
+      "expectedOutput": "[3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[16,9],[12,10],[15,14],[8,17],[1,3],[3,2],[13,15],[6,1],[7,16],[4,18],[10,13],[14,5],[5,7],[2,11],[18,8],[11,4],[17,12],[4,7]]]",
+      "output": "[4,7]",
+      "expectedOutput": "[4,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[9,18],[11,14],[15,8],[1,7],[20,3],[12,4],[22,16],[5,19],[21,5],[3,15],[17,22],[14,10],[10,9],[7,11],[6,17],[18,21],[13,6],[16,1],[8,2],[19,20],[4,13],[7,1]]]",
+      "output": "[7,1]",
+      "expectedOutput": "[7,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,2],[2,3],[3,4],[1,4],[4,5],[5,6],[1,6]]]",
+      "output": "[1,4]",
+      "expectedOutput": "[1,4]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "edges = [[1,2],[1,3],[2,3]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "explanation": "1-2 and 1-3 already connect all three nodes; 2-3 closes the cycle"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "edges = [[1,2],[2,3],[3,4],[1,4],[1,5]]",
+        "output": "[1,4]",
+        "expectedOutput": "[1,4]",
+        "explanation": "1-2-3-4 already forms a path; adding 1-4 closes it into a cycle"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "edges = [[1,2],[1,3],[1,4],[3,4]]",
+        "output": "[3,4]",
+        "expectedOutput": "[3,4]",
+        "explanation": "1 is already connected to 2, 3, and 4; adding 3-4 closes a cycle"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,2],[1,3],[2,3]]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,2],[2,3],[3,4],[1,4],[1,5]]]",
+        "output": "[1,4]",
+        "expectedOutput": "[1,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,2],[1,3],[1,4],[3,4]]]",
+        "output": "[3,4]",
+        "expectedOutput": "[3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,2],[2,3],[1,3]]]",
+        "output": "[1,3]",
+        "expectedOutput": "[1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,2],[2,3],[3,5],[5,4],[4,1]]]",
+        "output": "[4,1]",
+        "expectedOutput": "[4,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,2],[2,3],[3,1],[4,5]]]",
+        "output": "[3,1]",
+        "expectedOutput": "[3,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[5,1],[3,7],[6,4],[9,10],[8,6],[10,2],[1,3],[7,9],[2,8],[7,4]]]",
+        "output": "[7,4]",
+        "expectedOutput": "[7,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[5,4],[14,12],[2,10],[8,6],[15,1],[3,7],[12,13],[1,8],[6,14],[10,9],[4,15],[11,5],[7,2],[9,11],[12,8]]]",
+        "output": "[12,8]",
+        "expectedOutput": "[12,8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[15,14],[14,9],[10,7],[6,15],[11,8],[13,5],[9,12],[20,16],[8,3],[7,17],[17,2],[4,18],[12,11],[1,13],[19,10],[5,4],[3,1],[18,20],[2,6],[19,4]]]",
+        "output": "[19,4]",
+        "expectedOutput": "[19,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[7,8],[8,12],[19,7],[13,17],[6,25],[11,18],[17,4],[20,19],[22,13],[24,21],[21,5],[5,2],[16,20],[23,9],[1,23],[2,11],[4,16],[12,14],[25,1],[18,22],[15,24],[9,15],[10,3],[3,6],[13,17]]]",
+        "output": "[13,17]",
+        "expectedOutput": "[13,17]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[8,9],[22,26],[17,12],[14,29],[5,6],[27,8],[30,19],[29,11],[7,18],[13,4],[9,17],[10,22],[23,28],[15,5],[4,14],[12,1],[25,16],[1,24],[20,23],[24,10],[26,7],[6,2],[18,13],[28,15],[2,27],[3,25],[11,30],[16,20],[19,21],[18,10]]]",
+        "output": "[18,10]",
+        "expectedOutput": "[18,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,2],[1,3],[1,4],[1,5],[2,3]]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,2],[2,3],[3,4],[4,5],[5,1]]]",
+        "output": "[5,1]",
+        "expectedOutput": "[5,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,2],[1,3],[2,4],[2,5],[3,6],[3,7],[6,7]]]",
+        "output": "[6,7]",
+        "expectedOutput": "[6,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[6,1],[11,3],[3,7],[7,9],[2,6],[8,5],[1,8],[5,4],[12,2],[4,10],[9,12],[11,9]]]",
+        "output": "[11,9]",
+        "expectedOutput": "[11,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,2],[2,3],[3,1]]]",
+        "output": "[3,1]",
+        "expectedOutput": "[3,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,3],[2,4],[6,8],[5,2],[3,6],[4,7],[8,5],[3,4]]]",
+        "output": "[3,4]",
+        "expectedOutput": "[3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[16,9],[12,10],[15,14],[8,17],[1,3],[3,2],[13,15],[6,1],[7,16],[4,18],[10,13],[14,5],[5,7],[2,11],[18,8],[11,4],[17,12],[4,7]]]",
+        "output": "[4,7]",
+        "expectedOutput": "[4,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[9,18],[11,14],[15,8],[1,7],[20,3],[12,4],[22,16],[5,19],[21,5],[3,15],[17,22],[14,10],[10,9],[7,11],[6,17],[18,21],[13,6],[16,1],[8,2],[19,20],[4,13],[7,1]]]",
+        "output": "[7,1]",
+        "expectedOutput": "[7,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,2],[2,3],[3,4],[1,4],[4,5],[5,6],[1,6]]]",
+        "output": "[1,4]",
+        "expectedOutput": "[1,4]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findRedundantConnection(self, edges):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findRedundantConnection(vector<vector<int>>& edges) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findRedundantConnection(int[][] edges) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findRedundantConnection(edges: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findRedundantConnection(edges) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findRedundantConnection(self, edges):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findRedundantConnection(vector<vector<int>>& edges) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findRedundantConnection(int[][] edges) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findRedundantConnection(edges: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findRedundantConnection(edges) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findRedundantConnection(self, edges):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findRedundantConnection(vector<vector<int>>& edges) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findRedundantConnection(int[][] edges) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findRedundantConnection(edges: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findRedundantConnection(edges) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findRedundantConnection(self, edges):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findRedundantConnection(vector<vector<int>>& edges) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findRedundantConnection(int[][] edges) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findRedundantConnection(edges: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findRedundantConnection(edges) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n * alpha(n))",
+      "space": "O(n)",
+      "pattern": "union find (cycle detection while merging)"
+    },
+    "bruteForce": {
+      "approach": "for each edge, temporarily remove it and check with DFS/BFS whether the remaining edges form a valid tree; return the first (from the end) edge for which this holds",
+      "time": "O(n^2)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "union find (cycle detection while merging)",
+    "time": "O(n * alpha(n))",
+    "space": "O(n)",
+    "hint_ladder": [
+      "process the edges in the given order and union each pair's endpoints",
+      "since the input is a tree plus exactly one extra edge, there is exactly one point where a union would connect two nodes that are already in the same component",
+      "the very first edge where find(u) == find(v) before you union them is the answer - since only one such edge exists, it is automatically both the first and last one encountered",
+      "use path compression so this stays fast even for the maximum input size"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each edge, temporarily remove it and check with DFS/BFS whether the remaining edges form a valid tree; return the first (from the end) edge for which this holds",
+    "time": "O(n^2)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

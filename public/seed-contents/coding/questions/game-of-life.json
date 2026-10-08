@@ -1,0 +1,635 @@
+{
+  "id": "game-of-life",
+  "questionId": "game-of-life",
+  "slug": "game-of-life",
+  "title": "Game of Life",
+  "difficulty": "Medium",
+  "category": "Two pointers",
+  "patterns": [
+    "matrix simulation",
+    "in-place transformation"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "the tricky part isn't counting neighbors, it's that every cell must be updated based on the *original* board, not a partially-updated one",
+    "the simplest fix is to just build a second grid for the answer and never touch the input while computing counts - are you doing that, or overwriting cells as you go?",
+    "if you want to avoid extra space, you can encode both the old and new state in each cell (e.g. use 2 or 3 for 'was X, now Y') and decode at the end",
+    "count live neighbors as the sum of board[i+di][j+dj] for di, dj in {-1,0,1} excluding (0,0), skipping out-of-bounds indices",
+    "double check corner and edge cells - they have fewer than 8 neighbors, so don't assume every cell has all 8"
+  ],
+  "commonMistakes": [
+    "mutating the board while computing neighbor counts, so later cells see already-updated neighbors instead of the original generation",
+    "forgetting to bounds-check neighbor indices near the edges and corners, causing an index error or wrong count",
+    "using 4-directional neighbors instead of the required 8-directional (including diagonals)",
+    "off-by-one in the live-neighbor thresholds (it's fewer than 2 dies, 2 or 3 survives, more than 3 dies, exactly 3 revives)"
+  ],
+  "content": {
+    "problemStatement": "You're given a grid of cells where each cell is either 1 (live) or 0\n(dead).\n\n**Compute the next generation of the grid using Conway's rules, applied simultaneously to every cell based on its 8 neighbors (up, down, left, right, and the four diagonals), and return the grid after applying exactly one step.**\n\n- a live cell with 2 or 3 live neighbors stays alive\n- a live cell with fewer than 2 or more than 3 live neighbors dies\n- a dead cell with exactly 3 live neighbors becomes alive\n- every other cell stays as it is (dead stays dead)\n\nCells off the edge of the grid don't count as neighbors.\n",
+    "constraints": [
+      "1 <= rows, cols <= 25",
+      "board[i][j] is 0 or 1",
+      "the update must reflect the state of all cells as of the previous generation, computed simultaneously"
+    ],
+    "notes": [
+      "a 1x1 board (no neighbors, the single cell always dies or stays dead)",
+      "a board that is entirely dead",
+      "a board that is entirely live",
+      "a live cell in a corner (only 3 possible neighbors) or edge (only 5 possible neighbors)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "board = [[0,1,0],[0,0,1],[1,1,1],[0,0,0]]",
+        "output": "[[0,0,0],[1,0,1],[0,1,1],[0,1,0]]",
+        "expectedOutput": "[[0,0,0],[1,0,1],[0,1,1],[0,1,0]]",
+        "explanation": "each cell's next state is computed from its live neighbor count in the original grid, all at once"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "board = [[1,1],[1,0]]",
+        "output": "[[1,1],[1,1]]",
+        "expectedOutput": "[[1,1],[1,1]]",
+        "explanation": "the dead cell has 3 live neighbors so it becomes alive, and each live cell has 2 live neighbors so it survives"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "board = [[0,0],[0,0]]",
+        "output": "[[0,0],[0,0]]",
+        "expectedOutput": "[[0,0],[0,0]]",
+        "explanation": "an all-dead grid stays dead, since no dead cell has exactly 3 live neighbors"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,1,0],[0,0,1],[1,1,1],[0,0,0]]]",
+        "output": "[[0,0,0],[1,0,1],[0,1,1],[0,1,0]]",
+        "expectedOutput": "[[0,0,0],[1,0,1],[0,1,1],[0,1,0]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,1],[1,0]]]",
+        "output": "[[1,1],[1,1]]",
+        "expectedOutput": "[[1,1],[1,1]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "[[0,0],[0,0]]",
+        "expectedOutput": "[[0,0],[0,0]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[0]]]",
+        "output": "[[0]]",
+        "expectedOutput": "[[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1]]]",
+        "output": "[[0]]",
+        "expectedOutput": "[[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "[[1,1],[1,1]]",
+        "expectedOutput": "[[1,1],[1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0,1,0],[1,1,1],[0,1,0]]]",
+        "output": "[[1,1,1],[1,0,1],[1,1,1]]",
+        "expectedOutput": "[[1,1,1],[1,0,1],[1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+        "output": "[[1,0,1],[0,0,0],[1,0,1]]",
+        "expectedOutput": "[[1,0,1],[0,0,0],[1,0,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0,0,0],[0,0,0],[0,0,0]]]",
+        "output": "[[0,0,0],[0,0,0],[0,0,0]]",
+        "expectedOutput": "[[0,0,0],[0,0,0],[0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[0,1],[1,0]]]",
+        "output": "[[0,0],[0,0]]",
+        "expectedOutput": "[[0,0],[0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,0],[0,1]]]",
+        "output": "[[0,0],[0,0]]",
+        "expectedOutput": "[[0,0],[0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,1,0],[0,0,0],[0,0,1]]]",
+        "output": "[[0,0,0],[0,1,0],[0,0,0]]",
+        "expectedOutput": "[[0,0,0],[0,1,0],[0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]]]",
+        "output": "[[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]]",
+        "expectedOutput": "[[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,0,0],[0,0,0],[0,0,1]]]",
+        "output": "[[0,0,0],[0,0,0],[0,0,0]]",
+        "expectedOutput": "[[0,0,0],[0,0,0],[0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,1,1,0,0]]]",
+        "output": "[[0,0,0,0,0]]",
+        "expectedOutput": "[[0,0,0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1],[1],[0],[1]]]",
+        "output": "[[0],[0],[0],[0]]",
+        "expectedOutput": "[[0],[0],[0],[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,1,1,0],[0,0,0,0]]]",
+        "output": "[[0,1,0,0],[0,1,0,0]]",
+        "expectedOutput": "[[0,1,0,0],[0,1,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,1,0,1,1]]]",
+        "output": "[[0,0,0,0,0]]",
+        "expectedOutput": "[[0,0,0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[0,0,1],[0,0,1],[0,0,1]]]",
+        "output": "[[0,0,0],[0,1,1],[0,0,0]]",
+        "expectedOutput": "[[0,0,0],[0,1,1],[0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]]]",
+        "output": "[[1,0,0,1],[0,0,0,0],[0,0,0,0],[1,0,0,1]]",
+        "expectedOutput": "[[1,0,0,1],[0,0,0,0],[0,0,0,0],[1,0,0,1]]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "board = [[0,1,0],[0,0,1],[1,1,1],[0,0,0]]",
+      "output": "[[0,0,0],[1,0,1],[0,1,1],[0,1,0]]",
+      "expectedOutput": "[[0,0,0],[1,0,1],[0,1,1],[0,1,0]]",
+      "explanation": "each cell's next state is computed from its live neighbor count in the original grid, all at once"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "board = [[1,1],[1,0]]",
+      "output": "[[1,1],[1,1]]",
+      "expectedOutput": "[[1,1],[1,1]]",
+      "explanation": "the dead cell has 3 live neighbors so it becomes alive, and each live cell has 2 live neighbors so it survives"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "board = [[0,0],[0,0]]",
+      "output": "[[0,0],[0,0]]",
+      "expectedOutput": "[[0,0],[0,0]]",
+      "explanation": "an all-dead grid stays dead, since no dead cell has exactly 3 live neighbors"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "board = [[0,1,0],[0,0,1],[1,1,1],[0,0,0]]",
+      "output": "[[0,0,0],[1,0,1],[0,1,1],[0,1,0]]",
+      "expectedOutput": "[[0,0,0],[1,0,1],[0,1,1],[0,1,0]]",
+      "explanation": "each cell's next state is computed from its live neighbor count in the original grid, all at once"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "board = [[1,1],[1,0]]",
+      "output": "[[1,1],[1,1]]",
+      "expectedOutput": "[[1,1],[1,1]]",
+      "explanation": "the dead cell has 3 live neighbors so it becomes alive, and each live cell has 2 live neighbors so it survives"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "board = [[0,0],[0,0]]",
+      "output": "[[0,0],[0,0]]",
+      "expectedOutput": "[[0,0],[0,0]]",
+      "explanation": "an all-dead grid stays dead, since no dead cell has exactly 3 live neighbors"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[0,1,0],[0,0,1],[1,1,1],[0,0,0]]]",
+      "output": "[[0,0,0],[1,0,1],[0,1,1],[0,1,0]]",
+      "expectedOutput": "[[0,0,0],[1,0,1],[0,1,1],[0,1,0]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,1],[1,0]]]",
+      "output": "[[1,1],[1,1]]",
+      "expectedOutput": "[[1,1],[1,1]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[0,0],[0,0]]]",
+      "output": "[[0,0],[0,0]]",
+      "expectedOutput": "[[0,0],[0,0]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[0]]]",
+      "output": "[[0]]",
+      "expectedOutput": "[[0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1]]]",
+      "output": "[[0]]",
+      "expectedOutput": "[[0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,1],[1,1]]]",
+      "output": "[[1,1],[1,1]]",
+      "expectedOutput": "[[1,1],[1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[0,1,0],[1,1,1],[0,1,0]]]",
+      "output": "[[1,1,1],[1,0,1],[1,1,1]]",
+      "expectedOutput": "[[1,1,1],[1,0,1],[1,1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+      "output": "[[1,0,1],[0,0,0],[1,0,1]]",
+      "expectedOutput": "[[1,0,1],[0,0,0],[1,0,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[0,0,0],[0,0,0],[0,0,0]]]",
+      "output": "[[0,0,0],[0,0,0],[0,0,0]]",
+      "expectedOutput": "[[0,0,0],[0,0,0],[0,0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[0,1],[1,0]]]",
+      "output": "[[0,0],[0,0]]",
+      "expectedOutput": "[[0,0],[0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[1,0],[0,1]]]",
+      "output": "[[0,0],[0,0]]",
+      "expectedOutput": "[[0,0],[0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[1,1,0],[0,0,0],[0,0,1]]]",
+      "output": "[[0,0,0],[0,1,0],[0,0,0]]",
+      "expectedOutput": "[[0,0,0],[0,1,0],[0,0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]]]",
+      "output": "[[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]]",
+      "expectedOutput": "[[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,0,0],[0,0,0],[0,0,1]]]",
+      "output": "[[0,0,0],[0,0,0],[0,0,0]]",
+      "expectedOutput": "[[0,0,0],[0,0,0],[0,0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[0,1,1,0,0]]]",
+      "output": "[[0,0,0,0,0]]",
+      "expectedOutput": "[[0,0,0,0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[1],[1],[0],[1]]]",
+      "output": "[[0],[0],[0],[0]]",
+      "expectedOutput": "[[0],[0],[0],[0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,1,1,0],[0,0,0,0]]]",
+      "output": "[[0,1,0,0],[0,1,0,0]]",
+      "expectedOutput": "[[0,1,0,0],[0,1,0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1,1,0,1,1]]]",
+      "output": "[[0,0,0,0,0]]",
+      "expectedOutput": "[[0,0,0,0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[0,0,1],[0,0,1],[0,0,1]]]",
+      "output": "[[0,0,0],[0,1,1],[0,0,0]]",
+      "expectedOutput": "[[0,0,0],[0,1,1],[0,0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]]]",
+      "output": "[[1,0,0,1],[0,0,0,0],[0,0,0,0],[1,0,0,1]]",
+      "expectedOutput": "[[1,0,0,1],[0,0,0,0],[0,0,0,0],[1,0,0,1]]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "board = [[0,1,0],[0,0,1],[1,1,1],[0,0,0]]",
+        "output": "[[0,0,0],[1,0,1],[0,1,1],[0,1,0]]",
+        "expectedOutput": "[[0,0,0],[1,0,1],[0,1,1],[0,1,0]]",
+        "explanation": "each cell's next state is computed from its live neighbor count in the original grid, all at once"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "board = [[1,1],[1,0]]",
+        "output": "[[1,1],[1,1]]",
+        "expectedOutput": "[[1,1],[1,1]]",
+        "explanation": "the dead cell has 3 live neighbors so it becomes alive, and each live cell has 2 live neighbors so it survives"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "board = [[0,0],[0,0]]",
+        "output": "[[0,0],[0,0]]",
+        "expectedOutput": "[[0,0],[0,0]]",
+        "explanation": "an all-dead grid stays dead, since no dead cell has exactly 3 live neighbors"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,1,0],[0,0,1],[1,1,1],[0,0,0]]]",
+        "output": "[[0,0,0],[1,0,1],[0,1,1],[0,1,0]]",
+        "expectedOutput": "[[0,0,0],[1,0,1],[0,1,1],[0,1,0]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,1],[1,0]]]",
+        "output": "[[1,1],[1,1]]",
+        "expectedOutput": "[[1,1],[1,1]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "[[0,0],[0,0]]",
+        "expectedOutput": "[[0,0],[0,0]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[0]]]",
+        "output": "[[0]]",
+        "expectedOutput": "[[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1]]]",
+        "output": "[[0]]",
+        "expectedOutput": "[[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "[[1,1],[1,1]]",
+        "expectedOutput": "[[1,1],[1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0,1,0],[1,1,1],[0,1,0]]]",
+        "output": "[[1,1,1],[1,0,1],[1,1,1]]",
+        "expectedOutput": "[[1,1,1],[1,0,1],[1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+        "output": "[[1,0,1],[0,0,0],[1,0,1]]",
+        "expectedOutput": "[[1,0,1],[0,0,0],[1,0,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0,0,0],[0,0,0],[0,0,0]]]",
+        "output": "[[0,0,0],[0,0,0],[0,0,0]]",
+        "expectedOutput": "[[0,0,0],[0,0,0],[0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[0,1],[1,0]]]",
+        "output": "[[0,0],[0,0]]",
+        "expectedOutput": "[[0,0],[0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,0],[0,1]]]",
+        "output": "[[0,0],[0,0]]",
+        "expectedOutput": "[[0,0],[0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,1,0],[0,0,0],[0,0,1]]]",
+        "output": "[[0,0,0],[0,1,0],[0,0,0]]",
+        "expectedOutput": "[[0,0,0],[0,1,0],[0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]]]",
+        "output": "[[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]]",
+        "expectedOutput": "[[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,0,0],[0,0,0],[0,0,1]]]",
+        "output": "[[0,0,0],[0,0,0],[0,0,0]]",
+        "expectedOutput": "[[0,0,0],[0,0,0],[0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,1,1,0,0]]]",
+        "output": "[[0,0,0,0,0]]",
+        "expectedOutput": "[[0,0,0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1],[1],[0],[1]]]",
+        "output": "[[0],[0],[0],[0]]",
+        "expectedOutput": "[[0],[0],[0],[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,1,1,0],[0,0,0,0]]]",
+        "output": "[[0,1,0,0],[0,1,0,0]]",
+        "expectedOutput": "[[0,1,0,0],[0,1,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,1,0,1,1]]]",
+        "output": "[[0,0,0,0,0]]",
+        "expectedOutput": "[[0,0,0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[0,0,1],[0,0,1],[0,0,1]]]",
+        "output": "[[0,0,0],[0,1,1],[0,0,0]]",
+        "expectedOutput": "[[0,0,0],[0,1,1],[0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]]]",
+        "output": "[[1,0,0,1],[0,0,0,0],[0,0,0,0],[1,0,0,1]]",
+        "expectedOutput": "[[1,0,0,1],[0,0,0,0],[0,0,0,0],[1,0,0,1]]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def gameOfLife(self, board):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> gameOfLife(vector<vector<int>>& board) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] gameOfLife(int[][] board) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun gameOfLife(board: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    gameOfLife(board) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def gameOfLife(self, board):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> gameOfLife(vector<vector<int>>& board) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] gameOfLife(int[][] board) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun gameOfLife(board: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    gameOfLife(board) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def gameOfLife(self, board):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> gameOfLife(vector<vector<int>>& board) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] gameOfLife(int[][] board) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun gameOfLife(board: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    gameOfLife(board) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def gameOfLife(self, board):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> gameOfLife(vector<vector<int>>& board) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] gameOfLife(int[][] board) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun gameOfLife(board: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    gameOfLife(board) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(rows * cols)",
+      "space": "O(1) extra if mutating in place with encoded states, O(rows * cols) if returning a fresh grid",
+      "pattern": "in-place simulation using extra encoded states to remember the old value while writing the new one"
+    },
+    "bruteForce": {
+      "approach": "allocate a brand new grid of the same size, and for every cell count its live neighbors by looking at the original grid, then write the new state into the new grid using the rules",
+      "time": "O(rows * cols)",
+      "space": "O(rows * cols) for the copy"
+    }
+  },
+  "optimal": {
+    "pattern": "in-place simulation using extra encoded states to remember the old value while writing the new one",
+    "time": "O(rows * cols)",
+    "space": "O(1) extra if mutating in place with encoded states, O(rows * cols) if returning a fresh grid",
+    "hint_ladder": [
+      "the tricky part isn't counting neighbors, it's that every cell must be updated based on the *original* board, not a partially-updated one",
+      "the simplest fix is to just build a second grid for the answer and never touch the input while computing counts - are you doing that, or overwriting cells as you go?",
+      "if you want to avoid extra space, you can encode both the old and new state in each cell (e.g. use 2 or 3 for 'was X, now Y') and decode at the end",
+      "count live neighbors as the sum of board[i+di][j+dj] for di, dj in {-1,0,1} excluding (0,0), skipping out-of-bounds indices",
+      "double check corner and edge cells - they have fewer than 8 neighbors, so don't assume every cell has all 8"
+    ]
+  },
+  "bruteForce": {
+    "approach": "allocate a brand new grid of the same size, and for every cell count its live neighbors by looking at the original grid, then write the new state into the new grid using the rules",
+    "time": "O(rows * cols)",
+    "space": "O(rows * cols) for the copy"
+  },
+  "isIndex0": true,
+  "level": null
+}

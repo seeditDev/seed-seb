@@ -1,0 +1,631 @@
+{
+  "id": "minimum-size-subarray-sum",
+  "questionId": "minimum-size-subarray-sum",
+  "slug": "minimum-size-subarray-sum",
+  "title": "Minimum Size Subarray Sum",
+  "difficulty": "Medium",
+  "category": "Sliding window",
+  "patterns": [
+    "sliding window",
+    "variable-size window"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "since all numbers are positive, what happens to the window's sum as you shrink it from the left? does it only ever move in one direction?",
+    "grow the window by moving the right edge forward, adding to a running sum, until the sum is at least the target",
+    "once the target is met, that's a valid window - can you shrink it from the left while it's still valid, to find something shorter?",
+    "keep shrinking from the left (subtracting from the running sum and updating the best length) until the sum drops below target, then go back to growing the right edge"
+  ],
+  "commonMistakes": [
+    "forgetting to update the minimum length while shrinking, only checking it when first reaching the target",
+    "not shrinking as far as possible before growing again, missing shorter valid windows",
+    "returning the window size when no valid window was ever found, instead of 0"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of positive integers `nums` and a target sum.\n\n**Find the length of the shortest contiguous subarray whose sum is greater than or equal to the target. If no such subarray exists, return 0.**\n",
+    "constraints": [
+      "1 <= target <= 10^9",
+      "1 <= nums.length <= 10^5",
+      "1 <= nums[i] <= 10^4"
+    ],
+    "notes": [
+      "the whole array is needed to reach the target",
+      "a single element already meets or exceeds the target",
+      "the target is larger than the sum of the entire array"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "target = 7, nums = [2, 3, 1, 2, 4, 3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the subarray [4, 3] sums to 7 in just 2 elements, the shortest possible"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "target = 4, nums = [1, 4, 4]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "target = 11, nums = [1, 1, 1, 1, 1, 1, 1, 1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "no contiguous subarray sums to at least 11"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[7,[2,3,1,2,4,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[4,[1,4,4]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[11,[1,1,1,1,1,1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[15,[1,2,3,4,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[100,[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[3,[1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[5,[2,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[100,[1,2,3,4,5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[6,[10,2,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[50,[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[9,[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[1,[5,1,3,2,4]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[39,[1,4,4]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[213,[12,28,83,4,25,26,25,2,25,25,25,12]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[7,[2,1,5,2,3,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[280,[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[11,[1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[3,[3,1,1,1,1,1,1,1,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[25,[4,3,10,2,8,5,1,9,6,7,2,3,15,4]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "target = 7, nums = [2, 3, 1, 2, 4, 3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the subarray [4, 3] sums to 7 in just 2 elements, the shortest possible"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "target = 4, nums = [1, 4, 4]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "target = 11, nums = [1, 1, 1, 1, 1, 1, 1, 1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "no contiguous subarray sums to at least 11"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "target = 7, nums = [2, 3, 1, 2, 4, 3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the subarray [4, 3] sums to 7 in just 2 elements, the shortest possible"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "target = 4, nums = [1, 4, 4]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "target = 11, nums = [1, 1, 1, 1, 1, 1, 1, 1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "no contiguous subarray sums to at least 11"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[7,[2,3,1,2,4,3]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[4,[1,4,4]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[11,[1,1,1,1,1,1,1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[15,[1,2,3,4,5]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[1,[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[100,[1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[3,[1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[5,[2,3]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[100,[1,2,3,4,5]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[6,[10,2,3]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[50,[1,2,3,4,5,6,7,8,9,10]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[9,[1,2,3,4,5,6,7,8,9,10]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[1,[5,1,3,2,4]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[39,[1,4,4]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[213,[12,28,83,4,25,26,25,2,25,25,25,12]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[7,[2,1,5,2,3,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[280,[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[11,[1,1,1,1,1,1,1,1,1,1,1]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[3,[3,1,1,1,1,1,1,1,1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[25,[4,3,10,2,8,5,1,9,6,7,2,3,15,4]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "target = 7, nums = [2, 3, 1, 2, 4, 3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the subarray [4, 3] sums to 7 in just 2 elements, the shortest possible"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "target = 4, nums = [1, 4, 4]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "target = 11, nums = [1, 1, 1, 1, 1, 1, 1, 1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "no contiguous subarray sums to at least 11"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[7,[2,3,1,2,4,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[4,[1,4,4]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[11,[1,1,1,1,1,1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[15,[1,2,3,4,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[100,[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[3,[1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[5,[2,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[100,[1,2,3,4,5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[6,[10,2,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[50,[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[9,[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[1,[5,1,3,2,4]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[39,[1,4,4]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[213,[12,28,83,4,25,26,25,2,25,25,25,12]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[7,[2,1,5,2,3,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[280,[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[11,[1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[3,[3,1,1,1,1,1,1,1,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[25,[4,3,10,2,8,5,1,9,6,7,2,3,15,4]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minSubArrayLen(self, target, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minSubArrayLen(int target, vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minSubArrayLen(int target, int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minSubArrayLen(target: Int, nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minSubArrayLen(target, nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minSubArrayLen(self, target, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minSubArrayLen(int target, vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minSubArrayLen(int target, int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minSubArrayLen(target: Int, nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minSubArrayLen(target, nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minSubArrayLen(self, target, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minSubArrayLen(int target, vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minSubArrayLen(int target, int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minSubArrayLen(target: Int, nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minSubArrayLen(target, nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minSubArrayLen(self, target, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minSubArrayLen(int target, vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minSubArrayLen(int target, int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minSubArrayLen(target: Int, nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minSubArrayLen(target, nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "variable-size sliding window - grow the window until the sum meets the target, then shrink from the left as much as possible"
+    },
+    "bruteForce": {
+      "approach": "for every starting index, extend forward summing until the target is reached, tracking the shortest length found",
+      "time": "O(n^2)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "variable-size sliding window - grow the window until the sum meets the target, then shrink from the left as much as possible",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "since all numbers are positive, what happens to the window's sum as you shrink it from the left? does it only ever move in one direction?",
+      "grow the window by moving the right edge forward, adding to a running sum, until the sum is at least the target",
+      "once the target is met, that's a valid window - can you shrink it from the left while it's still valid, to find something shorter?",
+      "keep shrinking from the left (subtracting from the running sum and updating the best length) until the sum drops below target, then go back to growing the right edge"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every starting index, extend forward summing until the target is reached, tracking the shortest length found",
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,632 @@
+{
+  "id": "number-of-dice-rolls-with-target-sum",
+  "questionId": "number-of-dice-rolls-with-target-sum",
+  "slug": "number-of-dice-rolls-with-target-sum",
+  "title": "Number of Dice Rolls With Target Sum",
+  "difficulty": "Medium",
+  "category": "Knapsack",
+  "patterns": [
+    "knapsack",
+    "bounded knapsack",
+    "dynamic programming"
+  ],
+  "lists": [],
+  "hints": [
+    "unlike coin change, here you must use exactly n dice, not 'as few as possible' or 'any number' - the item count itself is fixed, so the die index needs to be part of your state",
+    "define dp[i][t] as the number of ways to reach sum t using exactly i dice, with dp[0][0] = 1 and dp[0][t] = 0 for t > 0",
+    "for die i, try every face value f from 1 to k: dp[i][t] = sum over f of dp[i-1][t-f], as long as t-f >= 0",
+    "process dice one at a time from 1 to n, and for each, sweep every reachable target value, summing contributions from the previous die's row over all k face values",
+    "the final answer is dp[n][target] mod 1000000007 - remember to take the modulo after every addition, not just at the end, to avoid overflow in languages with fixed-size integers"
+  ],
+  "commonMistakes": [
+    "not tracking the die index as part of the DP state, which conflates 'used at most n dice' with the required 'used exactly n dice'",
+    "forgetting to apply the modulo during intermediate additions, causing overflow in fixed-width integer types",
+    "allowing a face value loop to run past k or below 1, or not checking t - f >= 0 before indexing"
+  ],
+  "content": {
+    "problemStatement": "You roll `n` identical dice, each with `k` faces numbered 1 through k. The dice are treated as ordered, distinguishable positions, so two ways are distinct if at least one die shows a different face value.\n\n**Given `n`, `k`, and a `target` sum, return the number of distinct ways to roll the n dice so that the face values add up to exactly target, modulo 1000000007.**\n",
+    "constraints": [
+      "1 <= n, k",
+      "each die independently shows a value from 1 to k",
+      "answer must be returned modulo 1000000007"
+    ],
+    "notes": [
+      "target is below the minimum possible sum (n) or above the maximum possible sum (n * k), giving 0",
+      "a single die (n = 1)",
+      "target exactly equal to n (every die must show 1) or exactly n * k (every die must show k)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 1, k = 6, target = 3",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "with a single die, only rolling a 3 reaches the target"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 2, k = 6, target = 7",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "the pairs (1,6), (2,5), (3,4), (4,3), (5,2), (6,1) all sum to 7"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 2, k = 6, target = 13",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "the maximum possible sum with two 6-sided dice is 12, so 13 is unreachable"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[1,6,3]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[2,6,7]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[2,6,13]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[3,2,5]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,6,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[1,6,6]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[1,6,7]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[2,6,2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[2,6,12]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[3,6,10]",
+        "output": "27",
+        "expectedOutput": "27",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[5,4,10]",
+        "output": "101",
+        "expectedOutput": "101",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[1,1,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[2,2,3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[4,3,8]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[30,30,500]",
+        "output": "222616187",
+        "expectedOutput": "222616187",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[10,6,30]",
+        "output": "2930455",
+        "expectedOutput": "2930455",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[1,6,0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[3,3,9]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[2,6,1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[20,20,200]",
+        "output": "270319085",
+        "expectedOutput": "270319085",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 1, k = 6, target = 3",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "with a single die, only rolling a 3 reaches the target"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 2, k = 6, target = 7",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "the pairs (1,6), (2,5), (3,4), (4,3), (5,2), (6,1) all sum to 7"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 2, k = 6, target = 13",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "the maximum possible sum with two 6-sided dice is 12, so 13 is unreachable"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 1, k = 6, target = 3",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "with a single die, only rolling a 3 reaches the target"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 2, k = 6, target = 7",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "the pairs (1,6), (2,5), (3,4), (4,3), (5,2), (6,1) all sum to 7"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 2, k = 6, target = 13",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "the maximum possible sum with two 6-sided dice is 12, so 13 is unreachable"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[1,6,3]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[2,6,7]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[2,6,13]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[3,2,5]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[1,6,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[1,6,6]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[1,6,7]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[2,6,2]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[2,6,12]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[3,6,10]",
+      "output": "27",
+      "expectedOutput": "27",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[5,4,10]",
+      "output": "101",
+      "expectedOutput": "101",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[1,1,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[2,2,3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[4,3,8]",
+      "output": "19",
+      "expectedOutput": "19",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[30,30,500]",
+      "output": "222616187",
+      "expectedOutput": "222616187",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[10,6,30]",
+      "output": "2930455",
+      "expectedOutput": "2930455",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[1,6,0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[3,3,9]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[2,6,1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[20,20,200]",
+      "output": "270319085",
+      "expectedOutput": "270319085",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 1, k = 6, target = 3",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "with a single die, only rolling a 3 reaches the target"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 2, k = 6, target = 7",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "the pairs (1,6), (2,5), (3,4), (4,3), (5,2), (6,1) all sum to 7"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 2, k = 6, target = 13",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "the maximum possible sum with two 6-sided dice is 12, so 13 is unreachable"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[1,6,3]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[2,6,7]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[2,6,13]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[3,2,5]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,6,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[1,6,6]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[1,6,7]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[2,6,2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[2,6,12]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[3,6,10]",
+        "output": "27",
+        "expectedOutput": "27",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[5,4,10]",
+        "output": "101",
+        "expectedOutput": "101",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[1,1,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[2,2,3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[4,3,8]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[30,30,500]",
+        "output": "222616187",
+        "expectedOutput": "222616187",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[10,6,30]",
+        "output": "2930455",
+        "expectedOutput": "2930455",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[1,6,0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[3,3,9]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[2,6,1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[20,20,200]",
+        "output": "270319085",
+        "expectedOutput": "270319085",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def numRollsToTarget(self, n, k, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numRollsToTarget(int n, int k, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numRollsToTarget(int n, int k, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numRollsToTarget(n: Int, k: Int, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numRollsToTarget(n, k, target) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def numRollsToTarget(self, n, k, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numRollsToTarget(int n, int k, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numRollsToTarget(int n, int k, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numRollsToTarget(n: Int, k: Int, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numRollsToTarget(n, k, target) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def numRollsToTarget(self, n, k, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numRollsToTarget(int n, int k, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numRollsToTarget(int n, int k, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numRollsToTarget(n: Int, k: Int, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numRollsToTarget(n, k, target) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def numRollsToTarget(self, n, k, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numRollsToTarget(int n, int k, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numRollsToTarget(int n, int k, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numRollsToTarget(n: Int, k: Int, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numRollsToTarget(n, k, target) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n * target * k)",
+      "space": "O(target), or O(n * target) if the full table is kept",
+      "pattern": "knapsack (bounded - exactly n items must be used, each 'item' being one die roll contributing a value from 1 to k toward the target sum)"
+    },
+    "bruteForce": {
+      "approach": "recursively try every face value 1..k for the current die, decrementing the remaining target and the remaining die count, and count the leaves that land exactly on 0 with 0 dice left",
+      "time": "O(k^n) without memoization",
+      "space": "O(n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "knapsack (bounded - exactly n items must be used, each 'item' being one die roll contributing a value from 1 to k toward the target sum)",
+    "time": "O(n * target * k)",
+    "space": "O(target), or O(n * target) if the full table is kept",
+    "hint_ladder": [
+      "unlike coin change, here you must use exactly n dice, not 'as few as possible' or 'any number' - the item count itself is fixed, so the die index needs to be part of your state",
+      "define dp[i][t] as the number of ways to reach sum t using exactly i dice, with dp[0][0] = 1 and dp[0][t] = 0 for t > 0",
+      "for die i, try every face value f from 1 to k: dp[i][t] = sum over f of dp[i-1][t-f], as long as t-f >= 0",
+      "process dice one at a time from 1 to n, and for each, sweep every reachable target value, summing contributions from the previous die's row over all k face values",
+      "the final answer is dp[n][target] mod 1000000007 - remember to take the modulo after every addition, not just at the end, to avoid overflow in languages with fixed-size integers"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try every face value 1..k for the current die, decrementing the remaining target and the remaining die count, and count the leaves that land exactly on 0 with 0 dice left",
+    "time": "O(k^n) without memoization",
+    "space": "O(n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

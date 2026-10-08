@@ -1,0 +1,675 @@
+{
+  "id": "plus-one",
+  "questionId": "plus-one",
+  "slug": "plus-one",
+  "title": "Plus One",
+  "difficulty": "Easy",
+  "category": "Greedy",
+  "patterns": [
+    "greedy",
+    "simulation"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "adding one only ever affects the last digit, unless that digit is a 9 - then the carry needs to propagate further left",
+    "walk the array from the last index toward the first; if the current digit is less than 9, add one to it and you're done immediately",
+    "if the current digit is 9, it becomes 0 and the carry continues to the digit before it",
+    "what happens if every single digit is 9? the carry runs off the front of the array, and you need one new leading digit (a 1) that wasn't there before"
+  ],
+  "commonMistakes": [
+    "converting to a native integer type, which can overflow for the 100-digit constraint",
+    "forgetting the case where every digit is 9 and the result needs to grow by one digit at the front",
+    "stopping the carry propagation one digit too early or too late",
+    "building a new array instead of noticing most digits are unchanged and only the trailing 9s (plus one flipped digit) need to change"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of digits representing a large non-negative\ninteger, with the most significant digit first and no leading zeroes\n(unless the number itself is a single 0).\n\n**Add one to the integer and return the resulting array of digits, in the same most-significant-first order.**\n",
+    "constraints": [
+      "1 <= digits.length <= 100",
+      "0 <= digits[i] <= 9",
+      "digits does not contain any leading zeroes, except the array [0] itself"
+    ],
+    "notes": [
+      "the array is a single digit",
+      "the array is a single 0",
+      "adding one causes a carry all the way through, growing the array by one digit (e.g. [9,9,9] -> [1,0,0,0])",
+      "no carry occurs at all, only the last digit changes"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "digits = [1,2,3]",
+        "output": "[1,2,4]",
+        "expectedOutput": "[1,2,4]",
+        "explanation": "123 + 1 = 124"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "digits = [9,9]",
+        "output": "[1,0,0]",
+        "expectedOutput": "[1,0,0]",
+        "explanation": "99 + 1 = 100, which needs one extra digit"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "digits = [0]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": "0 + 1 = 1"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3]]",
+        "output": "[1,2,4]",
+        "expectedOutput": "[1,2,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[4,3,2,1]]",
+        "output": "[4,3,2,2]",
+        "expectedOutput": "[4,3,2,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[9]]",
+        "output": "[1,0]",
+        "expectedOutput": "[1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[9,9]]",
+        "output": "[1,0,0]",
+        "expectedOutput": "[1,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[9,9,9]]",
+        "output": "[1,0,0,0]",
+        "expectedOutput": "[1,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,9,9]]",
+        "output": "[2,0,0]",
+        "expectedOutput": "[2,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[8,9,9,9]]",
+        "output": "[9,0,0,0]",
+        "expectedOutput": "[9,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,0]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[2,9,9]]",
+        "output": "[3,0,0]",
+        "expectedOutput": "[3,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,9]]",
+        "output": "[1,3,0]",
+        "expectedOutput": "[1,3,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[9,8,9]]",
+        "output": "[9,9,0]",
+        "expectedOutput": "[9,9,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[5]]",
+        "output": "[6]",
+        "expectedOutput": "[6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,0,0,0]]",
+        "output": "[1,0,0,1]",
+        "expectedOutput": "[1,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,1,9]]",
+        "output": "[2,2,0]",
+        "expectedOutput": "[2,2,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[6,1,4,5,3,9,9]]",
+        "output": "[6,1,4,5,4,0,0]",
+        "expectedOutput": "[6,1,4,5,4,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[9,9,9,9,9]]",
+        "output": "[1,0,0,0,0,0]",
+        "expectedOutput": "[1,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,1,1,1]]",
+        "output": "[1,1,1,2]",
+        "expectedOutput": "[1,1,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[3,4,5]]",
+        "output": "[3,4,6]",
+        "expectedOutput": "[3,4,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[9,0]]",
+        "output": "[9,1]",
+        "expectedOutput": "[9,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,9]]",
+        "output": "[2,0]",
+        "expectedOutput": "[2,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[4,9,9]]",
+        "output": "[5,0,0]",
+        "expectedOutput": "[5,0,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "digits = [1,2,3]",
+      "output": "[1,2,4]",
+      "expectedOutput": "[1,2,4]",
+      "explanation": "123 + 1 = 124"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "digits = [9,9]",
+      "output": "[1,0,0]",
+      "expectedOutput": "[1,0,0]",
+      "explanation": "99 + 1 = 100, which needs one extra digit"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "digits = [0]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": "0 + 1 = 1"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "digits = [1,2,3]",
+      "output": "[1,2,4]",
+      "expectedOutput": "[1,2,4]",
+      "explanation": "123 + 1 = 124"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "digits = [9,9]",
+      "output": "[1,0,0]",
+      "expectedOutput": "[1,0,0]",
+      "explanation": "99 + 1 = 100, which needs one extra digit"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "digits = [0]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": "0 + 1 = 1"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3]]",
+      "output": "[1,2,4]",
+      "expectedOutput": "[1,2,4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[4,3,2,1]]",
+      "output": "[4,3,2,2]",
+      "expectedOutput": "[4,3,2,2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[9]]",
+      "output": "[1,0]",
+      "expectedOutput": "[1,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[0]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[9,9]]",
+      "output": "[1,0,0]",
+      "expectedOutput": "[1,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[9,9,9]]",
+      "output": "[1,0,0,0]",
+      "expectedOutput": "[1,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,9,9]]",
+      "output": "[2,0,0]",
+      "expectedOutput": "[2,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[8,9,9,9]]",
+      "output": "[9,0,0,0]",
+      "expectedOutput": "[9,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,0]]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[2,9,9]]",
+      "output": "[3,0,0]",
+      "expectedOutput": "[3,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,9]]",
+      "output": "[1,3,0]",
+      "expectedOutput": "[1,3,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[9,8,9]]",
+      "output": "[9,9,0]",
+      "expectedOutput": "[9,9,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[5]]",
+      "output": "[6]",
+      "expectedOutput": "[6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,0,0,0]]",
+      "output": "[1,0,0,1]",
+      "expectedOutput": "[1,0,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[2,1,9]]",
+      "output": "[2,2,0]",
+      "expectedOutput": "[2,2,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[6,1,4,5,3,9,9]]",
+      "output": "[6,1,4,5,4,0,0]",
+      "expectedOutput": "[6,1,4,5,4,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[9,9,9,9,9]]",
+      "output": "[1,0,0,0,0,0]",
+      "expectedOutput": "[1,0,0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,1,1,1]]",
+      "output": "[1,1,1,2]",
+      "expectedOutput": "[1,1,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[3,4,5]]",
+      "output": "[3,4,6]",
+      "expectedOutput": "[3,4,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[9,0]]",
+      "output": "[9,1]",
+      "expectedOutput": "[9,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[1,9]]",
+      "output": "[2,0]",
+      "expectedOutput": "[2,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[[4,9,9]]",
+      "output": "[5,0,0]",
+      "expectedOutput": "[5,0,0]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "digits = [1,2,3]",
+        "output": "[1,2,4]",
+        "expectedOutput": "[1,2,4]",
+        "explanation": "123 + 1 = 124"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "digits = [9,9]",
+        "output": "[1,0,0]",
+        "expectedOutput": "[1,0,0]",
+        "explanation": "99 + 1 = 100, which needs one extra digit"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "digits = [0]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": "0 + 1 = 1"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3]]",
+        "output": "[1,2,4]",
+        "expectedOutput": "[1,2,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[4,3,2,1]]",
+        "output": "[4,3,2,2]",
+        "expectedOutput": "[4,3,2,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[9]]",
+        "output": "[1,0]",
+        "expectedOutput": "[1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[9,9]]",
+        "output": "[1,0,0]",
+        "expectedOutput": "[1,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[9,9,9]]",
+        "output": "[1,0,0,0]",
+        "expectedOutput": "[1,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,9,9]]",
+        "output": "[2,0,0]",
+        "expectedOutput": "[2,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[8,9,9,9]]",
+        "output": "[9,0,0,0]",
+        "expectedOutput": "[9,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,0]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[2,9,9]]",
+        "output": "[3,0,0]",
+        "expectedOutput": "[3,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,9]]",
+        "output": "[1,3,0]",
+        "expectedOutput": "[1,3,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[9,8,9]]",
+        "output": "[9,9,0]",
+        "expectedOutput": "[9,9,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[5]]",
+        "output": "[6]",
+        "expectedOutput": "[6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,0,0,0]]",
+        "output": "[1,0,0,1]",
+        "expectedOutput": "[1,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,1,9]]",
+        "output": "[2,2,0]",
+        "expectedOutput": "[2,2,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[6,1,4,5,3,9,9]]",
+        "output": "[6,1,4,5,4,0,0]",
+        "expectedOutput": "[6,1,4,5,4,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[9,9,9,9,9]]",
+        "output": "[1,0,0,0,0,0]",
+        "expectedOutput": "[1,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,1,1,1]]",
+        "output": "[1,1,1,2]",
+        "expectedOutput": "[1,1,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[3,4,5]]",
+        "output": "[3,4,6]",
+        "expectedOutput": "[3,4,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[9,0]]",
+        "output": "[9,1]",
+        "expectedOutput": "[9,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,9]]",
+        "output": "[2,0]",
+        "expectedOutput": "[2,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[4,9,9]]",
+        "output": "[5,0,0]",
+        "expectedOutput": "[5,0,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def plusOne(self, digits):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> plusOne(vector<int>& digits) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] plusOne(int[] digits) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun plusOne(digits: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    plusOne(digits) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def plusOne(self, digits):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> plusOne(vector<int>& digits) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] plusOne(int[] digits) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun plusOne(digits: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    plusOne(digits) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def plusOne(self, digits):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> plusOne(vector<int>& digits) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] plusOne(int[] digits) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun plusOne(digits: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    plusOne(digits) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def plusOne(self, digits):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> plusOne(vector<int>& digits) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] plusOne(int[] digits) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun plusOne(digits: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    plusOne(digits) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra beyond the output (O(n) if the array grows by one digit)",
+      "pattern": "simulate the addition from the last digit, propagating a carry leftward"
+    },
+    "bruteForce": {
+      "approach": "convert the digit array to a native integer, add one, convert back to a digit array; breaks down once the array is longer than the native integer type can represent",
+      "time": "O(n)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "simulate the addition from the last digit, propagating a carry leftward",
+    "time": "O(n)",
+    "space": "O(1) extra beyond the output (O(n) if the array grows by one digit)",
+    "hint_ladder": [
+      "adding one only ever affects the last digit, unless that digit is a 9 - then the carry needs to propagate further left",
+      "walk the array from the last index toward the first; if the current digit is less than 9, add one to it and you're done immediately",
+      "if the current digit is 9, it becomes 0 and the carry continues to the digit before it",
+      "what happens if every single digit is 9? the carry runs off the front of the array, and you need one new leading digit (a 1) that wasn't there before"
+    ]
+  },
+  "bruteForce": {
+    "approach": "convert the digit array to a native integer, add one, convert back to a digit array; breaks down once the array is longer than the native integer type can represent",
+    "time": "O(n)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

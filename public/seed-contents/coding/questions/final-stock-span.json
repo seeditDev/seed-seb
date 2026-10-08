@@ -1,0 +1,629 @@
+{
+  "id": "final-stock-span",
+  "questionId": "final-stock-span",
+  "slug": "final-stock-span",
+  "title": "Stock Span (Batch)",
+  "difficulty": "Easy",
+  "category": "Monotonic stack",
+  "patterns": [
+    "monotonic stack",
+    "array"
+  ],
+  "lists": [],
+  "hints": [
+    "walking backwards from every single day is wasteful - once you know a price was beaten by a smaller span, can you skip past that whole stretch instead of re-checking it day by day?",
+    "keep a stack of days whose span hasn't been 'absorbed' yet. what should happen to a day on the stack once a later, higher price arrives?",
+    "while the stack's top price is <= today's price, pop it and add its span to today's running span, since today's span swallows that whole stretch at once",
+    "today's span starts at 1 (for itself), grows by absorbing popped spans, and then today gets pushed onto the stack with its own final span"
+  ],
+  "commonMistakes": [
+    "resetting the span counter incorrectly and not accumulating the popped spans before pushing the current day",
+    "using strict < instead of <= when comparing to the stack top, which would undercount spans with ties",
+    "storing just prices on the stack without also storing each day's already-computed span, forcing extra recomputation"
+  ],
+  "content": {
+    "problemStatement": "You're given the daily price of a stock as an array, in chronological\norder.\n\n**Return an array containing the span for every day, where a day's span is the number of consecutive days ending on that day, counting today and going backwards, during which the price was less than or equal to today's price.**\n",
+    "constraints": [
+      "1 <= prices.length <= 10^4",
+      "1 <= prices[i] <= 10^5",
+      "the span for a day always includes that day itself, so every span is at least 1"
+    ],
+    "notes": [
+      "strictly increasing prices, where every day's span extends all the way back to day 0",
+      "strictly decreasing prices, where every span is 1",
+      "a single day of prices"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "prices = [100, 80, 60, 70, 60, 75, 85]",
+        "output": "[1, 1, 1, 2, 1, 4, 6]",
+        "expectedOutput": "[1, 1, 1, 2, 1, 4, 6]",
+        "explanation": "on day 5 (price 75), the prior days 60, 70, 60 are all <= 75 but day 1 (price 80) is not, so the span is 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "prices = [10, 4, 5, 90, 120, 80]",
+        "output": "[1, 1, 2, 4, 5, 1]",
+        "expectedOutput": "[1, 1, 2, 4, 5, 1]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "prices = [1, 2, 3, 4, 5]",
+        "output": "[1, 2, 3, 4, 5]",
+        "expectedOutput": "[1, 2, 3, 4, 5]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[100,80,60,70,60,75,85]]",
+        "output": "[1,1,1,2,1,4,6]",
+        "expectedOutput": "[1,1,1,2,1,4,6]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[10,4,5,90,120,80]]",
+        "output": "[1,1,2,4,5,1]",
+        "expectedOutput": "[1,1,2,4,5,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,4,5]]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,4,3,2,1]]",
+        "output": "[1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[50]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[50,50,50,50]]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[10,20,30,40,50,60,70,80,90,100]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[100,90,80,70,60,50,40,30,20,10]]",
+        "output": "[1,1,1,1,1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,3,8,3,9,3,10,3,3,3]]",
+        "output": "[1,1,3,1,5,1,7,1,2,3]",
+        "expectedOutput": "[1,1,3,1,5,1,7,1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[67,75,176,176,48,167,60,171,38,58,165,188,48,34,19,137,55,191,76,8,111,33,176,156,4,71,38,22,68,116]]",
+        "output": "[1,2,3,4,1,2,1,4,1,2,3,12,1,1,1,4,1,18,1,1,3,1,5,1,1,2,1,1,3,6]",
+        "expectedOutput": "[1,2,3,4,1,2,1,4,1,2,3,12,1,1,1,4,1,18,1,1,3,1,5,1,1,2,1,1,3,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1,2,2,3,3,4,4,5,5]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[2,1]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[127,318,298,393,498,373,337,218,248,391,159,490,71,218,279,387,64,129,152,305]]",
+        "output": "[1,2,1,4,5,1,1,1,2,5,1,7,1,2,3,4,1,2,3,4]",
+        "expectedOutput": "[1,2,1,4,5,1,1,1,2,5,1,7,1,2,3,4,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,100,2,99,3,98,4,97]]",
+        "output": "[1,2,1,2,1,2,1,2]",
+        "expectedOutput": "[1,2,1,2,1,2,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[100,1,99,2,98,3,97,4]]",
+        "output": "[1,1,2,1,2,1,2,1]",
+        "expectedOutput": "[1,1,2,1,2,1,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[7,7,7,8,8,8,9,9,9]]",
+        "output": "[1,2,3,4,5,6,7,8,9]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "prices = [100, 80, 60, 70, 60, 75, 85]",
+      "output": "[1, 1, 1, 2, 1, 4, 6]",
+      "expectedOutput": "[1, 1, 1, 2, 1, 4, 6]",
+      "explanation": "on day 5 (price 75), the prior days 60, 70, 60 are all <= 75 but day 1 (price 80) is not, so the span is 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "prices = [10, 4, 5, 90, 120, 80]",
+      "output": "[1, 1, 2, 4, 5, 1]",
+      "expectedOutput": "[1, 1, 2, 4, 5, 1]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "prices = [1, 2, 3, 4, 5]",
+      "output": "[1, 2, 3, 4, 5]",
+      "expectedOutput": "[1, 2, 3, 4, 5]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "prices = [100, 80, 60, 70, 60, 75, 85]",
+      "output": "[1, 1, 1, 2, 1, 4, 6]",
+      "expectedOutput": "[1, 1, 1, 2, 1, 4, 6]",
+      "explanation": "on day 5 (price 75), the prior days 60, 70, 60 are all <= 75 but day 1 (price 80) is not, so the span is 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "prices = [10, 4, 5, 90, 120, 80]",
+      "output": "[1, 1, 2, 4, 5, 1]",
+      "expectedOutput": "[1, 1, 2, 4, 5, 1]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "prices = [1, 2, 3, 4, 5]",
+      "output": "[1, 2, 3, 4, 5]",
+      "expectedOutput": "[1, 2, 3, 4, 5]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[100,80,60,70,60,75,85]]",
+      "output": "[1,1,1,2,1,4,6]",
+      "expectedOutput": "[1,1,1,2,1,4,6]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[10,4,5,90,120,80]]",
+      "output": "[1,1,2,4,5,1]",
+      "expectedOutput": "[1,1,2,4,5,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3,4,5]]",
+      "output": "[1,2,3,4,5]",
+      "expectedOutput": "[1,2,3,4,5]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[5,4,3,2,1]]",
+      "output": "[1,1,1,1,1]",
+      "expectedOutput": "[1,1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[50]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[50,50,50,50]]",
+      "output": "[1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[10,20,30,40,50,60,70,80,90,100]]",
+      "output": "[1,2,3,4,5,6,7,8,9,10]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[100,90,80,70,60,50,40,30,20,10]]",
+      "output": "[1,1,1,1,1,1,1,1,1,1]",
+      "expectedOutput": "[1,1,1,1,1,1,1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[5,3,8,3,9,3,10,3,3,3]]",
+      "output": "[1,1,3,1,5,1,7,1,2,3]",
+      "expectedOutput": "[1,1,3,1,5,1,7,1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[67,75,176,176,48,167,60,171,38,58,165,188,48,34,19,137,55,191,76,8,111,33,176,156,4,71,38,22,68,116]]",
+      "output": "[1,2,3,4,1,2,1,4,1,2,3,12,1,1,1,4,1,18,1,1,3,1,5,1,1,2,1,1,3,6]",
+      "expectedOutput": "[1,2,3,4,1,2,1,4,1,2,3,12,1,1,1,4,1,18,1,1,3,1,5,1,1,2,1,1,3,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,1,2,2,3,3,4,4,5,5]]",
+      "output": "[1,2,3,4,5,6,7,8,9,10]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2]]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[2,1]]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[127,318,298,393,498,373,337,218,248,391,159,490,71,218,279,387,64,129,152,305]]",
+      "output": "[1,2,1,4,5,1,1,1,2,5,1,7,1,2,3,4,1,2,3,4]",
+      "expectedOutput": "[1,2,1,4,5,1,1,1,2,5,1,7,1,2,3,4,1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10]]",
+      "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,100,2,99,3,98,4,97]]",
+      "output": "[1,2,1,2,1,2,1,2]",
+      "expectedOutput": "[1,2,1,2,1,2,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[100,1,99,2,98,3,97,4]]",
+      "output": "[1,1,2,1,2,1,2,1]",
+      "expectedOutput": "[1,1,2,1,2,1,2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+      "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[7,7,7,8,8,8,9,9,9]]",
+      "output": "[1,2,3,4,5,6,7,8,9]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "prices = [100, 80, 60, 70, 60, 75, 85]",
+        "output": "[1, 1, 1, 2, 1, 4, 6]",
+        "expectedOutput": "[1, 1, 1, 2, 1, 4, 6]",
+        "explanation": "on day 5 (price 75), the prior days 60, 70, 60 are all <= 75 but day 1 (price 80) is not, so the span is 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "prices = [10, 4, 5, 90, 120, 80]",
+        "output": "[1, 1, 2, 4, 5, 1]",
+        "expectedOutput": "[1, 1, 2, 4, 5, 1]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "prices = [1, 2, 3, 4, 5]",
+        "output": "[1, 2, 3, 4, 5]",
+        "expectedOutput": "[1, 2, 3, 4, 5]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[100,80,60,70,60,75,85]]",
+        "output": "[1,1,1,2,1,4,6]",
+        "expectedOutput": "[1,1,1,2,1,4,6]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[10,4,5,90,120,80]]",
+        "output": "[1,1,2,4,5,1]",
+        "expectedOutput": "[1,1,2,4,5,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,4,5]]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,4,3,2,1]]",
+        "output": "[1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[50]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[50,50,50,50]]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[10,20,30,40,50,60,70,80,90,100]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[100,90,80,70,60,50,40,30,20,10]]",
+        "output": "[1,1,1,1,1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,3,8,3,9,3,10,3,3,3]]",
+        "output": "[1,1,3,1,5,1,7,1,2,3]",
+        "expectedOutput": "[1,1,3,1,5,1,7,1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[67,75,176,176,48,167,60,171,38,58,165,188,48,34,19,137,55,191,76,8,111,33,176,156,4,71,38,22,68,116]]",
+        "output": "[1,2,3,4,1,2,1,4,1,2,3,12,1,1,1,4,1,18,1,1,3,1,5,1,1,2,1,1,3,6]",
+        "expectedOutput": "[1,2,3,4,1,2,1,4,1,2,3,12,1,1,1,4,1,18,1,1,3,1,5,1,1,2,1,1,3,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1,2,2,3,3,4,4,5,5]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[2,1]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[127,318,298,393,498,373,337,218,248,391,159,490,71,218,279,387,64,129,152,305]]",
+        "output": "[1,2,1,4,5,1,1,1,2,5,1,7,1,2,3,4,1,2,3,4]",
+        "expectedOutput": "[1,2,1,4,5,1,1,1,2,5,1,7,1,2,3,4,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,100,2,99,3,98,4,97]]",
+        "output": "[1,2,1,2,1,2,1,2]",
+        "expectedOutput": "[1,2,1,2,1,2,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[100,1,99,2,98,3,97,4]]",
+        "output": "[1,1,2,1,2,1,2,1]",
+        "expectedOutput": "[1,1,2,1,2,1,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[7,7,7,8,8,8,9,9,9]]",
+        "output": "[1,2,3,4,5,6,7,8,9]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def stockSpans(self, prices):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> stockSpans(vector<int>& prices) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] stockSpans(int[] prices) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun stockSpans(prices: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    stockSpans(prices) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def stockSpans(self, prices):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> stockSpans(vector<int>& prices) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] stockSpans(int[] prices) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun stockSpans(prices: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    stockSpans(prices) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def stockSpans(self, prices):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> stockSpans(vector<int>& prices) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] stockSpans(int[] prices) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun stockSpans(prices: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    stockSpans(prices) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def stockSpans(self, prices):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> stockSpans(vector<int>& prices) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] stockSpans(int[] prices) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun stockSpans(prices: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    stockSpans(prices) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the stack",
+      "pattern": "monotonic decreasing stack of (price, span) pairs, or just indices, processed left to right"
+    },
+    "bruteForce": {
+      "approach": "for each day, walk backwards day by day counting how many consecutive prior prices are <= today's price",
+      "time": "O(n^2)",
+      "space": "O(1) beyond the output"
+    }
+  },
+  "optimal": {
+    "pattern": "monotonic decreasing stack of (price, span) pairs, or just indices, processed left to right",
+    "time": "O(n)",
+    "space": "O(n) for the stack",
+    "hint_ladder": [
+      "walking backwards from every single day is wasteful - once you know a price was beaten by a smaller span, can you skip past that whole stretch instead of re-checking it day by day?",
+      "keep a stack of days whose span hasn't been 'absorbed' yet. what should happen to a day on the stack once a later, higher price arrives?",
+      "while the stack's top price is <= today's price, pop it and add its span to today's running span, since today's span swallows that whole stretch at once",
+      "today's span starts at 1 (for itself), grows by absorbing popped spans, and then today gets pushed onto the stack with its own final span"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each day, walk backwards day by day counting how many consecutive prior prices are <= today's price",
+    "time": "O(n^2)",
+    "space": "O(1) beyond the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,680 @@
+{
+  "id": "clone-graph",
+  "questionId": "clone-graph",
+  "slug": "clone-graph",
+  "title": "Clone Graph",
+  "difficulty": "Medium",
+  "category": "Graphs",
+  "patterns": [
+    "graph dfs/bfs",
+    "hash map"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "a graph can have cycles, so a naive recursive clone-and-recurse-into-every-neighbor approach will loop forever without some way to remember what's already been cloned",
+    "keep a hash map from original node label to its already-created clone node",
+    "when visiting a node: if it's already in the map, you're done, just return its existing clone (this is what breaks the infinite cycle); otherwise create a new clone node for it, store it in the map immediately (before recursing into neighbors), then recurse into each neighbor and attach the clone of each returned neighbor",
+    "storing the new clone in the map before recursing into neighbors is essential - it's what lets a neighbor that cycles back to this node find the clone already waiting instead of trying to clone it again",
+    "once every node has been visited and cloned, walk the map in label order and read off each clone's neighbor list, sorted ascending, to produce the final adjacency list"
+  ],
+  "commonMistakes": [
+    "not marking a node as cloned until after recursing into all of its neighbors, which causes infinite recursion on any cycle",
+    "creating a fresh clone for a node every time it's encountered as a neighbor, instead of reusing the one already stored in the map, producing multiple distinct clones of the same node",
+    "reading the adjacency list back in the original input's row order per node instead of sorting each row ascending before returning it",
+    "confusing node labels with 0-indexed array positions when building the label-to-clone map or the final output rows"
+  ],
+  "content": {
+    "problemStatement": "You're given a connected, undirected graph with `n` nodes labeled 1 through n, as an adjacency list `graph`, where `graph[i]` is the list of neighbor labels for node i + 1 (so `graph[0]` holds node 1's neighbors, `graph[1]` holds node 2's neighbors, and so on).\n\n**Build a deep copy of the entire graph, meaning every node and every edge is a brand new object, not a reference to the original.**\n\nTo prove the clone is structurally correct, re-derive its adjacency list from the cloned graph you built (not from the input) and return it, with each row's neighbors sorted in ascending order and rows ordered by node label.\n",
+    "constraints": [
+      "1 <= n <= 100 nodes",
+      "the graph is connected (every node is reachable from every other node)",
+      "no self-loops and no repeated edges",
+      "the adjacency list is symmetric: if node a lists node b as a neighbor, node b lists node a"
+    ],
+    "notes": [
+      "a single node with no neighbors",
+      "a graph that is just one cycle (every node has exactly two neighbors)",
+      "a densely connected graph where most nodes are neighbors of most other nodes",
+      "a tree-shaped graph (no cycles), including leaf nodes with only one neighbor"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "graph = [[2, 4], [1, 3], [2, 4], [1, 3]]",
+        "output": "[[2, 4], [1, 3], [2, 4], [1, 3]]",
+        "expectedOutput": "[[2, 4], [1, 3], [2, 4], [1, 3]]",
+        "explanation": "a 4-cycle: node 1 connects to 2 and 4, node 2 connects to 1 and 3, and so on; the clone reproduces the same connections"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "graph = [[]]",
+        "output": "[[]]",
+        "expectedOutput": "[[]]",
+        "explanation": "a single node with no edges clones to a single node with no edges"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "graph = [[3, 2], [3, 1], [2, 1]]",
+        "output": "[[2, 3], [1, 3], [1, 2]]",
+        "expectedOutput": "[[2, 3], [1, 3], [1, 2]]",
+        "explanation": "a triangle among nodes 1, 2, and 3; the input row order within each list doesn't matter, only the resulting sorted adjacency does"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[]]]",
+        "output": "[[]]",
+        "expectedOutput": "[[]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[2],[1]]]",
+        "output": "[[2],[1]]",
+        "expectedOutput": "[[2],[1]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[3,2],[3,1],[2,1]]]",
+        "output": "[[2,3],[1,3],[1,2]]",
+        "expectedOutput": "[[2,3],[1,3],[1,2]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[4,2],[3,1],[4,2],[3,1]]]",
+        "output": "[[2,4],[1,3],[2,4],[1,3]]",
+        "expectedOutput": "[[2,4],[1,3],[2,4],[1,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[2],[3,1],[4,2],[3]]]",
+        "output": "[[2],[1,3],[2,4],[3]]",
+        "expectedOutput": "[[2],[1,3],[2,4],[3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[5,3,2,4],[1],[1],[1],[1]]]",
+        "output": "[[2,3,4,5],[1],[1],[1],[1]]",
+        "expectedOutput": "[[2,3,4,5],[1],[1],[1],[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[6,2],[3,1],[4,2],[5,3],[6,4],[1,5]]]",
+        "output": "[[2,6],[1,3],[2,4],[3,5],[4,6],[1,5]]",
+        "expectedOutput": "[[2,6],[1,3],[2,4],[3,5],[4,6],[1,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[2],[1,3],[2]]]",
+        "output": "[[2],[1,3],[2]]",
+        "expectedOutput": "[[2],[1,3],[2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[4,3,2],[4,1,3],[1,4,2],[2,3,1]]]",
+        "output": "[[2,3,4],[1,3,4],[1,2,4],[1,2,3]]",
+        "expectedOutput": "[[2,3,4],[1,3,4],[1,2,4],[1,2,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[3,2],[5,1,4],[7,1,6],[2],[2],[3],[3]]]",
+        "output": "[[2,3],[1,4,5],[1,6,7],[2],[2],[3],[3]]",
+        "expectedOutput": "[[2,3],[1,4,5],[1,6,7],[2],[2],[3],[3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[3,2],[3,1],[5,1,4,2],[5,3],[4,3]]]",
+        "output": "[[2,3],[1,3],[1,2,4,5],[3,5],[3,4]]",
+        "expectedOutput": "[[2,3],[1,3],[1,2,4,5],[3,5],[3,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[2],[3,1],[4,2],[5,3],[6,4],[7,5],[8,6],[7]]]",
+        "output": "[[2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7]]",
+        "expectedOutput": "[[2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[4,2,3],[3,1],[2,1],[1]]]",
+        "output": "[[2,3,4],[1,3],[1,2],[1]]",
+        "expectedOutput": "[[2,3,4],[1,3],[1,2],[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[3,2],[1],[1]]]",
+        "output": "[[2,3],[1],[1]]",
+        "expectedOutput": "[[2,3],[1],[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[2,4],[3,1],[4,2],[1,3]]]",
+        "output": "[[2,4],[1,3],[2,4],[1,3]]",
+        "expectedOutput": "[[2,4],[1,3],[2,4],[1,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[3,2],[3,1],[4,1,2],[6,3,5],[6,4],[5,4]]]",
+        "output": "[[2,3],[1,3],[1,2,4],[3,5,6],[4,6],[4,5]]",
+        "expectedOutput": "[[2,3],[1,3],[1,2,4],[3,5,6],[4,6],[4,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[5,2],[3,1],[4,2],[5,3],[1,4]]]",
+        "output": "[[2,5],[1,3],[2,4],[3,5],[1,4]]",
+        "expectedOutput": "[[2,5],[1,3],[2,4],[3,5],[1,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[3,2],[5,1,4],[7,1,6],[2],[2],[3],[9,3,8],[7],[7]]]",
+        "output": "[[2,3],[1,4,5],[1,6,7],[2],[2],[3],[3,8,9],[7],[7]]",
+        "expectedOutput": "[[2,3],[1,4,5],[1,6,7],[2],[2],[3],[3,8,9],[7],[7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[2,3],[3,1],[1,2]]]",
+        "output": "[[2,3],[1,3],[1,2]]",
+        "expectedOutput": "[[2,3],[1,3],[1,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[2],[3,1],[4,2],[5,3],[6,4],[7,5],[8,6],[9,7],[10,8],[9]]]",
+        "output": "[[2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7,9],[8,10],[9]]",
+        "expectedOutput": "[[2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7,9],[8,10],[9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[2],[3,1],[2]]]",
+        "output": "[[2],[1,3],[2]]",
+        "expectedOutput": "[[2],[1,3],[2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[[4],[4],[4],[3,1,2]]]",
+        "output": "[[4],[4],[4],[1,2,3]]",
+        "expectedOutput": "[[4],[4],[4],[1,2,3]]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "graph = [[2, 4], [1, 3], [2, 4], [1, 3]]",
+      "output": "[[2, 4], [1, 3], [2, 4], [1, 3]]",
+      "expectedOutput": "[[2, 4], [1, 3], [2, 4], [1, 3]]",
+      "explanation": "a 4-cycle: node 1 connects to 2 and 4, node 2 connects to 1 and 3, and so on; the clone reproduces the same connections"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "graph = [[]]",
+      "output": "[[]]",
+      "expectedOutput": "[[]]",
+      "explanation": "a single node with no edges clones to a single node with no edges"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "graph = [[3, 2], [3, 1], [2, 1]]",
+      "output": "[[2, 3], [1, 3], [1, 2]]",
+      "expectedOutput": "[[2, 3], [1, 3], [1, 2]]",
+      "explanation": "a triangle among nodes 1, 2, and 3; the input row order within each list doesn't matter, only the resulting sorted adjacency does"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "graph = [[2, 4], [1, 3], [2, 4], [1, 3]]",
+      "output": "[[2, 4], [1, 3], [2, 4], [1, 3]]",
+      "expectedOutput": "[[2, 4], [1, 3], [2, 4], [1, 3]]",
+      "explanation": "a 4-cycle: node 1 connects to 2 and 4, node 2 connects to 1 and 3, and so on; the clone reproduces the same connections"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "graph = [[]]",
+      "output": "[[]]",
+      "expectedOutput": "[[]]",
+      "explanation": "a single node with no edges clones to a single node with no edges"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "graph = [[3, 2], [3, 1], [2, 1]]",
+      "output": "[[2, 3], [1, 3], [1, 2]]",
+      "expectedOutput": "[[2, 3], [1, 3], [1, 2]]",
+      "explanation": "a triangle among nodes 1, 2, and 3; the input row order within each list doesn't matter, only the resulting sorted adjacency does"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[]]]",
+      "output": "[[]]",
+      "expectedOutput": "[[]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[2],[1]]]",
+      "output": "[[2],[1]]",
+      "expectedOutput": "[[2],[1]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[3,2],[3,1],[2,1]]]",
+      "output": "[[2,3],[1,3],[1,2]]",
+      "expectedOutput": "[[2,3],[1,3],[1,2]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[4,2],[3,1],[4,2],[3,1]]]",
+      "output": "[[2,4],[1,3],[2,4],[1,3]]",
+      "expectedOutput": "[[2,4],[1,3],[2,4],[1,3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[2],[3,1],[4,2],[3]]]",
+      "output": "[[2],[1,3],[2,4],[3]]",
+      "expectedOutput": "[[2],[1,3],[2,4],[3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[5,3,2,4],[1],[1],[1],[1]]]",
+      "output": "[[2,3,4,5],[1],[1],[1],[1]]",
+      "expectedOutput": "[[2,3,4,5],[1],[1],[1],[1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[6,2],[3,1],[4,2],[5,3],[6,4],[1,5]]]",
+      "output": "[[2,6],[1,3],[2,4],[3,5],[4,6],[1,5]]",
+      "expectedOutput": "[[2,6],[1,3],[2,4],[3,5],[4,6],[1,5]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[2],[1,3],[2]]]",
+      "output": "[[2],[1,3],[2]]",
+      "expectedOutput": "[[2],[1,3],[2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[4,3,2],[4,1,3],[1,4,2],[2,3,1]]]",
+      "output": "[[2,3,4],[1,3,4],[1,2,4],[1,2,3]]",
+      "expectedOutput": "[[2,3,4],[1,3,4],[1,2,4],[1,2,3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[3,2],[5,1,4],[7,1,6],[2],[2],[3],[3]]]",
+      "output": "[[2,3],[1,4,5],[1,6,7],[2],[2],[3],[3]]",
+      "expectedOutput": "[[2,3],[1,4,5],[1,6,7],[2],[2],[3],[3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[3,2],[3,1],[5,1,4,2],[5,3],[4,3]]]",
+      "output": "[[2,3],[1,3],[1,2,4,5],[3,5],[3,4]]",
+      "expectedOutput": "[[2,3],[1,3],[1,2,4,5],[3,5],[3,4]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[2],[3,1],[4,2],[5,3],[6,4],[7,5],[8,6],[7]]]",
+      "output": "[[2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7]]",
+      "expectedOutput": "[[2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[4,2,3],[3,1],[2,1],[1]]]",
+      "output": "[[2,3,4],[1,3],[1,2],[1]]",
+      "expectedOutput": "[[2,3,4],[1,3],[1,2],[1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[3,2],[1],[1]]]",
+      "output": "[[2,3],[1],[1]]",
+      "expectedOutput": "[[2,3],[1],[1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[2,4],[3,1],[4,2],[1,3]]]",
+      "output": "[[2,4],[1,3],[2,4],[1,3]]",
+      "expectedOutput": "[[2,4],[1,3],[2,4],[1,3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[3,2],[3,1],[4,1,2],[6,3,5],[6,4],[5,4]]]",
+      "output": "[[2,3],[1,3],[1,2,4],[3,5,6],[4,6],[4,5]]",
+      "expectedOutput": "[[2,3],[1,3],[1,2,4],[3,5,6],[4,6],[4,5]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[5,2],[3,1],[4,2],[5,3],[1,4]]]",
+      "output": "[[2,5],[1,3],[2,4],[3,5],[1,4]]",
+      "expectedOutput": "[[2,5],[1,3],[2,4],[3,5],[1,4]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[3,2],[5,1,4],[7,1,6],[2],[2],[3],[9,3,8],[7],[7]]]",
+      "output": "[[2,3],[1,4,5],[1,6,7],[2],[2],[3],[3,8,9],[7],[7]]",
+      "expectedOutput": "[[2,3],[1,4,5],[1,6,7],[2],[2],[3],[3,8,9],[7],[7]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[2,3],[3,1],[1,2]]]",
+      "output": "[[2,3],[1,3],[1,2]]",
+      "expectedOutput": "[[2,3],[1,3],[1,2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[2],[3,1],[4,2],[5,3],[6,4],[7,5],[8,6],[9,7],[10,8],[9]]]",
+      "output": "[[2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7,9],[8,10],[9]]",
+      "expectedOutput": "[[2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7,9],[8,10],[9]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[[2],[3,1],[2]]]",
+      "output": "[[2],[1,3],[2]]",
+      "expectedOutput": "[[2],[1,3],[2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[[[4],[4],[4],[3,1,2]]]",
+      "output": "[[4],[4],[4],[1,2,3]]",
+      "expectedOutput": "[[4],[4],[4],[1,2,3]]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "graph = [[2, 4], [1, 3], [2, 4], [1, 3]]",
+        "output": "[[2, 4], [1, 3], [2, 4], [1, 3]]",
+        "expectedOutput": "[[2, 4], [1, 3], [2, 4], [1, 3]]",
+        "explanation": "a 4-cycle: node 1 connects to 2 and 4, node 2 connects to 1 and 3, and so on; the clone reproduces the same connections"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "graph = [[]]",
+        "output": "[[]]",
+        "expectedOutput": "[[]]",
+        "explanation": "a single node with no edges clones to a single node with no edges"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "graph = [[3, 2], [3, 1], [2, 1]]",
+        "output": "[[2, 3], [1, 3], [1, 2]]",
+        "expectedOutput": "[[2, 3], [1, 3], [1, 2]]",
+        "explanation": "a triangle among nodes 1, 2, and 3; the input row order within each list doesn't matter, only the resulting sorted adjacency does"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[]]]",
+        "output": "[[]]",
+        "expectedOutput": "[[]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[2],[1]]]",
+        "output": "[[2],[1]]",
+        "expectedOutput": "[[2],[1]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[3,2],[3,1],[2,1]]]",
+        "output": "[[2,3],[1,3],[1,2]]",
+        "expectedOutput": "[[2,3],[1,3],[1,2]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[4,2],[3,1],[4,2],[3,1]]]",
+        "output": "[[2,4],[1,3],[2,4],[1,3]]",
+        "expectedOutput": "[[2,4],[1,3],[2,4],[1,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[2],[3,1],[4,2],[3]]]",
+        "output": "[[2],[1,3],[2,4],[3]]",
+        "expectedOutput": "[[2],[1,3],[2,4],[3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[5,3,2,4],[1],[1],[1],[1]]]",
+        "output": "[[2,3,4,5],[1],[1],[1],[1]]",
+        "expectedOutput": "[[2,3,4,5],[1],[1],[1],[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[6,2],[3,1],[4,2],[5,3],[6,4],[1,5]]]",
+        "output": "[[2,6],[1,3],[2,4],[3,5],[4,6],[1,5]]",
+        "expectedOutput": "[[2,6],[1,3],[2,4],[3,5],[4,6],[1,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[2],[1,3],[2]]]",
+        "output": "[[2],[1,3],[2]]",
+        "expectedOutput": "[[2],[1,3],[2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[4,3,2],[4,1,3],[1,4,2],[2,3,1]]]",
+        "output": "[[2,3,4],[1,3,4],[1,2,4],[1,2,3]]",
+        "expectedOutput": "[[2,3,4],[1,3,4],[1,2,4],[1,2,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[3,2],[5,1,4],[7,1,6],[2],[2],[3],[3]]]",
+        "output": "[[2,3],[1,4,5],[1,6,7],[2],[2],[3],[3]]",
+        "expectedOutput": "[[2,3],[1,4,5],[1,6,7],[2],[2],[3],[3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[3,2],[3,1],[5,1,4,2],[5,3],[4,3]]]",
+        "output": "[[2,3],[1,3],[1,2,4,5],[3,5],[3,4]]",
+        "expectedOutput": "[[2,3],[1,3],[1,2,4,5],[3,5],[3,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[2],[3,1],[4,2],[5,3],[6,4],[7,5],[8,6],[7]]]",
+        "output": "[[2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7]]",
+        "expectedOutput": "[[2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[4,2,3],[3,1],[2,1],[1]]]",
+        "output": "[[2,3,4],[1,3],[1,2],[1]]",
+        "expectedOutput": "[[2,3,4],[1,3],[1,2],[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[3,2],[1],[1]]]",
+        "output": "[[2,3],[1],[1]]",
+        "expectedOutput": "[[2,3],[1],[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[2,4],[3,1],[4,2],[1,3]]]",
+        "output": "[[2,4],[1,3],[2,4],[1,3]]",
+        "expectedOutput": "[[2,4],[1,3],[2,4],[1,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[3,2],[3,1],[4,1,2],[6,3,5],[6,4],[5,4]]]",
+        "output": "[[2,3],[1,3],[1,2,4],[3,5,6],[4,6],[4,5]]",
+        "expectedOutput": "[[2,3],[1,3],[1,2,4],[3,5,6],[4,6],[4,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[5,2],[3,1],[4,2],[5,3],[1,4]]]",
+        "output": "[[2,5],[1,3],[2,4],[3,5],[1,4]]",
+        "expectedOutput": "[[2,5],[1,3],[2,4],[3,5],[1,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[3,2],[5,1,4],[7,1,6],[2],[2],[3],[9,3,8],[7],[7]]]",
+        "output": "[[2,3],[1,4,5],[1,6,7],[2],[2],[3],[3,8,9],[7],[7]]",
+        "expectedOutput": "[[2,3],[1,4,5],[1,6,7],[2],[2],[3],[3,8,9],[7],[7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[2,3],[3,1],[1,2]]]",
+        "output": "[[2,3],[1,3],[1,2]]",
+        "expectedOutput": "[[2,3],[1,3],[1,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[2],[3,1],[4,2],[5,3],[6,4],[7,5],[8,6],[9,7],[10,8],[9]]]",
+        "output": "[[2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7,9],[8,10],[9]]",
+        "expectedOutput": "[[2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7,9],[8,10],[9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[2],[3,1],[2]]]",
+        "output": "[[2],[1,3],[2]]",
+        "expectedOutput": "[[2],[1,3],[2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[[4],[4],[4],[3,1,2]]]",
+        "output": "[[4],[4],[4],[1,2,3]]",
+        "expectedOutput": "[[4],[4],[4],[1,2,3]]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def cloneGraphAdjacency(self, graph):\n",
+    "cpp": "#include <vector>\n#include <unordered_map>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> cloneGraphAdjacency(vector<vector<int>>& graph) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] cloneGraphAdjacency(int[][] graph) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun cloneGraphAdjacency(graph: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    cloneGraphAdjacency(graph) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def cloneGraphAdjacency(self, graph):\n",
+    "cpp": "#include <vector>\n#include <unordered_map>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> cloneGraphAdjacency(vector<vector<int>>& graph) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] cloneGraphAdjacency(int[][] graph) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun cloneGraphAdjacency(graph: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    cloneGraphAdjacency(graph) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def cloneGraphAdjacency(self, graph):\n",
+    "cpp": "#include <vector>\n#include <unordered_map>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> cloneGraphAdjacency(vector<vector<int>>& graph) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] cloneGraphAdjacency(int[][] graph) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun cloneGraphAdjacency(graph: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    cloneGraphAdjacency(graph) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def cloneGraphAdjacency(self, graph):\n",
+    "cpp": "#include <vector>\n#include <unordered_map>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> cloneGraphAdjacency(vector<vector<int>>& graph) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] cloneGraphAdjacency(int[][] graph) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun cloneGraphAdjacency(graph: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    cloneGraphAdjacency(graph) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n + e)",
+      "space": "O(n) for the visited/clone map, plus O(n) recursion depth for DFS",
+      "pattern": "DFS (or BFS) from any starting node, using a hash map from original node label to its clone to avoid recreating or infinitely revisiting nodes in a graph that may contain cycles"
+    },
+    "bruteForce": {
+      "approach": "traverse the original graph twice: once to enumerate every node and create its clone with no edges, and a second full pass over every original edge to look up both endpoints' clones and wire the edge between them",
+      "time": "O(n + e) where e is the number of edges",
+      "space": "O(n) for the clone lookup structure"
+    }
+  },
+  "optimal": {
+    "pattern": "DFS (or BFS) from any starting node, using a hash map from original node label to its clone to avoid recreating or infinitely revisiting nodes in a graph that may contain cycles",
+    "time": "O(n + e)",
+    "space": "O(n) for the visited/clone map, plus O(n) recursion depth for DFS",
+    "hint_ladder": [
+      "a graph can have cycles, so a naive recursive clone-and-recurse-into-every-neighbor approach will loop forever without some way to remember what's already been cloned",
+      "keep a hash map from original node label to its already-created clone node",
+      "when visiting a node: if it's already in the map, you're done, just return its existing clone (this is what breaks the infinite cycle); otherwise create a new clone node for it, store it in the map immediately (before recursing into neighbors), then recurse into each neighbor and attach the clone of each returned neighbor",
+      "storing the new clone in the map before recursing into neighbors is essential - it's what lets a neighbor that cycles back to this node find the clone already waiting instead of trying to clone it again",
+      "once every node has been visited and cloned, walk the map in label order and read off each clone's neighbor list, sorted ascending, to produce the final adjacency list"
+    ]
+  },
+  "bruteForce": {
+    "approach": "traverse the original graph twice: once to enumerate every node and create its clone with no edges, and a second full pass over every original edge to look up both endpoints' clones and wire the edge between them",
+    "time": "O(n + e) where e is the number of edges",
+    "space": "O(n) for the clone lookup structure"
+  },
+  "isIndex0": true,
+  "level": null
+}

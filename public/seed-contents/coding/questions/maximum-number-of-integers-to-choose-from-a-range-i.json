@@ -1,0 +1,630 @@
+{
+  "id": "maximum-number-of-integers-to-choose-from-a-range-i",
+  "questionId": "maximum-number-of-integers-to-choose-from-a-range-i",
+  "slug": "maximum-number-of-integers-to-choose-from-a-range-i",
+  "title": "Count Distinct Numbers Not in Banned List",
+  "difficulty": "Easy",
+  "category": "Cyclic sort",
+  "patterns": [
+    "cyclic sort",
+    "array",
+    "greedy"
+  ],
+  "lists": [],
+  "hints": [
+    "the numbers you're choosing from live in a small conceptual range [1, n] - you don't actually need to build an array of size n to reason about which are banned",
+    "put the banned values into a hash set for O(1) membership checks, since only those matter, not the whole range",
+    "greedily walk candidate values starting from 1 upward. skip anything in the banned set, and for everything else keep a running sum, stopping the moment adding the next number would exceed maxSum",
+    "since n can be up to 10^9 but banned is small, make sure your loop terminates based on maxSum and banned.length, not by literally iterating up to n every time"
+  ],
+  "commonMistakes": [
+    "forgetting to ignore banned values that are outside the range [1, n]",
+    "not deduplicating the banned list, which can cause incorrect skipping logic",
+    "iterating all the way to n even when maxSum is reached far earlier, causing a timeout on large n"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of `banned` integers, an upper bound `n`, and a\n`maxSum`. Consider the integers from 1 to `n`, excluding any that appear\nin `banned`.\n\n**Greedily pick as many distinct numbers as possible from what remains, always preferring smaller numbers first, such that the total of everything you picked does not exceed `maxSum`, and return how many numbers you were able to pick.**\n",
+    "constraints": [
+      "1 <= n <= 10^9",
+      "banned may contain values outside [1, n], which should simply be ignored",
+      "pick smaller available numbers first (greedy)"
+    ],
+    "notes": [
+      "every number from 1 to n is banned (answer 0)",
+      "maxSum is smaller than the smallest available number (answer 0)",
+      "banned contains duplicates or values greater than n"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "banned = [1, 6, 5], n = 5, maxSum = 6",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "available numbers in order are 2, 3, 4 (1 and 5 are banned). pick 2 then 3, total 5, cannot add 4 since 5+4=9 > 6"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "banned = [1, 2, 3, 4, 5, 6, 7], n = 8, maxSum = 18",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "only 8 is available (1 through 7 are banned). pick 8, total 8 <= 18"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "banned = [11], n = 6, maxSum = 6",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "available numbers are 1..6 (11 is out of range). pick 1, 2, 3, total 6, cannot add 4"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,6,5],5,6]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5,6,7],8,18]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[11],6,6]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[],5,15]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[],1,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1],1,1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[],3,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[2],5,100]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5],5,100]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[],10,5]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[3,3,3],5,100]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[100],5,100]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2],10,4]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49],100,5000]",
+        "output": "51",
+        "expectedOutput": "51",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[],1000000000,10]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[5,10,15,20],25,200]",
+        "output": "17",
+        "expectedOutput": "17",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,4,6,8,10],20,50]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],20,0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[],20,1000]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[15],15,15]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "banned = [1, 6, 5], n = 5, maxSum = 6",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "available numbers in order are 2, 3, 4 (1 and 5 are banned). pick 2 then 3, total 5, cannot add 4 since 5+4=9 > 6"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "banned = [1, 2, 3, 4, 5, 6, 7], n = 8, maxSum = 18",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "only 8 is available (1 through 7 are banned). pick 8, total 8 <= 18"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "banned = [11], n = 6, maxSum = 6",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "available numbers are 1..6 (11 is out of range). pick 1, 2, 3, total 6, cannot add 4"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "banned = [1, 6, 5], n = 5, maxSum = 6",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "available numbers in order are 2, 3, 4 (1 and 5 are banned). pick 2 then 3, total 5, cannot add 4 since 5+4=9 > 6"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "banned = [1, 2, 3, 4, 5, 6, 7], n = 8, maxSum = 18",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "only 8 is available (1 through 7 are banned). pick 8, total 8 <= 18"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "banned = [11], n = 6, maxSum = 6",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "available numbers are 1..6 (11 is out of range). pick 1, 2, 3, total 6, cannot add 4"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,6,5],5,6]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3,4,5,6,7],8,18]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[11],6,6]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[],5,15]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[],1,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1],1,1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[],3,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[2],5,100]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4,5],5,100]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[],10,5]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[3,3,3],5,100]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[100],5,100]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2],10,4]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49],100,5000]",
+      "output": "51",
+      "expectedOutput": "51",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[],1000000000,10]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[5,10,15,20],25,200]",
+      "output": "17",
+      "expectedOutput": "17",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[2,4,6,8,10],20,50]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],20,0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[],20,1000]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[15],15,15]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "banned = [1, 6, 5], n = 5, maxSum = 6",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "available numbers in order are 2, 3, 4 (1 and 5 are banned). pick 2 then 3, total 5, cannot add 4 since 5+4=9 > 6"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "banned = [1, 2, 3, 4, 5, 6, 7], n = 8, maxSum = 18",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "only 8 is available (1 through 7 are banned). pick 8, total 8 <= 18"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "banned = [11], n = 6, maxSum = 6",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "available numbers are 1..6 (11 is out of range). pick 1, 2, 3, total 6, cannot add 4"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,6,5],5,6]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5,6,7],8,18]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[11],6,6]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[],5,15]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[],1,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1],1,1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[],3,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[2],5,100]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5],5,100]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[],10,5]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[3,3,3],5,100]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[100],5,100]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2],10,4]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49],100,5000]",
+        "output": "51",
+        "expectedOutput": "51",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[],1000000000,10]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[5,10,15,20],25,200]",
+        "output": "17",
+        "expectedOutput": "17",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,4,6,8,10],20,50]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],20,0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[],20,1000]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[15],15,15]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def countAvailable(self, banned, n, maxSum):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_set>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countAvailable(vector<int>& banned, int n, int maxSum) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countAvailable(int[] banned, int n, int maxSum) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countAvailable(banned: IntArray, n: Int, maxSum: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countAvailable(banned, n, maxSum) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def countAvailable(self, banned, n, maxSum):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_set>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countAvailable(vector<int>& banned, int n, int maxSum) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countAvailable(int[] banned, int n, int maxSum) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countAvailable(banned: IntArray, n: Int, maxSum: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countAvailable(banned, n, maxSum) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def countAvailable(self, banned, n, maxSum):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_set>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countAvailable(vector<int>& banned, int n, int maxSum) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countAvailable(int[] banned, int n, int maxSum) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countAvailable(banned: IntArray, n: Int, maxSum: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countAvailable(banned, n, maxSum) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def countAvailable(self, banned, n, maxSum):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_set>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countAvailable(vector<int>& banned, int n, int maxSum) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countAvailable(int[] banned, int n, int maxSum) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countAvailable(banned: IntArray, n: Int, maxSum: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countAvailable(banned, n, maxSum) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(banned.length log banned.length) or O(banned.length) with a hash set, independent of n",
+      "space": "O(banned.length)",
+      "pattern": "same greedy scan, but treat the banned values like markers over the bounded range [1, n] rather than materializing the whole range, so it scales even when n is huge"
+    },
+    "bruteForce": {
+      "approach": "iterate from 1 to n, skip banned numbers using a hash set lookup, and keep adding to a running sum and count until the next number would exceed maxSum",
+      "time": "O(n) to build the set and scan",
+      "space": "O(banned.length) for the set"
+    }
+  },
+  "optimal": {
+    "pattern": "same greedy scan, but treat the banned values like markers over the bounded range [1, n] rather than materializing the whole range, so it scales even when n is huge",
+    "time": "O(banned.length log banned.length) or O(banned.length) with a hash set, independent of n",
+    "space": "O(banned.length)",
+    "hint_ladder": [
+      "the numbers you're choosing from live in a small conceptual range [1, n] - you don't actually need to build an array of size n to reason about which are banned",
+      "put the banned values into a hash set for O(1) membership checks, since only those matter, not the whole range",
+      "greedily walk candidate values starting from 1 upward. skip anything in the banned set, and for everything else keep a running sum, stopping the moment adding the next number would exceed maxSum",
+      "since n can be up to 10^9 but banned is small, make sure your loop terminates based on maxSum and banned.length, not by literally iterating up to n every time"
+    ]
+  },
+  "bruteForce": {
+    "approach": "iterate from 1 to n, skip banned numbers using a hash set lookup, and keep adding to a running sum and count until the next number would exceed maxSum",
+    "time": "O(n) to build the set and scan",
+    "space": "O(banned.length) for the set"
+  },
+  "isIndex0": true,
+  "level": null
+}

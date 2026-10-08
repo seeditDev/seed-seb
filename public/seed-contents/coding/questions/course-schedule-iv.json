@@ -1,0 +1,632 @@
+{
+  "id": "course-schedule-iv",
+  "questionId": "course-schedule-iv",
+  "slug": "course-schedule-iv",
+  "title": "Course Schedule IV",
+  "difficulty": "Medium",
+  "category": "Topological sort",
+  "patterns": [
+    "topological sort",
+    "graph",
+    "reachability"
+  ],
+  "lists": [],
+  "hints": [
+    "answering 'can u reach v' by re-searching from scratch for every single query is wasteful when many queries share the same graph - can you precompute reachability once?",
+    "process the courses in topological order; when you finish course u, you already know everything reachable from every one of u's own prerequisites",
+    "maintain a reach[v] set (or bit array) for every node; for each edge u -> v processed in topological order, reach[v] absorbs u itself plus everything already in reach[u]",
+    "after processing the whole topological order, answering a query [u, v] is just checking whether v is in reach[u]"
+  ],
+  "commonMistakes": [
+    "checking the edge direction backwards, i.e. checking if v reaches u instead of u reaches v",
+    "answering u == v queries as true by assuming a node is trivially a prerequisite of itself",
+    "recomputing a full BFS or DFS per query instead of precomputing reachability once, which is correct but far slower than necessary and can time out with many queries"
+  ],
+  "content": {
+    "problemStatement": "There are `numCourses` courses, labeled 0 to numCourses - 1. You're given\na list of `prerequisites` pairs, where each pair [a, b] means course a is\na (possibly indirect) prerequisite for course b, a must be completed\nbefore b, directly or through a chain of other courses.\n\nYou're also given a list of `queries`, where each query [u, v] asks whether u is a prerequisite of v.\n\n**Return an array of the same length as `queries`, where each entry is 1 if the answer to that query is true, and 0 if it is false.**\n",
+    "constraints": [
+      "1 <= numCourses <= 100",
+      "each prerequisite pair [a, b] has 0 <= a, b < numCourses and a != b",
+      "the prerequisites are guaranteed to form a DAG (no cycles)",
+      "1 <= queries.length"
+    ],
+    "notes": [
+      "a query where u equals v - false, unless an explicit self-referencing chain exists (which cannot happen in a valid DAG)",
+      "no prerequisites at all - every query answers 0",
+      "a long transitive chain that a query must follow through several intermediate courses",
+      "multiple queries reusing the same pair of nodes"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "numCourses = 5, prerequisites = [[0, 1], [1, 2], [2, 3], [3, 4]], queries = [[0, 4], [4, 0], [1, 3], [3, 0]]",
+        "output": "[1, 0, 1, 0]",
+        "expectedOutput": "[1, 0, 1, 0]",
+        "explanation": "0 -> 1 -> 2 -> 3 -> 4 is a chain, so 0 is a prerequisite of 4 and 1 is a prerequisite of 3, but nothing points backward toward 0"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "numCourses = 3, prerequisites = [[0, 1], [0, 2]], queries = [[0, 1], [0, 2], [1, 2], [2, 1]]",
+        "output": "[1, 1, 0, 0]",
+        "expectedOutput": "[1, 1, 0, 0]",
+        "explanation": "0 is a prerequisite of both 1 and 2, but 1 and 2 have no relationship to each other"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "numCourses = 4, prerequisites = [], queries = [[0, 1], [2, 3]]",
+        "output": "[0, 0]",
+        "expectedOutput": "[0, 0]",
+        "explanation": "with no prerequisites at all, no query can be true"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[5,[[0,1],[1,2],[2,3],[3,4]],[[0,4],[4,0],[1,3],[3,0]]]",
+        "output": "[1,0,1,0]",
+        "expectedOutput": "[1,0,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,[[0,1],[0,2]],[[0,1],[0,2],[1,2],[2,1]]]",
+        "output": "[1,1,0,0]",
+        "expectedOutput": "[1,1,0,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[4,[],[[0,1],[2,3]]]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[4,[[0,1],[1,2],[0,3]],[[0,2],[3,2],[0,3]]]",
+        "output": "[1,0,1]",
+        "expectedOutput": "[1,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,[],[[0,0]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],[[0,19],[19,0],[5,10],[10,5],[0,0],[3,3],[15,19],[0,19]]]",
+        "output": "[1,0,1,0,0,0,1,1]",
+        "expectedOutput": "[1,0,1,0,0,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[10,[[0,1],[1,2],[3,4],[5,6],[6,7]],[[0,2],[3,4],[5,7],[0,7],[2,0],[9,0]]]",
+        "output": "[1,1,1,0,0,0]",
+        "expectedOutput": "[1,1,1,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[6,[[0,1],[0,2],[1,3],[2,3],[3,4],[3,5]],[[0,3],[0,4],[0,5],[1,2],[2,1],[4,5]]]",
+        "output": "[1,1,1,0,0,0]",
+        "expectedOutput": "[1,1,1,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[5,[],[[0,1],[2,3],[4,0],[1,1]]]",
+        "output": "[0,0,0,0]",
+        "expectedOutput": "[0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[18,[[1,4],[1,7],[1,11],[1,17],[2,14],[2,15],[3,4],[3,8],[3,10],[4,9],[5,6],[5,8],[7,8],[7,10],[7,14],[9,15],[10,14],[10,16],[11,12],[11,13],[14,16]],[[16,4],[16,16],[0,7],[2,0],[1,4],[11,3],[12,14],[17,1],[0,17],[7,15]]]",
+        "output": "[0,0,0,0,1,0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,1,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[8,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]],[[0,7],[7,0],[3,3],[0,0],[6,7]]]",
+        "output": "[1,0,0,0,1]",
+        "expectedOutput": "[1,0,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[12,[[0,1],[1,2],[2,3],[3,4],[4,5],[0,6],[6,7],[7,8],[8,9],[9,10],[10,11]],[[0,5],[0,11],[6,11],[1,4],[7,10],[2,9],[11,0],[0,0],[5,5]]]",
+        "output": "[1,1,1,1,1,0,0,0,0]",
+        "expectedOutput": "[1,1,1,1,1,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[7,[[0,1],[0,2],[1,3],[2,3],[3,4],[3,5],[4,6],[5,6]],[[0,6],[1,5],[2,4],[6,0],[0,4]]]",
+        "output": "[1,1,1,0,1]",
+        "expectedOutput": "[1,1,1,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[4,[[0,1],[1,2],[2,3]],[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3],[3,0],[2,0],[1,0]]]",
+        "output": "[1,1,1,1,1,1,0,0,0]",
+        "expectedOutput": "[1,1,1,1,1,1,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[16,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15]],[[0,15],[15,0],[7,8],[3,12],[0,0]]]",
+        "output": "[1,0,1,1,0]",
+        "expectedOutput": "[1,0,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[5,[[0,1],[0,2],[0,3],[0,4]],[[0,1],[0,2],[0,3],[0,4],[1,2],[2,3],[3,4]]]",
+        "output": "[1,1,1,1,0,0,0]",
+        "expectedOutput": "[1,1,1,1,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[9,[],[[0,1],[2,3],[4,5],[6,7],[8,0]]]",
+        "output": "[0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[10,[[1,0],[2,0],[3,1],[3,2],[4,3]],[[1,4],[2,4],[3,4],[0,4],[4,1],[9,0]]]",
+        "output": "[0,0,0,0,1,0]",
+        "expectedOutput": "[0,0,0,0,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[22,[[0,1],[1,2],[0,2],[0,3],[2,3],[1,4],[0,4],[0,5],[4,5],[5,6],[0,6],[6,7],[5,7],[4,8],[3,8],[1,9],[2,9],[1,10],[3,10],[4,11],[5,11],[5,12],[6,12],[4,13],[0,13],[5,14],[4,14],[14,15],[4,15],[1,16],[11,16],[11,17],[10,17],[16,18],[15,18],[9,19],[0,19],[13,20],[0,20],[13,21],[16,21]],[[3,11],[15,1],[17,18],[6,2],[18,9],[5,13],[0,16],[6,9],[1,0],[11,15],[3,15],[5,15]]]",
+        "output": "[0,0,0,0,0,0,1,0,0,0,0,1]",
+        "expectedOutput": "[0,0,0,0,0,0,1,0,0,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[3,[[0,1],[1,2]],[[0,2]]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "numCourses = 5, prerequisites = [[0, 1], [1, 2], [2, 3], [3, 4]], queries = [[0, 4], [4, 0], [1, 3], [3, 0]]",
+      "output": "[1, 0, 1, 0]",
+      "expectedOutput": "[1, 0, 1, 0]",
+      "explanation": "0 -> 1 -> 2 -> 3 -> 4 is a chain, so 0 is a prerequisite of 4 and 1 is a prerequisite of 3, but nothing points backward toward 0"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "numCourses = 3, prerequisites = [[0, 1], [0, 2]], queries = [[0, 1], [0, 2], [1, 2], [2, 1]]",
+      "output": "[1, 1, 0, 0]",
+      "expectedOutput": "[1, 1, 0, 0]",
+      "explanation": "0 is a prerequisite of both 1 and 2, but 1 and 2 have no relationship to each other"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "numCourses = 4, prerequisites = [], queries = [[0, 1], [2, 3]]",
+      "output": "[0, 0]",
+      "expectedOutput": "[0, 0]",
+      "explanation": "with no prerequisites at all, no query can be true"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "numCourses = 5, prerequisites = [[0, 1], [1, 2], [2, 3], [3, 4]], queries = [[0, 4], [4, 0], [1, 3], [3, 0]]",
+      "output": "[1, 0, 1, 0]",
+      "expectedOutput": "[1, 0, 1, 0]",
+      "explanation": "0 -> 1 -> 2 -> 3 -> 4 is a chain, so 0 is a prerequisite of 4 and 1 is a prerequisite of 3, but nothing points backward toward 0"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "numCourses = 3, prerequisites = [[0, 1], [0, 2]], queries = [[0, 1], [0, 2], [1, 2], [2, 1]]",
+      "output": "[1, 1, 0, 0]",
+      "expectedOutput": "[1, 1, 0, 0]",
+      "explanation": "0 is a prerequisite of both 1 and 2, but 1 and 2 have no relationship to each other"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "numCourses = 4, prerequisites = [], queries = [[0, 1], [2, 3]]",
+      "output": "[0, 0]",
+      "expectedOutput": "[0, 0]",
+      "explanation": "with no prerequisites at all, no query can be true"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[5,[[0,1],[1,2],[2,3],[3,4]],[[0,4],[4,0],[1,3],[3,0]]]",
+      "output": "[1,0,1,0]",
+      "expectedOutput": "[1,0,1,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[3,[[0,1],[0,2]],[[0,1],[0,2],[1,2],[2,1]]]",
+      "output": "[1,1,0,0]",
+      "expectedOutput": "[1,1,0,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[4,[],[[0,1],[2,3]]]",
+      "output": "[0,0]",
+      "expectedOutput": "[0,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[4,[[0,1],[1,2],[0,3]],[[0,2],[3,2],[0,3]]]",
+      "output": "[1,0,1]",
+      "expectedOutput": "[1,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[1,[],[[0,0]]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],[[0,19],[19,0],[5,10],[10,5],[0,0],[3,3],[15,19],[0,19]]]",
+      "output": "[1,0,1,0,0,0,1,1]",
+      "expectedOutput": "[1,0,1,0,0,0,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[10,[[0,1],[1,2],[3,4],[5,6],[6,7]],[[0,2],[3,4],[5,7],[0,7],[2,0],[9,0]]]",
+      "output": "[1,1,1,0,0,0]",
+      "expectedOutput": "[1,1,1,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[6,[[0,1],[0,2],[1,3],[2,3],[3,4],[3,5]],[[0,3],[0,4],[0,5],[1,2],[2,1],[4,5]]]",
+      "output": "[1,1,1,0,0,0]",
+      "expectedOutput": "[1,1,1,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[5,[],[[0,1],[2,3],[4,0],[1,1]]]",
+      "output": "[0,0,0,0]",
+      "expectedOutput": "[0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[18,[[1,4],[1,7],[1,11],[1,17],[2,14],[2,15],[3,4],[3,8],[3,10],[4,9],[5,6],[5,8],[7,8],[7,10],[7,14],[9,15],[10,14],[10,16],[11,12],[11,13],[14,16]],[[16,4],[16,16],[0,7],[2,0],[1,4],[11,3],[12,14],[17,1],[0,17],[7,15]]]",
+      "output": "[0,0,0,0,1,0,0,0,0,0]",
+      "expectedOutput": "[0,0,0,0,1,0,0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[8,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]],[[0,7],[7,0],[3,3],[0,0],[6,7]]]",
+      "output": "[1,0,0,0,1]",
+      "expectedOutput": "[1,0,0,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[12,[[0,1],[1,2],[2,3],[3,4],[4,5],[0,6],[6,7],[7,8],[8,9],[9,10],[10,11]],[[0,5],[0,11],[6,11],[1,4],[7,10],[2,9],[11,0],[0,0],[5,5]]]",
+      "output": "[1,1,1,1,1,0,0,0,0]",
+      "expectedOutput": "[1,1,1,1,1,0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[7,[[0,1],[0,2],[1,3],[2,3],[3,4],[3,5],[4,6],[5,6]],[[0,6],[1,5],[2,4],[6,0],[0,4]]]",
+      "output": "[1,1,1,0,1]",
+      "expectedOutput": "[1,1,1,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[4,[[0,1],[1,2],[2,3]],[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3],[3,0],[2,0],[1,0]]]",
+      "output": "[1,1,1,1,1,1,0,0,0]",
+      "expectedOutput": "[1,1,1,1,1,1,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[16,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15]],[[0,15],[15,0],[7,8],[3,12],[0,0]]]",
+      "output": "[1,0,1,1,0]",
+      "expectedOutput": "[1,0,1,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[5,[[0,1],[0,2],[0,3],[0,4]],[[0,1],[0,2],[0,3],[0,4],[1,2],[2,3],[3,4]]]",
+      "output": "[1,1,1,1,0,0,0]",
+      "expectedOutput": "[1,1,1,1,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[9,[],[[0,1],[2,3],[4,5],[6,7],[8,0]]]",
+      "output": "[0,0,0,0,0]",
+      "expectedOutput": "[0,0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[10,[[1,0],[2,0],[3,1],[3,2],[4,3]],[[1,4],[2,4],[3,4],[0,4],[4,1],[9,0]]]",
+      "output": "[0,0,0,0,1,0]",
+      "expectedOutput": "[0,0,0,0,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[22,[[0,1],[1,2],[0,2],[0,3],[2,3],[1,4],[0,4],[0,5],[4,5],[5,6],[0,6],[6,7],[5,7],[4,8],[3,8],[1,9],[2,9],[1,10],[3,10],[4,11],[5,11],[5,12],[6,12],[4,13],[0,13],[5,14],[4,14],[14,15],[4,15],[1,16],[11,16],[11,17],[10,17],[16,18],[15,18],[9,19],[0,19],[13,20],[0,20],[13,21],[16,21]],[[3,11],[15,1],[17,18],[6,2],[18,9],[5,13],[0,16],[6,9],[1,0],[11,15],[3,15],[5,15]]]",
+      "output": "[0,0,0,0,0,0,1,0,0,0,0,1]",
+      "expectedOutput": "[0,0,0,0,0,0,1,0,0,0,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[3,[[0,1],[1,2]],[[0,2]]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "numCourses = 5, prerequisites = [[0, 1], [1, 2], [2, 3], [3, 4]], queries = [[0, 4], [4, 0], [1, 3], [3, 0]]",
+        "output": "[1, 0, 1, 0]",
+        "expectedOutput": "[1, 0, 1, 0]",
+        "explanation": "0 -> 1 -> 2 -> 3 -> 4 is a chain, so 0 is a prerequisite of 4 and 1 is a prerequisite of 3, but nothing points backward toward 0"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "numCourses = 3, prerequisites = [[0, 1], [0, 2]], queries = [[0, 1], [0, 2], [1, 2], [2, 1]]",
+        "output": "[1, 1, 0, 0]",
+        "expectedOutput": "[1, 1, 0, 0]",
+        "explanation": "0 is a prerequisite of both 1 and 2, but 1 and 2 have no relationship to each other"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "numCourses = 4, prerequisites = [], queries = [[0, 1], [2, 3]]",
+        "output": "[0, 0]",
+        "expectedOutput": "[0, 0]",
+        "explanation": "with no prerequisites at all, no query can be true"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[5,[[0,1],[1,2],[2,3],[3,4]],[[0,4],[4,0],[1,3],[3,0]]]",
+        "output": "[1,0,1,0]",
+        "expectedOutput": "[1,0,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,[[0,1],[0,2]],[[0,1],[0,2],[1,2],[2,1]]]",
+        "output": "[1,1,0,0]",
+        "expectedOutput": "[1,1,0,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[4,[],[[0,1],[2,3]]]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[4,[[0,1],[1,2],[0,3]],[[0,2],[3,2],[0,3]]]",
+        "output": "[1,0,1]",
+        "expectedOutput": "[1,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,[],[[0,0]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[20,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19]],[[0,19],[19,0],[5,10],[10,5],[0,0],[3,3],[15,19],[0,19]]]",
+        "output": "[1,0,1,0,0,0,1,1]",
+        "expectedOutput": "[1,0,1,0,0,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[10,[[0,1],[1,2],[3,4],[5,6],[6,7]],[[0,2],[3,4],[5,7],[0,7],[2,0],[9,0]]]",
+        "output": "[1,1,1,0,0,0]",
+        "expectedOutput": "[1,1,1,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[6,[[0,1],[0,2],[1,3],[2,3],[3,4],[3,5]],[[0,3],[0,4],[0,5],[1,2],[2,1],[4,5]]]",
+        "output": "[1,1,1,0,0,0]",
+        "expectedOutput": "[1,1,1,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[5,[],[[0,1],[2,3],[4,0],[1,1]]]",
+        "output": "[0,0,0,0]",
+        "expectedOutput": "[0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[18,[[1,4],[1,7],[1,11],[1,17],[2,14],[2,15],[3,4],[3,8],[3,10],[4,9],[5,6],[5,8],[7,8],[7,10],[7,14],[9,15],[10,14],[10,16],[11,12],[11,13],[14,16]],[[16,4],[16,16],[0,7],[2,0],[1,4],[11,3],[12,14],[17,1],[0,17],[7,15]]]",
+        "output": "[0,0,0,0,1,0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,1,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[8,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]],[[0,7],[7,0],[3,3],[0,0],[6,7]]]",
+        "output": "[1,0,0,0,1]",
+        "expectedOutput": "[1,0,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[12,[[0,1],[1,2],[2,3],[3,4],[4,5],[0,6],[6,7],[7,8],[8,9],[9,10],[10,11]],[[0,5],[0,11],[6,11],[1,4],[7,10],[2,9],[11,0],[0,0],[5,5]]]",
+        "output": "[1,1,1,1,1,0,0,0,0]",
+        "expectedOutput": "[1,1,1,1,1,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[7,[[0,1],[0,2],[1,3],[2,3],[3,4],[3,5],[4,6],[5,6]],[[0,6],[1,5],[2,4],[6,0],[0,4]]]",
+        "output": "[1,1,1,0,1]",
+        "expectedOutput": "[1,1,1,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[4,[[0,1],[1,2],[2,3]],[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3],[3,0],[2,0],[1,0]]]",
+        "output": "[1,1,1,1,1,1,0,0,0]",
+        "expectedOutput": "[1,1,1,1,1,1,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[16,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15]],[[0,15],[15,0],[7,8],[3,12],[0,0]]]",
+        "output": "[1,0,1,1,0]",
+        "expectedOutput": "[1,0,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[5,[[0,1],[0,2],[0,3],[0,4]],[[0,1],[0,2],[0,3],[0,4],[1,2],[2,3],[3,4]]]",
+        "output": "[1,1,1,1,0,0,0]",
+        "expectedOutput": "[1,1,1,1,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[9,[],[[0,1],[2,3],[4,5],[6,7],[8,0]]]",
+        "output": "[0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[10,[[1,0],[2,0],[3,1],[3,2],[4,3]],[[1,4],[2,4],[3,4],[0,4],[4,1],[9,0]]]",
+        "output": "[0,0,0,0,1,0]",
+        "expectedOutput": "[0,0,0,0,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[22,[[0,1],[1,2],[0,2],[0,3],[2,3],[1,4],[0,4],[0,5],[4,5],[5,6],[0,6],[6,7],[5,7],[4,8],[3,8],[1,9],[2,9],[1,10],[3,10],[4,11],[5,11],[5,12],[6,12],[4,13],[0,13],[5,14],[4,14],[14,15],[4,15],[1,16],[11,16],[11,17],[10,17],[16,18],[15,18],[9,19],[0,19],[13,20],[0,20],[13,21],[16,21]],[[3,11],[15,1],[17,18],[6,2],[18,9],[5,13],[0,16],[6,9],[1,0],[11,15],[3,15],[5,15]]]",
+        "output": "[0,0,0,0,0,0,1,0,0,0,0,1]",
+        "expectedOutput": "[0,0,0,0,0,0,1,0,0,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[3,[[0,1],[1,2]],[[0,2]]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def checkPrerequisites(self, numCourses, prerequisites, queries):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> checkPrerequisites(int numCourses, vector<vector<int>>& prerequisites, vector<vector<int>>& queries) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] checkPrerequisites(int numCourses, int[][] prerequisites, int[][] queries) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun checkPrerequisites(numCourses: Int, prerequisites: Array<IntArray>, queries: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    checkPrerequisites(numCourses, prerequisites, queries) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def checkPrerequisites(self, numCourses, prerequisites, queries):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> checkPrerequisites(int numCourses, vector<vector<int>>& prerequisites, vector<vector<int>>& queries) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] checkPrerequisites(int numCourses, int[][] prerequisites, int[][] queries) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun checkPrerequisites(numCourses: Int, prerequisites: Array<IntArray>, queries: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    checkPrerequisites(numCourses, prerequisites, queries) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def checkPrerequisites(self, numCourses, prerequisites, queries):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> checkPrerequisites(int numCourses, vector<vector<int>>& prerequisites, vector<vector<int>>& queries) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] checkPrerequisites(int numCourses, int[][] prerequisites, int[][] queries) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun checkPrerequisites(numCourses: Int, prerequisites: Array<IntArray>, queries: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    checkPrerequisites(numCourses, prerequisites, queries) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def checkPrerequisites(self, numCourses, prerequisites, queries):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> checkPrerequisites(int numCourses, vector<vector<int>>& prerequisites, vector<vector<int>>& queries) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] checkPrerequisites(int numCourses, int[][] prerequisites, int[][] queries) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun checkPrerequisites(numCourses: Int, prerequisites: Array<IntArray>, queries: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    checkPrerequisites(numCourses, prerequisites, queries) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(V * (V + E) / 64)",
+      "space": "O(V^2)",
+      "pattern": "process courses in topological order and maintain a reachability set per node, propagating each node's prerequisites forward"
+    },
+    "bruteForce": {
+      "approach": "for each query [u, v], run a fresh BFS or DFS from u and check whether v is reachable",
+      "time": "O(Q * (V + E))",
+      "space": "O(V + E)"
+    }
+  },
+  "optimal": {
+    "pattern": "process courses in topological order and maintain a reachability set per node, propagating each node's prerequisites forward",
+    "time": "O(V * (V + E) / 64)",
+    "space": "O(V^2)",
+    "hint_ladder": [
+      "answering 'can u reach v' by re-searching from scratch for every single query is wasteful when many queries share the same graph - can you precompute reachability once?",
+      "process the courses in topological order; when you finish course u, you already know everything reachable from every one of u's own prerequisites",
+      "maintain a reach[v] set (or bit array) for every node; for each edge u -> v processed in topological order, reach[v] absorbs u itself plus everything already in reach[u]",
+      "after processing the whole topological order, answering a query [u, v] is just checking whether v is in reach[u]"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each query [u, v], run a fresh BFS or DFS from u and check whether v is reachable",
+    "time": "O(Q * (V + E))",
+    "space": "O(V + E)"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,628 @@
+{
+  "id": "make-the-string-great",
+  "questionId": "make-the-string-great",
+  "slug": "make-the-string-great",
+  "title": "Make the String Great",
+  "difficulty": "Easy",
+  "category": "Monotonic stack",
+  "patterns": [
+    "stack",
+    "string"
+  ],
+  "lists": [],
+  "hints": [
+    "a bad pair can only ever involve two characters that are directly adjacent in the current string - and after a removal, the two characters that become newly adjacent are the ones right before and after the removed pair",
+    "what data structure naturally gives you 'the character that would become adjacent to the next one' after removals, without rebuilding the string each time?",
+    "walk through s once, pushing each character onto a stack; before pushing, check if it forms a bad pair with the character currently on top of the stack",
+    "if it's a bad pair, pop the stack instead of pushing (this represents both characters cancelling out); otherwise push normally. the final stack contents, in order, are the answer"
+  ],
+  "commonMistakes": [
+    "checking character equality only, without checking that the cases are opposite (so 'aa' would incorrectly be treated as a bad pair)",
+    "rebuilding the string with slicing on every removal instead of using a stack, causing quadratic behavior",
+    "comparing ASCII values incorrectly when checking for 'same letter, opposite case'"
+  ],
+  "content": {
+    "problemStatement": "You're given a string `s` made up of upper and lower case English letters.\nA pair of adjacent characters is \"bad\" if they're the same letter but\nopposite case (like 'a' next to 'A').\n\n**Repeatedly remove any adjacent bad pair until none remain, then return the resulting string.**\n\nRemoving a pair can create a new adjacent bad pair, which should also be\nremoved.\n",
+    "constraints": [
+      "0 <= s.length <= 100",
+      "s consists of upper and lower case English letters"
+    ],
+    "notes": [
+      "removing one pair exposes a new adjacent pair that also needs removing",
+      "the whole string cancels out to empty",
+      "no bad pairs exist anywhere in the string"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"leEeetcode\"",
+        "output": "\"leetcode\"",
+        "expectedOutput": "\"leetcode\"",
+        "explanation": "the adjacent 'E' and 'e' cancel out, leaving leetcode, which has no more bad pairs"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"abBAcC\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": "abBAcC -> aAcC (removing bB) -> cC (removing aA) -> \"\" (removing cC)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"s\"",
+        "output": "\"s\"",
+        "expectedOutput": "\"s\"",
+        "explanation": "a single character has no adjacent pair to remove"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"leEeetcode\"]",
+        "output": "leetcode",
+        "expectedOutput": "leetcode",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"abBAcC\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"s\"]",
+        "output": "s",
+        "expectedOutput": "s",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"Pp\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aA\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aAaAaA\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abcABC\"]",
+        "output": "abcABC",
+        "expectedOutput": "abcABC",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aBbAaAbB\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"xyzXYZzyx\"]",
+        "output": "xyz",
+        "expectedOutput": "xyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"aAbBcCdDeEfFgGhHiI\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abababab\"]",
+        "output": "abababab",
+        "expectedOutput": "abababab",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"qQwWeErRtTyYuUiIoOpP\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"Aa\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aAbBaAbBaAbBaAbBaAbB\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"ZzZzZzZzZzZzZzZz\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"abcdefghijklmnopqrstuvwxyz\"]",
+        "output": "abcdefghijklmnopqrstuvwxyz",
+        "expectedOutput": "abcdefghijklmnopqrstuvwxyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"HelloWorld\"]",
+        "output": "HelloWorld",
+        "expectedOutput": "HelloWorld",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"leEeetcode\"",
+      "output": "\"leetcode\"",
+      "expectedOutput": "\"leetcode\"",
+      "explanation": "the adjacent 'E' and 'e' cancel out, leaving leetcode, which has no more bad pairs"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"abBAcC\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": "abBAcC -> aAcC (removing bB) -> cC (removing aA) -> \"\" (removing cC)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"s\"",
+      "output": "\"s\"",
+      "expectedOutput": "\"s\"",
+      "explanation": "a single character has no adjacent pair to remove"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"leEeetcode\"",
+      "output": "\"leetcode\"",
+      "expectedOutput": "\"leetcode\"",
+      "explanation": "the adjacent 'E' and 'e' cancel out, leaving leetcode, which has no more bad pairs"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"abBAcC\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": "abBAcC -> aAcC (removing bB) -> cC (removing aA) -> \"\" (removing cC)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"s\"",
+      "output": "\"s\"",
+      "expectedOutput": "\"s\"",
+      "explanation": "a single character has no adjacent pair to remove"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"leEeetcode\"]",
+      "output": "leetcode",
+      "expectedOutput": "leetcode",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"abBAcC\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"s\"]",
+      "output": "s",
+      "expectedOutput": "s",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"Pp\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"aA\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"aAaAaA\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"abcABC\"]",
+      "output": "abcABC",
+      "expectedOutput": "abcABC",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"aBbAaAbB\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"xyzXYZzyx\"]",
+      "output": "xyz",
+      "expectedOutput": "xyz",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"aAbBcCdDeEfFgGhHiI\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"abababab\"]",
+      "output": "abababab",
+      "expectedOutput": "abababab",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"qQwWeErRtTyYuUiIoOpP\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"Aa\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"aAbBaAbBaAbBaAbBaAbB\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"ZzZzZzZzZzZzZzZz\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"abcdefghijklmnopqrstuvwxyz\"]",
+      "output": "abcdefghijklmnopqrstuvwxyz",
+      "expectedOutput": "abcdefghijklmnopqrstuvwxyz",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"HelloWorld\"]",
+      "output": "HelloWorld",
+      "expectedOutput": "HelloWorld",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"leEeetcode\"",
+        "output": "\"leetcode\"",
+        "expectedOutput": "\"leetcode\"",
+        "explanation": "the adjacent 'E' and 'e' cancel out, leaving leetcode, which has no more bad pairs"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"abBAcC\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": "abBAcC -> aAcC (removing bB) -> cC (removing aA) -> \"\" (removing cC)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"s\"",
+        "output": "\"s\"",
+        "expectedOutput": "\"s\"",
+        "explanation": "a single character has no adjacent pair to remove"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"leEeetcode\"]",
+        "output": "leetcode",
+        "expectedOutput": "leetcode",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"abBAcC\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"s\"]",
+        "output": "s",
+        "expectedOutput": "s",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"Pp\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aA\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aAaAaA\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abcABC\"]",
+        "output": "abcABC",
+        "expectedOutput": "abcABC",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aBbAaAbB\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"xyzXYZzyx\"]",
+        "output": "xyz",
+        "expectedOutput": "xyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"aAbBcCdDeEfFgGhHiI\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abababab\"]",
+        "output": "abababab",
+        "expectedOutput": "abababab",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"qQwWeErRtTyYuUiIoOpP\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"Aa\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aAbBaAbBaAbBaAbBaAbB\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"ZzZzZzZzZzZzZzZz\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"abcdefghijklmnopqrstuvwxyz\"]",
+        "output": "abcdefghijklmnopqrstuvwxyz",
+        "expectedOutput": "abcdefghijklmnopqrstuvwxyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"HelloWorld\"]",
+        "output": "HelloWorld",
+        "expectedOutput": "HelloWorld",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def makeGood(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string makeGood(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String makeGood(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun makeGood(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    makeGood(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def makeGood(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string makeGood(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String makeGood(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun makeGood(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    makeGood(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def makeGood(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string makeGood(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String makeGood(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun makeGood(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    makeGood(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def makeGood(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string makeGood(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String makeGood(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun makeGood(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    makeGood(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the stack",
+      "pattern": "a stack that holds 'good so far' characters, checking only the most recent character against each new one"
+    },
+    "bruteForce": {
+      "approach": "repeatedly scan the string looking for any adjacent bad pair, remove it, and rebuild the string, until a full scan finds none",
+      "time": "O(n^2) since each removal can require a fresh scan",
+      "space": "O(n) per rebuilt string"
+    }
+  },
+  "optimal": {
+    "pattern": "a stack that holds 'good so far' characters, checking only the most recent character against each new one",
+    "time": "O(n)",
+    "space": "O(n) for the stack",
+    "hint_ladder": [
+      "a bad pair can only ever involve two characters that are directly adjacent in the current string - and after a removal, the two characters that become newly adjacent are the ones right before and after the removed pair",
+      "what data structure naturally gives you 'the character that would become adjacent to the next one' after removals, without rebuilding the string each time?",
+      "walk through s once, pushing each character onto a stack; before pushing, check if it forms a bad pair with the character currently on top of the stack",
+      "if it's a bad pair, pop the stack instead of pushing (this represents both characters cancelling out); otherwise push normally. the final stack contents, in order, are the answer"
+    ]
+  },
+  "bruteForce": {
+    "approach": "repeatedly scan the string looking for any adjacent bad pair, remove it, and rebuild the string, until a full scan finds none",
+    "time": "O(n^2) since each removal can require a fresh scan",
+    "space": "O(n) per rebuilt string"
+  },
+  "isIndex0": true,
+  "level": null
+}

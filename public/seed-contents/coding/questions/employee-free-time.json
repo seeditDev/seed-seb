@@ -1,0 +1,672 @@
+{
+  "id": "employee-free-time",
+  "questionId": "employee-free-time",
+  "slug": "employee-free-time",
+  "title": "Employee Free Time",
+  "difficulty": "Medium",
+  "category": "Merge intervals",
+  "patterns": [
+    "merge intervals",
+    "sorting"
+  ],
+  "lists": [],
+  "hints": [
+    "free time is just the complement of everyone's combined busy time - so first figure out the combined busy time",
+    "sort all the given intervals by start time, ignoring which employee they belong to, since you only care about total coverage",
+    "sweep through and merge overlapping or touching intervals into a list of non-overlapping busy blocks, exactly like the standard merge intervals problem",
+    "walk through the merged busy blocks in order: whenever the next block's start is strictly greater than the previous block's end, that gap [previousEnd, nextStart] is a free time interval"
+  ],
+  "commonMistakes": [
+    "forgetting to merge overlapping busy intervals first before looking for gaps, which produces false gaps that are actually still covered by another employee",
+    "including the time before the very first block's start or after the very last block's end as free time, when only gaps strictly between merged blocks should count",
+    "treating touching intervals (where one ends exactly where the next starts) as producing a zero-length free interval instead of no gap at all"
+  ],
+  "content": {
+    "problemStatement": "A company has several employees, and you're given everyone's working\nintervals already flattened into a single combined list (not grouped by\nemployee), where each interval is `[start, end]` representing a time\nsomeone was working.\n\n**Return the list of finite gaps, sorted by start time, during which no one at all was working.**\n\nOnly gaps strictly between the earliest start time and the latest end time in the whole schedule count, so time before the first start or after the last end is not included.\n",
+    "constraints": [
+      "each interval is [start, end] with start <= end",
+      "the input is not guaranteed to be sorted",
+      "there are at least two intervals in the schedule"
+    ],
+    "notes": [
+      "the merged schedule has no internal gaps at all (return an empty list)",
+      "many small intervals scattered with several gaps between them",
+      "overlapping intervals from different employees that need to be merged before finding gaps",
+      "intervals that only touch at an endpoint (no gap between them)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "schedule = [[1,3],[6,7],[2,4],[8,10]]",
+        "output": "[[4,6],[7,8]]",
+        "expectedOutput": "[[4,6],[7,8]]",
+        "explanation": "merging the working intervals gives [1,4],[6,7],[8,10], so the gaps between them are [4,6] and [7,8]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "schedule = [[1,5],[2,6]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "the merged working time is one continuous block [1,6] with no gaps inside it"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "schedule = [[1,2],[5,6],[1,3]]",
+        "output": "[[3,5]]",
+        "expectedOutput": "[[3,5]]",
+        "explanation": "merged busy time is [1,3] and [5,6], leaving the gap [3,5]"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,3],[6,7],[2,4],[8,10]]]",
+        "output": "[[4,6],[7,8]]",
+        "expectedOutput": "[[4,6],[7,8]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,5],[2,6]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,2],[5,6],[1,3]]]",
+        "output": "[[3,5]]",
+        "expectedOutput": "[[3,5]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,10],[2,3],[4,5],[6,7]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,2],[3,4]]]",
+        "output": "[[2,3]]",
+        "expectedOutput": "[[2,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,2],[2,3],[3,4]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0,5],[10,15],[20,25],[30,35]]]",
+        "output": "[[5,10],[15,20],[25,30]]",
+        "expectedOutput": "[[5,10],[15,20],[25,30]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,3],[2,5],[4,8],[10,12],[11,14],[20,22]]]",
+        "output": "[[8,10],[14,20]]",
+        "expectedOutput": "[[8,10],[14,20]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0,5],[10,15],[20,25],[30,35],[40,45],[50,55],[60,65],[70,75],[80,85],[90,95],[100,105],[110,115],[120,125],[130,135],[140,145]]]",
+        "output": "[[5,10],[15,20],[25,30],[35,40],[45,50],[55,60],[65,70],[75,80],[85,90],[95,100],[105,110],[115,120],[125,130],[135,140]]",
+        "expectedOutput": "[[5,10],[15,20],[25,30],[35,40],[45,50],[55,60],[65,70],[75,80],[85,90],[95,100],[105,110],[115,120],[125,130],[135,140]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,100],[2,3],[4,5],[6,7],[50,60]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,3],[1,3]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[5,10],[1,3],[15,20],[8,12]]]",
+        "output": "[[3,5],[12,15]]",
+        "expectedOutput": "[[3,5],[12,15]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,1],[2,3],[4,5],[6,7],[8,9],[10,11]]]",
+        "output": "[[1,2],[3,4],[5,6],[7,8],[9,10]]",
+        "expectedOutput": "[[1,2],[3,4],[5,6],[7,8],[9,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,2],[1,2],[1,2],[5,6]]]",
+        "output": "[[2,5]]",
+        "expectedOutput": "[[2,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,50],[10,20],[30,40]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,4],[4,7],[7,10],[10,13],[20,25]]]",
+        "output": "[[13,20]]",
+        "expectedOutput": "[[13,20]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[100,200],[0,50],[60,90]]]",
+        "output": "[[50,60],[90,100]]",
+        "expectedOutput": "[[50,60],[90,100]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,3],[6,7],[2,4],[8,10],[9,11],[12,13]]]",
+        "output": "[[4,6],[7,8],[11,12]]",
+        "expectedOutput": "[[4,6],[7,8],[11,12]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[10,20],[0,5]]]",
+        "output": "[[5,10]]",
+        "expectedOutput": "[[5,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[3,4],[1,2]]]",
+        "output": "[[2,3]]",
+        "expectedOutput": "[[2,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[35,35],[36,40],[51,54],[87,91],[98,103],[107,112],[116,122],[119,125],[125,126],[136,141],[138,143],[142,145],[148,148],[185,189],[186,187],[189,191],[236,239],[282,284]]]",
+        "output": "[[35,36],[40,51],[54,87],[91,98],[103,107],[112,116],[126,136],[145,148],[148,185],[191,236],[239,282]]",
+        "expectedOutput": "[[35,36],[40,51],[54,87],[91,98],[103,107],[112,116],[126,136],[145,148],[148,185],[191,236],[239,282]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[[0,3],[3,6],[6,9],[9,12],[15,18]]]",
+        "output": "[[12,15]]",
+        "expectedOutput": "[[12,15]]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "schedule = [[1,3],[6,7],[2,4],[8,10]]",
+      "output": "[[4,6],[7,8]]",
+      "expectedOutput": "[[4,6],[7,8]]",
+      "explanation": "merging the working intervals gives [1,4],[6,7],[8,10], so the gaps between them are [4,6] and [7,8]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "schedule = [[1,5],[2,6]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "the merged working time is one continuous block [1,6] with no gaps inside it"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "schedule = [[1,2],[5,6],[1,3]]",
+      "output": "[[3,5]]",
+      "expectedOutput": "[[3,5]]",
+      "explanation": "merged busy time is [1,3] and [5,6], leaving the gap [3,5]"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "schedule = [[1,3],[6,7],[2,4],[8,10]]",
+      "output": "[[4,6],[7,8]]",
+      "expectedOutput": "[[4,6],[7,8]]",
+      "explanation": "merging the working intervals gives [1,4],[6,7],[8,10], so the gaps between them are [4,6] and [7,8]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "schedule = [[1,5],[2,6]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "the merged working time is one continuous block [1,6] with no gaps inside it"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "schedule = [[1,2],[5,6],[1,3]]",
+      "output": "[[3,5]]",
+      "expectedOutput": "[[3,5]]",
+      "explanation": "merged busy time is [1,3] and [5,6], leaving the gap [3,5]"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,3],[6,7],[2,4],[8,10]]]",
+      "output": "[[4,6],[7,8]]",
+      "expectedOutput": "[[4,6],[7,8]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,5],[2,6]]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1,2],[5,6],[1,3]]]",
+      "output": "[[3,5]]",
+      "expectedOutput": "[[3,5]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1,10],[2,3],[4,5],[6,7]]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,2],[3,4]]]",
+      "output": "[[2,3]]",
+      "expectedOutput": "[[2,3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,2],[2,3],[3,4]]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[0,5],[10,15],[20,25],[30,35]]]",
+      "output": "[[5,10],[15,20],[25,30]]",
+      "expectedOutput": "[[5,10],[15,20],[25,30]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,3],[2,5],[4,8],[10,12],[11,14],[20,22]]]",
+      "output": "[[8,10],[14,20]]",
+      "expectedOutput": "[[8,10],[14,20]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[0,5],[10,15],[20,25],[30,35],[40,45],[50,55],[60,65],[70,75],[80,85],[90,95],[100,105],[110,115],[120,125],[130,135],[140,145]]]",
+      "output": "[[5,10],[15,20],[25,30],[35,40],[45,50],[55,60],[65,70],[75,80],[85,90],[95,100],[105,110],[115,120],[125,130],[135,140]]",
+      "expectedOutput": "[[5,10],[15,20],[25,30],[35,40],[45,50],[55,60],[65,70],[75,80],[85,90],[95,100],[105,110],[115,120],[125,130],[135,140]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1,100],[2,3],[4,5],[6,7],[50,60]]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[1,3],[1,3]]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[5,10],[1,3],[15,20],[8,12]]]",
+      "output": "[[3,5],[12,15]]",
+      "expectedOutput": "[[3,5],[12,15]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[0,1],[2,3],[4,5],[6,7],[8,9],[10,11]]]",
+      "output": "[[1,2],[3,4],[5,6],[7,8],[9,10]]",
+      "expectedOutput": "[[1,2],[3,4],[5,6],[7,8],[9,10]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,2],[1,2],[1,2],[5,6]]]",
+      "output": "[[2,5]]",
+      "expectedOutput": "[[2,5]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[1,50],[10,20],[30,40]]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[1,4],[4,7],[7,10],[10,13],[20,25]]]",
+      "output": "[[13,20]]",
+      "expectedOutput": "[[13,20]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[100,200],[0,50],[60,90]]]",
+      "output": "[[50,60],[90,100]]",
+      "expectedOutput": "[[50,60],[90,100]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1,3],[6,7],[2,4],[8,10],[9,11],[12,13]]]",
+      "output": "[[4,6],[7,8],[11,12]]",
+      "expectedOutput": "[[4,6],[7,8],[11,12]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[10,20],[0,5]]]",
+      "output": "[[5,10]]",
+      "expectedOutput": "[[5,10]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[3,4],[1,2]]]",
+      "output": "[[2,3]]",
+      "expectedOutput": "[[2,3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[[35,35],[36,40],[51,54],[87,91],[98,103],[107,112],[116,122],[119,125],[125,126],[136,141],[138,143],[142,145],[148,148],[185,189],[186,187],[189,191],[236,239],[282,284]]]",
+      "output": "[[35,36],[40,51],[54,87],[91,98],[103,107],[112,116],[126,136],[145,148],[148,185],[191,236],[239,282]]",
+      "expectedOutput": "[[35,36],[40,51],[54,87],[91,98],[103,107],[112,116],[126,136],[145,148],[148,185],[191,236],[239,282]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[[[0,3],[3,6],[6,9],[9,12],[15,18]]]",
+      "output": "[[12,15]]",
+      "expectedOutput": "[[12,15]]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "schedule = [[1,3],[6,7],[2,4],[8,10]]",
+        "output": "[[4,6],[7,8]]",
+        "expectedOutput": "[[4,6],[7,8]]",
+        "explanation": "merging the working intervals gives [1,4],[6,7],[8,10], so the gaps between them are [4,6] and [7,8]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "schedule = [[1,5],[2,6]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "the merged working time is one continuous block [1,6] with no gaps inside it"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "schedule = [[1,2],[5,6],[1,3]]",
+        "output": "[[3,5]]",
+        "expectedOutput": "[[3,5]]",
+        "explanation": "merged busy time is [1,3] and [5,6], leaving the gap [3,5]"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,3],[6,7],[2,4],[8,10]]]",
+        "output": "[[4,6],[7,8]]",
+        "expectedOutput": "[[4,6],[7,8]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,5],[2,6]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,2],[5,6],[1,3]]]",
+        "output": "[[3,5]]",
+        "expectedOutput": "[[3,5]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,10],[2,3],[4,5],[6,7]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,2],[3,4]]]",
+        "output": "[[2,3]]",
+        "expectedOutput": "[[2,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,2],[2,3],[3,4]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0,5],[10,15],[20,25],[30,35]]]",
+        "output": "[[5,10],[15,20],[25,30]]",
+        "expectedOutput": "[[5,10],[15,20],[25,30]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,3],[2,5],[4,8],[10,12],[11,14],[20,22]]]",
+        "output": "[[8,10],[14,20]]",
+        "expectedOutput": "[[8,10],[14,20]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0,5],[10,15],[20,25],[30,35],[40,45],[50,55],[60,65],[70,75],[80,85],[90,95],[100,105],[110,115],[120,125],[130,135],[140,145]]]",
+        "output": "[[5,10],[15,20],[25,30],[35,40],[45,50],[55,60],[65,70],[75,80],[85,90],[95,100],[105,110],[115,120],[125,130],[135,140]]",
+        "expectedOutput": "[[5,10],[15,20],[25,30],[35,40],[45,50],[55,60],[65,70],[75,80],[85,90],[95,100],[105,110],[115,120],[125,130],[135,140]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,100],[2,3],[4,5],[6,7],[50,60]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,3],[1,3]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[5,10],[1,3],[15,20],[8,12]]]",
+        "output": "[[3,5],[12,15]]",
+        "expectedOutput": "[[3,5],[12,15]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,1],[2,3],[4,5],[6,7],[8,9],[10,11]]]",
+        "output": "[[1,2],[3,4],[5,6],[7,8],[9,10]]",
+        "expectedOutput": "[[1,2],[3,4],[5,6],[7,8],[9,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,2],[1,2],[1,2],[5,6]]]",
+        "output": "[[2,5]]",
+        "expectedOutput": "[[2,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,50],[10,20],[30,40]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,4],[4,7],[7,10],[10,13],[20,25]]]",
+        "output": "[[13,20]]",
+        "expectedOutput": "[[13,20]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[100,200],[0,50],[60,90]]]",
+        "output": "[[50,60],[90,100]]",
+        "expectedOutput": "[[50,60],[90,100]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,3],[6,7],[2,4],[8,10],[9,11],[12,13]]]",
+        "output": "[[4,6],[7,8],[11,12]]",
+        "expectedOutput": "[[4,6],[7,8],[11,12]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[10,20],[0,5]]]",
+        "output": "[[5,10]]",
+        "expectedOutput": "[[5,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[3,4],[1,2]]]",
+        "output": "[[2,3]]",
+        "expectedOutput": "[[2,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[35,35],[36,40],[51,54],[87,91],[98,103],[107,112],[116,122],[119,125],[125,126],[136,141],[138,143],[142,145],[148,148],[185,189],[186,187],[189,191],[236,239],[282,284]]]",
+        "output": "[[35,36],[40,51],[54,87],[91,98],[103,107],[112,116],[126,136],[145,148],[148,185],[191,236],[239,282]]",
+        "expectedOutput": "[[35,36],[40,51],[54,87],[91,98],[103,107],[112,116],[126,136],[145,148],[148,185],[191,236],[239,282]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[[0,3],[3,6],[6,9],[9,12],[15,18]]]",
+        "output": "[[12,15]]",
+        "expectedOutput": "[[12,15]]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def employeeFreeTime(self, schedule):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> employeeFreeTime(vector<vector<int>>& schedule) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] employeeFreeTime(int[][] schedule) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun employeeFreeTime(schedule: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    employeeFreeTime(schedule) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def employeeFreeTime(self, schedule):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> employeeFreeTime(vector<vector<int>>& schedule) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] employeeFreeTime(int[][] schedule) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun employeeFreeTime(schedule: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    employeeFreeTime(schedule) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def employeeFreeTime(self, schedule):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> employeeFreeTime(vector<vector<int>>& schedule) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] employeeFreeTime(int[][] schedule) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun employeeFreeTime(schedule: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    employeeFreeTime(schedule) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def employeeFreeTime(self, schedule):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> employeeFreeTime(vector<vector<int>>& schedule) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] employeeFreeTime(int[][] schedule) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun employeeFreeTime(schedule: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    employeeFreeTime(schedule) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log n)",
+      "space": "O(n) for the merged intervals and output",
+      "pattern": "sort all intervals by start, merge overlapping ones into busy blocks, then read off the gaps between consecutive merged blocks"
+    },
+    "bruteForce": {
+      "approach": "mark every integer point from the overall earliest start to the overall latest end as busy or free by scanning all intervals for each point, then group consecutive free points into ranges",
+      "time": "O(n * range) where range is the span of time covered",
+      "space": "O(range)"
+    }
+  },
+  "optimal": {
+    "pattern": "sort all intervals by start, merge overlapping ones into busy blocks, then read off the gaps between consecutive merged blocks",
+    "time": "O(n log n)",
+    "space": "O(n) for the merged intervals and output",
+    "hint_ladder": [
+      "free time is just the complement of everyone's combined busy time - so first figure out the combined busy time",
+      "sort all the given intervals by start time, ignoring which employee they belong to, since you only care about total coverage",
+      "sweep through and merge overlapping or touching intervals into a list of non-overlapping busy blocks, exactly like the standard merge intervals problem",
+      "walk through the merged busy blocks in order: whenever the next block's start is strictly greater than the previous block's end, that gap [previousEnd, nextStart] is a free time interval"
+    ]
+  },
+  "bruteForce": {
+    "approach": "mark every integer point from the overall earliest start to the overall latest end as busy or free by scanning all intervals for each point, then group consecutive free points into ranges",
+    "time": "O(n * range) where range is the span of time covered",
+    "space": "O(range)"
+  },
+  "isIndex0": true,
+  "level": null
+}

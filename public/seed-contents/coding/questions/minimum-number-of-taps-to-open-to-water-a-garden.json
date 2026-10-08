@@ -1,0 +1,601 @@
+{
+  "id": "minimum-number-of-taps-to-open-to-water-a-garden",
+  "questionId": "minimum-number-of-taps-to-open-to-water-a-garden",
+  "slug": "minimum-number-of-taps-to-open-to-water-a-garden",
+  "title": "Minimum Number of Taps to Open to Water a Garden",
+  "difficulty": "Hard",
+  "category": "Greedy",
+  "patterns": [
+    "greedy",
+    "intervals",
+    "jump game"
+  ],
+  "lists": [],
+  "hints": [
+    "each tap i really just defines a coverage interval [max(0, i - ranges[i]), min(n, i + ranges[i])] - once you see it that way, what classic problem does 'cover a whole range using the fewest intervals' remind you of?",
+    "for every starting point l in [0, n], precompute the farthest right endpoint reachable by any tap whose interval begins at l - this reduces the problem to 'starting at position 0, using these reach values, how few jumps to reach position n' (like Jump Game II)",
+    "greedily track the farthest point reachable using taps considered so far; walk forward position by position, and whenever your current position reaches the boundary of what your currently-opened taps guarantee, you're forced to open one more tap - specifically, the one that pushes your farthest reach out the most among all positions you've passed through",
+    "if, at the point you're forced to open another tap, the farthest reach available doesn't extend past your current boundary at all, no tap can rescue you from that gap, so the garden can never be fully watered",
+    "why is greedily picking the single farthest-reaching option at each forced decision point always at least as good as any other choice? because a farther reach can only ever cover more ground and delay the next forced decision at least as long as a shorter reach would, so it never leads to needing more taps than the alternative"
+  ],
+  "commonMistakes": [
+    "trying to greedily pick taps in order of their range size rather than by how far right their interval actually reaches, which ignores that a tap's position matters as much as its range",
+    "forgetting to clip each tap's interval to [0, n], which can create phantom coverage that doesn't actually exist within the garden",
+    "not detecting the impossible case, and instead looping forever or returning an undercount when a gap in coverage cannot be closed by any tap"
+  ],
+  "content": {
+    "problemStatement": "A garden lies on the x-axis from point 0 to point n. There are n + 1 taps, located at points 0, 1, ..., n. When tap i is fully open, it waters the interval `[i - ranges[i], i + ranges[i]]`, clipped to stay within `[0, n]`.\n\n**Return the minimum number of taps you need to open to water the entire garden `[0, n]`, or -1 if it's impossible.**\n",
+    "constraints": [
+      "ranges.length == n + 1",
+      "0 <= ranges[i]",
+      "taps can be opened in any combination, in any order"
+    ],
+    "notes": [
+      "a single tap covers the entire garden by itself",
+      "every tap has range 0 (impossible unless n = 0)",
+      "n = 0 (a garden of a single point, trivially coverable)",
+      "a gap in coverage exists between two taps' reach that no other tap fills"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 5, ranges = [3, 4, 1, 1, 0, 0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "opening tap 1 alone waters [1-4, 1+4] = [-3, 5], which clipped to the garden covers all of [0, 5]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 3, ranges = [0, 0, 0, 0]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "every tap has range 0, so each one only waters its own single point, leaving gaps uncovered"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[5,[3,4,1,1,0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,[0,0,0,0]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[7,[1,2,1,0,2,1,0,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[8,[4,0,0,0,0,0,0,0,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[0,[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[1,[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[1,[0,0]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[10,[10,0,0,0,0,0,0,0,0,0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[4,[0,1,0,0,0]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[9,[0,1,0,2,1,0,1,1,0,1]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[20,[2,1,0,2,1,3,1,3,1,3,3,1,3,0,3,0,2,1,3,0,1]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[15,[3,0,0,3,0,0,3,0,0,3,0,0,3,0,0,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[2,[2,0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[2,[1,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[6,[3,3,3,3,3,3,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[12,[0,0,0,0,0,0,6,0,0,0,0,0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[5,[0,3,0,0,0,0]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[16,[2,0,2,0,3,0,1,0,2,0,3,0,2,0,2,0,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[25,[0,3,2,4,4,0,3,4,2,2,2,1,3,0,0,4,0,4,2,0,1,3,1,3,1,3]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[3,[3,0,0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 5, ranges = [3, 4, 1, 1, 0, 0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "opening tap 1 alone waters [1-4, 1+4] = [-3, 5], which clipped to the garden covers all of [0, 5]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 3, ranges = [0, 0, 0, 0]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "every tap has range 0, so each one only waters its own single point, leaving gaps uncovered"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 5, ranges = [3, 4, 1, 1, 0, 0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "opening tap 1 alone waters [1-4, 1+4] = [-3, 5], which clipped to the garden covers all of [0, 5]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 3, ranges = [0, 0, 0, 0]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "every tap has range 0, so each one only waters its own single point, leaving gaps uncovered"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[5,[3,4,1,1,0,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[3,[0,0,0,0]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[7,[1,2,1,0,2,1,0,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[8,[4,0,0,0,0,0,0,0,4]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[0,[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[1,[1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[1,[0,0]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[10,[10,0,0,0,0,0,0,0,0,0,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[4,[0,1,0,0,0]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[9,[0,1,0,2,1,0,1,1,0,1]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[20,[2,1,0,2,1,3,1,3,1,3,3,1,3,0,3,0,2,1,3,0,1]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[15,[3,0,0,3,0,0,3,0,0,3,0,0,3,0,0,3]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[2,[2,0,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[2,[1,1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[6,[3,3,3,3,3,3,3]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[12,[0,0,0,0,0,0,6,0,0,0,0,0,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[5,[0,3,0,0,0,0]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[16,[2,0,2,0,3,0,1,0,2,0,3,0,2,0,2,0,1]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[25,[0,3,2,4,4,0,3,4,2,2,2,1,3,0,0,4,0,4,2,0,1,3,1,3,1,3]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[3,[3,0,0,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 5, ranges = [3, 4, 1, 1, 0, 0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "opening tap 1 alone waters [1-4, 1+4] = [-3, 5], which clipped to the garden covers all of [0, 5]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 3, ranges = [0, 0, 0, 0]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "every tap has range 0, so each one only waters its own single point, leaving gaps uncovered"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[5,[3,4,1,1,0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,[0,0,0,0]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[7,[1,2,1,0,2,1,0,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[8,[4,0,0,0,0,0,0,0,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[0,[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[1,[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[1,[0,0]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[10,[10,0,0,0,0,0,0,0,0,0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[4,[0,1,0,0,0]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[9,[0,1,0,2,1,0,1,1,0,1]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[20,[2,1,0,2,1,3,1,3,1,3,3,1,3,0,3,0,2,1,3,0,1]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[15,[3,0,0,3,0,0,3,0,0,3,0,0,3,0,0,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[2,[2,0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[2,[1,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[6,[3,3,3,3,3,3,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[12,[0,0,0,0,0,0,6,0,0,0,0,0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[5,[0,3,0,0,0,0]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[16,[2,0,2,0,3,0,1,0,2,0,3,0,2,0,2,0,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[25,[0,3,2,4,4,0,3,4,2,2,2,1,3,0,0,4,0,4,2,0,1,3,1,3,1,3]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[3,[3,0,0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minTaps(self, n, ranges):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minTaps(int n, vector<int>& ranges) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minTaps(int n, int[] ranges) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minTaps(n: Int, ranges: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minTaps(n, ranges) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minTaps(self, n, ranges):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minTaps(int n, vector<int>& ranges) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minTaps(int n, int[] ranges) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minTaps(n: Int, ranges: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minTaps(n, ranges) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minTaps(self, n, ranges):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minTaps(int n, vector<int>& ranges) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minTaps(int n, int[] ranges) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minTaps(n: Int, ranges: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minTaps(n, ranges) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minTaps(self, n, ranges):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minTaps(int n, vector<int>& ranges) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minTaps(int n, int[] ranges) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minTaps(n: Int, ranges: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minTaps(n, ranges) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n)",
+      "pattern": "convert each tap into an interval [i - ranges[i], i + ranges[i]], then this becomes an interval-covering / jump-game problem: greedily extend coverage as far as possible at each step"
+    },
+    "bruteForce": {
+      "approach": "try every subset of the n+1 taps, check whether the union of their intervals covers [0, n] completely, keep the smallest covering subset",
+      "time": "O(2^n)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "convert each tap into an interval [i - ranges[i], i + ranges[i]], then this becomes an interval-covering / jump-game problem: greedily extend coverage as far as possible at each step",
+    "time": "O(n)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "each tap i really just defines a coverage interval [max(0, i - ranges[i]), min(n, i + ranges[i])] - once you see it that way, what classic problem does 'cover a whole range using the fewest intervals' remind you of?",
+      "for every starting point l in [0, n], precompute the farthest right endpoint reachable by any tap whose interval begins at l - this reduces the problem to 'starting at position 0, using these reach values, how few jumps to reach position n' (like Jump Game II)",
+      "greedily track the farthest point reachable using taps considered so far; walk forward position by position, and whenever your current position reaches the boundary of what your currently-opened taps guarantee, you're forced to open one more tap - specifically, the one that pushes your farthest reach out the most among all positions you've passed through",
+      "if, at the point you're forced to open another tap, the farthest reach available doesn't extend past your current boundary at all, no tap can rescue you from that gap, so the garden can never be fully watered",
+      "why is greedily picking the single farthest-reaching option at each forced decision point always at least as good as any other choice? because a farther reach can only ever cover more ground and delay the next forced decision at least as long as a shorter reach would, so it never leads to needing more taps than the alternative"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every subset of the n+1 taps, check whether the union of their intervals covers [0, n] completely, keep the smallest covering subset",
+    "time": "O(2^n)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,627 @@
+{
+  "id": "backspace-compare-with-stack",
+  "questionId": "backspace-compare-with-stack",
+  "slug": "backspace-compare-with-stack",
+  "title": "Build Final String With Backspaces",
+  "difficulty": "Easy",
+  "category": "Stack",
+  "patterns": [
+    "stack"
+  ],
+  "lists": [],
+  "hints": [
+    "what does pressing backspace actually do to whatever you've typed so far - does it need to know anything beyond the very last character you typed?",
+    "walk through s left to right; for a letter, add it to your result so far; for '#', remove the most recent character if one exists",
+    "a stack (or a list used as one) models 'the most recent character typed' exactly, and popping on '#' handles the no-op case naturally when it's empty",
+    "join the stack's contents at the end to form the final string"
+  ],
+  "commonMistakes": [
+    "popping from an empty stack on '#' instead of checking first (or not handling the case at all in languages where it would crash)",
+    "trying to handle backspaces by scanning right to left with a counter of skips (works, but is easy to get the counter logic wrong compared to the simpler stack simulation)",
+    "forgetting consecutive '#' characters can cancel each other's effect only if there's enough typed content before them"
+  ],
+  "content": {
+    "problemStatement": "You're given a string containing lowercase letters and the character '#', where '#' represents pressing backspace, deleting the previous character in the string being typed (if there is one; a '#' with nothing before it does nothing).\n\n**Simulate typing the string character by character, and return the final resulting string after all backspaces are applied.**\n",
+    "constraints": [
+      "0 <= s.length <= 200",
+      "s consists only of lowercase English letters and the character '#'"
+    ],
+    "notes": [
+      "backspace at the very start of the string (no-op)",
+      "more backspaces than typed characters",
+      "string with no '#' at all"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"ab#c\"",
+        "output": "\"ac\"",
+        "expectedOutput": "\"ac\"",
+        "explanation": "type a, type b, backspace removes b, type c -> \"ac\""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"ab##\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": "type a, type b, backspace removes b, backspace removes a -> empty"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"a##c\"",
+        "output": "\"c\"",
+        "expectedOutput": "\"c\"",
+        "explanation": "type a, backspace removes a (empty), backspace does nothing (nothing to remove), type c -> \"c\""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"ab#c\"]",
+        "output": "ac",
+        "expectedOutput": "ac",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"ab##\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a##c\"]",
+        "output": "c",
+        "expectedOutput": "c",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"xywrrmp\"]",
+        "output": "xywrrmp",
+        "expectedOutput": "xywrrmp",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"####\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"#\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"##\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"a#\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aa#b\"]",
+        "output": "ab",
+        "expectedOutput": "ab",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abc#d##c\"]",
+        "output": "ac",
+        "expectedOutput": "ac",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"a#c#d#\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"###a###b\"]",
+        "output": "b",
+        "expectedOutput": "b",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abcdefg\"]",
+        "output": "abcdefg",
+        "expectedOutput": "abcdefg",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"a#b#c#d#e#f#g#\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"z#z#z#z#z#\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"hello##world\"]",
+        "output": "helworld",
+        "expectedOutput": "helworld",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"typing#with#no#deletions#left\"]",
+        "output": "typinwitndeletionleft",
+        "expectedOutput": "typinwitndeletionleft",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"aaaaaaaaaa##########\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"ab#c\"",
+      "output": "\"ac\"",
+      "expectedOutput": "\"ac\"",
+      "explanation": "type a, type b, backspace removes b, type c -> \"ac\""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"ab##\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": "type a, type b, backspace removes b, backspace removes a -> empty"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"a##c\"",
+      "output": "\"c\"",
+      "expectedOutput": "\"c\"",
+      "explanation": "type a, backspace removes a (empty), backspace does nothing (nothing to remove), type c -> \"c\""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"ab#c\"",
+      "output": "\"ac\"",
+      "expectedOutput": "\"ac\"",
+      "explanation": "type a, type b, backspace removes b, type c -> \"ac\""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"ab##\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": "type a, type b, backspace removes b, backspace removes a -> empty"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"a##c\"",
+      "output": "\"c\"",
+      "expectedOutput": "\"c\"",
+      "explanation": "type a, backspace removes a (empty), backspace does nothing (nothing to remove), type c -> \"c\""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"ab#c\"]",
+      "output": "ac",
+      "expectedOutput": "ac",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"ab##\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"a##c\"]",
+      "output": "c",
+      "expectedOutput": "c",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"xywrrmp\"]",
+      "output": "xywrrmp",
+      "expectedOutput": "xywrrmp",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"####\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"#\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"##\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"a\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"a#\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"aa#b\"]",
+      "output": "ab",
+      "expectedOutput": "ab",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"abc#d##c\"]",
+      "output": "ac",
+      "expectedOutput": "ac",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"a#c#d#\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"###a###b\"]",
+      "output": "b",
+      "expectedOutput": "b",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"abcdefg\"]",
+      "output": "abcdefg",
+      "expectedOutput": "abcdefg",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"a#b#c#d#e#f#g#\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"z#z#z#z#z#\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"hello##world\"]",
+      "output": "helworld",
+      "expectedOutput": "helworld",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"typing#with#no#deletions#left\"]",
+      "output": "typinwitndeletionleft",
+      "expectedOutput": "typinwitndeletionleft",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"aaaaaaaaaa##########\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"ab#c\"",
+        "output": "\"ac\"",
+        "expectedOutput": "\"ac\"",
+        "explanation": "type a, type b, backspace removes b, type c -> \"ac\""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"ab##\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": "type a, type b, backspace removes b, backspace removes a -> empty"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"a##c\"",
+        "output": "\"c\"",
+        "expectedOutput": "\"c\"",
+        "explanation": "type a, backspace removes a (empty), backspace does nothing (nothing to remove), type c -> \"c\""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"ab#c\"]",
+        "output": "ac",
+        "expectedOutput": "ac",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"ab##\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a##c\"]",
+        "output": "c",
+        "expectedOutput": "c",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"xywrrmp\"]",
+        "output": "xywrrmp",
+        "expectedOutput": "xywrrmp",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"####\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"#\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"##\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"a#\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aa#b\"]",
+        "output": "ab",
+        "expectedOutput": "ab",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abc#d##c\"]",
+        "output": "ac",
+        "expectedOutput": "ac",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"a#c#d#\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"###a###b\"]",
+        "output": "b",
+        "expectedOutput": "b",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abcdefg\"]",
+        "output": "abcdefg",
+        "expectedOutput": "abcdefg",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"a#b#c#d#e#f#g#\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"z#z#z#z#z#\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"hello##world\"]",
+        "output": "helworld",
+        "expectedOutput": "helworld",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"typing#with#no#deletions#left\"]",
+        "output": "typinwitndeletionleft",
+        "expectedOutput": "typinwitndeletionleft",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"aaaaaaaaaa##########\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def buildFinalString(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    string buildFinalString(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String buildFinalString(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun buildFinalString(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    buildFinalString(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def buildFinalString(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    string buildFinalString(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String buildFinalString(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun buildFinalString(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    buildFinalString(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def buildFinalString(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    string buildFinalString(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String buildFinalString(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun buildFinalString(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    buildFinalString(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def buildFinalString(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    string buildFinalString(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String buildFinalString(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun buildFinalString(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    buildFinalString(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n)",
+      "pattern": "stack (simulate typing)"
+    },
+    "bruteForce": {
+      "approach": "same as the optimal approach - a stack is already the direct and simplest simulation of typing with backspace",
+      "time": "O(n)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "stack (simulate typing)",
+    "time": "O(n)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "what does pressing backspace actually do to whatever you've typed so far - does it need to know anything beyond the very last character you typed?",
+      "walk through s left to right; for a letter, add it to your result so far; for '#', remove the most recent character if one exists",
+      "a stack (or a list used as one) models 'the most recent character typed' exactly, and popping on '#' handles the no-op case naturally when it's empty",
+      "join the stack's contents at the end to form the final string"
+    ]
+  },
+  "bruteForce": {
+    "approach": "same as the optimal approach - a stack is already the direct and simplest simulation of typing with backspace",
+    "time": "O(n)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,599 @@
+{
+  "id": "binary-search",
+  "questionId": "binary-search",
+  "slug": "binary-search",
+  "title": "Binary Search",
+  "difficulty": "Easy",
+  "category": "Binary search",
+  "patterns": [
+    "binary search"
+  ],
+  "lists": [
+    "grind-75"
+  ],
+  "hints": [
+    "the array is sorted - does a linear scan actually use that fact?",
+    "if you check the middle element, what does that tell you about which half the target could be in?",
+    "you can eliminate half the remaining elements with a single comparison - repeat that",
+    "track left and right pointers, compute mid, compare arr[mid] to target, and move left or right accordingly"
+  ],
+  "commonMistakes": [
+    "infinite loop from not updating left/right correctly (e.g. mid instead of mid+1/mid-1)",
+    "integer overflow computing mid as (left+right)/2 in languages where this matters (mention left + (right-left)/2 as the safe form)",
+    "off-by-one on the loop condition (left <= right vs left < right)"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of distinct integers sorted in ascending order, and a target value.\n\n**Return the index of the target if it exists in the array, or -1 if it doesn't.**\n",
+    "constraints": [
+      "1 <= nums.length <= 10^4",
+      "-10^4 < nums[i], target < 10^4",
+      "all the integers in nums are unique",
+      "nums is sorted in ascending order"
+    ],
+    "notes": [
+      "target not in the array (below min or above max)",
+      "target is the first or last element",
+      "array with a single element"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [-1, 0, 3, 5, 9, 12], target = 9",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "9 is at index 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-1, 0, 3, 5, 9, 12], target = 2",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "2 is not in the array"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[-1,0,3,5,9,12],9]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-1,0,3,5,9,12],2]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[5],5]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5],-5]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,3,5,7,9,11,13,15,17,19],1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,3,5,7,9,11,13,15,17,19],19]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,3,5,7,9,11,13,15,17,19],10]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,3,5,7,9,11,13,15,17,19],0]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,3,5,7,9,11,13,15,17,19],20]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-20,-15,-10,-5,0,5,10,15,20],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-20,-15,-10,-5,0,5,10,15,20],-20]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-20,-15,-10,-5,0,5,10,15,20],20]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[2,4],2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[2,4],4]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,4],3]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-50,-47,-44,-41,-38,-35,-32,-29,-26,-23,-20,-17,-14,-11,-8,-5,-2,1,4,7,10,13,16,19,22,25,28,31,34,37,40,43,46,49],-50]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-50,-47,-44,-41,-38,-35,-32,-29,-26,-23,-20,-17,-14,-11,-8,-5,-2,1,4,7,10,13,16,19,22,25,28,31,34,37,40,43,46,49],46]",
+        "output": "32",
+        "expectedOutput": "32",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-50,-47,-44,-41,-38,-35,-32,-29,-26,-23,-20,-17,-14,-11,-8,-5,-2,1,4,7,10,13,16,19,22,25,28,31,34,37,40,43,46,49],47]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,6,11,16,21,26,31,36,41,46,51,56,61,66,71,76,81,86,91,96,101,106,111,116,121,126,131,136,141,146,151,156,161,166,171,176,181,186,191,196],101]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,6,11,16,21,26,31,36,41,46,51,56,61,66,71,76,81,86,91,96,101,106,111,116,121,126,131,136,141,146,151,156,161,166,171,176,181,186,191,196],100]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [-1, 0, 3, 5, 9, 12], target = 9",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "9 is at index 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-1, 0, 3, 5, 9, 12], target = 2",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "2 is not in the array"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [-1, 0, 3, 5, 9, 12], target = 9",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "9 is at index 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-1, 0, 3, 5, 9, 12], target = 2",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "2 is not in the array"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[-1,0,3,5,9,12],9]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[-1,0,3,5,9,12],2]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[5],5]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[5],-5]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,3,5,7,9,11,13,15,17,19],1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,3,5,7,9,11,13,15,17,19],19]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,3,5,7,9,11,13,15,17,19],10]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,3,5,7,9,11,13,15,17,19],0]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,3,5,7,9,11,13,15,17,19],20]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[-20,-15,-10,-5,0,5,10,15,20],0]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[-20,-15,-10,-5,0,5,10,15,20],-20]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[-20,-15,-10,-5,0,5,10,15,20],20]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[2,4],2]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[2,4],4]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[2,4],3]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[-50,-47,-44,-41,-38,-35,-32,-29,-26,-23,-20,-17,-14,-11,-8,-5,-2,1,4,7,10,13,16,19,22,25,28,31,34,37,40,43,46,49],-50]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[-50,-47,-44,-41,-38,-35,-32,-29,-26,-23,-20,-17,-14,-11,-8,-5,-2,1,4,7,10,13,16,19,22,25,28,31,34,37,40,43,46,49],46]",
+      "output": "32",
+      "expectedOutput": "32",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[-50,-47,-44,-41,-38,-35,-32,-29,-26,-23,-20,-17,-14,-11,-8,-5,-2,1,4,7,10,13,16,19,22,25,28,31,34,37,40,43,46,49],47]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,6,11,16,21,26,31,36,41,46,51,56,61,66,71,76,81,86,91,96,101,106,111,116,121,126,131,136,141,146,151,156,161,166,171,176,181,186,191,196],101]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,6,11,16,21,26,31,36,41,46,51,56,61,66,71,76,81,86,91,96,101,106,111,116,121,126,131,136,141,146,151,156,161,166,171,176,181,186,191,196],100]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [-1, 0, 3, 5, 9, 12], target = 9",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "9 is at index 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-1, 0, 3, 5, 9, 12], target = 2",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "2 is not in the array"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[-1,0,3,5,9,12],9]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-1,0,3,5,9,12],2]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[5],5]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5],-5]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,3,5,7,9,11,13,15,17,19],1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,3,5,7,9,11,13,15,17,19],19]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,3,5,7,9,11,13,15,17,19],10]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,3,5,7,9,11,13,15,17,19],0]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,3,5,7,9,11,13,15,17,19],20]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-20,-15,-10,-5,0,5,10,15,20],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-20,-15,-10,-5,0,5,10,15,20],-20]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-20,-15,-10,-5,0,5,10,15,20],20]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[2,4],2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[2,4],4]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,4],3]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-50,-47,-44,-41,-38,-35,-32,-29,-26,-23,-20,-17,-14,-11,-8,-5,-2,1,4,7,10,13,16,19,22,25,28,31,34,37,40,43,46,49],-50]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-50,-47,-44,-41,-38,-35,-32,-29,-26,-23,-20,-17,-14,-11,-8,-5,-2,1,4,7,10,13,16,19,22,25,28,31,34,37,40,43,46,49],46]",
+        "output": "32",
+        "expectedOutput": "32",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-50,-47,-44,-41,-38,-35,-32,-29,-26,-23,-20,-17,-14,-11,-8,-5,-2,1,4,7,10,13,16,19,22,25,28,31,34,37,40,43,46,49],47]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,6,11,16,21,26,31,36,41,46,51,56,61,66,71,76,81,86,91,96,101,106,111,116,121,126,131,136,141,146,151,156,161,166,171,176,181,186,191,196],101]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,6,11,16,21,26,31,36,41,46,51,56,61,66,71,76,81,86,91,96,101,106,111,116,121,126,131,136,141,146,151,156,161,166,171,176,181,186,191,196],100]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def search(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int search(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int search(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun search(nums: IntArray, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    search(nums, target) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def search(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int search(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int search(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun search(nums: IntArray, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    search(nums, target) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def search(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int search(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int search(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun search(nums: IntArray, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    search(nums, target) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def search(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int search(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int search(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun search(nums: IntArray, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    search(nums, target) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(log n)",
+      "space": "O(1) iterative, O(log n) if recursive",
+      "pattern": "binary search (halve the search space each step)"
+    },
+    "bruteForce": {
+      "approach": "linear scan through the array checking each element against target",
+      "time": "O(n)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "binary search (halve the search space each step)",
+    "time": "O(log n)",
+    "space": "O(1) iterative, O(log n) if recursive",
+    "hint_ladder": [
+      "the array is sorted - does a linear scan actually use that fact?",
+      "if you check the middle element, what does that tell you about which half the target could be in?",
+      "you can eliminate half the remaining elements with a single comparison - repeat that",
+      "track left and right pointers, compute mid, compare arr[mid] to target, and move left or right accordingly"
+    ]
+  },
+  "bruteForce": {
+    "approach": "linear scan through the array checking each element against target",
+    "time": "O(n)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

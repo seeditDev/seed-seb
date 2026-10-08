@@ -1,0 +1,630 @@
+{
+  "id": "is-subsequence",
+  "questionId": "is-subsequence",
+  "slug": "is-subsequence",
+  "title": "Is Subsequence",
+  "difficulty": "Easy",
+  "category": "Two pointers",
+  "patterns": [
+    "two pointers"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "you never need to look backward in t once you've matched a character - what does that suggest about how many pointers you need, and how they should move?",
+    "keep one pointer in s and one in t; advance the t pointer every step, and only advance the s pointer when the characters match",
+    "if the s pointer reaches the end of s, every character was matched in order - s is a subsequence",
+    "if the t pointer runs out first, there weren't enough matching characters left in t"
+  ],
+  "commonMistakes": [
+    "advancing the s pointer even when characters don't match",
+    "not handling the empty-string case for s explicitly (though the two-pointer approach naturally handles it if written correctly)",
+    "restarting the scan of t from the beginning for each character of s instead of continuing from where you left off"
+  ],
+  "content": {
+    "problemStatement": "You're given two strings, `s` and `t`.\n\n**Determine whether `s` is a subsequence of `t`.**\n\nA subsequence means every character of `s` appears in `t` in the same\nrelative order, though not necessarily right next to each other.\n",
+    "constraints": [
+      "0 <= s.length <= 100",
+      "0 <= t.length <= 10^4",
+      "s and t consist of lowercase English letters and spaces"
+    ],
+    "notes": [
+      "s is empty (always true)",
+      "s is longer than t (always false, unless s is empty)",
+      "s equals t exactly"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"abc\", t = \"ahbgdc\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "a, b, c appear in that order within ahbgdc, with other letters in between"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"axc\", t = \"ahbgdc\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "there's no x anywhere in t"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"\", t = \"ahbgdc\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "an empty string is a subsequence of anything"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"abc\",\"ahbgdc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"axc\",\"ahbgdc\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"\",\"ahbgdc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"b\",\"\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a\",\"a\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"ab\",\"ba\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abc\",\"abc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaaa\",\"aaaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aaaaa\",\"aaaa\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"xyz\",\"axbycz\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abcdefghij\",\"aabbccddeeffgghhiijj\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abcdefghijklmno\",\"zabzcdzefzghzijzklzmnzo\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"z\",\"abcdefghijklmnopqrstuvwxy\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"acegikmoqsuwy\",\"abcdefghijklmnopqrstuvwxyz\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"bdfhjlnprtvxz\",\"abcdefghijklmnopqrstuvwxyz\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"hello world this is a longer subsequence test\",\"hello world this is a longer subsequence test string here\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"ba\",\"ab\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"abc\", t = \"ahbgdc\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "a, b, c appear in that order within ahbgdc, with other letters in between"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"axc\", t = \"ahbgdc\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "there's no x anywhere in t"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"\", t = \"ahbgdc\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "an empty string is a subsequence of anything"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"abc\", t = \"ahbgdc\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "a, b, c appear in that order within ahbgdc, with other letters in between"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"axc\", t = \"ahbgdc\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "there's no x anywhere in t"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"\", t = \"ahbgdc\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "an empty string is a subsequence of anything"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"abc\",\"ahbgdc\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"axc\",\"ahbgdc\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"\",\"ahbgdc\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"b\",\"\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"\",\"\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\",\"\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"a\",\"a\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"ab\",\"ba\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"abc\",\"abc\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"aaaa\",\"aaaaaaaa\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"aaaaa\",\"aaaa\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"xyz\",\"axbycz\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"abcdefghij\",\"aabbccddeeffgghhiijj\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"abcdefghijklmno\",\"zabzcdzefzghzijzklzmnzo\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"z\",\"abcdefghijklmnopqrstuvwxy\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"acegikmoqsuwy\",\"abcdefghijklmnopqrstuvwxyz\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"bdfhjlnprtvxz\",\"abcdefghijklmnopqrstuvwxyz\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"hello world this is a longer subsequence test\",\"hello world this is a longer subsequence test string here\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"aaaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"ba\",\"ab\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"abc\", t = \"ahbgdc\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "a, b, c appear in that order within ahbgdc, with other letters in between"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"axc\", t = \"ahbgdc\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "there's no x anywhere in t"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"\", t = \"ahbgdc\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "an empty string is a subsequence of anything"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"abc\",\"ahbgdc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"axc\",\"ahbgdc\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"\",\"ahbgdc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"b\",\"\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a\",\"a\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"ab\",\"ba\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abc\",\"abc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaaa\",\"aaaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aaaaa\",\"aaaa\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"xyz\",\"axbycz\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abcdefghij\",\"aabbccddeeffgghhiijj\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abcdefghijklmno\",\"zabzcdzefzghzijzklzmnzo\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"z\",\"abcdefghijklmnopqrstuvwxy\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"acegikmoqsuwy\",\"abcdefghijklmnopqrstuvwxyz\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"bdfhjlnprtvxz\",\"abcdefghijklmnopqrstuvwxyz\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"hello world this is a longer subsequence test\",\"hello world this is a longer subsequence test string here\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"ba\",\"ab\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def isSubsequence(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isSubsequence(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isSubsequence(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isSubsequence(s: String, t: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isSubsequence(s, t) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def isSubsequence(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isSubsequence(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isSubsequence(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isSubsequence(s: String, t: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isSubsequence(s, t) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def isSubsequence(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isSubsequence(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isSubsequence(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isSubsequence(s: String, t: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isSubsequence(s, t) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def isSubsequence(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isSubsequence(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isSubsequence(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isSubsequence(s: String, t: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isSubsequence(s, t) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n + m)",
+      "space": "O(1)",
+      "pattern": "two pointers advancing through s and t together in a single pass"
+    },
+    "bruteForce": {
+      "approach": "for each character of s, search forward in t starting from where the last match was found, re-scanning as needed",
+      "time": "O(n * m) in the worst case if searches overlap heavily",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "two pointers advancing through s and t together in a single pass",
+    "time": "O(n + m)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "you never need to look backward in t once you've matched a character - what does that suggest about how many pointers you need, and how they should move?",
+      "keep one pointer in s and one in t; advance the t pointer every step, and only advance the s pointer when the characters match",
+      "if the s pointer reaches the end of s, every character was matched in order - s is a subsequence",
+      "if the t pointer runs out first, there weren't enough matching characters left in t"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each character of s, search forward in t starting from where the last match was found, re-scanning as needed",
+    "time": "O(n * m) in the worst case if searches overlap heavily",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

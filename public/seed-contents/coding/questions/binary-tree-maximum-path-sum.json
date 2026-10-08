@@ -1,0 +1,654 @@
+{
+  "id": "binary-tree-maximum-path-sum",
+  "questionId": "binary-tree-maximum-path-sum",
+  "slug": "binary-tree-maximum-path-sum",
+  "title": "Binary Tree Maximum Path Sum",
+  "difficulty": "Hard",
+  "category": "Tree dfs",
+  "patterns": [
+    "tree",
+    "dfs",
+    "recursion"
+  ],
+  "lists": [
+    "blind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "a valid path can 'bend' at most once, at its highest point - once a path goes down into a child and back up, it can never branch again. what does that tell you about what a node can safely report to its parent?",
+    "a node can only offer its parent a straight extension going one direction (through at most one child), even though the best path passing through the node itself might use both children",
+    "write a helper that returns the best downward sum starting at this node and extending into at most one child (never both) - and treat any negative child contribution as 0 (skip it) since including a negative sum only hurts",
+    "at each node, separately compute leftGain and rightGain (each clamped to at least 0), update a running global maximum with tree[i] + leftGain + rightGain (the 'bent' path through this node), but return only tree[i] + max(leftGain, rightGain) upward to the parent"
+  ],
+  "commonMistakes": [
+    "returning tree[i] + leftGain + rightGain (using both children) up to the parent, which would let the parent build an invalid branching 'path'",
+    "not clamping negative child contributions to 0, which lets a bad subtree drag down an otherwise good path unnecessarily",
+    "initializing the running global maximum to 0 instead of negative infinity (or the first node's value), which breaks on trees where every value is negative"
+  ],
+  "content": {
+    "problemStatement": "Binary trees are encoded as flat arrays using complete-binary-tree (heap) indexing:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array's bounds **and** its value isn't the sentinel `-101`, which means \"no node there\"\n\nFor example, `[1, 2, 3, -101, 4]` encodes this tree:\n\n```\n      1\n     / \\\n    2   3\n     \\\n      4\n```\n\nNode 2's left child is missing and its right child is 4.\n\nA \"path\" is any sequence of nodes where each consecutive pair is connected by an edge, no node appears more than once, and the path does not need to pass through the root or end at a leaf, it can start and end anywhere as long as it forms a single connected, non-branching line.\n\n**Return the maximum possible sum of node values along any non-empty path.**\n\nNode values may be negative, so the best path might be a single node.\n",
+    "constraints": [
+      "1 <= number of nodes in the tree <= 3 * 10^4",
+      "-100 <= tree[i] <= 100 for every real node value",
+      "tree[i] == -101 marks a missing node and never appears as a real value"
+    ],
+    "notes": [
+      "a tree where every value is negative, forcing the answer to be the single least-negative node",
+      "the best path passing entirely within one subtree, never reaching the root",
+      "a node where using both children in the path (bending through the node) beats using just one side"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [1, 2, 3]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "the path 2 -> 1 -> 3 sums to 6, and it's the best possible since it uses every node, all positive"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [-10, 9, 20, -101, -101, 15, 7]",
+        "output": "42",
+        "expectedOutput": "42",
+        "explanation": "root -10 has left child 9 (a leaf) and right child 20, whose children are 15 and 7. the best path, 15 -> 20 -> 7, sums to 42 and doesn't need to touch the negative root at all"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [-3]",
+        "output": "-3",
+        "expectedOutput": "-3",
+        "explanation": "a single node is the only possible path, even though its value is negative - the path must be non-empty"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-10,9,20,-101,-101,15,7]]",
+        "output": "42",
+        "expectedOutput": "42",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[-3]]",
+        "output": "-3",
+        "expectedOutput": "-3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[-2,-1]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[2,-1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-1]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-100,-50,-1]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-5,-4,-3,-2,-1]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-4,-85,-38,-6,-68,-69,-90,-101,-101,-101,-101,-101,-92,-101,-8,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-19]]",
+        "output": "-4",
+        "expectedOutput": "-4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-38,28,-101,41,-101,-101,-101,-59,-101,-101,-101,-101,-101,-101,-101,-38,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-35]]",
+        "output": "69",
+        "expectedOutput": "69",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-32,-101,-87,-101,-101,-101,85,-101,-101,-101,-101,-101,-101,-101,31,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,23,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-6,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-92]]",
+        "output": "139",
+        "expectedOutput": "139",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[57,-45,16,28,82,23,83,33,-8,87,16,86,-93,-91,-57]]",
+        "output": "306",
+        "expectedOutput": "306",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-21,-27,54,8,-39,18,-66,20,-70,-30,57,-101,41,-101,-101,-101,-101,25,61,-101,82,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,8,-70,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-23,-101,-101,-101,-101,-101,65]]",
+        "output": "155",
+        "expectedOutput": "155",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-22,-11,20,-30,24,6,-101,-34,-24,39,44,-18,31,-101,-101,27,-37,3,-12,-101,-101,-101,-101,-101,-101,-101,34,-101,-101,-101,-101,-101,-101,-101,-101,10,-40,39,41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-43,-101,-101,-17,1,-101,39]]",
+        "output": "126",
+        "expectedOutput": "126",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,-5,20,-101,-101,15,25]]",
+        "output": "60",
+        "expectedOutput": "60",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,-2,-3,1,3,-2,-1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[5,4,8,11,-101,13,4,7,2,-101,-101,5,1]]",
+        "output": "53",
+        "expectedOutput": "53",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[68,90,-32,-42,38,-73,-11,-101,-101,17,-101,-41,-47,67,22,-101,-101,-101,-101,-49,-101,-101,-101,-39,-45,44,-101,-58,-36,-35,33,-101,-101,-101,-101,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,81,-27,-101,-101,-89,90,-101,-101,-64,29,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-79,-101,-101,-101,-101,20]]",
+        "output": "237",
+        "expectedOutput": "237",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-1,-2]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[3,-1,-1,5,-101,-101,-101]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [1, 2, 3]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "the path 2 -> 1 -> 3 sums to 6, and it's the best possible since it uses every node, all positive"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [-10, 9, 20, -101, -101, 15, 7]",
+      "output": "42",
+      "expectedOutput": "42",
+      "explanation": "root -10 has left child 9 (a leaf) and right child 20, whose children are 15 and 7. the best path, 15 -> 20 -> 7, sums to 42 and doesn't need to touch the negative root at all"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [-3]",
+      "output": "-3",
+      "expectedOutput": "-3",
+      "explanation": "a single node is the only possible path, even though its value is negative - the path must be non-empty"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [1, 2, 3]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "the path 2 -> 1 -> 3 sums to 6, and it's the best possible since it uses every node, all positive"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [-10, 9, 20, -101, -101, 15, 7]",
+      "output": "42",
+      "expectedOutput": "42",
+      "explanation": "root -10 has left child 9 (a leaf) and right child 20, whose children are 15 and 7. the best path, 15 -> 20 -> 7, sums to 42 and doesn't need to touch the negative root at all"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [-3]",
+      "output": "-3",
+      "expectedOutput": "-3",
+      "explanation": "a single node is the only possible path, even though its value is negative - the path must be non-empty"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[-10,9,20,-101,-101,15,7]]",
+      "output": "42",
+      "expectedOutput": "42",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[-3]]",
+      "output": "-3",
+      "expectedOutput": "-3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[-2,-1]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[2,-1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[-1]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[-100,-50,-1]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-5,-4,-3,-2,-1]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[-4,-85,-38,-6,-68,-69,-90,-101,-101,-101,-101,-101,-92,-101,-8,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-19]]",
+      "output": "-4",
+      "expectedOutput": "-4",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[-38,28,-101,41,-101,-101,-101,-59,-101,-101,-101,-101,-101,-101,-101,-38,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-35]]",
+      "output": "69",
+      "expectedOutput": "69",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[-32,-101,-87,-101,-101,-101,85,-101,-101,-101,-101,-101,-101,-101,31,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,23,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-6,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-92]]",
+      "output": "139",
+      "expectedOutput": "139",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[57,-45,16,28,82,23,83,33,-8,87,16,86,-93,-91,-57]]",
+      "output": "306",
+      "expectedOutput": "306",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-21,-27,54,8,-39,18,-66,20,-70,-30,57,-101,41,-101,-101,-101,-101,25,61,-101,82,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,8,-70,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-23,-101,-101,-101,-101,-101,65]]",
+      "output": "155",
+      "expectedOutput": "155",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-22,-11,20,-30,24,6,-101,-34,-24,39,44,-18,31,-101,-101,27,-37,3,-12,-101,-101,-101,-101,-101,-101,-101,34,-101,-101,-101,-101,-101,-101,-101,-101,10,-40,39,41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-43,-101,-101,-17,1,-101,39]]",
+      "output": "126",
+      "expectedOutput": "126",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[10,-5,20,-101,-101,15,25]]",
+      "output": "60",
+      "expectedOutput": "60",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,-2,-3,1,3,-2,-1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[5,4,8,11,-101,13,4,7,2,-101,-101,5,1]]",
+      "output": "53",
+      "expectedOutput": "53",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[68,90,-32,-42,38,-73,-11,-101,-101,17,-101,-41,-47,67,22,-101,-101,-101,-101,-49,-101,-101,-101,-39,-45,44,-101,-58,-36,-35,33,-101,-101,-101,-101,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,81,-27,-101,-101,-89,90,-101,-101,-64,29,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-79,-101,-101,-101,-101,20]]",
+      "output": "237",
+      "expectedOutput": "237",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[-1,-2]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[3,-1,-1,5,-101,-101,-101]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [1, 2, 3]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "the path 2 -> 1 -> 3 sums to 6, and it's the best possible since it uses every node, all positive"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [-10, 9, 20, -101, -101, 15, 7]",
+        "output": "42",
+        "expectedOutput": "42",
+        "explanation": "root -10 has left child 9 (a leaf) and right child 20, whose children are 15 and 7. the best path, 15 -> 20 -> 7, sums to 42 and doesn't need to touch the negative root at all"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [-3]",
+        "output": "-3",
+        "expectedOutput": "-3",
+        "explanation": "a single node is the only possible path, even though its value is negative - the path must be non-empty"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-10,9,20,-101,-101,15,7]]",
+        "output": "42",
+        "expectedOutput": "42",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[-3]]",
+        "output": "-3",
+        "expectedOutput": "-3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[-2,-1]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[2,-1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-1]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-100,-50,-1]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-5,-4,-3,-2,-1]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-4,-85,-38,-6,-68,-69,-90,-101,-101,-101,-101,-101,-92,-101,-8,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-19]]",
+        "output": "-4",
+        "expectedOutput": "-4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-38,28,-101,41,-101,-101,-101,-59,-101,-101,-101,-101,-101,-101,-101,-38,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-35]]",
+        "output": "69",
+        "expectedOutput": "69",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-32,-101,-87,-101,-101,-101,85,-101,-101,-101,-101,-101,-101,-101,31,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,23,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-6,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-92]]",
+        "output": "139",
+        "expectedOutput": "139",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[57,-45,16,28,82,23,83,33,-8,87,16,86,-93,-91,-57]]",
+        "output": "306",
+        "expectedOutput": "306",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-21,-27,54,8,-39,18,-66,20,-70,-30,57,-101,41,-101,-101,-101,-101,25,61,-101,82,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,8,-70,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-23,-101,-101,-101,-101,-101,65]]",
+        "output": "155",
+        "expectedOutput": "155",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-22,-11,20,-30,24,6,-101,-34,-24,39,44,-18,31,-101,-101,27,-37,3,-12,-101,-101,-101,-101,-101,-101,-101,34,-101,-101,-101,-101,-101,-101,-101,-101,10,-40,39,41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-43,-101,-101,-17,1,-101,39]]",
+        "output": "126",
+        "expectedOutput": "126",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,-5,20,-101,-101,15,25]]",
+        "output": "60",
+        "expectedOutput": "60",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,-2,-3,1,3,-2,-1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[5,4,8,11,-101,13,4,7,2,-101,-101,5,1]]",
+        "output": "53",
+        "expectedOutput": "53",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[68,90,-32,-42,38,-73,-11,-101,-101,17,-101,-41,-47,67,22,-101,-101,-101,-101,-49,-101,-101,-101,-39,-45,44,-101,-58,-36,-35,33,-101,-101,-101,-101,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,81,-27,-101,-101,-89,90,-101,-101,-64,29,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-79,-101,-101,-101,-101,20]]",
+        "output": "237",
+        "expectedOutput": "237",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-1,-2]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[3,-1,-1,5,-101,-101,-101]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def maxPathSum(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxPathSum(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxPathSum(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxPathSum(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxPathSum(tree) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def maxPathSum(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxPathSum(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxPathSum(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxPathSum(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxPathSum(tree) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def maxPathSum(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxPathSum(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxPathSum(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxPathSum(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxPathSum(tree) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def maxPathSum(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxPathSum(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxPathSum(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxPathSum(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxPathSum(tree) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n), each node processed once",
+      "space": "O(h) recursion stack",
+      "pattern": "single postorder DFS that returns the best downward (non-branching) sum extending from a node, while updating a running global best that allows the path to bend through both children at once"
+    },
+    "bruteForce": {
+      "approach": "for every node, treat it as the 'peak' of a candidate path and separately compute the best downward sum extending into its left and right subtrees, recomputing those downward sums from scratch each time",
+      "time": "O(n^2) worst case due to repeated recomputation",
+      "space": "O(h) recursion stack"
+    }
+  },
+  "optimal": {
+    "pattern": "single postorder DFS that returns the best downward (non-branching) sum extending from a node, while updating a running global best that allows the path to bend through both children at once",
+    "time": "O(n), each node processed once",
+    "space": "O(h) recursion stack",
+    "hint_ladder": [
+      "a valid path can 'bend' at most once, at its highest point - once a path goes down into a child and back up, it can never branch again. what does that tell you about what a node can safely report to its parent?",
+      "a node can only offer its parent a straight extension going one direction (through at most one child), even though the best path passing through the node itself might use both children",
+      "write a helper that returns the best downward sum starting at this node and extending into at most one child (never both) - and treat any negative child contribution as 0 (skip it) since including a negative sum only hurts",
+      "at each node, separately compute leftGain and rightGain (each clamped to at least 0), update a running global maximum with tree[i] + leftGain + rightGain (the 'bent' path through this node), but return only tree[i] + max(leftGain, rightGain) upward to the parent"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every node, treat it as the 'peak' of a candidate path and separately compute the best downward sum extending into its left and right subtrees, recomputing those downward sums from scratch each time",
+    "time": "O(n^2) worst case due to repeated recomputation",
+    "space": "O(h) recursion stack"
+  },
+  "isIndex0": true,
+  "level": null
+}

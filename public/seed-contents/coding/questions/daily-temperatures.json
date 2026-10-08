@@ -1,0 +1,649 @@
+{
+  "id": "daily-temperatures",
+  "questionId": "daily-temperatures",
+  "slug": "daily-temperatures",
+  "title": "Daily Temperatures",
+  "difficulty": "Medium",
+  "category": "Monotonic stack",
+  "patterns": [
+    "monotonic stack",
+    "array"
+  ],
+  "lists": [],
+  "hints": [
+    "instead of each day searching forward on its own, what if colder days just 'waited' until a warmer day showed up and told them the answer directly?",
+    "keep a stack of indices for days whose warmer day hasn't been found yet - what should happen to the indices on the stack the moment you see a temperature warmer than all of them?",
+    "walk through the temperatures once; while the stack is non-empty and today's temperature is warmer than the temperature at the index on top of the stack, pop it and record today's index minus that popped index as its answer",
+    "after resolving everything you can with today's temperature, push today's own index onto the stack, since it's now waiting for its own warmer day"
+  ],
+  "commonMistakes": [
+    "storing temperatures on the stack instead of indices, making it impossible to compute the day difference",
+    "using >= instead of > when comparing, which would treat an equal temperature as 'warmer'",
+    "leaving indices on the stack unresolved at the end without their answer defaulting to 0"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of daily `temperatures`.\n\n**For each day, determine how many days you'd have to wait until a warmer temperature occurs, and return the results as an array, one value per day.**\n\nIf there's no future day with a warmer temperature, use 0 for that day instead.\n",
+    "constraints": [
+      "temperatures.length >= 1",
+      "answer must count actual days waited, not the temperature difference"
+    ],
+    "notes": [
+      "strictly decreasing temperatures, where every answer is 0",
+      "a single day of temperatures",
+      "repeated equal temperatures, which do not count as 'warmer'"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "temperatures = [73, 74, 75, 71, 69, 72, 76, 73]",
+        "output": "[1, 1, 4, 2, 1, 1, 0, 0]",
+        "expectedOutput": "[1, 1, 4, 2, 1, 1, 0, 0]",
+        "explanation": "day 0 (73) waits 1 day for 74; day 2 (75) waits 4 days for 76; the last two days never see a warmer temperature"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "temperatures = [30, 40, 50, 60]",
+        "output": "[1, 1, 1, 0]",
+        "expectedOutput": "[1, 1, 1, 0]",
+        "explanation": "each day is immediately followed by a warmer one, except the last"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "temperatures = [30, 60, 90]",
+        "output": "[1, 1, 0]",
+        "expectedOutput": "[1, 1, 0]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[73,74,75,71,69,72,76,73]]",
+        "output": "[1,1,4,2,1,1,0,0]",
+        "expectedOutput": "[1,1,4,2,1,1,0,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[30,40,50,60]]",
+        "output": "[1,1,1,0]",
+        "expectedOutput": "[1,1,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[30,60,90]]",
+        "output": "[1,1,0]",
+        "expectedOutput": "[1,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[89,62,70,58,47,47,46,76,100,70]]",
+        "output": "[8,1,5,4,3,2,1,1,0,0]",
+        "expectedOutput": "[8,1,5,4,3,2,1,1,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[70]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[70,70,70,70]]",
+        "output": "[0,0,0,0]",
+        "expectedOutput": "[0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[100,99,98,97,96]]",
+        "output": "[0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[50,51,52,53,54,55]]",
+        "output": "[1,1,1,1,1,0]",
+        "expectedOutput": "[1,1,1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[55,54,53,52,51,60]]",
+        "output": "[5,4,3,2,1,0]",
+        "expectedOutput": "[5,4,3,2,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[87,89,87,95,54,53,95,90,53,42,87,68,48,41,98,35,80,87,50,31,97,38,37,34,54]]",
+        "output": "[1,2,1,11,2,1,8,7,2,1,4,3,2,1,0,1,1,3,2,1,0,3,2,1,0]",
+        "expectedOutput": "[1,2,1,11,2,1,8,7,2,1,4,3,2,1,0,1,1,3,2,1,0,3,2,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[90,90,90,90,90,90,90,90,90,90,90,90,90,90,90,95]]",
+        "output": "[15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0]",
+        "expectedOutput": "[15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[100,90,80,70,60,50,40,30,20,10]]",
+        "output": "[0,0,0,0,0,0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[30,40,30,40,30,40,30,40]]",
+        "output": "[1,0,1,0,1,0,1,0]",
+        "expectedOutput": "[1,0,1,0,1,0,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,0]]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[76,45,75,14,1,40,68,99,74,43,38,21,45,22,97,19,13,85,51,45,22,56,79,50,59,64,87,30,91,24,79,40,68,33,8,42,80,15,46,93]]",
+        "output": "[7,1,5,2,1,1,1,0,6,3,2,1,2,1,0,2,1,9,3,2,1,1,4,1,1,1,2,1,11,1,6,1,4,2,1,1,3,1,1,0]",
+        "expectedOutput": "[7,1,5,2,1,1,1,0,6,3,2,1,2,1,0,2,1,9,3,2,1,1,4,1,1,1,2,1,11,1,6,1,4,2,1,1,3,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,1,2,1,2,1,2,1,2]]",
+        "output": "[1,0,1,0,1,0,1,0,1,0]",
+        "expectedOutput": "[1,0,1,0,1,0,1,0,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[100,50,50,50,50,50,50,50,50,50,50,101]]",
+        "output": "[11,10,9,8,7,6,5,4,3,2,1,0]",
+        "expectedOutput": "[11,10,9,8,7,6,5,4,3,2,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[50,49,48,47,46,45,44,43,42,41,40]]",
+        "output": "[0,0,0,0,0,0,0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,0,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,3,2,4,3,5,4,6,5,7]]",
+        "output": "[1,2,1,2,1,2,1,2,1,0]",
+        "expectedOutput": "[1,2,1,2,1,2,1,2,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[10,10,10,10,10,10,10,10,10,10,20]]",
+        "output": "[10,9,8,7,6,5,4,3,2,1,0]",
+        "expectedOutput": "[10,9,8,7,6,5,4,3,2,1,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "temperatures = [73, 74, 75, 71, 69, 72, 76, 73]",
+      "output": "[1, 1, 4, 2, 1, 1, 0, 0]",
+      "expectedOutput": "[1, 1, 4, 2, 1, 1, 0, 0]",
+      "explanation": "day 0 (73) waits 1 day for 74; day 2 (75) waits 4 days for 76; the last two days never see a warmer temperature"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "temperatures = [30, 40, 50, 60]",
+      "output": "[1, 1, 1, 0]",
+      "expectedOutput": "[1, 1, 1, 0]",
+      "explanation": "each day is immediately followed by a warmer one, except the last"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "temperatures = [30, 60, 90]",
+      "output": "[1, 1, 0]",
+      "expectedOutput": "[1, 1, 0]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "temperatures = [73, 74, 75, 71, 69, 72, 76, 73]",
+      "output": "[1, 1, 4, 2, 1, 1, 0, 0]",
+      "expectedOutput": "[1, 1, 4, 2, 1, 1, 0, 0]",
+      "explanation": "day 0 (73) waits 1 day for 74; day 2 (75) waits 4 days for 76; the last two days never see a warmer temperature"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "temperatures = [30, 40, 50, 60]",
+      "output": "[1, 1, 1, 0]",
+      "expectedOutput": "[1, 1, 1, 0]",
+      "explanation": "each day is immediately followed by a warmer one, except the last"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "temperatures = [30, 60, 90]",
+      "output": "[1, 1, 0]",
+      "expectedOutput": "[1, 1, 0]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[73,74,75,71,69,72,76,73]]",
+      "output": "[1,1,4,2,1,1,0,0]",
+      "expectedOutput": "[1,1,4,2,1,1,0,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[30,40,50,60]]",
+      "output": "[1,1,1,0]",
+      "expectedOutput": "[1,1,1,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[30,60,90]]",
+      "output": "[1,1,0]",
+      "expectedOutput": "[1,1,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[89,62,70,58,47,47,46,76,100,70]]",
+      "output": "[8,1,5,4,3,2,1,1,0,0]",
+      "expectedOutput": "[8,1,5,4,3,2,1,1,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[70]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[70,70,70,70]]",
+      "output": "[0,0,0,0]",
+      "expectedOutput": "[0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[100,99,98,97,96]]",
+      "output": "[0,0,0,0,0]",
+      "expectedOutput": "[0,0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[50,51,52,53,54,55]]",
+      "output": "[1,1,1,1,1,0]",
+      "expectedOutput": "[1,1,1,1,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[55,54,53,52,51,60]]",
+      "output": "[5,4,3,2,1,0]",
+      "expectedOutput": "[5,4,3,2,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[87,89,87,95,54,53,95,90,53,42,87,68,48,41,98,35,80,87,50,31,97,38,37,34,54]]",
+      "output": "[1,2,1,11,2,1,8,7,2,1,4,3,2,1,0,1,1,3,2,1,0,3,2,1,0]",
+      "expectedOutput": "[1,2,1,11,2,1,8,7,2,1,4,3,2,1,0,1,1,3,2,1,0,3,2,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[90,90,90,90,90,90,90,90,90,90,90,90,90,90,90,95]]",
+      "output": "[15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0]",
+      "expectedOutput": "[15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[100,90,80,70,60,50,40,30,20,10]]",
+      "output": "[0,0,0,0,0,0,0,0,0,0]",
+      "expectedOutput": "[0,0,0,0,0,0,0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[30,40,30,40,30,40,30,40]]",
+      "output": "[1,0,1,0,1,0,1,0]",
+      "expectedOutput": "[1,0,1,0,1,0,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[0,0]]",
+      "output": "[0,0]",
+      "expectedOutput": "[0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[76,45,75,14,1,40,68,99,74,43,38,21,45,22,97,19,13,85,51,45,22,56,79,50,59,64,87,30,91,24,79,40,68,33,8,42,80,15,46,93]]",
+      "output": "[7,1,5,2,1,1,1,0,6,3,2,1,2,1,0,2,1,9,3,2,1,1,4,1,1,1,2,1,11,1,6,1,4,2,1,1,3,1,1,0]",
+      "expectedOutput": "[7,1,5,2,1,1,1,0,6,3,2,1,2,1,0,2,1,9,3,2,1,1,4,1,1,1,2,1,11,1,6,1,4,2,1,1,3,1,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,1,2,1,2,1,2,1,2]]",
+      "output": "[1,0,1,0,1,0,1,0,1,0]",
+      "expectedOutput": "[1,0,1,0,1,0,1,0,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[100,50,50,50,50,50,50,50,50,50,50,101]]",
+      "output": "[11,10,9,8,7,6,5,4,3,2,1,0]",
+      "expectedOutput": "[11,10,9,8,7,6,5,4,3,2,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[50,49,48,47,46,45,44,43,42,41,40]]",
+      "output": "[0,0,0,0,0,0,0,0,0,0,0]",
+      "expectedOutput": "[0,0,0,0,0,0,0,0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,3,2,4,3,5,4,6,5,7]]",
+      "output": "[1,2,1,2,1,2,1,2,1,0]",
+      "expectedOutput": "[1,2,1,2,1,2,1,2,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[10,10,10,10,10,10,10,10,10,10,20]]",
+      "output": "[10,9,8,7,6,5,4,3,2,1,0]",
+      "expectedOutput": "[10,9,8,7,6,5,4,3,2,1,0]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "temperatures = [73, 74, 75, 71, 69, 72, 76, 73]",
+        "output": "[1, 1, 4, 2, 1, 1, 0, 0]",
+        "expectedOutput": "[1, 1, 4, 2, 1, 1, 0, 0]",
+        "explanation": "day 0 (73) waits 1 day for 74; day 2 (75) waits 4 days for 76; the last two days never see a warmer temperature"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "temperatures = [30, 40, 50, 60]",
+        "output": "[1, 1, 1, 0]",
+        "expectedOutput": "[1, 1, 1, 0]",
+        "explanation": "each day is immediately followed by a warmer one, except the last"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "temperatures = [30, 60, 90]",
+        "output": "[1, 1, 0]",
+        "expectedOutput": "[1, 1, 0]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[73,74,75,71,69,72,76,73]]",
+        "output": "[1,1,4,2,1,1,0,0]",
+        "expectedOutput": "[1,1,4,2,1,1,0,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[30,40,50,60]]",
+        "output": "[1,1,1,0]",
+        "expectedOutput": "[1,1,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[30,60,90]]",
+        "output": "[1,1,0]",
+        "expectedOutput": "[1,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[89,62,70,58,47,47,46,76,100,70]]",
+        "output": "[8,1,5,4,3,2,1,1,0,0]",
+        "expectedOutput": "[8,1,5,4,3,2,1,1,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[70]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[70,70,70,70]]",
+        "output": "[0,0,0,0]",
+        "expectedOutput": "[0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[100,99,98,97,96]]",
+        "output": "[0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[50,51,52,53,54,55]]",
+        "output": "[1,1,1,1,1,0]",
+        "expectedOutput": "[1,1,1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[55,54,53,52,51,60]]",
+        "output": "[5,4,3,2,1,0]",
+        "expectedOutput": "[5,4,3,2,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[87,89,87,95,54,53,95,90,53,42,87,68,48,41,98,35,80,87,50,31,97,38,37,34,54]]",
+        "output": "[1,2,1,11,2,1,8,7,2,1,4,3,2,1,0,1,1,3,2,1,0,3,2,1,0]",
+        "expectedOutput": "[1,2,1,11,2,1,8,7,2,1,4,3,2,1,0,1,1,3,2,1,0,3,2,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[90,90,90,90,90,90,90,90,90,90,90,90,90,90,90,95]]",
+        "output": "[15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0]",
+        "expectedOutput": "[15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[100,90,80,70,60,50,40,30,20,10]]",
+        "output": "[0,0,0,0,0,0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[30,40,30,40,30,40,30,40]]",
+        "output": "[1,0,1,0,1,0,1,0]",
+        "expectedOutput": "[1,0,1,0,1,0,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,0]]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[76,45,75,14,1,40,68,99,74,43,38,21,45,22,97,19,13,85,51,45,22,56,79,50,59,64,87,30,91,24,79,40,68,33,8,42,80,15,46,93]]",
+        "output": "[7,1,5,2,1,1,1,0,6,3,2,1,2,1,0,2,1,9,3,2,1,1,4,1,1,1,2,1,11,1,6,1,4,2,1,1,3,1,1,0]",
+        "expectedOutput": "[7,1,5,2,1,1,1,0,6,3,2,1,2,1,0,2,1,9,3,2,1,1,4,1,1,1,2,1,11,1,6,1,4,2,1,1,3,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,1,2,1,2,1,2,1,2]]",
+        "output": "[1,0,1,0,1,0,1,0,1,0]",
+        "expectedOutput": "[1,0,1,0,1,0,1,0,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[100,50,50,50,50,50,50,50,50,50,50,101]]",
+        "output": "[11,10,9,8,7,6,5,4,3,2,1,0]",
+        "expectedOutput": "[11,10,9,8,7,6,5,4,3,2,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[50,49,48,47,46,45,44,43,42,41,40]]",
+        "output": "[0,0,0,0,0,0,0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,0,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,3,2,4,3,5,4,6,5,7]]",
+        "output": "[1,2,1,2,1,2,1,2,1,0]",
+        "expectedOutput": "[1,2,1,2,1,2,1,2,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[10,10,10,10,10,10,10,10,10,10,20]]",
+        "output": "[10,9,8,7,6,5,4,3,2,1,0]",
+        "expectedOutput": "[10,9,8,7,6,5,4,3,2,1,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def dailyTemperatures(self, temperatures):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> dailyTemperatures(vector<int>& temperatures) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] dailyTemperatures(int[] temperatures) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun dailyTemperatures(temperatures: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    dailyTemperatures(temperatures) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def dailyTemperatures(self, temperatures):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> dailyTemperatures(vector<int>& temperatures) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] dailyTemperatures(int[] temperatures) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun dailyTemperatures(temperatures: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    dailyTemperatures(temperatures) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def dailyTemperatures(self, temperatures):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> dailyTemperatures(vector<int>& temperatures) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] dailyTemperatures(int[] temperatures) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun dailyTemperatures(temperatures: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    dailyTemperatures(temperatures) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def dailyTemperatures(self, temperatures):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> dailyTemperatures(vector<int>& temperatures) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] dailyTemperatures(int[] temperatures) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun dailyTemperatures(temperatures: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    dailyTemperatures(temperatures) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the stack",
+      "pattern": "monotonic decreasing stack of indices, resolved as each new warmer day arrives"
+    },
+    "bruteForce": {
+      "approach": "for each day, scan forward day by day until a warmer temperature is found or the array ends",
+      "time": "O(n^2)",
+      "space": "O(1) beyond the output"
+    }
+  },
+  "optimal": {
+    "pattern": "monotonic decreasing stack of indices, resolved as each new warmer day arrives",
+    "time": "O(n)",
+    "space": "O(n) for the stack",
+    "hint_ladder": [
+      "instead of each day searching forward on its own, what if colder days just 'waited' until a warmer day showed up and told them the answer directly?",
+      "keep a stack of indices for days whose warmer day hasn't been found yet - what should happen to the indices on the stack the moment you see a temperature warmer than all of them?",
+      "walk through the temperatures once; while the stack is non-empty and today's temperature is warmer than the temperature at the index on top of the stack, pop it and record today's index minus that popped index as its answer",
+      "after resolving everything you can with today's temperature, push today's own index onto the stack, since it's now waiting for its own warmer day"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each day, scan forward day by day until a warmer temperature is found or the array ends",
+    "time": "O(n^2)",
+    "space": "O(1) beyond the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

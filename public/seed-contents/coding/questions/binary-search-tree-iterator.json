@@ -1,0 +1,637 @@
+{
+  "id": "binary-search-tree-iterator",
+  "questionId": "binary-search-tree-iterator",
+  "slug": "binary-search-tree-iterator",
+  "title": "Binary Search Tree Iterator",
+  "difficulty": "Medium",
+  "category": "Tree dfs",
+  "patterns": [
+    "tree",
+    "binary search tree",
+    "stack",
+    "design"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "you don't need every value up front - you only need to know 'what's the smallest value not yet visited' at each step, and be able to advance past it cheaply",
+    "initialize by pushing every node from the root down along its leftmost path onto a stack - the top of the stack is now the smallest unvisited value",
+    "next pops the top of the stack (that's the answer) and then pushes that node's right child's entire leftmost path onto the stack, since that subtree is now the next place to look for smaller values",
+    "hasNext is just checking whether the stack is empty",
+    "simulate this process fresh for each test case, starting from an empty stack and the tree's root, processing the ops string token by token in order"
+  ],
+  "commonMistakes": [
+    "materializing the full inorder list up front (which works but doesn't reflect the O(h) space / amortized O(1) time the design is meant to teach)",
+    "forgetting to push the right child's leftmost path after popping a node in next, which breaks the traversal after the first right turn",
+    "pushing a node's right child directly without first walking down its own leftmost path, which skips smaller values in that subtree",
+    "confusing this tree's binary-search-tree ordering with a general binary tree and trying to compare values instead of relying purely on structure and inorder position"
+  ],
+  "content": {
+    "problemStatement": "Binary trees in these problems are encoded as a flat array named `tree` using complete-binary-tree (heap) indexing:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array bounds **and** its value isn't the sentinel `-101`, which means \"no node there\"\n\nThe given tree is always a valid binary search tree.\n\n**Design an iterator that walks the tree's nodes in ascending (inorder) order, supporting `next` (returns the value of the next smallest node not yet returned, and advances past it) and `hasNext` (reports whether any node remains to be returned).**\n\nSince this problem asks for a single pure function rather than a stateful object, you're given the tree plus a space-delimited string of operations (each token either \"next\" or \"hasNext\"). Simulate a freshly constructed iterator running through each operation in order, and return a list of results: the returned value for each \"next\", and 1 or 0 for each \"hasNext\".\n",
+    "constraints": [
+      "1 <= number of nodes in tree <= 10^4",
+      "-100 <= tree[i] <= 100 for every real node",
+      "the given tree always satisfies the binary search tree property",
+      "every \"next\" token in ops is only ever called when a preceding hasNext (implicit or checked) would have returned true"
+    ],
+    "notes": [
+      "a single-node tree",
+      "a left-only or right-only chain, stressing how far the traversal state needs to reach before finding the next value",
+      "ops consisting entirely of hasNext calls with no next calls at all"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [7, 3, 15, -101, -101, 9, 20], ops = \"next next hasNext next hasNext\"",
+        "output": "[3, 7, 1, 9, 1]",
+        "expectedOutput": "[3, 7, 1, 9, 1]",
+        "explanation": "inorder order is 3, 7, 9, 15, 20; the first two next calls return 3 and 7, hasNext is true since 9, 15, 20 remain, next returns 9, and hasNext is still true since 15 and 20 remain"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [1], ops = \"hasNext next hasNext\"",
+        "output": "[1, 1, 0]",
+        "expectedOutput": "[1, 1, 0]",
+        "explanation": "a single-node tree: hasNext is true before any calls, next returns the only value 1, and hasNext is false afterward since nothing remains"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [2, 1, 3], ops = \"next next next hasNext\"",
+        "output": "[1, 2, 3, 0]",
+        "expectedOutput": "[1, 2, 3, 0]",
+        "explanation": "inorder order is 1, 2, 3; after three next calls every node has been returned, so the final hasNext is false"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[7,3,15,-101,-101,9,20],\"next next hasNext next hasNext next hasNext\"]",
+        "output": "[3,7,1,9,1,15,1]",
+        "expectedOutput": "[3,7,1,9,1,15,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1],\"hasNext next hasNext\"]",
+        "output": "[1,1,0]",
+        "expectedOutput": "[1,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[2,1,3],\"next next next hasNext\"]",
+        "output": "[1,2,3,0]",
+        "expectedOutput": "[1,2,3,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[10,5,15,2,7,12,20],\"next next next next next next next hasNext\"]",
+        "output": "[2,5,7,10,12,15,20,0]",
+        "expectedOutput": "[2,5,7,10,12,15,20,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[5,3,8,1,4,7,9],\"hasNext next hasNext next hasNext next hasNext next hasNext next hasNext next hasNext\"]",
+        "output": "[1,1,1,3,1,4,1,5,1,7,1,8,1]",
+        "expectedOutput": "[1,1,1,3,1,4,1,5,1,7,1,8,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,1,4],\"next next next hasNext\"]",
+        "output": "[1,2,4,0]",
+        "expectedOutput": "[1,2,4,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[8,4,12,2,6,10,14,1,3,5,7,9,11,13,15],\"next next next next next next next next next next next next next next next hasNext\"]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[20,10,30],\"next next next hasNext\"]",
+        "output": "[10,20,30,0]",
+        "expectedOutput": "[10,20,30,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,-101,2],\"next next hasNext\"]",
+        "output": "[1,2,0]",
+        "expectedOutput": "[1,2,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[50,25,75,-101,-101,60,100],\"next next next next next hasNext\"]",
+        "output": "[25,50,60,75,100,0]",
+        "expectedOutput": "[25,50,60,75,100,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[9,7,-101,6],\"next next next hasNext\"]",
+        "output": "[6,7,9,0]",
+        "expectedOutput": "[6,7,9,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[6,2,8,-101,4,7,9,-101,-101,3,5],\"next next next next next next next hasNext\"]",
+        "output": "[2,3,4,5,6,7,8,1]",
+        "expectedOutput": "[2,3,4,5,6,7,8,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[100,50,150,25,75,125,175],\"next next hasNext next next hasNext next next hasNext\"]",
+        "output": "[25,50,1,75,100,1,125,150,1]",
+        "expectedOutput": "[25,50,1,75,100,1,125,150,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[4,2,6,1,3,5,7],\"next hasNext next hasNext next hasNext next hasNext next hasNext next hasNext next hasNext\"]",
+        "output": "[1,1,2,1,3,1,4,1,5,1,6,1,7,0]",
+        "expectedOutput": "[1,1,2,1,3,1,4,1,5,1,6,1,7,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[5,2,8,-101,3,-101,9],\"hasNext next next next next hasNext\"]",
+        "output": "[1,2,3,5,8,1]",
+        "expectedOutput": "[1,2,3,5,8,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[15,10,20,5,12,18,25],\"next next next next next next next hasNext\"]",
+        "output": "[5,10,12,15,18,20,25,0]",
+        "expectedOutput": "[5,10,12,15,18,20,25,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,1],\"next next hasNext\"]",
+        "output": "[1,2,0]",
+        "expectedOutput": "[1,2,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,-101,5],\"next next hasNext\"]",
+        "output": "[3,5,0]",
+        "expectedOutput": "[3,5,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[12,8,16,4,10,14,18],\"next next next next next next next hasNext\"]",
+        "output": "[4,8,10,12,14,16,18,0]",
+        "expectedOutput": "[4,8,10,12,14,16,18,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[30,20,40,10,25,35,50],\"next next next next next next next hasNext\"]",
+        "output": "[10,20,25,30,35,40,50,0]",
+        "expectedOutput": "[10,20,25,30,35,40,50,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [7, 3, 15, -101, -101, 9, 20], ops = \"next next hasNext next hasNext\"",
+      "output": "[3, 7, 1, 9, 1]",
+      "expectedOutput": "[3, 7, 1, 9, 1]",
+      "explanation": "inorder order is 3, 7, 9, 15, 20; the first two next calls return 3 and 7, hasNext is true since 9, 15, 20 remain, next returns 9, and hasNext is still true since 15 and 20 remain"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [1], ops = \"hasNext next hasNext\"",
+      "output": "[1, 1, 0]",
+      "expectedOutput": "[1, 1, 0]",
+      "explanation": "a single-node tree: hasNext is true before any calls, next returns the only value 1, and hasNext is false afterward since nothing remains"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [2, 1, 3], ops = \"next next next hasNext\"",
+      "output": "[1, 2, 3, 0]",
+      "expectedOutput": "[1, 2, 3, 0]",
+      "explanation": "inorder order is 1, 2, 3; after three next calls every node has been returned, so the final hasNext is false"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [7, 3, 15, -101, -101, 9, 20], ops = \"next next hasNext next hasNext\"",
+      "output": "[3, 7, 1, 9, 1]",
+      "expectedOutput": "[3, 7, 1, 9, 1]",
+      "explanation": "inorder order is 3, 7, 9, 15, 20; the first two next calls return 3 and 7, hasNext is true since 9, 15, 20 remain, next returns 9, and hasNext is still true since 15 and 20 remain"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [1], ops = \"hasNext next hasNext\"",
+      "output": "[1, 1, 0]",
+      "expectedOutput": "[1, 1, 0]",
+      "explanation": "a single-node tree: hasNext is true before any calls, next returns the only value 1, and hasNext is false afterward since nothing remains"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [2, 1, 3], ops = \"next next next hasNext\"",
+      "output": "[1, 2, 3, 0]",
+      "expectedOutput": "[1, 2, 3, 0]",
+      "explanation": "inorder order is 1, 2, 3; after three next calls every node has been returned, so the final hasNext is false"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[7,3,15,-101,-101,9,20],\"next next hasNext next hasNext next hasNext\"]",
+      "output": "[3,7,1,9,1,15,1]",
+      "expectedOutput": "[3,7,1,9,1,15,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1],\"hasNext next hasNext\"]",
+      "output": "[1,1,0]",
+      "expectedOutput": "[1,1,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[2,1,3],\"next next next hasNext\"]",
+      "output": "[1,2,3,0]",
+      "expectedOutput": "[1,2,3,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[10,5,15,2,7,12,20],\"next next next next next next next hasNext\"]",
+      "output": "[2,5,7,10,12,15,20,0]",
+      "expectedOutput": "[2,5,7,10,12,15,20,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[5,3,8,1,4,7,9],\"hasNext next hasNext next hasNext next hasNext next hasNext next hasNext next hasNext\"]",
+      "output": "[1,1,1,3,1,4,1,5,1,7,1,8,1]",
+      "expectedOutput": "[1,1,1,3,1,4,1,5,1,7,1,8,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[2,1,4],\"next next next hasNext\"]",
+      "output": "[1,2,4,0]",
+      "expectedOutput": "[1,2,4,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[8,4,12,2,6,10,14,1,3,5,7,9,11,13,15],\"next next next next next next next next next next next next next next next hasNext\"]",
+      "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[20,10,30],\"next next next hasNext\"]",
+      "output": "[10,20,30,0]",
+      "expectedOutput": "[10,20,30,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,-101,2],\"next next hasNext\"]",
+      "output": "[1,2,0]",
+      "expectedOutput": "[1,2,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[50,25,75,-101,-101,60,100],\"next next next next next hasNext\"]",
+      "output": "[25,50,60,75,100,0]",
+      "expectedOutput": "[25,50,60,75,100,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[9,7,-101,6],\"next next next hasNext\"]",
+      "output": "[6,7,9,0]",
+      "expectedOutput": "[6,7,9,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[6,2,8,-101,4,7,9,-101,-101,3,5],\"next next next next next next next hasNext\"]",
+      "output": "[2,3,4,5,6,7,8,1]",
+      "expectedOutput": "[2,3,4,5,6,7,8,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[100,50,150,25,75,125,175],\"next next hasNext next next hasNext next next hasNext\"]",
+      "output": "[25,50,1,75,100,1,125,150,1]",
+      "expectedOutput": "[25,50,1,75,100,1,125,150,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[4,2,6,1,3,5,7],\"next hasNext next hasNext next hasNext next hasNext next hasNext next hasNext next hasNext\"]",
+      "output": "[1,1,2,1,3,1,4,1,5,1,6,1,7,0]",
+      "expectedOutput": "[1,1,2,1,3,1,4,1,5,1,6,1,7,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[5,2,8,-101,3,-101,9],\"hasNext next next next next hasNext\"]",
+      "output": "[1,2,3,5,8,1]",
+      "expectedOutput": "[1,2,3,5,8,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[15,10,20,5,12,18,25],\"next next next next next next next hasNext\"]",
+      "output": "[5,10,12,15,18,20,25,0]",
+      "expectedOutput": "[5,10,12,15,18,20,25,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[2,1],\"next next hasNext\"]",
+      "output": "[1,2,0]",
+      "expectedOutput": "[1,2,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[3,-101,5],\"next next hasNext\"]",
+      "output": "[3,5,0]",
+      "expectedOutput": "[3,5,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[12,8,16,4,10,14,18],\"next next next next next next next hasNext\"]",
+      "output": "[4,8,10,12,14,16,18,0]",
+      "expectedOutput": "[4,8,10,12,14,16,18,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[30,20,40,10,25,35,50],\"next next next next next next next hasNext\"]",
+      "output": "[10,20,25,30,35,40,50,0]",
+      "expectedOutput": "[10,20,25,30,35,40,50,0]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [7, 3, 15, -101, -101, 9, 20], ops = \"next next hasNext next hasNext\"",
+        "output": "[3, 7, 1, 9, 1]",
+        "expectedOutput": "[3, 7, 1, 9, 1]",
+        "explanation": "inorder order is 3, 7, 9, 15, 20; the first two next calls return 3 and 7, hasNext is true since 9, 15, 20 remain, next returns 9, and hasNext is still true since 15 and 20 remain"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [1], ops = \"hasNext next hasNext\"",
+        "output": "[1, 1, 0]",
+        "expectedOutput": "[1, 1, 0]",
+        "explanation": "a single-node tree: hasNext is true before any calls, next returns the only value 1, and hasNext is false afterward since nothing remains"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [2, 1, 3], ops = \"next next next hasNext\"",
+        "output": "[1, 2, 3, 0]",
+        "expectedOutput": "[1, 2, 3, 0]",
+        "explanation": "inorder order is 1, 2, 3; after three next calls every node has been returned, so the final hasNext is false"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[7,3,15,-101,-101,9,20],\"next next hasNext next hasNext next hasNext\"]",
+        "output": "[3,7,1,9,1,15,1]",
+        "expectedOutput": "[3,7,1,9,1,15,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1],\"hasNext next hasNext\"]",
+        "output": "[1,1,0]",
+        "expectedOutput": "[1,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[2,1,3],\"next next next hasNext\"]",
+        "output": "[1,2,3,0]",
+        "expectedOutput": "[1,2,3,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[10,5,15,2,7,12,20],\"next next next next next next next hasNext\"]",
+        "output": "[2,5,7,10,12,15,20,0]",
+        "expectedOutput": "[2,5,7,10,12,15,20,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[5,3,8,1,4,7,9],\"hasNext next hasNext next hasNext next hasNext next hasNext next hasNext next hasNext\"]",
+        "output": "[1,1,1,3,1,4,1,5,1,7,1,8,1]",
+        "expectedOutput": "[1,1,1,3,1,4,1,5,1,7,1,8,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,1,4],\"next next next hasNext\"]",
+        "output": "[1,2,4,0]",
+        "expectedOutput": "[1,2,4,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[8,4,12,2,6,10,14,1,3,5,7,9,11,13,15],\"next next next next next next next next next next next next next next next hasNext\"]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[20,10,30],\"next next next hasNext\"]",
+        "output": "[10,20,30,0]",
+        "expectedOutput": "[10,20,30,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,-101,2],\"next next hasNext\"]",
+        "output": "[1,2,0]",
+        "expectedOutput": "[1,2,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[50,25,75,-101,-101,60,100],\"next next next next next hasNext\"]",
+        "output": "[25,50,60,75,100,0]",
+        "expectedOutput": "[25,50,60,75,100,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[9,7,-101,6],\"next next next hasNext\"]",
+        "output": "[6,7,9,0]",
+        "expectedOutput": "[6,7,9,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[6,2,8,-101,4,7,9,-101,-101,3,5],\"next next next next next next next hasNext\"]",
+        "output": "[2,3,4,5,6,7,8,1]",
+        "expectedOutput": "[2,3,4,5,6,7,8,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[100,50,150,25,75,125,175],\"next next hasNext next next hasNext next next hasNext\"]",
+        "output": "[25,50,1,75,100,1,125,150,1]",
+        "expectedOutput": "[25,50,1,75,100,1,125,150,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[4,2,6,1,3,5,7],\"next hasNext next hasNext next hasNext next hasNext next hasNext next hasNext next hasNext\"]",
+        "output": "[1,1,2,1,3,1,4,1,5,1,6,1,7,0]",
+        "expectedOutput": "[1,1,2,1,3,1,4,1,5,1,6,1,7,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[5,2,8,-101,3,-101,9],\"hasNext next next next next hasNext\"]",
+        "output": "[1,2,3,5,8,1]",
+        "expectedOutput": "[1,2,3,5,8,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[15,10,20,5,12,18,25],\"next next next next next next next hasNext\"]",
+        "output": "[5,10,12,15,18,20,25,0]",
+        "expectedOutput": "[5,10,12,15,18,20,25,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,1],\"next next hasNext\"]",
+        "output": "[1,2,0]",
+        "expectedOutput": "[1,2,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,-101,5],\"next next hasNext\"]",
+        "output": "[3,5,0]",
+        "expectedOutput": "[3,5,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[12,8,16,4,10,14,18],\"next next next next next next next hasNext\"]",
+        "output": "[4,8,10,12,14,16,18,0]",
+        "expectedOutput": "[4,8,10,12,14,16,18,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[30,20,40,10,25,35,50],\"next next next next next next next hasNext\"]",
+        "output": "[10,20,25,30,35,40,50,0]",
+        "expectedOutput": "[10,20,25,30,35,40,50,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def bstIteratorRun(self, tree, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> bstIteratorRun(vector<int>& tree, string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] bstIteratorRun(int[] tree, String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun bstIteratorRun(tree: IntArray, ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    bstIteratorRun(tree, ops) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def bstIteratorRun(self, tree, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> bstIteratorRun(vector<int>& tree, string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] bstIteratorRun(int[] tree, String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun bstIteratorRun(tree: IntArray, ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    bstIteratorRun(tree, ops) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def bstIteratorRun(self, tree, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> bstIteratorRun(vector<int>& tree, string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] bstIteratorRun(int[] tree, String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun bstIteratorRun(tree: IntArray, ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    bstIteratorRun(tree, ops) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def bstIteratorRun(self, tree, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> bstIteratorRun(vector<int>& tree, string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] bstIteratorRun(int[] tree, String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun bstIteratorRun(tree: IntArray, ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    bstIteratorRun(tree, ops) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(1) amortized per next call (O(h) worst case for a single call, but each node is pushed and popped exactly once across the whole run), O(1) for hasNext",
+      "space": "O(h) for the stack, where h is the tree's height",
+      "pattern": "stack-based lazy inorder traversal: keep only the path of left ancestors on a stack, expanding one step at a time"
+    },
+    "bruteForce": {
+      "approach": "do a full inorder traversal up front, collecting every value into a list, then serve next and hasNext calls by walking a plain index cursor through that precomputed list",
+      "time": "O(n) up front, O(1) per operation after that",
+      "space": "O(n) to store the entire traversal"
+    }
+  },
+  "optimal": {
+    "pattern": "stack-based lazy inorder traversal: keep only the path of left ancestors on a stack, expanding one step at a time",
+    "time": "O(1) amortized per next call (O(h) worst case for a single call, but each node is pushed and popped exactly once across the whole run), O(1) for hasNext",
+    "space": "O(h) for the stack, where h is the tree's height",
+    "hint_ladder": [
+      "you don't need every value up front - you only need to know 'what's the smallest value not yet visited' at each step, and be able to advance past it cheaply",
+      "initialize by pushing every node from the root down along its leftmost path onto a stack - the top of the stack is now the smallest unvisited value",
+      "next pops the top of the stack (that's the answer) and then pushes that node's right child's entire leftmost path onto the stack, since that subtree is now the next place to look for smaller values",
+      "hasNext is just checking whether the stack is empty",
+      "simulate this process fresh for each test case, starting from an empty stack and the tree's root, processing the ops string token by token in order"
+    ]
+  },
+  "bruteForce": {
+    "approach": "do a full inorder traversal up front, collecting every value into a list, then serve next and hasNext calls by walking a plain index cursor through that precomputed list",
+    "time": "O(n) up front, O(1) per operation after that",
+    "space": "O(n) to store the entire traversal"
+  },
+  "isIndex0": true,
+  "level": null
+}

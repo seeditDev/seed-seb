@@ -1,0 +1,630 @@
+{
+  "id": "find-peak-element",
+  "questionId": "find-peak-element",
+  "slug": "find-peak-element",
+  "title": "Find Peak Element",
+  "difficulty": "Medium",
+  "category": "Binary search",
+  "patterns": [
+    "binary search"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "you don't need to find THE peak, just A peak - does that change what a binary search comparison could look like?",
+    "at any index mid, look at nums[mid] versus nums[mid+1] - that comparison tells you which direction is 'uphill'",
+    "if nums[mid] < nums[mid+1], there's guaranteed to be a peak somewhere to the right (the slope has to top out eventually, even if it's just at the end); if nums[mid] > nums[mid+1], a peak is guaranteed somewhere at mid or to its left",
+    "binary search by always moving toward the uphill side; when left and right meet, that index is a peak"
+  ],
+  "commonMistakes": [
+    "trying to find the global maximum instead of just any local peak, overcomplicating the search",
+    "off-by-one comparing nums[mid] to nums[mid+1] when mid is the last index (out of bounds access)",
+    "assuming there's only one peak and being surprised when multiple valid answers exist"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of integers where no two adjacent elements are\nequal. A peak element is one that is strictly greater than its\nneighbors, treating the positions just off the left and right ends of\nthe array as negative infinity, so an end element only needs to beat its\none real neighbor.\n\n**Return the index of any peak element.**\n\nIf there are multiple peaks, returning the index of any one of them is accepted. You must do this faster than a plain linear scan.\n",
+    "constraints": [
+      "1 <= nums.length <= 1000",
+      "-2^31 <= nums[i] <= 2^31 - 1",
+      "nums[i] != nums[i + 1] for all valid i"
+    ],
+    "notes": [
+      "the array has only one element (trivially a peak)",
+      "the array is strictly increasing (the peak is the last element)",
+      "the array is strictly decreasing (the peak is the first element)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "3 is greater than both of its neighbors, 2 and 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 3, 2, 1]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "4 is the single peak, greater than both 3 (on the left) and 3 (on the right)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 1, 3, 5, 6, 4]",
+        "output": "5 (or 1)",
+        "expectedOutput": "5 (or 1)",
+        "explanation": "there are two peaks here, index 1 (value 2) and index 5 (value 6) - either is a valid answer"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,3,2,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[10,9,8,7,6,5,4,3,2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,3,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[3,2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,3,6,10,15,21,28,20,10,5,1]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,10,20,15,8,3,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-5,-3,-1,0,-2,-4]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,10,9,8,7,6,5,4]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,1,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,-1,-2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[7]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,9]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[9,3]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[100,50,25,12,6,3,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 1]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "3 is greater than both of its neighbors, 2 and 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 3, 2, 1]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "4 is the single peak, greater than both 3 (on the left) and 3 (on the right)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 1, 3, 5, 6, 4]",
+      "output": "5 (or 1)",
+      "expectedOutput": "5 (or 1)",
+      "explanation": "there are two peaks here, index 1 (value 2) and index 5 (value 6) - either is a valid answer"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 1]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "3 is greater than both of its neighbors, 2 and 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 3, 2, 1]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "4 is the single peak, greater than both 3 (on the left) and 3 (on the right)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 1, 3, 5, 6, 4]",
+      "output": "5 (or 1)",
+      "expectedOutput": "5 (or 1)",
+      "explanation": "there are two peaks here, index 1 (value 2) and index 5 (value 6) - either is a valid answer"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3,4,3,2,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[2,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[10,9,8,7,6,5,4,3,2,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,3,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[3,2,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,3,6,10,15,21,28,20,10,5,1]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[5,10,20,15,8,3,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[-5,-3,-1,0,-2,-4]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,10,9,8,7,6,5,4]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,9,8,7,6,5,4,3,2,1]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[0,1,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[0,-1,-2]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[7]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[3,9]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[9,3]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[100,50,25,12,6,3,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "3 is greater than both of its neighbors, 2 and 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 3, 2, 1]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "4 is the single peak, greater than both 3 (on the left) and 3 (on the right)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 1, 3, 5, 6, 4]",
+        "output": "5 (or 1)",
+        "expectedOutput": "5 (or 1)",
+        "explanation": "there are two peaks here, index 1 (value 2) and index 5 (value 6) - either is a valid answer"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,3,2,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[10,9,8,7,6,5,4,3,2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,3,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[3,2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,3,6,10,15,21,28,20,10,5,1]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,10,20,15,8,3,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-5,-3,-1,0,-2,-4]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,10,9,8,7,6,5,4]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,1,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,-1,-2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[7]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,9]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[9,3]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[100,50,25,12,6,3,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findPeakElement(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findPeakElement(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findPeakElement(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findPeakElement(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findPeakElement(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findPeakElement(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findPeakElement(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findPeakElement(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findPeakElement(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findPeakElement(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findPeakElement(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findPeakElement(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findPeakElement(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findPeakElement(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findPeakElement(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findPeakElement(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findPeakElement(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findPeakElement(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findPeakElement(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findPeakElement(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(log n)",
+      "space": "O(1)",
+      "pattern": "binary search that follows the upward slope toward a peak"
+    },
+    "bruteForce": {
+      "approach": "linear scan checking each element against both neighbors until one that's bigger than both is found",
+      "time": "O(n)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "binary search that follows the upward slope toward a peak",
+    "time": "O(log n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "you don't need to find THE peak, just A peak - does that change what a binary search comparison could look like?",
+      "at any index mid, look at nums[mid] versus nums[mid+1] - that comparison tells you which direction is 'uphill'",
+      "if nums[mid] < nums[mid+1], there's guaranteed to be a peak somewhere to the right (the slope has to top out eventually, even if it's just at the end); if nums[mid] > nums[mid+1], a peak is guaranteed somewhere at mid or to its left",
+      "binary search by always moving toward the uphill side; when left and right meet, that index is a peak"
+    ]
+  },
+  "bruteForce": {
+    "approach": "linear scan checking each element against both neighbors until one that's bigger than both is found",
+    "time": "O(n)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

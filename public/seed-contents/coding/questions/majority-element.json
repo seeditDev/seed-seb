@@ -1,0 +1,599 @@
+{
+  "id": "majority-element",
+  "questionId": "majority-element",
+  "slug": "majority-element",
+  "title": "Majority Element",
+  "difficulty": "Easy",
+  "category": "Hash map",
+  "patterns": [
+    "hash map"
+  ],
+  "lists": [
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "the hash map approach is already O(n) time, but it costs O(n) space. since the majority element appears MORE than half the time, is there a way to find it with almost no extra memory?",
+    "imagine each occurrence of the majority value as +1 vote and every other value as -1 vote against whatever the current leading candidate is. what happens to the running total over the whole array?",
+    "keep a candidate and a count starting at 0. for each number: if count is 0, make it the new candidate; then add 1 to count if the number matches the candidate, or subtract 1 if it doesn't",
+    "because the majority element outnumbers everything else combined, it's guaranteed to be the candidate left standing at the end"
+  ],
+  "commonMistakes": [
+    "not resetting the candidate when the count hits zero, or resetting at the wrong point in the loop",
+    "assuming Boyer-Moore voting works when no true majority exists (it doesn't guarantee a correct answer in that case, but this problem guarantees one exists)",
+    "using the hash map approach and calling it done without considering the O(1) space follow-up, missing the point of the pattern"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of integers `nums`.\n\n**Return the value that appears more than `n/2` times, where `n` is the array's length.**\n\nYou can assume such a value always exists.\n",
+    "constraints": [
+      "1 <= nums.length <= 5 * 10^4",
+      "-10^9 <= nums[i] <= 10^9",
+      "the majority element always exists in the array"
+    ],
+    "notes": [
+      "a single element array (it's trivially the majority)",
+      "the majority element is exactly n/2 + 1 occurrences",
+      "all elements are the same value"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 2, 3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [2, 2, 1, 1, 1, 2, 2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[3,2,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2,2,1,1,1,2,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[6,5,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,2,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,1,2,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,-1,-1,2,3]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,0,0,0,1,2,3]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,1,2,3,4,5,6,7,8,9,10,11,12,13,14]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[9,9,9,9,9,9,9,9,9,9,1,2,3,4,5,6,7,8,9,10]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[100,100,100,-100,-100]]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,3,4,2,4,4,2,4,4]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[5,17,5,8,5,8,5,2,14,5,17,5,5,5,5,12,5,5,5,5,5,4,5,5,13]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,2,3,3,2,2,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-5,-5,-5,-5,1,2,3,4,5,6]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,1,1,1,1,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[8,8,1,8,2,8,3,8]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[9,9,9,9,1,2,3]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 2, 3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [2, 2, 1, 1, 1, 2, 2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 2, 3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [2, 2, 1, 1, 1, 2, 2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[3,2,3]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[2,2,1,1,1,2,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[6,5,5]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[2,2,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,1,2,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[-1,-1,-1,2,3]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[0,0,0,0,1,2,3]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,1,2,3,4,5,6,7,8,9,10,11,12,13,14]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[9,9,9,9,9,9,9,9,9,9,1,2,3,4,5,6,7,8,9,10]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[100,100,100,-100,-100]]",
+      "output": "100",
+      "expectedOutput": "100",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[3,3,4,2,4,4,2,4,4]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[5,17,5,8,5,8,5,2,14,5,17,5,5,5,5,12,5,5,5,5,5,4,5,5,13]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[2,2,3,3,2,2,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[-5,-5,-5,-5,1,2,3,4,5,6]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,1,1,1,1,1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[8,8,1,8,2,8,3,8]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[9,9,9,9,1,2,3]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 2, 3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [2, 2, 1, 1, 1, 2, 2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[3,2,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2,2,1,1,1,2,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[6,5,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,2,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,1,2,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,-1,-1,2,3]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,0,0,0,1,2,3]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,1,2,3,4,5,6,7,8,9,10,11,12,13,14]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[9,9,9,9,9,9,9,9,9,9,1,2,3,4,5,6,7,8,9,10]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[100,100,100,-100,-100]]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,3,4,2,4,4,2,4,4]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[5,17,5,8,5,8,5,2,14,5,17,5,5,5,5,12,5,5,5,5,5,4,5,5,13]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,2,3,3,2,2,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-5,-5,-5,-5,1,2,3,4,5,6]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,1,1,1,1,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[8,8,1,8,2,8,3,8]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[9,9,9,9,1,2,3]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def majorityElement(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int majorityElement(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int majorityElement(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun majorityElement(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    majorityElement(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def majorityElement(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int majorityElement(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int majorityElement(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun majorityElement(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    majorityElement(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def majorityElement(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int majorityElement(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int majorityElement(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun majorityElement(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    majorityElement(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def majorityElement(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int majorityElement(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int majorityElement(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun majorityElement(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    majorityElement(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "Boyer-Moore voting - track a single candidate and a running counter as you scan once"
+    },
+    "bruteForce": {
+      "approach": "count occurrences of every value with a hash map, then return whichever value's count exceeds n/2",
+      "time": "O(n)",
+      "space": "O(n) for the counts"
+    }
+  },
+  "optimal": {
+    "pattern": "Boyer-Moore voting - track a single candidate and a running counter as you scan once",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "the hash map approach is already O(n) time, but it costs O(n) space. since the majority element appears MORE than half the time, is there a way to find it with almost no extra memory?",
+      "imagine each occurrence of the majority value as +1 vote and every other value as -1 vote against whatever the current leading candidate is. what happens to the running total over the whole array?",
+      "keep a candidate and a count starting at 0. for each number: if count is 0, make it the new candidate; then add 1 to count if the number matches the candidate, or subtract 1 if it doesn't",
+      "because the majority element outnumbers everything else combined, it's guaranteed to be the candidate left standing at the end"
+    ]
+  },
+  "bruteForce": {
+    "approach": "count occurrences of every value with a hash map, then return whichever value's count exceeds n/2",
+    "time": "O(n)",
+    "space": "O(n) for the counts"
+  },
+  "isIndex0": true,
+  "level": null
+}

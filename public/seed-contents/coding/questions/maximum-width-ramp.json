@@ -1,0 +1,628 @@
+{
+  "id": "maximum-width-ramp",
+  "questionId": "maximum-width-ramp",
+  "slug": "maximum-width-ramp",
+  "title": "Maximum Width Ramp",
+  "difficulty": "Medium",
+  "category": "Monotonic stack",
+  "patterns": [
+    "monotonic stack",
+    "array"
+  ],
+  "lists": [],
+  "hints": [
+    "only certain indices can ever be the 'i' of the widest ramp - if nums[a] > nums[b] for a < b, could a ever be a *worse* choice than b as a left endpoint? that means many indices can be ruled out immediately as candidates",
+    "build a stack of indices where the values are strictly decreasing as you scan left to right - this stack holds every index that could possibly be the left end of some ramp",
+    "now scan the array from right to left as the 'j' side; while the stack is non-empty and nums[top of stack] <= nums[j], pop it and update the best width using j - poppedIndex, since j is the farthest-right partner for that particular left endpoint",
+    "because you're scanning j from the right, once an index is popped and matched, its best possible width has already been found, and the stack naturally shrinks as wider matches get discovered first for the remaining candidates"
+  ],
+  "commonMistakes": [
+    "trying to also build a decreasing candidate structure from the right side for j, which isn't needed since any j works as long as its value beats the stack top",
+    "popping only one candidate per j value instead of continuing to pop while nums[top] <= nums[j]",
+    "building the candidate stack with non-strict decreasing values, which would keep redundant indices that can never win"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of integers `nums`. A ramp is a pair of indices\n`(i, j)` with `i < j` such that `nums[i] <= nums[j]`.\n\n**Return the maximum possible width `j - i` over all ramps in the array, or 0 if no ramp exists.**\n",
+    "constraints": [
+      "2 <= nums.length",
+      "0 <= nums[i] <= 50000"
+    ],
+    "notes": [
+      "a strictly decreasing array, where no ramp exists (answer 0)",
+      "all elements equal, where the widest possible ramp spans the whole array",
+      "the widest ramp starts at index 0 and ends at the last index"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [6, 0, 8, 2, 1, 5]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "the ramp (i=1, j=5) has nums[1]=0 <= nums[5]=5, giving width 5 - 1 = 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [9, 8, 1, 0, 1, 9, 4, 0, 4, 1]",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the widest ramp is (i=0, j=2), since nums[0]=1 <= nums[2]=3"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[6,0,8,2,1,5]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[9,8,1,0,1,9,4,0,4,1]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,4,3,2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0,0,0,0,0]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[18999,5475,1119,38799,20102,27770,24850,34739,23467,8539,47576,12582,17523,29135,922,14486,40642,29821,1623,6940,5621,46531,32652,27606,1283,33595,41134,48117,28265,23527]]",
+        "output": "29",
+        "expectedOutput": "29",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,1,2,3,4,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,20,0,20,0,20,0,20]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,0,1,0,1,0,1,0,1,0]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2002,42851,47321,17999,1171,31351,36040,22796,15641,28604,2041,4452,19768,8274,39224,19531,32435,18446,19839,28382,22202,25869,12697,30634,25180,20476,47890,2509,34104,23093,11368,40470,49864,14403,39738,17546,42370,32371,44844,30324]]",
+        "output": "39",
+        "expectedOutput": "39",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[0,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0,2500,5000,7500,10000,12500,15000,17500,20000,22500,25000,27500,30000,32500,35000,37500,40000,42500,45000,47500]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[10,9,8,7,6,5,4,3,2,1,0,1,2,3,4,5,6,7,8,9,10]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,0,3,0,3,0,3,0,3,50000]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [6, 0, 8, 2, 1, 5]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "the ramp (i=1, j=5) has nums[1]=0 <= nums[5]=5, giving width 5 - 1 = 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [9, 8, 1, 0, 1, 9, 4, 0, 4, 1]",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the widest ramp is (i=0, j=2), since nums[0]=1 <= nums[2]=3"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [6, 0, 8, 2, 1, 5]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "the ramp (i=1, j=5) has nums[1]=0 <= nums[5]=5, giving width 5 - 1 = 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [9, 8, 1, 0, 1, 9, 4, 0, 4, 1]",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the widest ramp is (i=0, j=2), since nums[0]=1 <= nums[2]=3"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[6,0,8,2,1,5]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[9,8,1,0,1,9,4,0,4,1]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[5,4,3,2,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[2,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[0,0,0,0,0]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+      "output": "19",
+      "expectedOutput": "19",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[18999,5475,1119,38799,20102,27770,24850,34739,23467,8539,47576,12582,17523,29135,922,14486,40642,29821,1623,6940,5621,46531,32652,27606,1283,33595,41134,48117,28265,23527]]",
+      "output": "29",
+      "expectedOutput": "29",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[5,1,2,3,4,5]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[0,20,0,20,0,20,0,20]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,0,1,0,1,0,1,0,1,0]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[2002,42851,47321,17999,1171,31351,36040,22796,15641,28604,2041,4452,19768,8274,39224,19531,32435,18446,19839,28382,22202,25869,12697,30634,25180,20476,47890,2509,34104,23093,11368,40470,49864,14403,39738,17546,42370,32371,44844,30324]]",
+      "output": "39",
+      "expectedOutput": "39",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000]]",
+      "output": "19",
+      "expectedOutput": "19",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[0,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000]]",
+      "output": "19",
+      "expectedOutput": "19",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[0,2500,5000,7500,10000,12500,15000,17500,20000,22500,25000,27500,30000,32500,35000,37500,40000,42500,45000,47500]]",
+      "output": "19",
+      "expectedOutput": "19",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[10,9,8,7,6,5,4,3,2,1,0,1,2,3,4,5,6,7,8,9,10]]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[3,0,3,0,3,0,3,0,3,50000]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [6, 0, 8, 2, 1, 5]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "the ramp (i=1, j=5) has nums[1]=0 <= nums[5]=5, giving width 5 - 1 = 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [9, 8, 1, 0, 1, 9, 4, 0, 4, 1]",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the widest ramp is (i=0, j=2), since nums[0]=1 <= nums[2]=3"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[6,0,8,2,1,5]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[9,8,1,0,1,9,4,0,4,1]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,4,3,2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0,0,0,0,0]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[18999,5475,1119,38799,20102,27770,24850,34739,23467,8539,47576,12582,17523,29135,922,14486,40642,29821,1623,6940,5621,46531,32652,27606,1283,33595,41134,48117,28265,23527]]",
+        "output": "29",
+        "expectedOutput": "29",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,1,2,3,4,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,20,0,20,0,20,0,20]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,0,1,0,1,0,1,0,1,0]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2002,42851,47321,17999,1171,31351,36040,22796,15641,28604,2041,4452,19768,8274,39224,19531,32435,18446,19839,28382,22202,25869,12697,30634,25180,20476,47890,2509,34104,23093,11368,40470,49864,14403,39738,17546,42370,32371,44844,30324]]",
+        "output": "39",
+        "expectedOutput": "39",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[0,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0,2500,5000,7500,10000,12500,15000,17500,20000,22500,25000,27500,30000,32500,35000,37500,40000,42500,45000,47500]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[10,9,8,7,6,5,4,3,2,1,0,1,2,3,4,5,6,7,8,9,10]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,0,3,0,3,0,3,0,3,50000]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def maxWidthRamp(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxWidthRamp(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxWidthRamp(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxWidthRamp(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxWidthRamp(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def maxWidthRamp(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxWidthRamp(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxWidthRamp(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxWidthRamp(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxWidthRamp(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def maxWidthRamp(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxWidthRamp(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxWidthRamp(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxWidthRamp(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxWidthRamp(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def maxWidthRamp(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxWidthRamp(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxWidthRamp(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxWidthRamp(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxWidthRamp(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the stack",
+      "pattern": "monotonic decreasing stack of candidate left endpoints, matched against the array scanned right to left"
+    },
+    "bruteForce": {
+      "approach": "check every pair of indices (i, j) with i < j and nums[i] <= nums[j], tracking the maximum width found",
+      "time": "O(n^2)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "monotonic decreasing stack of candidate left endpoints, matched against the array scanned right to left",
+    "time": "O(n)",
+    "space": "O(n) for the stack",
+    "hint_ladder": [
+      "only certain indices can ever be the 'i' of the widest ramp - if nums[a] > nums[b] for a < b, could a ever be a *worse* choice than b as a left endpoint? that means many indices can be ruled out immediately as candidates",
+      "build a stack of indices where the values are strictly decreasing as you scan left to right - this stack holds every index that could possibly be the left end of some ramp",
+      "now scan the array from right to left as the 'j' side; while the stack is non-empty and nums[top of stack] <= nums[j], pop it and update the best width using j - poppedIndex, since j is the farthest-right partner for that particular left endpoint",
+      "because you're scanning j from the right, once an index is popped and matched, its best possible width has already been found, and the stack naturally shrinks as wider matches get discovered first for the remaining candidates"
+    ]
+  },
+  "bruteForce": {
+    "approach": "check every pair of indices (i, j) with i < j and nums[i] <= nums[j], tracking the maximum width found",
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

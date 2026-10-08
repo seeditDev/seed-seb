@@ -1,0 +1,658 @@
+{
+  "id": "lru-cache",
+  "questionId": "lru-cache",
+  "slug": "lru-cache",
+  "title": "LRU Cache",
+  "difficulty": "Medium",
+  "category": "Hash map",
+  "patterns": [
+    "hash map",
+    "linked list",
+    "design"
+  ],
+  "lists": [
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "get needs O(1) lookup by key - that alone points to a hash map from key to some node holding the value",
+    "but you also need to know, in O(1), which entry is least recently used when you need to evict - a hash map alone can't tell you that ordering",
+    "keep a doubly linked list of entries ordered by recency, so the least recently used entry is always at one fixed end and the most recently used is always at the other",
+    "have the hash map store key -> pointer to that key's node in the linked list, so any access can jump straight to its node and unlink/relink it in O(1)",
+    "every get or put on an existing key: unlink its node and re-insert it at the most-recently-used end; every put on a new key: insert a new node at the most-recently-used end, and if capacity is now exceeded, remove the node at the least-recently-used end (and its hash map entry too)"
+  ],
+  "commonMistakes": [
+    "forgetting that get also counts as a use and must bump the key's recency, not just put",
+    "forgetting that put on an already-present key must update its value and bump recency without changing the cache's size or evicting anything",
+    "evicting based on insertion order instead of last-used order, which is wrong once a get has touched an older entry",
+    "not removing the evicted key from the hash map when removing its linked list node, leaving stale entries"
+  ],
+  "content": {
+    "problemStatement": "You're given a fixed `capacity` and a space-delimited sequence of `ops` to\nrun against an initially empty Least Recently Used (LRU) cache. Each token\nis one of:\n\n- `\"put_<key>_<value>\"` - insert or update the value for `key`, marking it most recently used, evicting the least recently used entry first if this exceeds capacity\n- `\"get_<key>\"` - return the value for `key` if present, marking it most recently used, or `-1` if absent\n\n**Simulate the operations in order and return a list containing the result of every \"get\" operation, in the order they occurred.**\n\nAccessing a key with either `get` or `put` always counts as using it.\n",
+    "constraints": [
+      "1 <= capacity <= 3000",
+      "0 <= number of operations <= 2 * 10^4",
+      "-10^4 <= key, value <= 10^4"
+    ],
+    "notes": [
+      "get called on a key that was never put",
+      "put on an already-present key updates its value without changing the cache's size or triggering an eviction",
+      "capacity of 1, where every put after the first evicts the previous entry",
+      "a get on a key bumps its recency, changing which key gets evicted by a later put"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "capacity = 2, ops = \"put_1_1 put_2_2 get_1 put_3_3 get_2 put_4_4 get_1 get_3 get_4\"",
+        "output": "[1, -1, -1, 3, 4]",
+        "expectedOutput": "[1, -1, -1, 3, 4]",
+        "explanation": "get_1 returns 1 and makes 1 most recent; put_3_3 evicts 2 (least recently used); put_4_4 evicts 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "capacity = 1, ops = \"put_1_1 get_1 put_2_2 get_1 get_2\"",
+        "output": "[1, -1, 2]",
+        "expectedOutput": "[1, -1, 2]",
+        "explanation": "with capacity 1, put_2_2 immediately evicts the only entry, key 1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "capacity = 2, ops = \"put_1_1 put_2_2 put_1_10 get_1 get_2\"",
+        "output": "[10, 2]",
+        "expectedOutput": "[10, 2]",
+        "explanation": "put_1_10 updates the existing key 1 to value 10 and marks it most recently used, it does not count as a new insert"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[2,\"put_1_1 put_2_2 get_1 put_3_3 get_2 put_4_4 get_1 get_3 get_4\"]",
+        "output": "[1,-1,-1,3,4]",
+        "expectedOutput": "[1,-1,-1,3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[1,\"put_1_1 get_1 put_2_2 get_1 get_2\"]",
+        "output": "[1,-1,2]",
+        "expectedOutput": "[1,-1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[2,\"get_1 put_1_1 get_1\"]",
+        "output": "[-1,1]",
+        "expectedOutput": "[-1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[2,\"put_1_1 put_2_2 put_1_10 get_1 get_2\"]",
+        "output": "[10,2]",
+        "expectedOutput": "[10,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[3,\"put_1_1 put_2_2 put_3_3 get_1 put_4_4 get_2 get_3 get_4\"]",
+        "output": "[1,-1,3,4]",
+        "expectedOutput": "[1,-1,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[2,\"put_1_1 put_1_2 get_1\"]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[2,\"put_1_1 put_2_2 get_3\"]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[1,\"put_1_1 put_1_2 put_1_3 get_1\"]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[2,\"put_1_1 put_2_2 get_1 get_2 put_3_3 get_1 get_2 get_3\"]",
+        "output": "[1,2,-1,2,3]",
+        "expectedOutput": "[1,2,-1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[4,\"put_1_1 put_2_2 put_3_3 put_4_4 put_5_5 get_1 get_2 get_5\"]",
+        "output": "[-1,2,5]",
+        "expectedOutput": "[-1,2,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[2,\"put_1_100 get_1\"]",
+        "output": "[100]",
+        "expectedOutput": "[100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[2,\"put_-1_-5 get_-1\"]",
+        "output": "[-5]",
+        "expectedOutput": "[-5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[2,\"put_1_1 put_2_2 put_3_3 get_1 get_2 get_3\"]",
+        "output": "[-1,2,3]",
+        "expectedOutput": "[-1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[3,\"put_1_1 put_2_2 get_1 put_3_3 put_4_4 get_2 get_1 get_3 get_4\"]",
+        "output": "[1,-1,1,3,4]",
+        "expectedOutput": "[1,-1,1,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[2,\"get_5 get_6\"]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[1,\"put_1_1 get_1 get_1 get_1\"]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[5,\"put_1_1 put_2_2 put_3_3 put_4_4 put_5_5 put_6_6 get_1 get_6\"]",
+        "output": "[-1,6]",
+        "expectedOutput": "[-1,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[2,\"put_7_70 put_8_80 get_7 put_9_90 get_8 get_9 get_7\"]",
+        "output": "[70,-1,90,70]",
+        "expectedOutput": "[70,-1,90,70]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[2,\"put_1_1 put_2_2 put_1_1 put_3_3 get_2 get_1 get_3\"]",
+        "output": "[-1,1,3]",
+        "expectedOutput": "[-1,1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[2,\"put_0_0 get_0\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[3,\"put_1_1 put_2_2 put_3_3 get_2 put_4_4 put_5_5 get_1 get_2 get_3 get_4 get_5\"]",
+        "output": "[2,-1,2,-1,4,5]",
+        "expectedOutput": "[2,-1,2,-1,4,5]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "capacity = 2, ops = \"put_1_1 put_2_2 get_1 put_3_3 get_2 put_4_4 get_1 get_3 get_4\"",
+      "output": "[1, -1, -1, 3, 4]",
+      "expectedOutput": "[1, -1, -1, 3, 4]",
+      "explanation": "get_1 returns 1 and makes 1 most recent; put_3_3 evicts 2 (least recently used); put_4_4 evicts 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "capacity = 1, ops = \"put_1_1 get_1 put_2_2 get_1 get_2\"",
+      "output": "[1, -1, 2]",
+      "expectedOutput": "[1, -1, 2]",
+      "explanation": "with capacity 1, put_2_2 immediately evicts the only entry, key 1"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "capacity = 2, ops = \"put_1_1 put_2_2 put_1_10 get_1 get_2\"",
+      "output": "[10, 2]",
+      "expectedOutput": "[10, 2]",
+      "explanation": "put_1_10 updates the existing key 1 to value 10 and marks it most recently used, it does not count as a new insert"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "capacity = 2, ops = \"put_1_1 put_2_2 get_1 put_3_3 get_2 put_4_4 get_1 get_3 get_4\"",
+      "output": "[1, -1, -1, 3, 4]",
+      "expectedOutput": "[1, -1, -1, 3, 4]",
+      "explanation": "get_1 returns 1 and makes 1 most recent; put_3_3 evicts 2 (least recently used); put_4_4 evicts 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "capacity = 1, ops = \"put_1_1 get_1 put_2_2 get_1 get_2\"",
+      "output": "[1, -1, 2]",
+      "expectedOutput": "[1, -1, 2]",
+      "explanation": "with capacity 1, put_2_2 immediately evicts the only entry, key 1"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "capacity = 2, ops = \"put_1_1 put_2_2 put_1_10 get_1 get_2\"",
+      "output": "[10, 2]",
+      "expectedOutput": "[10, 2]",
+      "explanation": "put_1_10 updates the existing key 1 to value 10 and marks it most recently used, it does not count as a new insert"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[2,\"put_1_1 put_2_2 get_1 put_3_3 get_2 put_4_4 get_1 get_3 get_4\"]",
+      "output": "[1,-1,-1,3,4]",
+      "expectedOutput": "[1,-1,-1,3,4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[1,\"put_1_1 get_1 put_2_2 get_1 get_2\"]",
+      "output": "[1,-1,2]",
+      "expectedOutput": "[1,-1,2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[2,\"get_1 put_1_1 get_1\"]",
+      "output": "[-1,1]",
+      "expectedOutput": "[-1,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[2,\"put_1_1 put_2_2 put_1_10 get_1 get_2\"]",
+      "output": "[10,2]",
+      "expectedOutput": "[10,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[3,\"put_1_1 put_2_2 put_3_3 get_1 put_4_4 get_2 get_3 get_4\"]",
+      "output": "[1,-1,3,4]",
+      "expectedOutput": "[1,-1,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[2,\"put_1_1 put_1_2 get_1\"]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[2,\"put_1_1 put_2_2 get_3\"]",
+      "output": "[-1]",
+      "expectedOutput": "[-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[1,\"put_1_1 put_1_2 put_1_3 get_1\"]",
+      "output": "[3]",
+      "expectedOutput": "[3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[2,\"put_1_1 put_2_2 get_1 get_2 put_3_3 get_1 get_2 get_3\"]",
+      "output": "[1,2,-1,2,3]",
+      "expectedOutput": "[1,2,-1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[4,\"put_1_1 put_2_2 put_3_3 put_4_4 put_5_5 get_1 get_2 get_5\"]",
+      "output": "[-1,2,5]",
+      "expectedOutput": "[-1,2,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[2,\"put_1_100 get_1\"]",
+      "output": "[100]",
+      "expectedOutput": "[100]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[2,\"put_-1_-5 get_-1\"]",
+      "output": "[-5]",
+      "expectedOutput": "[-5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[2,\"put_1_1 put_2_2 put_3_3 get_1 get_2 get_3\"]",
+      "output": "[-1,2,3]",
+      "expectedOutput": "[-1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[3,\"put_1_1 put_2_2 get_1 put_3_3 put_4_4 get_2 get_1 get_3 get_4\"]",
+      "output": "[1,-1,1,3,4]",
+      "expectedOutput": "[1,-1,1,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[2,\"get_5 get_6\"]",
+      "output": "[-1,-1]",
+      "expectedOutput": "[-1,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[1,\"put_1_1 get_1 get_1 get_1\"]",
+      "output": "[1,1,1]",
+      "expectedOutput": "[1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[5,\"put_1_1 put_2_2 put_3_3 put_4_4 put_5_5 put_6_6 get_1 get_6\"]",
+      "output": "[-1,6]",
+      "expectedOutput": "[-1,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[2,\"put_7_70 put_8_80 get_7 put_9_90 get_8 get_9 get_7\"]",
+      "output": "[70,-1,90,70]",
+      "expectedOutput": "[70,-1,90,70]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[2,\"put_1_1 put_2_2 put_1_1 put_3_3 get_2 get_1 get_3\"]",
+      "output": "[-1,1,3]",
+      "expectedOutput": "[-1,1,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[2,\"put_0_0 get_0\"]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[3,\"put_1_1 put_2_2 put_3_3 get_2 put_4_4 put_5_5 get_1 get_2 get_3 get_4 get_5\"]",
+      "output": "[2,-1,2,-1,4,5]",
+      "expectedOutput": "[2,-1,2,-1,4,5]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "capacity = 2, ops = \"put_1_1 put_2_2 get_1 put_3_3 get_2 put_4_4 get_1 get_3 get_4\"",
+        "output": "[1, -1, -1, 3, 4]",
+        "expectedOutput": "[1, -1, -1, 3, 4]",
+        "explanation": "get_1 returns 1 and makes 1 most recent; put_3_3 evicts 2 (least recently used); put_4_4 evicts 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "capacity = 1, ops = \"put_1_1 get_1 put_2_2 get_1 get_2\"",
+        "output": "[1, -1, 2]",
+        "expectedOutput": "[1, -1, 2]",
+        "explanation": "with capacity 1, put_2_2 immediately evicts the only entry, key 1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "capacity = 2, ops = \"put_1_1 put_2_2 put_1_10 get_1 get_2\"",
+        "output": "[10, 2]",
+        "expectedOutput": "[10, 2]",
+        "explanation": "put_1_10 updates the existing key 1 to value 10 and marks it most recently used, it does not count as a new insert"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[2,\"put_1_1 put_2_2 get_1 put_3_3 get_2 put_4_4 get_1 get_3 get_4\"]",
+        "output": "[1,-1,-1,3,4]",
+        "expectedOutput": "[1,-1,-1,3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[1,\"put_1_1 get_1 put_2_2 get_1 get_2\"]",
+        "output": "[1,-1,2]",
+        "expectedOutput": "[1,-1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[2,\"get_1 put_1_1 get_1\"]",
+        "output": "[-1,1]",
+        "expectedOutput": "[-1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[2,\"put_1_1 put_2_2 put_1_10 get_1 get_2\"]",
+        "output": "[10,2]",
+        "expectedOutput": "[10,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[3,\"put_1_1 put_2_2 put_3_3 get_1 put_4_4 get_2 get_3 get_4\"]",
+        "output": "[1,-1,3,4]",
+        "expectedOutput": "[1,-1,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[2,\"put_1_1 put_1_2 get_1\"]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[2,\"put_1_1 put_2_2 get_3\"]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[1,\"put_1_1 put_1_2 put_1_3 get_1\"]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[2,\"put_1_1 put_2_2 get_1 get_2 put_3_3 get_1 get_2 get_3\"]",
+        "output": "[1,2,-1,2,3]",
+        "expectedOutput": "[1,2,-1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[4,\"put_1_1 put_2_2 put_3_3 put_4_4 put_5_5 get_1 get_2 get_5\"]",
+        "output": "[-1,2,5]",
+        "expectedOutput": "[-1,2,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[2,\"put_1_100 get_1\"]",
+        "output": "[100]",
+        "expectedOutput": "[100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[2,\"put_-1_-5 get_-1\"]",
+        "output": "[-5]",
+        "expectedOutput": "[-5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[2,\"put_1_1 put_2_2 put_3_3 get_1 get_2 get_3\"]",
+        "output": "[-1,2,3]",
+        "expectedOutput": "[-1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[3,\"put_1_1 put_2_2 get_1 put_3_3 put_4_4 get_2 get_1 get_3 get_4\"]",
+        "output": "[1,-1,1,3,4]",
+        "expectedOutput": "[1,-1,1,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[2,\"get_5 get_6\"]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[1,\"put_1_1 get_1 get_1 get_1\"]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[5,\"put_1_1 put_2_2 put_3_3 put_4_4 put_5_5 put_6_6 get_1 get_6\"]",
+        "output": "[-1,6]",
+        "expectedOutput": "[-1,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[2,\"put_7_70 put_8_80 get_7 put_9_90 get_8 get_9 get_7\"]",
+        "output": "[70,-1,90,70]",
+        "expectedOutput": "[70,-1,90,70]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[2,\"put_1_1 put_2_2 put_1_1 put_3_3 get_2 get_1 get_3\"]",
+        "output": "[-1,1,3]",
+        "expectedOutput": "[-1,1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[2,\"put_0_0 get_0\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[3,\"put_1_1 put_2_2 put_3_3 get_2 put_4_4 put_5_5 get_1 get_2 get_3 get_4 get_5\"]",
+        "output": "[2,-1,2,-1,4,5]",
+        "expectedOutput": "[2,-1,2,-1,4,5]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def lruCacheResults(self, capacity, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\n#include <unordered_map>\n#include <list>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> lruCacheResults(int capacity, string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] lruCacheResults(int capacity, String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lruCacheResults(capacity: Int, ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lruCacheResults(capacity, ops) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def lruCacheResults(self, capacity, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\n#include <unordered_map>\n#include <list>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> lruCacheResults(int capacity, string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] lruCacheResults(int capacity, String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lruCacheResults(capacity: Int, ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lruCacheResults(capacity, ops) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def lruCacheResults(self, capacity, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\n#include <unordered_map>\n#include <list>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> lruCacheResults(int capacity, string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] lruCacheResults(int capacity, String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lruCacheResults(capacity: Int, ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lruCacheResults(capacity, ops) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def lruCacheResults(self, capacity, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\n#include <unordered_map>\n#include <list>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> lruCacheResults(int capacity, string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] lruCacheResults(int capacity, String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lruCacheResults(capacity: Int, ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lruCacheResults(capacity, ops) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(1) per get or put operation",
+      "space": "O(capacity)",
+      "pattern": "hash map from key to node, combined with a doubly linked list ordered by recency (most recently used at one end, least recently used at the other)"
+    },
+    "bruteForce": {
+      "approach": "store entries in a plain list of (key, value, last-used-time) tuples; for every get or put, linearly scan to find the key and update a timestamp, and on eviction linearly scan for the minimum timestamp",
+      "time": "O(n) per operation",
+      "space": "O(capacity)"
+    }
+  },
+  "optimal": {
+    "pattern": "hash map from key to node, combined with a doubly linked list ordered by recency (most recently used at one end, least recently used at the other)",
+    "time": "O(1) per get or put operation",
+    "space": "O(capacity)",
+    "hint_ladder": [
+      "get needs O(1) lookup by key - that alone points to a hash map from key to some node holding the value",
+      "but you also need to know, in O(1), which entry is least recently used when you need to evict - a hash map alone can't tell you that ordering",
+      "keep a doubly linked list of entries ordered by recency, so the least recently used entry is always at one fixed end and the most recently used is always at the other",
+      "have the hash map store key -> pointer to that key's node in the linked list, so any access can jump straight to its node and unlink/relink it in O(1)",
+      "every get or put on an existing key: unlink its node and re-insert it at the most-recently-used end; every put on a new key: insert a new node at the most-recently-used end, and if capacity is now exceeded, remove the node at the least-recently-used end (and its hash map entry too)"
+    ]
+  },
+  "bruteForce": {
+    "approach": "store entries in a plain list of (key, value, last-used-time) tuples; for every get or put, linearly scan to find the key and update a timestamp, and on eviction linearly scan for the minimum timestamp",
+    "time": "O(n) per operation",
+    "space": "O(capacity)"
+  },
+  "isIndex0": true,
+  "level": null
+}

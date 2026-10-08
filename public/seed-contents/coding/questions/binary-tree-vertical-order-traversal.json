@@ -1,0 +1,672 @@
+{
+  "id": "binary-tree-vertical-order-traversal",
+  "questionId": "binary-tree-vertical-order-traversal",
+  "slug": "binary-tree-vertical-order-traversal",
+  "title": "Binary Tree Vertical Order Traversal",
+  "difficulty": "Medium",
+  "category": "Tree bfs",
+  "patterns": [
+    "tree bfs",
+    "queue"
+  ],
+  "lists": [],
+  "hints": [
+    "BFS already visits nodes level by level and left to right within a level - if you also track each node's column as you enqueue it, does that give you the tie-breaking order for free?",
+    "push (index, column) pairs onto the queue, starting with (root index, 0); when enqueuing a left child use column-1, and column+1 for a right child",
+    "as you pop nodes off the queue (which happens in level order, left to right), append each value to a map keyed by column - the map's per-key lists come out already correctly ordered",
+    "once BFS finishes, sort the map's keys (columns) numerically and read off the lists in that order to build the final result"
+  ],
+  "commonMistakes": [
+    "using a DFS that visits left before right but forgetting to also sort by depth afterward, so same-column nodes from different levels can end up in the wrong relative order",
+    "computing column with the parent's column plus/minus 1 incorrectly (mixing up which child gets -1 vs +1)",
+    "forgetting to sort the final column keys numerically, leaving negative columns in the wrong position relative to positive ones"
+  ],
+  "content": {
+    "problemStatement": "A binary tree is given as a plain integer array named `tree`, using a complete-binary-tree (heap) index layout:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array bounds **and** its value isn't the sentinel `-101`, which means \"no node here\"\n- every node is also assigned a column number: the root gets column 0, a left child gets its parent's column minus 1, and a right child gets its parent's column plus 1\n\nFor example, `[1, 2, 3, -101, 4]` encodes this tree:\n\n```\n      1\n     / \\\n    2   3\n     \\\n      4\n```\n\nNode 2 has no left child but does have a right child, 4.\n\n**Group the node values by column, ordered from the leftmost column to the rightmost column, and return the columns as a list of lists.**\n\nWithin a column, list values top to bottom by level; if two nodes land in the same column on the same level, list them in the order they're encountered scanning the tree left to right.\n",
+    "constraints": [
+      "1 <= length of tree <= 2000",
+      "every real node value is in the range -100 to 100",
+      "the sentinel value -101 marks a missing node and never appears as a real value",
+      "the result has one entry per distinct column, ordered from leftmost to rightmost column"
+    ],
+    "notes": [
+      "a single-node tree, which has exactly one column",
+      "a tree that is a straight diagonal chain (all left children, or all right children), giving every node its own column",
+      "multiple nodes sharing the same column at the same depth, requiring left-to-right tie-breaking"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [3, 9, 20, -101, -101, 15, 7]",
+        "output": "[[9], [3, 15], [20], [7]]",
+        "expectedOutput": "[[9], [3, 15], [20], [7]]",
+        "explanation": "9 is column -1; 3 (root) and 15 are column 0 (15 is 20's left child, so column 1-1=0); 20 is column 1; 7 is column 2"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, 4, 5, 6, 7]",
+        "output": "[[4], [2], [1, 5, 6], [3], [7]]",
+        "expectedOutput": "[[4], [2], [1, 5, 6], [3], [7]]",
+        "explanation": "columns range from -2 (node 4) to 2 (node 7); 1, 5, and 6 all land in column 0, and since 1 is on an earlier level it's listed first, then 5 and 6 in left-to-right encounter order"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, -101, 4]",
+        "output": "[[2], [1, 4], [3]]",
+        "expectedOutput": "[[2], [1, 4], [3]]",
+        "explanation": "2 is column -1; 1 (root) and 4 are column 0 (4 is 2's right child, so column -1+1=0); 3 is column 1"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[3,9,20,-101,-101,15,7]]",
+        "output": "[[9],[3,15],[20],[7]]",
+        "expectedOutput": "[[9],[3,15],[20],[7]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "[[4],[2],[1,5,6],[3],[7]]",
+        "expectedOutput": "[[4],[2],[1,5,6],[3],[7]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,-101,4]]",
+        "output": "[[2],[1,4],[3]]",
+        "expectedOutput": "[[2],[1,4],[3]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "[[1]]",
+        "expectedOutput": "[[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[42]]",
+        "output": "[[42]]",
+        "expectedOutput": "[[42]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-17]]",
+        "output": "[[-17]]",
+        "expectedOutput": "[[-17]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0]]",
+        "output": "[[0]]",
+        "expectedOutput": "[[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[10,11,-101,12,-101,-101,-101,13,-101,-101,-101,-101,-101,-101,-101,14]]",
+        "output": "[[14],[13],[12],[11],[10]]",
+        "expectedOutput": "[[14],[13],[12],[11],[10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-5,-101,-4,-101,-101,-101,-3,-101,-101,-101,-101,-101,-101,-101,-2,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,0]]",
+        "output": "[[-5],[-4],[-3],[-2],[-1],[0]]",
+        "expectedOutput": "[[-5],[-4],[-3],[-2],[-1],[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,-101,3,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,6,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,8]]",
+        "output": "[[8],[7],[6],[5],[4],[3],[2],[1]]",
+        "expectedOutput": "[[8],[7],[6],[5],[4],[3],[2],[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "[[4],[2],[1,5,6],[3],[7]]",
+        "expectedOutput": "[[4],[2],[1,5,6],[3],[7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "[[8],[4],[2,9,10,12],[1,5,6],[3,11,13,14],[7],[15]]",
+        "expectedOutput": "[[8],[4],[2,9,10,12],[1,5,6],[3,11,13,14],[7],[15]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-22,27,20,-24,-101,-101,19,-6,2,-101,-101,-101,-101,-101,29,16,28,26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,17,5,-101,-101,-5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-11,-20]]",
+        "output": "[[-11],[17],[16,-20],[-6,5,-5],[-24,28,26],[27,2],[-22],[20],[19],[29]]",
+        "expectedOutput": "[[-11],[17],[16,-20],[-6,5,-5],[-24,28,26],[27,2],[-22],[20],[19],[29]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-66,-37,-101,12,75,-101,-101,-79,62,13,33,-101,-101,-101,-101,-101,-101,-101,-24,-20,-57,-101,28,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-18,-32,-72,10,-101,-101,-101,-101,77,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-69,-101,47,36]]",
+        "output": "[[-69],[-79,-72],[12,-20,47],[-37,62,13,-18,10],[-66,75,-24,-57,36],[33,-32,77],[28]]",
+        "expectedOutput": "[[-69],[-79,-72],[12,-20,47],[-37,62,13,-18,10],[-66,75,-24,-57,36],[33,-32,77],[28]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-40,20,21,-32,40,33,5,-101,9,-84,-62,66,64,-101,-101,-101,-101,-14,-91,-101,-66,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,47,52,-101,-101,-101,-101,74,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-44,-101,-101,-101,-101,-101,-101,-101,-101,-101,46,46,66,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,72]]",
+        "output": "[[47],[-32,-14,-44,46],[20,9,-84,66,52,74,72],[-40,40,33,-91,-66,46,66],[21,-62,64,4],[5,-4]]",
+        "expectedOutput": "[[47],[-32,-14,-44,46],[20,9,-84,66,52,74,72],[-40,40,33,-91,-66,46,66],[21,-62,64,4],[5,-4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-40,22,-94,60,95,46,29,-101,91,40,-56,97,-101,68,10,-101,-101,-101,12,-34,-91,-101,-9,-101,-101,-101,-101,-101,-85,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-75,65,-101,-101,-101,-101,-98,-100,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,40,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-29,-101,-7,12,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-94,-101,-101,-101,-101,67,39]]",
+        "output": "[[-94],[-29],[-75],[60,-34,-7],[22,91,40,97,65,67,39],[-40,95,46,12,-91,12],[-94,-56,68,-98],[29,-9,-85,-26],[10,-100,40]]",
+        "expectedOutput": "[[-94],[-29],[-75],[60,-34,-7],[22,91,40,97,65,67,39],[-40,95,46,12,-91,12],[-94,-56,68,-98],[29,-9,-85,-26],[10,-100,40]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[9,-7,10,10,-5,-1,2,3,-101,-5,-101,2,0,-8,1,-1,-101,-101,-101,-101,-9,-101,-101,-101,6,-101,-101,3,-101,-101,-101,-8]]",
+        "output": "[[-8],[-1],[3],[10],[-7,-5,2],[9,-5,-1,-9,6,3],[10,0,-8],[2],[1]]",
+        "expectedOutput": "[[-8],[-1],[3],[10],[-7,-5,2],[9,-5,-1,-9,6,3],[10,0,-8],[2],[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,-101,5,-101,7,-101,-101,-101,-101,-101,-101,-101,15]]",
+        "output": "[[2],[1,5],[3],[7],[15]]",
+        "expectedOutput": "[[2],[1,5],[3],[7],[15]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2]]",
+        "output": "[[2],[1]]",
+        "expectedOutput": "[[2],[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,-101,3]]",
+        "output": "[[1],[3]]",
+        "expectedOutput": "[[1],[3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[-1,-2,-3,-4,-5,-6,-7]]",
+        "output": "[[-4],[-2],[-1,-5,-6],[-3],[-7]]",
+        "expectedOutput": "[[-4],[-2],[-1,-5,-6],[-3],[-7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[0,0,0,0,0,0,0]]",
+        "output": "[[0],[0],[0,0,0],[0],[0]]",
+        "expectedOutput": "[[0],[0],[0,0,0],[0],[0]]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [3, 9, 20, -101, -101, 15, 7]",
+      "output": "[[9], [3, 15], [20], [7]]",
+      "expectedOutput": "[[9], [3, 15], [20], [7]]",
+      "explanation": "9 is column -1; 3 (root) and 15 are column 0 (15 is 20's left child, so column 1-1=0); 20 is column 1; 7 is column 2"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, 4, 5, 6, 7]",
+      "output": "[[4], [2], [1, 5, 6], [3], [7]]",
+      "expectedOutput": "[[4], [2], [1, 5, 6], [3], [7]]",
+      "explanation": "columns range from -2 (node 4) to 2 (node 7); 1, 5, and 6 all land in column 0, and since 1 is on an earlier level it's listed first, then 5 and 6 in left-to-right encounter order"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, -101, 4]",
+      "output": "[[2], [1, 4], [3]]",
+      "expectedOutput": "[[2], [1, 4], [3]]",
+      "explanation": "2 is column -1; 1 (root) and 4 are column 0 (4 is 2's right child, so column -1+1=0); 3 is column 1"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [3, 9, 20, -101, -101, 15, 7]",
+      "output": "[[9], [3, 15], [20], [7]]",
+      "expectedOutput": "[[9], [3, 15], [20], [7]]",
+      "explanation": "9 is column -1; 3 (root) and 15 are column 0 (15 is 20's left child, so column 1-1=0); 20 is column 1; 7 is column 2"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, 4, 5, 6, 7]",
+      "output": "[[4], [2], [1, 5, 6], [3], [7]]",
+      "expectedOutput": "[[4], [2], [1, 5, 6], [3], [7]]",
+      "explanation": "columns range from -2 (node 4) to 2 (node 7); 1, 5, and 6 all land in column 0, and since 1 is on an earlier level it's listed first, then 5 and 6 in left-to-right encounter order"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, -101, 4]",
+      "output": "[[2], [1, 4], [3]]",
+      "expectedOutput": "[[2], [1, 4], [3]]",
+      "explanation": "2 is column -1; 1 (root) and 4 are column 0 (4 is 2's right child, so column -1+1=0); 3 is column 1"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[3,9,20,-101,-101,15,7]]",
+      "output": "[[9],[3,15],[20],[7]]",
+      "expectedOutput": "[[9],[3,15],[20],[7]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3,4,5,6,7]]",
+      "output": "[[4],[2],[1,5,6],[3],[7]]",
+      "expectedOutput": "[[4],[2],[1,5,6],[3],[7]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3,-101,4]]",
+      "output": "[[2],[1,4],[3]]",
+      "expectedOutput": "[[2],[1,4],[3]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1]]",
+      "output": "[[1]]",
+      "expectedOutput": "[[1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[42]]",
+      "output": "[[42]]",
+      "expectedOutput": "[[42]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[-17]]",
+      "output": "[[-17]]",
+      "expectedOutput": "[[-17]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[0]]",
+      "output": "[[0]]",
+      "expectedOutput": "[[0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[10,11,-101,12,-101,-101,-101,13,-101,-101,-101,-101,-101,-101,-101,14]]",
+      "output": "[[14],[13],[12],[11],[10]]",
+      "expectedOutput": "[[14],[13],[12],[11],[10]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-5,-101,-4,-101,-101,-101,-3,-101,-101,-101,-101,-101,-101,-101,-2,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,0]]",
+      "output": "[[-5],[-4],[-3],[-2],[-1],[0]]",
+      "expectedOutput": "[[-5],[-4],[-3],[-2],[-1],[0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,-101,3,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,6,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,8]]",
+      "output": "[[8],[7],[6],[5],[4],[3],[2],[1]]",
+      "expectedOutput": "[[8],[7],[6],[5],[4],[3],[2],[1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5,6,7]]",
+      "output": "[[4],[2],[1,5,6],[3],[7]]",
+      "expectedOutput": "[[4],[2],[1,5,6],[3],[7]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+      "output": "[[8],[4],[2,9,10,12],[1,5,6],[3,11,13,14],[7],[15]]",
+      "expectedOutput": "[[8],[4],[2,9,10,12],[1,5,6],[3,11,13,14],[7],[15]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[-22,27,20,-24,-101,-101,19,-6,2,-101,-101,-101,-101,-101,29,16,28,26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,17,5,-101,-101,-5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-11,-20]]",
+      "output": "[[-11],[17],[16,-20],[-6,5,-5],[-24,28,26],[27,2],[-22],[20],[19],[29]]",
+      "expectedOutput": "[[-11],[17],[16,-20],[-6,5,-5],[-24,28,26],[27,2],[-22],[20],[19],[29]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-66,-37,-101,12,75,-101,-101,-79,62,13,33,-101,-101,-101,-101,-101,-101,-101,-24,-20,-57,-101,28,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-18,-32,-72,10,-101,-101,-101,-101,77,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-69,-101,47,36]]",
+      "output": "[[-69],[-79,-72],[12,-20,47],[-37,62,13,-18,10],[-66,75,-24,-57,36],[33,-32,77],[28]]",
+      "expectedOutput": "[[-69],[-79,-72],[12,-20,47],[-37,62,13,-18,10],[-66,75,-24,-57,36],[33,-32,77],[28]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-40,20,21,-32,40,33,5,-101,9,-84,-62,66,64,-101,-101,-101,-101,-14,-91,-101,-66,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,47,52,-101,-101,-101,-101,74,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-44,-101,-101,-101,-101,-101,-101,-101,-101,-101,46,46,66,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,72]]",
+      "output": "[[47],[-32,-14,-44,46],[20,9,-84,66,52,74,72],[-40,40,33,-91,-66,46,66],[21,-62,64,4],[5,-4]]",
+      "expectedOutput": "[[47],[-32,-14,-44,46],[20,9,-84,66,52,74,72],[-40,40,33,-91,-66,46,66],[21,-62,64,4],[5,-4]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[-40,22,-94,60,95,46,29,-101,91,40,-56,97,-101,68,10,-101,-101,-101,12,-34,-91,-101,-9,-101,-101,-101,-101,-101,-85,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-75,65,-101,-101,-101,-101,-98,-100,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,40,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-29,-101,-7,12,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-94,-101,-101,-101,-101,67,39]]",
+      "output": "[[-94],[-29],[-75],[60,-34,-7],[22,91,40,97,65,67,39],[-40,95,46,12,-91,12],[-94,-56,68,-98],[29,-9,-85,-26],[10,-100,40]]",
+      "expectedOutput": "[[-94],[-29],[-75],[60,-34,-7],[22,91,40,97,65,67,39],[-40,95,46,12,-91,12],[-94,-56,68,-98],[29,-9,-85,-26],[10,-100,40]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[9,-7,10,10,-5,-1,2,3,-101,-5,-101,2,0,-8,1,-1,-101,-101,-101,-101,-9,-101,-101,-101,6,-101,-101,3,-101,-101,-101,-8]]",
+      "output": "[[-8],[-1],[3],[10],[-7,-5,2],[9,-5,-1,-9,6,3],[10,0,-8],[2],[1]]",
+      "expectedOutput": "[[-8],[-1],[3],[10],[-7,-5,2],[9,-5,-1,-9,6,3],[10,0,-8],[2],[1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,-101,5,-101,7,-101,-101,-101,-101,-101,-101,-101,15]]",
+      "output": "[[2],[1,5],[3],[7],[15]]",
+      "expectedOutput": "[[2],[1,5],[3],[7],[15]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2]]",
+      "output": "[[2],[1]]",
+      "expectedOutput": "[[2],[1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,-101,3]]",
+      "output": "[[1],[3]]",
+      "expectedOutput": "[[1],[3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[-1,-2,-3,-4,-5,-6,-7]]",
+      "output": "[[-4],[-2],[-1,-5,-6],[-3],[-7]]",
+      "expectedOutput": "[[-4],[-2],[-1,-5,-6],[-3],[-7]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[[0,0,0,0,0,0,0]]",
+      "output": "[[0],[0],[0,0,0],[0],[0]]",
+      "expectedOutput": "[[0],[0],[0,0,0],[0],[0]]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [3, 9, 20, -101, -101, 15, 7]",
+        "output": "[[9], [3, 15], [20], [7]]",
+        "expectedOutput": "[[9], [3, 15], [20], [7]]",
+        "explanation": "9 is column -1; 3 (root) and 15 are column 0 (15 is 20's left child, so column 1-1=0); 20 is column 1; 7 is column 2"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, 4, 5, 6, 7]",
+        "output": "[[4], [2], [1, 5, 6], [3], [7]]",
+        "expectedOutput": "[[4], [2], [1, 5, 6], [3], [7]]",
+        "explanation": "columns range from -2 (node 4) to 2 (node 7); 1, 5, and 6 all land in column 0, and since 1 is on an earlier level it's listed first, then 5 and 6 in left-to-right encounter order"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, -101, 4]",
+        "output": "[[2], [1, 4], [3]]",
+        "expectedOutput": "[[2], [1, 4], [3]]",
+        "explanation": "2 is column -1; 1 (root) and 4 are column 0 (4 is 2's right child, so column -1+1=0); 3 is column 1"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[3,9,20,-101,-101,15,7]]",
+        "output": "[[9],[3,15],[20],[7]]",
+        "expectedOutput": "[[9],[3,15],[20],[7]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "[[4],[2],[1,5,6],[3],[7]]",
+        "expectedOutput": "[[4],[2],[1,5,6],[3],[7]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,-101,4]]",
+        "output": "[[2],[1,4],[3]]",
+        "expectedOutput": "[[2],[1,4],[3]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "[[1]]",
+        "expectedOutput": "[[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[42]]",
+        "output": "[[42]]",
+        "expectedOutput": "[[42]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-17]]",
+        "output": "[[-17]]",
+        "expectedOutput": "[[-17]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0]]",
+        "output": "[[0]]",
+        "expectedOutput": "[[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[10,11,-101,12,-101,-101,-101,13,-101,-101,-101,-101,-101,-101,-101,14]]",
+        "output": "[[14],[13],[12],[11],[10]]",
+        "expectedOutput": "[[14],[13],[12],[11],[10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-5,-101,-4,-101,-101,-101,-3,-101,-101,-101,-101,-101,-101,-101,-2,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,0]]",
+        "output": "[[-5],[-4],[-3],[-2],[-1],[0]]",
+        "expectedOutput": "[[-5],[-4],[-3],[-2],[-1],[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,-101,3,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,6,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,8]]",
+        "output": "[[8],[7],[6],[5],[4],[3],[2],[1]]",
+        "expectedOutput": "[[8],[7],[6],[5],[4],[3],[2],[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "[[4],[2],[1,5,6],[3],[7]]",
+        "expectedOutput": "[[4],[2],[1,5,6],[3],[7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "[[8],[4],[2,9,10,12],[1,5,6],[3,11,13,14],[7],[15]]",
+        "expectedOutput": "[[8],[4],[2,9,10,12],[1,5,6],[3,11,13,14],[7],[15]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-22,27,20,-24,-101,-101,19,-6,2,-101,-101,-101,-101,-101,29,16,28,26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,17,5,-101,-101,-5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-11,-20]]",
+        "output": "[[-11],[17],[16,-20],[-6,5,-5],[-24,28,26],[27,2],[-22],[20],[19],[29]]",
+        "expectedOutput": "[[-11],[17],[16,-20],[-6,5,-5],[-24,28,26],[27,2],[-22],[20],[19],[29]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-66,-37,-101,12,75,-101,-101,-79,62,13,33,-101,-101,-101,-101,-101,-101,-101,-24,-20,-57,-101,28,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-18,-32,-72,10,-101,-101,-101,-101,77,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-69,-101,47,36]]",
+        "output": "[[-69],[-79,-72],[12,-20,47],[-37,62,13,-18,10],[-66,75,-24,-57,36],[33,-32,77],[28]]",
+        "expectedOutput": "[[-69],[-79,-72],[12,-20,47],[-37,62,13,-18,10],[-66,75,-24,-57,36],[33,-32,77],[28]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-40,20,21,-32,40,33,5,-101,9,-84,-62,66,64,-101,-101,-101,-101,-14,-91,-101,-66,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,47,52,-101,-101,-101,-101,74,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-44,-101,-101,-101,-101,-101,-101,-101,-101,-101,46,46,66,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,72]]",
+        "output": "[[47],[-32,-14,-44,46],[20,9,-84,66,52,74,72],[-40,40,33,-91,-66,46,66],[21,-62,64,4],[5,-4]]",
+        "expectedOutput": "[[47],[-32,-14,-44,46],[20,9,-84,66,52,74,72],[-40,40,33,-91,-66,46,66],[21,-62,64,4],[5,-4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-40,22,-94,60,95,46,29,-101,91,40,-56,97,-101,68,10,-101,-101,-101,12,-34,-91,-101,-9,-101,-101,-101,-101,-101,-85,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-75,65,-101,-101,-101,-101,-98,-100,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,40,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-29,-101,-7,12,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-94,-101,-101,-101,-101,67,39]]",
+        "output": "[[-94],[-29],[-75],[60,-34,-7],[22,91,40,97,65,67,39],[-40,95,46,12,-91,12],[-94,-56,68,-98],[29,-9,-85,-26],[10,-100,40]]",
+        "expectedOutput": "[[-94],[-29],[-75],[60,-34,-7],[22,91,40,97,65,67,39],[-40,95,46,12,-91,12],[-94,-56,68,-98],[29,-9,-85,-26],[10,-100,40]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[9,-7,10,10,-5,-1,2,3,-101,-5,-101,2,0,-8,1,-1,-101,-101,-101,-101,-9,-101,-101,-101,6,-101,-101,3,-101,-101,-101,-8]]",
+        "output": "[[-8],[-1],[3],[10],[-7,-5,2],[9,-5,-1,-9,6,3],[10,0,-8],[2],[1]]",
+        "expectedOutput": "[[-8],[-1],[3],[10],[-7,-5,2],[9,-5,-1,-9,6,3],[10,0,-8],[2],[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,-101,5,-101,7,-101,-101,-101,-101,-101,-101,-101,15]]",
+        "output": "[[2],[1,5],[3],[7],[15]]",
+        "expectedOutput": "[[2],[1,5],[3],[7],[15]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2]]",
+        "output": "[[2],[1]]",
+        "expectedOutput": "[[2],[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,-101,3]]",
+        "output": "[[1],[3]]",
+        "expectedOutput": "[[1],[3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[-1,-2,-3,-4,-5,-6,-7]]",
+        "output": "[[-4],[-2],[-1,-5,-6],[-3],[-7]]",
+        "expectedOutput": "[[-4],[-2],[-1,-5,-6],[-3],[-7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[0,0,0,0,0,0,0]]",
+        "output": "[[0],[0],[0,0,0],[0],[0]]",
+        "expectedOutput": "[[0],[0],[0,0,0],[0],[0]]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def verticalOrder(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> verticalOrder(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] verticalOrder(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun verticalOrder(tree: IntArray): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    verticalOrder(tree) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def verticalOrder(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> verticalOrder(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] verticalOrder(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun verticalOrder(tree: IntArray): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    verticalOrder(tree) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def verticalOrder(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> verticalOrder(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] verticalOrder(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun verticalOrder(tree: IntArray): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    verticalOrder(tree) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def verticalOrder(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> verticalOrder(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] verticalOrder(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun verticalOrder(tree: IntArray): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    verticalOrder(tree) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log n) for sorting the columns at the end (O(n) if column range is small enough to bucket directly)",
+      "space": "O(n)",
+      "pattern": "BFS with a queue, carrying each node's column alongside it so nodes are naturally visited in level order and left-to-right order within a level"
+    },
+    "bruteForce": {
+      "approach": "recursive DFS carrying (column, depth) for every node, collecting (column, depth, encounter-order, value) tuples, then sorting all of them by column, then depth, then encounter order, and finally grouping by column",
+      "time": "O(n log n)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "BFS with a queue, carrying each node's column alongside it so nodes are naturally visited in level order and left-to-right order within a level",
+    "time": "O(n log n) for sorting the columns at the end (O(n) if column range is small enough to bucket directly)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "BFS already visits nodes level by level and left to right within a level - if you also track each node's column as you enqueue it, does that give you the tie-breaking order for free?",
+      "push (index, column) pairs onto the queue, starting with (root index, 0); when enqueuing a left child use column-1, and column+1 for a right child",
+      "as you pop nodes off the queue (which happens in level order, left to right), append each value to a map keyed by column - the map's per-key lists come out already correctly ordered",
+      "once BFS finishes, sort the map's keys (columns) numerically and read off the lists in that order to build the final result"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursive DFS carrying (column, depth) for every node, collecting (column, depth, encounter-order, value) tuples, then sorting all of them by column, then depth, then encounter order, and finally grouping by column",
+    "time": "O(n log n)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

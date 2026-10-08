@@ -1,0 +1,693 @@
+{
+  "id": "circular-array-loop",
+  "questionId": "circular-array-loop",
+  "slug": "circular-array-loop",
+  "title": "Circular Array Loop",
+  "difficulty": "Medium",
+  "category": "Fast slow pointers",
+  "patterns": [
+    "fast & slow pointers",
+    "cycle detection",
+    "array"
+  ],
+  "lists": [],
+  "hints": [
+    "this is really the same shape as detecting a cycle in a linked list, except the 'next pointer' from index i is computed as (i + nums[i]) mod n - but not every walk is a valid cycle here, so what extra condition do you need to check at each step?",
+    "define a next-index function that respects wraparound (careful with negative mod), and enforce that every step from a given starting index moves in the same direction as the first step - stop that attempt immediately if the direction would flip",
+    "for each starting index, run fast (two next-steps) and slow (one next-step) pointers, both bound by the same direction rule; if they meet at a point that isn't a self-loop (i.e. next(index) != index), you've found a valid cycle",
+    "to avoid quadratic blowup, mark every index visited during a failed attempt (direction break or self-loop) as a dead end so future starting points skip over them entirely"
+  ],
+  "commonMistakes": [
+    "forgetting to handle negative mod correctly when wrapping the index around circularly",
+    "not rejecting single-index self-loops (where next(i) == i)",
+    "not detecting a direction change partway through a candidate cycle, incorrectly reporting a loop that isn't monotonic in direction"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of nonzero integers `nums`, treated as circular (the index after the last one wraps to 0, and the index before 0 wraps to the last one). From index `i`, the value `nums[i]` tells you how many steps to move: forward if positive, backward if negative.\n\n**Determine whether there exists a cycle in the array where every move along the cycle goes in the same direction (all forward or all backward), and the cycle visits more than one distinct index.**\n\nA single index that maps back to itself does not count as a cycle.\n",
+    "constraints": [
+      "1 <= nums.length <= 5000",
+      "-1000 <= nums[i] <= 1000",
+      "nums[i] != 0"
+    ],
+    "notes": [
+      "a self-loop (a single index whose move brings it back to itself), which does not count",
+      "a cycle that changes direction partway through, which does not count",
+      "multiple disjoint candidate cycles in the same array"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [2, -1, 1, 2, 2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "starting at index 0: 0 -> 2 -> 3 -> 0, all moves forward, cycle length 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-1, 2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "index 1 forms a self-loop (moving 2 steps forward from index 1 lands back on index 1), which does not count, and starting from index 0 only leads into that same self-loop"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [-2, 1, 1, 1, 1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "starting at 0 you go backward to index 3, but from 3 you'd move forward, which is a direction change, so no valid cycle exists through index 0"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[2,-1,1,2,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-1,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[-2,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1,1,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,-1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,2,-1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[3,1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-2,-3,-1,-5,-4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,-1,5,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[4,3,1,1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[100,100,100,100,100,-100,-100,-100]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,-1,1,2,2,-1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,-1,-2,-3,-4,-5,-6,-7,-8,-9,-10]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-3,-3,-3,-3,-3,-3,-3,-3,-3,-3]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,1,-1,-2,-3,4,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[5,4,3,2,1,-1,-2,-3,-4,-5,6,7,8,9,10,-6,-7,-8,-9,-10]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1000,-1000,500,-500,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[2,2,2,2,2,2,2,2,2,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[[-2,-2,-2,-2,-2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [2, -1, 1, 2, 2]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "starting at index 0: 0 -> 2 -> 3 -> 0, all moves forward, cycle length 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-1, 2]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "index 1 forms a self-loop (moving 2 steps forward from index 1 lands back on index 1), which does not count, and starting from index 0 only leads into that same self-loop"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [-2, 1, 1, 1, 1]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "starting at 0 you go backward to index 3, but from 3 you'd move forward, which is a direction change, so no valid cycle exists through index 0"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [2, -1, 1, 2, 2]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "starting at index 0: 0 -> 2 -> 3 -> 0, all moves forward, cycle length 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-1, 2]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "index 1 forms a self-loop (moving 2 steps forward from index 1 lands back on index 1), which does not count, and starting from index 0 only leads into that same self-loop"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [-2, 1, 1, 1, 1]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "starting at 0 you go backward to index 3, but from 3 you'd move forward, which is a direction change, so no valid cycle exists through index 0"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[2,-1,1,2,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[-1,2]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[-2,1,1,1,1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,1,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,1,1,1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[-1,-1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[2,2,-1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[3,1,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[-2,-3,-1,-5,-4]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,-1,5,1,1,1,1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[4,3,1,1,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[100,100,100,100,100,-100,-100,-100]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[2,-1,1,2,2,-1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,-1,-2,-3,-4,-5,-6,-7,-8,-9,-10]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[-3,-3,-3,-3,-3,-3,-3,-3,-3,-3]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[2,1,-1,-2,-3,4,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[5,4,3,2,1,-1,-2,-3,-4,-5,6,7,8,9,10,-6,-7,-8,-9,-10]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[1000,-1000,500,-500,1,1,1,1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[[2,2,2,2,2,2,2,2,2,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_23",
+      "input": "[[-2,-2,-2,-2,-2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [2, -1, 1, 2, 2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "starting at index 0: 0 -> 2 -> 3 -> 0, all moves forward, cycle length 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-1, 2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "index 1 forms a self-loop (moving 2 steps forward from index 1 lands back on index 1), which does not count, and starting from index 0 only leads into that same self-loop"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [-2, 1, 1, 1, 1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "starting at 0 you go backward to index 3, but from 3 you'd move forward, which is a direction change, so no valid cycle exists through index 0"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[2,-1,1,2,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-1,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[-2,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1,1,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,-1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,2,-1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[3,1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-2,-3,-1,-5,-4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,-1,5,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[4,3,1,1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[100,100,100,100,100,-100,-100,-100]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,-1,1,2,2,-1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,-1,-2,-3,-4,-5,-6,-7,-8,-9,-10]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-3,-3,-3,-3,-3,-3,-3,-3,-3,-3]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,1,-1,-2,-3,4,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[5,4,3,2,1,-1,-2,-3,-4,-5,6,7,8,9,10,-6,-7,-8,-9,-10]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1000,-1000,500,-500,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[2,2,2,2,2,2,2,2,2,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[[-2,-2,-2,-2,-2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def circularArrayLoop(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool circularArrayLoop(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean circularArrayLoop(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun circularArrayLoop(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    circularArrayLoop(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def circularArrayLoop(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool circularArrayLoop(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean circularArrayLoop(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun circularArrayLoop(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    circularArrayLoop(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def circularArrayLoop(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool circularArrayLoop(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean circularArrayLoop(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun circularArrayLoop(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    circularArrayLoop(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def circularArrayLoop(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool circularArrayLoop(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean circularArrayLoop(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun circularArrayLoop(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    circularArrayLoop(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n) amortized, since each index is finalized (visited) at most a constant number of times",
+      "space": "O(1) extra besides the visited marks (which can reuse the input array or O(n) if separate)",
+      "pattern": "fast & slow pointers (Floyd's cycle detection) run from each unvisited starting index, restricted to moves of consistent direction, with global visited marking to avoid rework"
+    },
+    "bruteForce": {
+      "approach": "from every starting index, simulate the walk, marking visited indices for that attempt, and check whether you return to the start with a consistent direction and cycle length > 1, resetting between attempts",
+      "time": "O(n^2) in the worst case",
+      "space": "O(n) for tracking visited indices per attempt"
+    }
+  },
+  "optimal": {
+    "pattern": "fast & slow pointers (Floyd's cycle detection) run from each unvisited starting index, restricted to moves of consistent direction, with global visited marking to avoid rework",
+    "time": "O(n) amortized, since each index is finalized (visited) at most a constant number of times",
+    "space": "O(1) extra besides the visited marks (which can reuse the input array or O(n) if separate)",
+    "hint_ladder": [
+      "this is really the same shape as detecting a cycle in a linked list, except the 'next pointer' from index i is computed as (i + nums[i]) mod n - but not every walk is a valid cycle here, so what extra condition do you need to check at each step?",
+      "define a next-index function that respects wraparound (careful with negative mod), and enforce that every step from a given starting index moves in the same direction as the first step - stop that attempt immediately if the direction would flip",
+      "for each starting index, run fast (two next-steps) and slow (one next-step) pointers, both bound by the same direction rule; if they meet at a point that isn't a self-loop (i.e. next(index) != index), you've found a valid cycle",
+      "to avoid quadratic blowup, mark every index visited during a failed attempt (direction break or self-loop) as a dead end so future starting points skip over them entirely"
+    ]
+  },
+  "bruteForce": {
+    "approach": "from every starting index, simulate the walk, marking visited indices for that attempt, and check whether you return to the start with a consistent direction and cycle length > 1, resetting between attempts",
+    "time": "O(n^2) in the worst case",
+    "space": "O(n) for tracking visited indices per attempt"
+  },
+  "isIndex0": true,
+  "level": null
+}

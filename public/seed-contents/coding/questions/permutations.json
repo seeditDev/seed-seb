@@ -1,0 +1,653 @@
+{
+  "id": "permutations",
+  "questionId": "permutations",
+  "slug": "permutations",
+  "title": "Permutations",
+  "difficulty": "Medium",
+  "category": "Backtracking",
+  "patterns": [
+    "backtracking"
+  ],
+  "lists": [
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "a permutation is built one position at a time - at each position, which values are still available to place there?",
+    "keep a boolean 'used' array (or remove/add from a working list) so you never place the same element twice in one permutation",
+    "when the current partial permutation reaches length n, format it as a comma-joined string and record it - then undo (mark unused) and try the next candidate",
+    "since the grading is order-independent of generation order, don't worry about producing them in any particular sequence while backtracking - just collect every formatted string, then sort all of them lexicographically and join with | at the very end"
+  ],
+  "commonMistakes": [
+    "forgetting to sort the collected permutation strings lexicographically before joining, so output order depends on backtracking traversal order and fails the deterministic grader",
+    "not restoring the 'used' marker (or not removing the element from the current path) after a recursive branch returns, which corrupts later branches",
+    "joining with a delimiter other than the exact ',' within a permutation and '|' between permutations, or leaving a trailing separator",
+    "sorting the permutation strings numerically instead of lexicographically as strings, which gives the wrong order for cases with negative numbers or multi-digit values"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of distinct integers, `nums`.\n\n**Generate every possible ordering (permutation) of the list.**\n\nBecause the grader needs one deterministic answer, encode your result as\na single string instead of a list of lists: format each permutation as\nits values joined by commas (e.g. \"1,2,3\"), join all the permutation\nstrings together with \"|\", and sort the permutation strings\nlexicographically (as plain strings, not by numeric value) before\njoining them, regardless of the order your backtracking happens to\ngenerate them in.\n\nWorked example: for `nums` = [1, 2, 3], the six permutations are\n[1,2,3], [1,3,2], [2,1,3], [2,3,1], [3,1,2], [3,2,1]. Formatted as\ncomma-joined strings they are \"1,2,3\", \"1,3,2\", \"2,1,3\", \"2,3,1\",\n\"3,1,2\", \"3,2,1\", sorted lexicographically that's already their order\nhere, so the final answer is\n\"1,2,3|1,3,2|2,1,3|2,3,1|3,1,2|3,2,1\".\n",
+    "constraints": [
+      "1 <= length of nums <= 6",
+      "all values in nums are distinct",
+      "values may be negative"
+    ],
+    "notes": [
+      "a single element (only one permutation, no separator)",
+      "two elements (smallest case with more than one ordering)",
+      "negative numbers mixed with positive ones, which affects string sort order (e.g. \"-1\" sorts before \"1\" but also before \"10\")"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3]",
+        "output": "\"1,2,3|1,3,2|2,1,3|2,3,1|3,1,2|3,2,1\"",
+        "expectedOutput": "\"1,2,3|1,3,2|2,1,3|2,3,1|3,1,2|3,2,1\"",
+        "explanation": "all 6 orderings of [1, 2, 3], joined by | in lexicographic string order"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 1]",
+        "output": "\"0,1|1,0\"",
+        "expectedOutput": "\"0,1|1,0\"",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1]",
+        "output": "\"1\"",
+        "expectedOutput": "\"1\"",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3]]",
+        "output": "1,2,3|1,3,2|2,1,3|2,3,1|3,1,2|3,2,1",
+        "expectedOutput": "1,2,3|1,3,2|2,1,3|2,3,1|3,1,2|3,2,1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,1]]",
+        "output": "0,1|1,0",
+        "expectedOutput": "0,1|1,0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2]]",
+        "output": "1,2|2,1",
+        "expectedOutput": "1,2|2,1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[3,1]]",
+        "output": "1,3|3,1",
+        "expectedOutput": "1,3|3,1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-1,1]]",
+        "output": "-1,1|1,-1",
+        "expectedOutput": "-1,1|1,-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,1]]",
+        "output": "1,2|2,1",
+        "expectedOutput": "1,2|2,1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,4,3]]",
+        "output": "3,4,5|3,5,4|4,3,5|4,5,3|5,3,4|5,4,3",
+        "expectedOutput": "3,4,5|3,5,4|4,3,5|4,5,3|5,3,4|5,4,3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,-1]]",
+        "output": "-1,0|0,-1",
+        "expectedOutput": "-1,0|0,-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[10,2]]",
+        "output": "10,2|2,10",
+        "expectedOutput": "10,2|2,10",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4]]",
+        "output": "1,2,3,4|1,2,4,3|1,3,2,4|1,3,4,2|1,4,2,3|1,4,3,2|2,1,3,4|2,1,4,3|2,3,1,4|2,3,4,1|2,4,1,3|2,4,3,1|3,1,2,4|3,1,4,2|3,2,1,4|3,2,4,1|3,4,1,2|3,4,2,1|4,1,2,3|4,1,3,2|4,2,1,3|4,2,3,1|4,3,1,2|4,3,2,1",
+        "expectedOutput": "1,2,3,4|1,2,4,3|1,3,2,4|1,3,4,2|1,4,2,3|1,4,3,2|2,1,3,4|2,1,4,3|2,3,1,4|2,3,4,1|2,4,1,3|2,4,3,1|3,1,2,4|3,1,4,2|3,2,1,4|3,2,4,1|3,4,1,2|3,4,2,1|4,1,2,3|4,1,3,2|4,2,1,3|4,2,3,1|4,3,1,2|4,3,2,1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-2,-1,0]]",
+        "output": "-1,-2,0|-1,0,-2|-2,-1,0|-2,0,-1|0,-1,-2|0,-2,-1",
+        "expectedOutput": "-1,-2,0|-1,0,-2|-2,-1,0|-2,0,-1|0,-1,-2|0,-2,-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[7,8]]",
+        "output": "7,8|8,7",
+        "expectedOutput": "7,8|8,7",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-5]]",
+        "output": "-5",
+        "expectedOutput": "-5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[9,1,5]]",
+        "output": "1,5,9|1,9,5|5,1,9|5,9,1|9,1,5|9,5,1",
+        "expectedOutput": "1,5,9|1,9,5|5,1,9|5,9,1|9,1,5|9,5,1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,0]]",
+        "output": "0,2|2,0",
+        "expectedOutput": "0,2|2,0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[100,20]]",
+        "output": "100,20|20,100",
+        "expectedOutput": "100,20|20,100",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[4,3,2,1]]",
+        "output": "1,2,3,4|1,2,4,3|1,3,2,4|1,3,4,2|1,4,2,3|1,4,3,2|2,1,3,4|2,1,4,3|2,3,1,4|2,3,4,1|2,4,1,3|2,4,3,1|3,1,2,4|3,1,4,2|3,2,1,4|3,2,4,1|3,4,1,2|3,4,2,1|4,1,2,3|4,1,3,2|4,2,1,3|4,2,3,1|4,3,1,2|4,3,2,1",
+        "expectedOutput": "1,2,3,4|1,2,4,3|1,3,2,4|1,3,4,2|1,4,2,3|1,4,3,2|2,1,3,4|2,1,4,3|2,3,1,4|2,3,4,1|2,4,1,3|2,4,3,1|3,1,2,4|3,1,4,2|3,2,1,4|3,2,4,1|3,4,1,2|3,4,2,1|4,1,2,3|4,1,3,2|4,2,1,3|4,2,3,1|4,3,1,2|4,3,2,1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[6,-3]]",
+        "output": "-3,6|6,-3",
+        "expectedOutput": "-3,6|6,-3",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,-1,0]]",
+        "output": "-1,0,1|-1,1,0|0,-1,1|0,1,-1|1,-1,0|1,0,-1",
+        "expectedOutput": "-1,0,1|-1,1,0|0,-1,1|0,1,-1|1,-1,0|1,0,-1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3]",
+      "output": "\"1,2,3|1,3,2|2,1,3|2,3,1|3,1,2|3,2,1\"",
+      "expectedOutput": "\"1,2,3|1,3,2|2,1,3|2,3,1|3,1,2|3,2,1\"",
+      "explanation": "all 6 orderings of [1, 2, 3], joined by | in lexicographic string order"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 1]",
+      "output": "\"0,1|1,0\"",
+      "expectedOutput": "\"0,1|1,0\"",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1]",
+      "output": "\"1\"",
+      "expectedOutput": "\"1\"",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3]",
+      "output": "\"1,2,3|1,3,2|2,1,3|2,3,1|3,1,2|3,2,1\"",
+      "expectedOutput": "\"1,2,3|1,3,2|2,1,3|2,3,1|3,1,2|3,2,1\"",
+      "explanation": "all 6 orderings of [1, 2, 3], joined by | in lexicographic string order"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 1]",
+      "output": "\"0,1|1,0\"",
+      "expectedOutput": "\"0,1|1,0\"",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1]",
+      "output": "\"1\"",
+      "expectedOutput": "\"1\"",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3]]",
+      "output": "1,2,3|1,3,2|2,1,3|2,3,1|3,1,2|3,2,1",
+      "expectedOutput": "1,2,3|1,3,2|2,1,3|2,3,1|3,1,2|3,2,1",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0,1]]",
+      "output": "0,1|1,0",
+      "expectedOutput": "0,1|1,0",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2]]",
+      "output": "1,2|2,1",
+      "expectedOutput": "1,2|2,1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[3,1]]",
+      "output": "1,3|3,1",
+      "expectedOutput": "1,3|3,1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[-1,1]]",
+      "output": "-1,1|1,-1",
+      "expectedOutput": "-1,1|1,-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[2,1]]",
+      "output": "1,2|2,1",
+      "expectedOutput": "1,2|2,1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[5,4,3]]",
+      "output": "3,4,5|3,5,4|4,3,5|4,5,3|5,3,4|5,4,3",
+      "expectedOutput": "3,4,5|3,5,4|4,3,5|4,5,3|5,3,4|5,4,3",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[0,-1]]",
+      "output": "-1,0|0,-1",
+      "expectedOutput": "-1,0|0,-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[10,2]]",
+      "output": "10,2|2,10",
+      "expectedOutput": "10,2|2,10",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4]]",
+      "output": "1,2,3,4|1,2,4,3|1,3,2,4|1,3,4,2|1,4,2,3|1,4,3,2|2,1,3,4|2,1,4,3|2,3,1,4|2,3,4,1|2,4,1,3|2,4,3,1|3,1,2,4|3,1,4,2|3,2,1,4|3,2,4,1|3,4,1,2|3,4,2,1|4,1,2,3|4,1,3,2|4,2,1,3|4,2,3,1|4,3,1,2|4,3,2,1",
+      "expectedOutput": "1,2,3,4|1,2,4,3|1,3,2,4|1,3,4,2|1,4,2,3|1,4,3,2|2,1,3,4|2,1,4,3|2,3,1,4|2,3,4,1|2,4,1,3|2,4,3,1|3,1,2,4|3,1,4,2|3,2,1,4|3,2,4,1|3,4,1,2|3,4,2,1|4,1,2,3|4,1,3,2|4,2,1,3|4,2,3,1|4,3,1,2|4,3,2,1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[-2,-1,0]]",
+      "output": "-1,-2,0|-1,0,-2|-2,-1,0|-2,0,-1|0,-1,-2|0,-2,-1",
+      "expectedOutput": "-1,-2,0|-1,0,-2|-2,-1,0|-2,0,-1|0,-1,-2|0,-2,-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[7,8]]",
+      "output": "7,8|8,7",
+      "expectedOutput": "7,8|8,7",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-5]]",
+      "output": "-5",
+      "expectedOutput": "-5",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[9,1,5]]",
+      "output": "1,5,9|1,9,5|5,1,9|5,9,1|9,1,5|9,5,1",
+      "expectedOutput": "1,5,9|1,9,5|5,1,9|5,9,1|9,1,5|9,5,1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[2,0]]",
+      "output": "0,2|2,0",
+      "expectedOutput": "0,2|2,0",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[100,20]]",
+      "output": "100,20|20,100",
+      "expectedOutput": "100,20|20,100",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[4,3,2,1]]",
+      "output": "1,2,3,4|1,2,4,3|1,3,2,4|1,3,4,2|1,4,2,3|1,4,3,2|2,1,3,4|2,1,4,3|2,3,1,4|2,3,4,1|2,4,1,3|2,4,3,1|3,1,2,4|3,1,4,2|3,2,1,4|3,2,4,1|3,4,1,2|3,4,2,1|4,1,2,3|4,1,3,2|4,2,1,3|4,2,3,1|4,3,1,2|4,3,2,1",
+      "expectedOutput": "1,2,3,4|1,2,4,3|1,3,2,4|1,3,4,2|1,4,2,3|1,4,3,2|2,1,3,4|2,1,4,3|2,3,1,4|2,3,4,1|2,4,1,3|2,4,3,1|3,1,2,4|3,1,4,2|3,2,1,4|3,2,4,1|3,4,1,2|3,4,2,1|4,1,2,3|4,1,3,2|4,2,1,3|4,2,3,1|4,3,1,2|4,3,2,1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[6,-3]]",
+      "output": "-3,6|6,-3",
+      "expectedOutput": "-3,6|6,-3",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[1,-1,0]]",
+      "output": "-1,0,1|-1,1,0|0,-1,1|0,1,-1|1,-1,0|1,0,-1",
+      "expectedOutput": "-1,0,1|-1,1,0|0,-1,1|0,1,-1|1,-1,0|1,0,-1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3]",
+        "output": "\"1,2,3|1,3,2|2,1,3|2,3,1|3,1,2|3,2,1\"",
+        "expectedOutput": "\"1,2,3|1,3,2|2,1,3|2,3,1|3,1,2|3,2,1\"",
+        "explanation": "all 6 orderings of [1, 2, 3], joined by | in lexicographic string order"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 1]",
+        "output": "\"0,1|1,0\"",
+        "expectedOutput": "\"0,1|1,0\"",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1]",
+        "output": "\"1\"",
+        "expectedOutput": "\"1\"",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3]]",
+        "output": "1,2,3|1,3,2|2,1,3|2,3,1|3,1,2|3,2,1",
+        "expectedOutput": "1,2,3|1,3,2|2,1,3|2,3,1|3,1,2|3,2,1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,1]]",
+        "output": "0,1|1,0",
+        "expectedOutput": "0,1|1,0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2]]",
+        "output": "1,2|2,1",
+        "expectedOutput": "1,2|2,1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[3,1]]",
+        "output": "1,3|3,1",
+        "expectedOutput": "1,3|3,1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-1,1]]",
+        "output": "-1,1|1,-1",
+        "expectedOutput": "-1,1|1,-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,1]]",
+        "output": "1,2|2,1",
+        "expectedOutput": "1,2|2,1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,4,3]]",
+        "output": "3,4,5|3,5,4|4,3,5|4,5,3|5,3,4|5,4,3",
+        "expectedOutput": "3,4,5|3,5,4|4,3,5|4,5,3|5,3,4|5,4,3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,-1]]",
+        "output": "-1,0|0,-1",
+        "expectedOutput": "-1,0|0,-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[10,2]]",
+        "output": "10,2|2,10",
+        "expectedOutput": "10,2|2,10",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4]]",
+        "output": "1,2,3,4|1,2,4,3|1,3,2,4|1,3,4,2|1,4,2,3|1,4,3,2|2,1,3,4|2,1,4,3|2,3,1,4|2,3,4,1|2,4,1,3|2,4,3,1|3,1,2,4|3,1,4,2|3,2,1,4|3,2,4,1|3,4,1,2|3,4,2,1|4,1,2,3|4,1,3,2|4,2,1,3|4,2,3,1|4,3,1,2|4,3,2,1",
+        "expectedOutput": "1,2,3,4|1,2,4,3|1,3,2,4|1,3,4,2|1,4,2,3|1,4,3,2|2,1,3,4|2,1,4,3|2,3,1,4|2,3,4,1|2,4,1,3|2,4,3,1|3,1,2,4|3,1,4,2|3,2,1,4|3,2,4,1|3,4,1,2|3,4,2,1|4,1,2,3|4,1,3,2|4,2,1,3|4,2,3,1|4,3,1,2|4,3,2,1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-2,-1,0]]",
+        "output": "-1,-2,0|-1,0,-2|-2,-1,0|-2,0,-1|0,-1,-2|0,-2,-1",
+        "expectedOutput": "-1,-2,0|-1,0,-2|-2,-1,0|-2,0,-1|0,-1,-2|0,-2,-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[7,8]]",
+        "output": "7,8|8,7",
+        "expectedOutput": "7,8|8,7",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-5]]",
+        "output": "-5",
+        "expectedOutput": "-5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[9,1,5]]",
+        "output": "1,5,9|1,9,5|5,1,9|5,9,1|9,1,5|9,5,1",
+        "expectedOutput": "1,5,9|1,9,5|5,1,9|5,9,1|9,1,5|9,5,1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,0]]",
+        "output": "0,2|2,0",
+        "expectedOutput": "0,2|2,0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[100,20]]",
+        "output": "100,20|20,100",
+        "expectedOutput": "100,20|20,100",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[4,3,2,1]]",
+        "output": "1,2,3,4|1,2,4,3|1,3,2,4|1,3,4,2|1,4,2,3|1,4,3,2|2,1,3,4|2,1,4,3|2,3,1,4|2,3,4,1|2,4,1,3|2,4,3,1|3,1,2,4|3,1,4,2|3,2,1,4|3,2,4,1|3,4,1,2|3,4,2,1|4,1,2,3|4,1,3,2|4,2,1,3|4,2,3,1|4,3,1,2|4,3,2,1",
+        "expectedOutput": "1,2,3,4|1,2,4,3|1,3,2,4|1,3,4,2|1,4,2,3|1,4,3,2|2,1,3,4|2,1,4,3|2,3,1,4|2,3,4,1|2,4,1,3|2,4,3,1|3,1,2,4|3,1,4,2|3,2,1,4|3,2,4,1|3,4,1,2|3,4,2,1|4,1,2,3|4,1,3,2|4,2,1,3|4,2,3,1|4,3,1,2|4,3,2,1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[6,-3]]",
+        "output": "-3,6|6,-3",
+        "expectedOutput": "-3,6|6,-3",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,-1,0]]",
+        "output": "-1,0,1|-1,1,0|0,-1,1|0,1,-1|1,-1,0|1,0,-1",
+        "expectedOutput": "-1,0,1|-1,1,0|0,-1,1|0,1,-1|1,-1,0|1,0,-1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def permute(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    string permute(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String permute(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun permute(nums: IntArray): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    permute(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def permute(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    string permute(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String permute(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun permute(nums: IntArray): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    permute(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def permute(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    string permute(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String permute(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun permute(nums: IntArray): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    permute(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def permute(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    string permute(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String permute(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun permute(nums: IntArray): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    permute(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n! * n)",
+      "space": "O(n) recursion depth and used-array, excluding output",
+      "pattern": "backtracking with a 'used' marker per element, building one permutation at a time"
+    },
+    "bruteForce": {
+      "approach": "recursively swap each remaining position into the front slot (classic swap-based permutation generation), collect every full-length arrangement, then format, sort the strings, and join",
+      "time": "O(n! * n)",
+      "space": "O(n! * n) for storing every permutation before formatting"
+    }
+  },
+  "optimal": {
+    "pattern": "backtracking with a 'used' marker per element, building one permutation at a time",
+    "time": "O(n! * n)",
+    "space": "O(n) recursion depth and used-array, excluding output",
+    "hint_ladder": [
+      "a permutation is built one position at a time - at each position, which values are still available to place there?",
+      "keep a boolean 'used' array (or remove/add from a working list) so you never place the same element twice in one permutation",
+      "when the current partial permutation reaches length n, format it as a comma-joined string and record it - then undo (mark unused) and try the next candidate",
+      "since the grading is order-independent of generation order, don't worry about producing them in any particular sequence while backtracking - just collect every formatted string, then sort all of them lexicographically and join with | at the very end"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively swap each remaining position into the front slot (classic swap-based permutation generation), collect every full-length arrangement, then format, sort the strings, and join",
+    "time": "O(n! * n)",
+    "space": "O(n! * n) for storing every permutation before formatting"
+  },
+  "isIndex0": true,
+  "level": null
+}

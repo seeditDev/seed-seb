@@ -1,0 +1,597 @@
+{
+  "id": "min-cost-climbing-stairs",
+  "questionId": "min-cost-climbing-stairs",
+  "slug": "min-cost-climbing-stairs",
+  "title": "Min Cost Climbing Stairs",
+  "difficulty": "Medium",
+  "category": "Dp 1d",
+  "patterns": [
+    "dynamic programming",
+    "fibonacci"
+  ],
+  "lists": [],
+  "hints": [
+    "define reach(i) as the cheapest cost to arrive standing on stair i - what are reach(0) and reach(1)?",
+    "to arrive at stair i you came from either stair i-1 or stair i-2, paying that stair's cost - which recurrence does that give you?",
+    "the answer isn't reach at the last stair - it's reach at the position one and two stairs past the last one, whichever is cheaper",
+    "you only need the previous two reach values at any point, so roll them forward instead of storing a full array"
+  ],
+  "commonMistakes": [
+    "confusing 'the cost to reach stair i' with 'the cost to leave stair i', which flips the recurrence",
+    "forgetting the top is one step past the last index, and stopping the recurrence at the last cost value",
+    "assuming you must start at stair 0, when starting at stair 1 for free is also allowed"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of `cost`, where `cost[i]` is the price you pay to\nstep on stair `i`. From stair `i` you may move to stair `i+1` or stair\n`i+2`, and you may begin your climb standing on stair 0 or stair 1 for\nfree, finishing once you've stepped past the last stair.\n\n**Return the minimum total cost to finish the climb.**\n",
+    "constraints": [
+      "cost.length >= 2",
+      "you may start on stair 0 or stair 1 for free",
+      "the top is one step past the last stair (index cost.length)"
+    ],
+    "notes": [
+      "all costs are 0 (answer is 0)",
+      "cost.length == 2 (only two choices for where to start)",
+      "costs alternate cheap and expensive, forcing a zig-zag choice"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "cost = [10, 15, 20]",
+        "output": "15",
+        "expectedOutput": "15",
+        "explanation": "start at stair 1 (free), pay 15, then jump two stairs past the top"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "cost = [1, 100, 1, 1, 1, 100, 1, 1, 100, 1]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "start at stair 0 and always take the cheap steps: 1+1+1+1+1+1 = 6"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[10,15,20]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,100,1,1,1,100,1,1,100,1]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[0,0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[5,10]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[10,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,1,2,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[10,15,20,25,30]]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[100,1,1,100,1,1,100,1,1,100]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,0,1,1,0,0,1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]]",
+        "output": "35",
+        "expectedOutput": "35",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[2,4,6,8,10,12,14,16,18,20]]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,100,1,100,1,100,1,100,1,100,1,100,1,100,1,100,1,100,1,100]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[9,8,7,6,5,4,3,2,1,0]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,2,1,4,5,6,7,8,9,0]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "cost = [10, 15, 20]",
+      "output": "15",
+      "expectedOutput": "15",
+      "explanation": "start at stair 1 (free), pay 15, then jump two stairs past the top"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "cost = [1, 100, 1, 1, 1, 100, 1, 1, 100, 1]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "start at stair 0 and always take the cheap steps: 1+1+1+1+1+1 = 6"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "cost = [10, 15, 20]",
+      "output": "15",
+      "expectedOutput": "15",
+      "explanation": "start at stair 1 (free), pay 15, then jump two stairs past the top"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "cost = [1, 100, 1, 1, 1, 100, 1, 1, 100, 1]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "start at stair 0 and always take the cheap steps: 1+1+1+1+1+1 = 6"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[10,15,20]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,100,1,1,1,100,1,1,100,1]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[0,0,0,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[0,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[5,10]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[10,5]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[0,1,2,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3,4,5]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[10,15,20,25,30]]",
+      "output": "40",
+      "expectedOutput": "40",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[100,1,1,100,1,1,100,1,1,100]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[0,0,1,1,0,0,1,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]]",
+      "output": "35",
+      "expectedOutput": "35",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[2,4,6,8,10,12,14,16,18,20]]",
+      "output": "50",
+      "expectedOutput": "50",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,100,1,100,1,100,1,100,1,100,1,100,1,100,1,100,1,100,1,100]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[9,8,7,6,5,4,3,2,1,0]]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[3,2,1,4,5,6,7,8,9,0]]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "cost = [10, 15, 20]",
+        "output": "15",
+        "expectedOutput": "15",
+        "explanation": "start at stair 1 (free), pay 15, then jump two stairs past the top"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "cost = [1, 100, 1, 1, 1, 100, 1, 1, 100, 1]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "start at stair 0 and always take the cheap steps: 1+1+1+1+1+1 = 6"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[10,15,20]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,100,1,1,1,100,1,1,100,1]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[0,0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[5,10]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[10,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,1,2,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[10,15,20,25,30]]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[100,1,1,100,1,1,100,1,1,100]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,0,1,1,0,0,1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]]",
+        "output": "35",
+        "expectedOutput": "35",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[2,4,6,8,10,12,14,16,18,20]]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,100,1,100,1,100,1,100,1,100,1,100,1,100,1,100,1,100,1,100]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[9,8,7,6,5,4,3,2,1,0]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,2,1,4,5,6,7,8,9,0]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minCostClimbingStairs(self, cost):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minCostClimbingStairs(vector<int>& cost) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minCostClimbingStairs(int[] cost) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minCostClimbingStairs(cost: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minCostClimbingStairs(cost) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minCostClimbingStairs(self, cost):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minCostClimbingStairs(vector<int>& cost) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minCostClimbingStairs(int[] cost) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minCostClimbingStairs(cost: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minCostClimbingStairs(cost) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minCostClimbingStairs(self, cost):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minCostClimbingStairs(vector<int>& cost) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minCostClimbingStairs(int[] cost) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minCostClimbingStairs(cost: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minCostClimbingStairs(cost) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minCostClimbingStairs(self, cost):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minCostClimbingStairs(vector<int>& cost) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minCostClimbingStairs(int[] cost) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minCostClimbingStairs(cost: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minCostClimbingStairs(cost) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) if only the last two values are kept, O(n) if a full array is memoized",
+      "pattern": "dynamic programming - let reach(i) be the minimum cost to arrive at stair i (before paying cost[i])"
+    },
+    "bruteForce": {
+      "approach": "recursively try both a 1-step and a 2-step move from every reachable stair, taking the cheaper total to reach the top",
+      "time": "O(2^n) - exponential, recomputes the same subproblems repeatedly",
+      "space": "O(n) recursion stack"
+    }
+  },
+  "optimal": {
+    "pattern": "dynamic programming - let reach(i) be the minimum cost to arrive at stair i (before paying cost[i])",
+    "time": "O(n)",
+    "space": "O(1) if only the last two values are kept, O(n) if a full array is memoized",
+    "hint_ladder": [
+      "define reach(i) as the cheapest cost to arrive standing on stair i - what are reach(0) and reach(1)?",
+      "to arrive at stair i you came from either stair i-1 or stair i-2, paying that stair's cost - which recurrence does that give you?",
+      "the answer isn't reach at the last stair - it's reach at the position one and two stairs past the last one, whichever is cheaper",
+      "you only need the previous two reach values at any point, so roll them forward instead of storing a full array"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try both a 1-step and a 2-step move from every reachable stair, taking the cheaper total to reach the top",
+    "time": "O(2^n) - exponential, recomputes the same subproblems repeatedly",
+    "space": "O(n) recursion stack"
+  },
+  "isIndex0": true,
+  "level": null
+}

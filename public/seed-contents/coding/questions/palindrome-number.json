@@ -1,0 +1,675 @@
+{
+  "id": "palindrome-number",
+  "questionId": "palindrome-number",
+  "slug": "palindrome-number",
+  "title": "Palindrome Number",
+  "difficulty": "Easy",
+  "category": "Two pointers",
+  "patterns": [
+    "two pointers",
+    "math"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "negative numbers can be rejected immediately - can they ever be palindromes?",
+    "you don't need to convert to a string at all; you can peel off digits with x % 10 and x / 10, the same way you'd reverse a whole number",
+    "you don't need to reverse the entire number either - stop once the reversed portion is >= what's left of the original, that's the halfway point",
+    "watch for numbers ending in 0 (other than 0 itself) - can a palindrome ever have a trailing zero digit that isn't also a leading zero?",
+    "at the halfway point, compare the remaining original value to the reversed-so-far value; for odd digit counts, divide the reversed half by 10 first to drop its extra middle digit"
+  ],
+  "commonMistakes": [
+    "forgetting that all negative numbers are automatically not palindromes",
+    "not handling numbers ending in a non-zero-preceded 0, like 10, 100, 1000 (these can never be palindromes since a leading zero isn't allowed in the original)",
+    "reversing the entire number and risking overflow in fixed-width integer languages, when reversing only half avoids that",
+    "off-by-one when splitting an odd-length number in half, forgetting to drop the extra middle digit from the reversed portion before comparing"
+  ],
+  "content": {
+    "problemStatement": "You're given an integer `x`.\n\n**Return true if `x` reads the same forward and backward as a base-10 number, and false otherwise.**\n\nAny negative number is never a palindrome, since its written form always starts with a minus sign that has no matching character at the end.\n",
+    "constraints": [
+      "-2^31 <= x <= 2^31 - 1"
+    ],
+    "notes": [
+      "x is negative (always false)",
+      "x is 0 (a single digit, trivially a palindrome)",
+      "x is a single digit, non-zero (trivially a palindrome)",
+      "x ends in 0 but isn't 0 itself, e.g. 10 or 100 (never a palindrome, since a palindrome can't have a leading zero)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "x = 121",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "121 reversed is still 121"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "x = -121",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "reversed it would read 121-, which isn't how numbers are written; the leading minus breaks the symmetry"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "x = 10",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "reversed, 10 becomes 01, which is just 1 - not equal to 10"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[121]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[-121]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[10]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[11]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[12321]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[123321]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[100]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[-1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[7]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[22]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[1000021]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[909]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[88]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[1221]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[123]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[5]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[-101]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[1000000001]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[2147447412]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[1001]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "x = 121",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "121 reversed is still 121"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "x = -121",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "reversed it would read 121-, which isn't how numbers are written; the leading minus breaks the symmetry"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "x = 10",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "reversed, 10 becomes 01, which is just 1 - not equal to 10"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "x = 121",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "121 reversed is still 121"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "x = -121",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "reversed it would read 121-, which isn't how numbers are written; the leading minus breaks the symmetry"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "x = 10",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "reversed, 10 becomes 01, which is just 1 - not equal to 10"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[121]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[-121]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[10]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[0]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[11]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[12321]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[123321]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[100]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[-1]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[7]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[22]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[1000021]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[909]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[88]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[1221]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[123]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[5]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[-101]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[1000000001]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[2147447412]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[1001]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "x = 121",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "121 reversed is still 121"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "x = -121",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "reversed it would read 121-, which isn't how numbers are written; the leading minus breaks the symmetry"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "x = 10",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "reversed, 10 becomes 01, which is just 1 - not equal to 10"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[121]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[-121]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[10]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[11]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[12321]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[123321]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[100]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[-1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[7]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[22]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[1000021]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[909]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[88]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[1221]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[123]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[5]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[-101]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[1000000001]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[2147447412]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[1001]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def isPalindrome(self, x):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isPalindrome(int x) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isPalindrome(int x) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isPalindrome(x: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isPalindrome(x) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def isPalindrome(self, x):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isPalindrome(int x) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isPalindrome(int x) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isPalindrome(x: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isPalindrome(x) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def isPalindrome(self, x):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isPalindrome(int x) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isPalindrome(int x) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isPalindrome(x: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isPalindrome(x) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def isPalindrome(self, x):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isPalindrome(int x) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isPalindrome(int x) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isPalindrome(x: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isPalindrome(x) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(d) where d is the number of digits, since you process roughly half of them",
+      "space": "O(1)",
+      "pattern": "reverse the second half of the number using pure arithmetic (no string conversion), then compare the two halves"
+    },
+    "bruteForce": {
+      "approach": "convert x to a string, then compare it against its own reverse (or walk two pointers from both ends of the string inward)",
+      "time": "O(d) where d is the number of digits",
+      "space": "O(d) for the string representation"
+    }
+  },
+  "optimal": {
+    "pattern": "reverse the second half of the number using pure arithmetic (no string conversion), then compare the two halves",
+    "time": "O(d) where d is the number of digits, since you process roughly half of them",
+    "space": "O(1)",
+    "hint_ladder": [
+      "negative numbers can be rejected immediately - can they ever be palindromes?",
+      "you don't need to convert to a string at all; you can peel off digits with x % 10 and x / 10, the same way you'd reverse a whole number",
+      "you don't need to reverse the entire number either - stop once the reversed portion is >= what's left of the original, that's the halfway point",
+      "watch for numbers ending in 0 (other than 0 itself) - can a palindrome ever have a trailing zero digit that isn't also a leading zero?",
+      "at the halfway point, compare the remaining original value to the reversed-so-far value; for odd digit counts, divide the reversed half by 10 first to drop its extra middle digit"
+    ]
+  },
+  "bruteForce": {
+    "approach": "convert x to a string, then compare it against its own reverse (or walk two pointers from both ends of the string inward)",
+    "time": "O(d) where d is the number of digits",
+    "space": "O(d) for the string representation"
+  },
+  "isIndex0": true,
+  "level": null
+}

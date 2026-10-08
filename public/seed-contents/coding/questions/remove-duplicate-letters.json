@@ -1,0 +1,630 @@
+{
+  "id": "remove-duplicate-letters",
+  "questionId": "remove-duplicate-letters",
+  "slug": "remove-duplicate-letters",
+  "title": "Remove Duplicate Letters",
+  "difficulty": "Medium",
+  "category": "Monotonic stack",
+  "patterns": [
+    "monotonic stack",
+    "greedy",
+    "string"
+  ],
+  "lists": [],
+  "hints": [
+    "precompute the last index at which every letter appears in s. why is that useful? it tells you whether, if you skip a letter now, you'll ever get another chance to include it",
+    "walk through s, building a stack of chosen letters, and also track which letters are currently on the stack so you don't add duplicates",
+    "before pushing a new letter, while the top of the stack is a letter that is bigger than the new one AND that top letter still occurs again later in s (check its last-seen index against your current position), pop it - removing it now, and re-adding it later, only makes the result smaller",
+    "if the current letter is already on the stack, skip it entirely (don't push a duplicate); otherwise push it and mark it as currently included"
+  ],
+  "commonMistakes": [
+    "popping a letter from the stack even though it never reappears later in the string, permanently losing that letter",
+    "forgetting to skip a letter that's already present in the stack, which would add a duplicate",
+    "comparing letters directly without first checking whether the top of the stack still has a later occurrence to fall back on"
+  ],
+  "content": {
+    "problemStatement": "You're given a string `s` of lowercase letters.\n\n**Build a result string that contains each distinct letter of `s` exactly once, choosing the lexicographically smallest such string.**\n\nThe result must be obtainable from `s` by only deleting characters (never reordering them), so the relative order of the letters you keep must match their relative order in `s`.\n",
+    "constraints": [
+      "s consists only of lowercase English letters",
+      "1 <= s.length",
+      "the result must be a valid subsequence of s (order-preserving deletion only)"
+    ],
+    "notes": [
+      "a letter's only remaining occurrence is 'blocked' by needing to keep an earlier, larger letter that never reappears",
+      "all characters in s are the same letter repeated",
+      "s already has each letter appearing exactly once"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"bcabc\"",
+        "output": "\"abc\"",
+        "expectedOutput": "\"abc\"",
+        "explanation": "the distinct letters are a, b, c; the smallest valid order obtainable by deletion alone is abc"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"cbacdcbc\"",
+        "output": "\"acdb\"",
+        "expectedOutput": "\"acdb\"",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"abcd\"",
+        "output": "\"abcd\"",
+        "expectedOutput": "\"abcd\"",
+        "explanation": "every letter already appears exactly once, in already-sorted order"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"bcabc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"cbacdcbc\"]",
+        "output": "acdb",
+        "expectedOutput": "acdb",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"abcd\"]",
+        "output": "abcd",
+        "expectedOutput": "abcd",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"bbcaac\"]",
+        "output": "bac",
+        "expectedOutput": "bac",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aa\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aaaaaaaa\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"edcba\"]",
+        "output": "edcba",
+        "expectedOutput": "edcba",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abcde\"]",
+        "output": "abcde",
+        "expectedOutput": "abcde",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"ecbacba\"]",
+        "output": "eacb",
+        "expectedOutput": "eacb",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"cdadabcc\"]",
+        "output": "adbc",
+        "expectedOutput": "adbc",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abacb\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"xyzabcxyzabc\"]",
+        "output": "abcxyz",
+        "expectedOutput": "abcxyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"thequickbrownfoxjumpsoverthelazydog\"]",
+        "output": "eqickbownfxjumpsvrthlazydg",
+        "expectedOutput": "eqickbownfxjumpsvrthlazydg",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"z\"]",
+        "output": "z",
+        "expectedOutput": "z",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"ba\"]",
+        "output": "ba",
+        "expectedOutput": "ba",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abcabcabc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"zyxzyxzyx\"]",
+        "output": "xyz",
+        "expectedOutput": "xyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"bcabcabcabcabcabcabc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"aaabbbcccdddeee\"]",
+        "output": "abcde",
+        "expectedOutput": "abcde",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"bcabc\"",
+      "output": "\"abc\"",
+      "expectedOutput": "\"abc\"",
+      "explanation": "the distinct letters are a, b, c; the smallest valid order obtainable by deletion alone is abc"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"cbacdcbc\"",
+      "output": "\"acdb\"",
+      "expectedOutput": "\"acdb\"",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"abcd\"",
+      "output": "\"abcd\"",
+      "expectedOutput": "\"abcd\"",
+      "explanation": "every letter already appears exactly once, in already-sorted order"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"bcabc\"",
+      "output": "\"abc\"",
+      "expectedOutput": "\"abc\"",
+      "explanation": "the distinct letters are a, b, c; the smallest valid order obtainable by deletion alone is abc"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"cbacdcbc\"",
+      "output": "\"acdb\"",
+      "expectedOutput": "\"acdb\"",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"abcd\"",
+      "output": "\"abcd\"",
+      "expectedOutput": "\"abcd\"",
+      "explanation": "every letter already appears exactly once, in already-sorted order"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"bcabc\"]",
+      "output": "abc",
+      "expectedOutput": "abc",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"cbacdcbc\"]",
+      "output": "acdb",
+      "expectedOutput": "acdb",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"abcd\"]",
+      "output": "abcd",
+      "expectedOutput": "abcd",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"bbcaac\"]",
+      "output": "bac",
+      "expectedOutput": "bac",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"a\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"aa\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"aaaaaaaa\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"edcba\"]",
+      "output": "edcba",
+      "expectedOutput": "edcba",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"abcde\"]",
+      "output": "abcde",
+      "expectedOutput": "abcde",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"ecbacba\"]",
+      "output": "eacb",
+      "expectedOutput": "eacb",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"cdadabcc\"]",
+      "output": "adbc",
+      "expectedOutput": "adbc",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"abacb\"]",
+      "output": "abc",
+      "expectedOutput": "abc",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"xyzabcxyzabc\"]",
+      "output": "abcxyz",
+      "expectedOutput": "abcxyz",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"thequickbrownfoxjumpsoverthelazydog\"]",
+      "output": "eqickbownfxjumpsvrthlazydg",
+      "expectedOutput": "eqickbownfxjumpsvrthlazydg",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"z\"]",
+      "output": "z",
+      "expectedOutput": "z",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"ba\"]",
+      "output": "ba",
+      "expectedOutput": "ba",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"abcabcabc\"]",
+      "output": "abc",
+      "expectedOutput": "abc",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"zyxzyxzyx\"]",
+      "output": "xyz",
+      "expectedOutput": "xyz",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"bcabcabcabcabcabcabc\"]",
+      "output": "abc",
+      "expectedOutput": "abc",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"aaabbbcccdddeee\"]",
+      "output": "abcde",
+      "expectedOutput": "abcde",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"bcabc\"",
+        "output": "\"abc\"",
+        "expectedOutput": "\"abc\"",
+        "explanation": "the distinct letters are a, b, c; the smallest valid order obtainable by deletion alone is abc"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"cbacdcbc\"",
+        "output": "\"acdb\"",
+        "expectedOutput": "\"acdb\"",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"abcd\"",
+        "output": "\"abcd\"",
+        "expectedOutput": "\"abcd\"",
+        "explanation": "every letter already appears exactly once, in already-sorted order"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"bcabc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"cbacdcbc\"]",
+        "output": "acdb",
+        "expectedOutput": "acdb",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"abcd\"]",
+        "output": "abcd",
+        "expectedOutput": "abcd",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"bbcaac\"]",
+        "output": "bac",
+        "expectedOutput": "bac",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aa\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aaaaaaaa\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"edcba\"]",
+        "output": "edcba",
+        "expectedOutput": "edcba",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abcde\"]",
+        "output": "abcde",
+        "expectedOutput": "abcde",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"ecbacba\"]",
+        "output": "eacb",
+        "expectedOutput": "eacb",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"cdadabcc\"]",
+        "output": "adbc",
+        "expectedOutput": "adbc",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abacb\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"xyzabcxyzabc\"]",
+        "output": "abcxyz",
+        "expectedOutput": "abcxyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"thequickbrownfoxjumpsoverthelazydog\"]",
+        "output": "eqickbownfxjumpsvrthlazydg",
+        "expectedOutput": "eqickbownfxjumpsvrthlazydg",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"z\"]",
+        "output": "z",
+        "expectedOutput": "z",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"ba\"]",
+        "output": "ba",
+        "expectedOutput": "ba",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abcabcabc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"zyxzyxzyx\"]",
+        "output": "xyz",
+        "expectedOutput": "xyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"bcabcabcabcabcabcabc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"aaabbbcccdddeee\"]",
+        "output": "abcde",
+        "expectedOutput": "abcde",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def removeDuplicateLetters(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string removeDuplicateLetters(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String removeDuplicateLetters(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeDuplicateLetters(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeDuplicateLetters(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def removeDuplicateLetters(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string removeDuplicateLetters(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String removeDuplicateLetters(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeDuplicateLetters(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeDuplicateLetters(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def removeDuplicateLetters(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string removeDuplicateLetters(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String removeDuplicateLetters(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeDuplicateLetters(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeDuplicateLetters(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def removeDuplicateLetters(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string removeDuplicateLetters(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String removeDuplicateLetters(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeDuplicateLetters(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeDuplicateLetters(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra beyond the stack, since at most 26 letters can be on it",
+      "pattern": "monotonic increasing stack, greedily popping a larger letter if it still reappears later and a smaller letter has just arrived"
+    },
+    "bruteForce": {
+      "approach": "try every possible ordering of the distinct letters that is a valid subsequence of s, and keep the lexicographically smallest one",
+      "time": "exponential in the number of distinct letters",
+      "space": "exponential"
+    }
+  },
+  "optimal": {
+    "pattern": "monotonic increasing stack, greedily popping a larger letter if it still reappears later and a smaller letter has just arrived",
+    "time": "O(n)",
+    "space": "O(1) extra beyond the stack, since at most 26 letters can be on it",
+    "hint_ladder": [
+      "precompute the last index at which every letter appears in s. why is that useful? it tells you whether, if you skip a letter now, you'll ever get another chance to include it",
+      "walk through s, building a stack of chosen letters, and also track which letters are currently on the stack so you don't add duplicates",
+      "before pushing a new letter, while the top of the stack is a letter that is bigger than the new one AND that top letter still occurs again later in s (check its last-seen index against your current position), pop it - removing it now, and re-adding it later, only makes the result smaller",
+      "if the current letter is already on the stack, skip it entirely (don't push a duplicate); otherwise push it and mark it as currently included"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every possible ordering of the distinct letters that is a valid subsequence of s, and keep the lexicographically smallest one",
+    "time": "exponential in the number of distinct letters",
+    "space": "exponential"
+  },
+  "isIndex0": true,
+  "level": null
+}

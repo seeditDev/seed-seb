@@ -1,0 +1,630 @@
+{
+  "id": "most-stones-removed-same-row-column",
+  "questionId": "most-stones-removed-same-row-column",
+  "slug": "most-stones-removed-same-row-column",
+  "title": "Most Stones Removed with Same Row or Column",
+  "difficulty": "Medium",
+  "category": "Union find",
+  "patterns": [
+    "union find",
+    "connected components"
+  ],
+  "lists": [],
+  "hints": [
+    "within a connected group of stones, you can always remove all but one - so the answer is total stones minus number of connected groups",
+    "you don't need to compare every pair of stones directly - union each stone with a shared 'row bucket' and 'column bucket' node instead",
+    "encode row x as one union-find id and column y as a different union-find id (for example, offset column ids so they never collide with row ids), then union each stone's row id with its column id",
+    "count the number of distinct roots among only the stone nodes at the end, then subtract from stones.length"
+  ],
+  "commonMistakes": [
+    "comparing every pair of stones directly (O(n^2) unions) instead of using shared row/column ids as bridge nodes",
+    "letting row and column ids collide because they weren't offset into separate ranges",
+    "counting the row/column bridge nodes themselves as if they were stone components"
+  ],
+  "content": {
+    "problemStatement": "You're given the positions of stones on an infinite 2D plane, where each stone is a pair `[x, y]`. No two stones share the same position. You may remove a stone if it shares a row or a column with some other stone that is still on the board.\n\n**Return the maximum number of stones you can remove.**\n",
+    "constraints": [
+      "1 <= stones.length <= 1000",
+      "0 <= x, y <= 10000",
+      "no two stones share the same [x, y] position"
+    ],
+    "notes": [
+      "a single stone (nothing to remove)",
+      "every stone isolated - no two share a row or column",
+      "all stones share one common row or column",
+      "stones connected only through a chain, not directly to each other"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "stones = [[0,0],[0,1],[1,0],[1,2],[2,1],[2,2]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "every stone is connected to some other stone through a chain of shared rows/columns, so all but one can be removed"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "stones = [[0,0],[0,2],[1,1],[2,0],[2,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "four stones form one connected group (leave 1 behind), and the middle stone is alone (leave it too), so 5 - 2 = 3 are removable"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "stones = [[0,0],[1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "the two stones share no row or column, so neither can ever be removed"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,0],[0,1],[1,0],[1,2],[2,1],[2,2]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0,0],[0,2],[1,1],[2,0],[2,2]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[0,0],[1,1]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[0,0],[0,1],[1,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[0,0],[1,1],[2,2],[3,3]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0,0],[0,1],[0,2],[0,3]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[0,0],[1,0],[2,0],[2,1],[2,2]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[4,4],[2,4],[3,4],[0,0],[6,1],[1,1],[5,4],[6,4],[0,6],[4,5],[2,6],[1,6],[3,2],[3,5],[5,2]]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[5,1],[5,7],[10,0],[10,6],[2,8],[7,1],[7,10],[6,8],[3,0],[4,5],[5,6],[5,9],[9,1],[10,2],[0,1],[0,7],[7,0],[8,4],[8,1],[8,7],[8,10],[2,9],[7,2],[6,3],[7,8]]]",
+        "output": "23",
+        "expectedOutput": "23",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[4,0],[4,3],[3,7],[5,4],[5,7],[0,5],[2,2],[1,0],[1,6],[6,2],[7,1],[7,7],[6,5],[3,0],[3,6],[0,7],[0,4],[2,7],[7,0],[7,6],[4,7],[3,5],[4,4],[5,5],[0,3],[1,4],[1,7],[2,6],[7,2],[6,6]]]",
+        "output": "29",
+        "expectedOutput": "29",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,0],[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7],[8,8],[9,9]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[0,0],[1,0],[2,0],[3,0],[4,0],[5,0],[6,0],[7,0],[8,0],[9,0]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,0],[0,5],[5,0],[5,5],[2,2]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[2,2],[2,5],[6,14],[4,2],[3,9],[14,12],[5,12],[11,7],[2,1],[0,10],[15,7],[6,7],[3,5],[9,3],[9,9],[0,6],[15,0],[15,6],[2,6],[2,15]]]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,1],[1,2],[2,1],[3,3],[3,4],[4,3]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0,0],[1,1],[2,2],[3,3],[4,4],[5,5],[0,5],[5,0]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[4,0],[5,1],[17,3],[17,12],[10,6],[9,14],[10,3],[1,0],[9,11],[13,2],[13,5],[9,20],[11,20],[18,1],[6,5],[2,20],[13,20],[7,10],[18,13],[20,10],[20,16],[3,0],[14,12],[9,1],[9,7],[5,12],[8,5],[1,11],[13,10],[15,1],[7,3],[15,10],[20,18],[14,5],[17,1],[5,5],[9,0],[12,20],[1,1],[14,20],[10,1],[19,16],[9,15],[2,3],[13,9],[1,7],[15,3],[6,0],[6,6],[15,15]]]",
+        "output": "49",
+        "expectedOutput": "49",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,0],[1,1],[0,1],[1,0],[2,2]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "stones = [[0,0],[0,1],[1,0],[1,2],[2,1],[2,2]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "every stone is connected to some other stone through a chain of shared rows/columns, so all but one can be removed"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "stones = [[0,0],[0,2],[1,1],[2,0],[2,2]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "four stones form one connected group (leave 1 behind), and the middle stone is alone (leave it too), so 5 - 2 = 3 are removable"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "stones = [[0,0],[1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "the two stones share no row or column, so neither can ever be removed"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "stones = [[0,0],[0,1],[1,0],[1,2],[2,1],[2,2]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "every stone is connected to some other stone through a chain of shared rows/columns, so all but one can be removed"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "stones = [[0,0],[0,2],[1,1],[2,0],[2,2]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "four stones form one connected group (leave 1 behind), and the middle stone is alone (leave it too), so 5 - 2 = 3 are removable"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "stones = [[0,0],[1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "the two stones share no row or column, so neither can ever be removed"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[0,0],[0,1],[1,0],[1,2],[2,1],[2,2]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[0,0],[0,2],[1,1],[2,0],[2,2]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[0,0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[0,0],[1,1]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[0,0],[0,1],[1,1]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[0,0],[1,1],[2,2],[3,3]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[0,0],[0,1],[0,2],[0,3]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[0,0],[1,0],[2,0],[2,1],[2,2]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[4,4],[2,4],[3,4],[0,0],[6,1],[1,1],[5,4],[6,4],[0,6],[4,5],[2,6],[1,6],[3,2],[3,5],[5,2]]]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[5,1],[5,7],[10,0],[10,6],[2,8],[7,1],[7,10],[6,8],[3,0],[4,5],[5,6],[5,9],[9,1],[10,2],[0,1],[0,7],[7,0],[8,4],[8,1],[8,7],[8,10],[2,9],[7,2],[6,3],[7,8]]]",
+      "output": "23",
+      "expectedOutput": "23",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[4,0],[4,3],[3,7],[5,4],[5,7],[0,5],[2,2],[1,0],[1,6],[6,2],[7,1],[7,7],[6,5],[3,0],[3,6],[0,7],[0,4],[2,7],[7,0],[7,6],[4,7],[3,5],[4,4],[5,5],[0,3],[1,4],[1,7],[2,6],[7,2],[6,6]]]",
+      "output": "29",
+      "expectedOutput": "29",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[0,0],[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7],[8,8],[9,9]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[0,0],[1,0],[2,0],[3,0],[4,0],[5,0],[6,0],[7,0],[8,0],[9,0]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[0,0],[0,5],[5,0],[5,5],[2,2]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[2,2],[2,5],[6,14],[4,2],[3,9],[14,12],[5,12],[11,7],[2,1],[0,10],[15,7],[6,7],[3,5],[9,3],[9,9],[0,6],[15,0],[15,6],[2,6],[2,15]]]",
+      "output": "18",
+      "expectedOutput": "18",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,1],[1,2],[2,1],[3,3],[3,4],[4,3]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[0,0],[1,1],[2,2],[3,3],[4,4],[5,5],[0,5],[5,0]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[4,0],[5,1],[17,3],[17,12],[10,6],[9,14],[10,3],[1,0],[9,11],[13,2],[13,5],[9,20],[11,20],[18,1],[6,5],[2,20],[13,20],[7,10],[18,13],[20,10],[20,16],[3,0],[14,12],[9,1],[9,7],[5,12],[8,5],[1,11],[13,10],[15,1],[7,3],[15,10],[20,18],[14,5],[17,1],[5,5],[9,0],[12,20],[1,1],[14,20],[10,1],[19,16],[9,15],[2,3],[13,9],[1,7],[15,3],[6,0],[6,6],[15,15]]]",
+      "output": "49",
+      "expectedOutput": "49",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[0,0],[1,1],[0,1],[1,0],[2,2]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "stones = [[0,0],[0,1],[1,0],[1,2],[2,1],[2,2]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "every stone is connected to some other stone through a chain of shared rows/columns, so all but one can be removed"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "stones = [[0,0],[0,2],[1,1],[2,0],[2,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "four stones form one connected group (leave 1 behind), and the middle stone is alone (leave it too), so 5 - 2 = 3 are removable"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "stones = [[0,0],[1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "the two stones share no row or column, so neither can ever be removed"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,0],[0,1],[1,0],[1,2],[2,1],[2,2]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0,0],[0,2],[1,1],[2,0],[2,2]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[0,0],[1,1]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[0,0],[0,1],[1,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[0,0],[1,1],[2,2],[3,3]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0,0],[0,1],[0,2],[0,3]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[0,0],[1,0],[2,0],[2,1],[2,2]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[4,4],[2,4],[3,4],[0,0],[6,1],[1,1],[5,4],[6,4],[0,6],[4,5],[2,6],[1,6],[3,2],[3,5],[5,2]]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[5,1],[5,7],[10,0],[10,6],[2,8],[7,1],[7,10],[6,8],[3,0],[4,5],[5,6],[5,9],[9,1],[10,2],[0,1],[0,7],[7,0],[8,4],[8,1],[8,7],[8,10],[2,9],[7,2],[6,3],[7,8]]]",
+        "output": "23",
+        "expectedOutput": "23",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[4,0],[4,3],[3,7],[5,4],[5,7],[0,5],[2,2],[1,0],[1,6],[6,2],[7,1],[7,7],[6,5],[3,0],[3,6],[0,7],[0,4],[2,7],[7,0],[7,6],[4,7],[3,5],[4,4],[5,5],[0,3],[1,4],[1,7],[2,6],[7,2],[6,6]]]",
+        "output": "29",
+        "expectedOutput": "29",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,0],[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7],[8,8],[9,9]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[0,0],[1,0],[2,0],[3,0],[4,0],[5,0],[6,0],[7,0],[8,0],[9,0]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,0],[0,5],[5,0],[5,5],[2,2]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[2,2],[2,5],[6,14],[4,2],[3,9],[14,12],[5,12],[11,7],[2,1],[0,10],[15,7],[6,7],[3,5],[9,3],[9,9],[0,6],[15,0],[15,6],[2,6],[2,15]]]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,1],[1,2],[2,1],[3,3],[3,4],[4,3]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0,0],[1,1],[2,2],[3,3],[4,4],[5,5],[0,5],[5,0]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[4,0],[5,1],[17,3],[17,12],[10,6],[9,14],[10,3],[1,0],[9,11],[13,2],[13,5],[9,20],[11,20],[18,1],[6,5],[2,20],[13,20],[7,10],[18,13],[20,10],[20,16],[3,0],[14,12],[9,1],[9,7],[5,12],[8,5],[1,11],[13,10],[15,1],[7,3],[15,10],[20,18],[14,5],[17,1],[5,5],[9,0],[12,20],[1,1],[14,20],[10,1],[19,16],[9,15],[2,3],[13,9],[1,7],[15,3],[6,0],[6,6],[15,15]]]",
+        "output": "49",
+        "expectedOutput": "49",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,0],[1,1],[0,1],[1,0],[2,2]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def removeStones(self, stones):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int removeStones(vector<vector<int>>& stones) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int removeStones(int[][] stones) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeStones(stones: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeStones(stones) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def removeStones(self, stones):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int removeStones(vector<vector<int>>& stones) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int removeStones(int[][] stones) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeStones(stones: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeStones(stones) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def removeStones(self, stones):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int removeStones(vector<vector<int>>& stones) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int removeStones(int[][] stones) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeStones(stones: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeStones(stones) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def removeStones(self, stones):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int removeStones(vector<vector<int>>& stones) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int removeStones(int[][] stones) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeStones(stones: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeStones(stones) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n * alpha(n))",
+      "space": "O(n)",
+      "pattern": "union find, unioning by shared row/column index instead of by stone pairs"
+    },
+    "bruteForce": {
+      "approach": "build a graph where stones are nodes and an edge connects any two stones sharing a row or column, then find connected components with DFS/BFS; answer is total stones minus number of components",
+      "time": "O(n^2)",
+      "space": "O(n^2)"
+    }
+  },
+  "optimal": {
+    "pattern": "union find, unioning by shared row/column index instead of by stone pairs",
+    "time": "O(n * alpha(n))",
+    "space": "O(n)",
+    "hint_ladder": [
+      "within a connected group of stones, you can always remove all but one - so the answer is total stones minus number of connected groups",
+      "you don't need to compare every pair of stones directly - union each stone with a shared 'row bucket' and 'column bucket' node instead",
+      "encode row x as one union-find id and column y as a different union-find id (for example, offset column ids so they never collide with row ids), then union each stone's row id with its column id",
+      "count the number of distinct roots among only the stone nodes at the end, then subtract from stones.length"
+    ]
+  },
+  "bruteForce": {
+    "approach": "build a graph where stones are nodes and an edge connects any two stones sharing a row or column, then find connected components with DFS/BFS; answer is total stones minus number of components",
+    "time": "O(n^2)",
+    "space": "O(n^2)"
+  },
+  "isIndex0": true,
+  "level": null
+}

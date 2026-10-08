@@ -1,0 +1,738 @@
+{
+  "id": "path-sum",
+  "questionId": "path-sum",
+  "slug": "path-sum",
+  "title": "Path Sum",
+  "difficulty": "Easy",
+  "category": "Tree dfs",
+  "patterns": [
+    "tree",
+    "dfs",
+    "recursion"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "you don't need to build full paths - what if you tracked how much of targetSum is 'left to find' as you descend?",
+    "define hasPath(i, remaining): does some root-to-leaf path from node i sum to remaining? what's remaining at the root?",
+    "at a missing node, the answer is false. at a leaf, the answer is whether the node's value equals remaining exactly",
+    "at an internal node, recurse into whichever children exist with remaining minus the current node's value, and return true if either side finds a path"
+  ],
+  "commonMistakes": [
+    "treating a node with exactly one missing child as a leaf, and returning true if the running sum happens to match at that point",
+    "checking the sum against targetSum only at the root, or only using > 0 as an early-exit condition (which breaks with negative values)",
+    "returning true for an empty tree when targetSum happens to be 0"
+  ],
+  "content": {
+    "problemStatement": "Binary trees are encoded as flat arrays using complete-binary-tree (heap) indexing:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array's bounds **and** its value isn't the sentinel `-101`\n- `-101` means \"no node there\" - real node values always fall between -100 and 100, so -101 never collides with a genuine value\n\nFor example, `[1, 2, 3, -101, 4]` encodes this tree:\n\n```\n      1\n     / \\\n    2   3\n     \\\n      4\n```\n\nNode 2's left child is missing (sentinel) but its right child is 4.\n\nYou're also given a target sum, `targetSum`.\n\n**Determine whether there exists a path from the root down to some leaf (a node with no children) such that the values along that path add up exactly to `targetSum`.**\n\nAn empty tree never has such a path, regardless of `targetSum`.\n",
+    "constraints": [
+      "0 <= number of real nodes <= 5000",
+      "-100 <= Node.val <= 100",
+      "-1000 <= targetSum <= 10000",
+      "the sentinel value -101 marks a missing node and never appears as a real value"
+    ],
+    "notes": [
+      "empty tree ([-101]), which always returns false",
+      "single node tree, where the root itself must equal targetSum to count (it's both root and leaf)",
+      "a node with only one child - the missing side must not be treated as a valid leaf"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [5, 4, 8, 11, 2, -101, 1], targetSum = 20",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "root 5 has left child 4 and right child 8; 4 has children 11 and 2; 8 has only a right child 1. the path 5 -> 4 -> 11 sums to 20"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [5, 4, 8, 11, 2, -101, 1], targetSum = 14",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the path 5 -> 8 -> 1 sums to 14 (8's left child is missing, so its only leaf path goes through 1)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [-101], targetSum = 0",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "an empty tree has no root-to-leaf paths at all"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[5,4,8,11,2,-101,1],20]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[5,4,8,11,2,-101,1],14]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[5,4,8,11,2,-101,1],100]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[-101],0]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[47,-61,13,57,93,-69,47,57,61,-101,-101,-101,-101,-101,-101,-1],99]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[47,-61,13,57,93,-69,47,57,61,-101,-101,-101,-101,-101,-101,-1],100]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[47,-61,13,57,93,-69,47,57,61,-101,-101,-101,-101,-101,-101,-1],107]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[47,-61,13,57,93,-69,47,57,61,-101,-101,-101,-101,-101,-101,-1],9999]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[99,-53,83,-101,78,-2,-16,-101,-101,-101,-101,97,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,14,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-38,14],124]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[99,-53,83,-101,78,-2,-16,-101,-101,-101,-101,97,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,14,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-38,14],125]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[99,-53,83,-101,78,-2,-16,-101,-101,-101,-101,97,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,14,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-38,14],166]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[99,-53,83,-101,78,-2,-16,-101,-101,-101,-101,97,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,14,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-38,14],9999]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-63,96,-101,25,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],6]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-63,96,-101,25,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],7]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-63,96,-101,25,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],9999]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[27,-101,17,-101,-101,-101,-78,-101,-101,-101,-101,-101,-101,-101,-68,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-92],-198]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[27,-101,17,-101,-101,-101,-78,-101,-101,-101,-101,-101,-101,-101,-68,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-92],-197]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[27,-101,17,-101,-101,-101,-78,-101,-101,-101,-101,-101,-101,-101,-68,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-92],9999]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[87,-28,98,-91,25,-99,33,69,-19,-50,17,27,41,93,89],37]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[87,-28,98,-91,25,-99,33,69,-19,-50,17,27,41,93,89],38]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[87,-28,98,-91,25,-99,33,69,-19,-50,17,27,41,93,89],307]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[[87,-28,98,-91,25,-99,33,69,-19,-50,17,27,41,93,89],9999]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_24",
+        "input": "[[37,21,5,-41,49,-101,-101,10,-101,-101,-101,-101,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7,37],42]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_25",
+        "input": "[[37,21,5,-41,49,-101,-101,10,-101,-101,-101,-101,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7,37],63]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [5, 4, 8, 11, 2, -101, 1], targetSum = 20",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "root 5 has left child 4 and right child 8; 4 has children 11 and 2; 8 has only a right child 1. the path 5 -> 4 -> 11 sums to 20"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [5, 4, 8, 11, 2, -101, 1], targetSum = 14",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the path 5 -> 8 -> 1 sums to 14 (8's left child is missing, so its only leaf path goes through 1)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [-101], targetSum = 0",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "an empty tree has no root-to-leaf paths at all"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [5, 4, 8, 11, 2, -101, 1], targetSum = 20",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "root 5 has left child 4 and right child 8; 4 has children 11 and 2; 8 has only a right child 1. the path 5 -> 4 -> 11 sums to 20"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [5, 4, 8, 11, 2, -101, 1], targetSum = 14",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the path 5 -> 8 -> 1 sums to 14 (8's left child is missing, so its only leaf path goes through 1)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [-101], targetSum = 0",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "an empty tree has no root-to-leaf paths at all"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[5,4,8,11,2,-101,1],20]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[5,4,8,11,2,-101,1],14]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[5,4,8,11,2,-101,1],100]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[-101],0]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1],1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[47,-61,13,57,93,-69,47,57,61,-101,-101,-101,-101,-101,-101,-1],99]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[47,-61,13,57,93,-69,47,57,61,-101,-101,-101,-101,-101,-101,-1],100]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[47,-61,13,57,93,-69,47,57,61,-101,-101,-101,-101,-101,-101,-1],107]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[47,-61,13,57,93,-69,47,57,61,-101,-101,-101,-101,-101,-101,-1],9999]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[99,-53,83,-101,78,-2,-16,-101,-101,-101,-101,97,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,14,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-38,14],124]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[99,-53,83,-101,78,-2,-16,-101,-101,-101,-101,97,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,14,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-38,14],125]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[99,-53,83,-101,78,-2,-16,-101,-101,-101,-101,97,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,14,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-38,14],166]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[99,-53,83,-101,78,-2,-16,-101,-101,-101,-101,97,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,14,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-38,14],9999]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-63,96,-101,25,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],6]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-63,96,-101,25,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],7]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[-63,96,-101,25,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],9999]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[27,-101,17,-101,-101,-101,-78,-101,-101,-101,-101,-101,-101,-101,-68,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-92],-198]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[27,-101,17,-101,-101,-101,-78,-101,-101,-101,-101,-101,-101,-101,-68,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-92],-197]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[27,-101,17,-101,-101,-101,-78,-101,-101,-101,-101,-101,-101,-101,-68,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-92],9999]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[87,-28,98,-91,25,-99,33,69,-19,-50,17,27,41,93,89],37]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[87,-28,98,-91,25,-99,33,69,-19,-50,17,27,41,93,89],38]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[[87,-28,98,-91,25,-99,33,69,-19,-50,17,27,41,93,89],307]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_23",
+      "input": "[[87,-28,98,-91,25,-99,33,69,-19,-50,17,27,41,93,89],9999]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_24",
+      "input": "[[37,21,5,-41,49,-101,-101,10,-101,-101,-101,-101,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7,37],42]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_25",
+      "input": "[[37,21,5,-41,49,-101,-101,10,-101,-101,-101,-101,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7,37],63]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [5, 4, 8, 11, 2, -101, 1], targetSum = 20",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "root 5 has left child 4 and right child 8; 4 has children 11 and 2; 8 has only a right child 1. the path 5 -> 4 -> 11 sums to 20"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [5, 4, 8, 11, 2, -101, 1], targetSum = 14",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the path 5 -> 8 -> 1 sums to 14 (8's left child is missing, so its only leaf path goes through 1)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [-101], targetSum = 0",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "an empty tree has no root-to-leaf paths at all"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[5,4,8,11,2,-101,1],20]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[5,4,8,11,2,-101,1],14]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[5,4,8,11,2,-101,1],100]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[-101],0]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[47,-61,13,57,93,-69,47,57,61,-101,-101,-101,-101,-101,-101,-1],99]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[47,-61,13,57,93,-69,47,57,61,-101,-101,-101,-101,-101,-101,-1],100]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[47,-61,13,57,93,-69,47,57,61,-101,-101,-101,-101,-101,-101,-1],107]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[47,-61,13,57,93,-69,47,57,61,-101,-101,-101,-101,-101,-101,-1],9999]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[99,-53,83,-101,78,-2,-16,-101,-101,-101,-101,97,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,14,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-38,14],124]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[99,-53,83,-101,78,-2,-16,-101,-101,-101,-101,97,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,14,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-38,14],125]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[99,-53,83,-101,78,-2,-16,-101,-101,-101,-101,97,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,14,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-38,14],166]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[99,-53,83,-101,78,-2,-16,-101,-101,-101,-101,97,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,14,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-38,14],9999]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-63,96,-101,25,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],6]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-63,96,-101,25,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],7]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-63,96,-101,25,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],9999]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[27,-101,17,-101,-101,-101,-78,-101,-101,-101,-101,-101,-101,-101,-68,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-92],-198]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[27,-101,17,-101,-101,-101,-78,-101,-101,-101,-101,-101,-101,-101,-68,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-92],-197]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[27,-101,17,-101,-101,-101,-78,-101,-101,-101,-101,-101,-101,-101,-68,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-92],9999]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[87,-28,98,-91,25,-99,33,69,-19,-50,17,27,41,93,89],37]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[87,-28,98,-91,25,-99,33,69,-19,-50,17,27,41,93,89],38]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[87,-28,98,-91,25,-99,33,69,-19,-50,17,27,41,93,89],307]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[[87,-28,98,-91,25,-99,33,69,-19,-50,17,27,41,93,89],9999]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_24",
+        "input": "[[37,21,5,-41,49,-101,-101,10,-101,-101,-101,-101,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7,37],42]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_25",
+        "input": "[[37,21,5,-41,49,-101,-101,10,-101,-101,-101,-101,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7,37],63]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def hasPathSum(self, tree, targetSum):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool hasPathSum(vector<int>& tree, int targetSum) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean hasPathSum(int[] tree, int targetSum) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun hasPathSum(tree: IntArray, targetSum: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    hasPathSum(tree, targetSum) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def hasPathSum(self, tree, targetSum):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool hasPathSum(vector<int>& tree, int targetSum) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean hasPathSum(int[] tree, int targetSum) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun hasPathSum(tree: IntArray, targetSum: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    hasPathSum(tree, targetSum) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def hasPathSum(self, tree, targetSum):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool hasPathSum(vector<int>& tree, int targetSum) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean hasPathSum(int[] tree, int targetSum) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun hasPathSum(tree: IntArray, targetSum: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    hasPathSum(tree, targetSum) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def hasPathSum(self, tree, targetSum):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool hasPathSum(vector<int>& tree, int targetSum) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean hasPathSum(int[] tree, int targetSum) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun hasPathSum(tree: IntArray, targetSum: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    hasPathSum(tree, targetSum) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n), visiting each node once",
+      "space": "O(h) recursion stack",
+      "pattern": "DFS carrying the remaining sum needed, subtracting the current node's value at each step"
+    },
+    "bruteForce": {
+      "approach": "enumerate every root-to-leaf path explicitly (DFS collecting the running sum), then check if any equals targetSum",
+      "time": "O(n) to O(n^2) depending on how paths are collected",
+      "space": "O(h) for recursion plus space for storing path sums"
+    }
+  },
+  "optimal": {
+    "pattern": "DFS carrying the remaining sum needed, subtracting the current node's value at each step",
+    "time": "O(n), visiting each node once",
+    "space": "O(h) recursion stack",
+    "hint_ladder": [
+      "you don't need to build full paths - what if you tracked how much of targetSum is 'left to find' as you descend?",
+      "define hasPath(i, remaining): does some root-to-leaf path from node i sum to remaining? what's remaining at the root?",
+      "at a missing node, the answer is false. at a leaf, the answer is whether the node's value equals remaining exactly",
+      "at an internal node, recurse into whichever children exist with remaining minus the current node's value, and return true if either side finds a path"
+    ]
+  },
+  "bruteForce": {
+    "approach": "enumerate every root-to-leaf path explicitly (DFS collecting the running sum), then check if any equals targetSum",
+    "time": "O(n) to O(n^2) depending on how paths are collected",
+    "space": "O(h) for recursion plus space for storing path sums"
+  },
+  "isIndex0": true,
+  "level": null
+}

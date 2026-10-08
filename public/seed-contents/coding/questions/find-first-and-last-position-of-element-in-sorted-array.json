@@ -1,0 +1,674 @@
+{
+  "id": "find-first-and-last-position-of-element-in-sorted-array",
+  "questionId": "find-first-and-last-position-of-element-in-sorted-array",
+  "slug": "find-first-and-last-position-of-element-in-sorted-array",
+  "title": "Find First and Last Position of Element in Sorted Array",
+  "difficulty": "Medium",
+  "category": "Binary search",
+  "patterns": [
+    "binary search"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "a plain binary search finds 'a' matching index, but with duplicates that could land anywhere in the run of equal values - how could you push the search toward one end?",
+    "run binary search for the leftmost occurrence: whenever nums[mid] == target, don't stop, instead keep searching the left half to see if an earlier match exists",
+    "run a second, separate binary search for the rightmost occurrence, this time continuing into the right half whenever nums[mid] == target",
+    "if the leftmost search never finds target at all, you can immediately return [-1, -1] without needing the second search"
+  ],
+  "commonMistakes": [
+    "stopping at the first index where nums[mid] == target instead of continuing to narrow toward the boundary, which can return a middle occurrence instead of the true first or last",
+    "not handling the empty array case before starting the binary search, causing an out-of-bounds midpoint calculation",
+    "using one binary search and trying to expand outward linearly from the found index to find the boundaries, which degrades to O(n) when there are many duplicates",
+    "off-by-one errors in the low/high bounds update that cause an infinite loop or skip the correct boundary index"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of integers sorted in ascending order, which may\ncontain duplicate values, and a target value.\n\n**Find the first index and the last index at which the target appears, and return them as a two-element array `[firstIndex, lastIndex]`, or `[-1, -1]` if the target doesn't appear at all.**\n\nYour solution must run in O(log n) time, so scanning the array linearly isn't acceptable.\n",
+    "constraints": [
+      "0 <= length of nums <= 10^5",
+      "array is sorted in non-decreasing order",
+      "nums may contain duplicate values"
+    ],
+    "notes": [
+      "empty array",
+      "target appears exactly once",
+      "every element in the array equals target",
+      "target is smaller than every element or larger than every element"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [5, 7, 7, 8, 8, 10], target = 8",
+        "output": "[3, 4]",
+        "expectedOutput": "[3, 4]",
+        "explanation": "8 first appears at index 3 and last appears at index 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [5, 7, 7, 8, 8, 10], target = 6",
+        "output": "[-1, -1]",
+        "expectedOutput": "[-1, -1]",
+        "explanation": "6 doesn't appear in the array"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [], target = 0",
+        "output": "[-1, -1]",
+        "expectedOutput": "[-1, -1]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[5,7,7,8,8,10],8]",
+        "output": "[3,4]",
+        "expectedOutput": "[3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[5,7,7,8,8,10],6]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[],0]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],1]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],2]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,2,2,2,2],2]",
+        "output": "[0,4]",
+        "expectedOutput": "[0,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5],1]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5],5]",
+        "output": "[4,4]",
+        "expectedOutput": "[4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5],0]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5],6]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1,2],1]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,2],2]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,3,3,3,3,3,3,3,9],3]",
+        "output": "[1,7]",
+        "expectedOutput": "[1,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-5,-3,-3,-1,0,2],-3]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-5,-3,-3,-1,0,2],0]",
+        "output": "[4,4]",
+        "expectedOutput": "[4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,0,0,0,0,0,0,0],0]",
+        "output": "[0,7]",
+        "expectedOutput": "[0,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,4,4,5,6,7,8,9,10],4]",
+        "output": "[3,5]",
+        "expectedOutput": "[3,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10,20,30],25]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[4,5,5,5,6,7,8,8,8,8,9],8]",
+        "output": "[6,9]",
+        "expectedOutput": "[6,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2],1]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,2],2]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[3,3],3]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [5, 7, 7, 8, 8, 10], target = 8",
+      "output": "[3, 4]",
+      "expectedOutput": "[3, 4]",
+      "explanation": "8 first appears at index 3 and last appears at index 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [5, 7, 7, 8, 8, 10], target = 6",
+      "output": "[-1, -1]",
+      "expectedOutput": "[-1, -1]",
+      "explanation": "6 doesn't appear in the array"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [], target = 0",
+      "output": "[-1, -1]",
+      "expectedOutput": "[-1, -1]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [5, 7, 7, 8, 8, 10], target = 8",
+      "output": "[3, 4]",
+      "expectedOutput": "[3, 4]",
+      "explanation": "8 first appears at index 3 and last appears at index 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [5, 7, 7, 8, 8, 10], target = 6",
+      "output": "[-1, -1]",
+      "expectedOutput": "[-1, -1]",
+      "explanation": "6 doesn't appear in the array"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [], target = 0",
+      "output": "[-1, -1]",
+      "expectedOutput": "[-1, -1]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[5,7,7,8,8,10],8]",
+      "output": "[3,4]",
+      "expectedOutput": "[3,4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[5,7,7,8,8,10],6]",
+      "output": "[-1,-1]",
+      "expectedOutput": "[-1,-1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[],0]",
+      "output": "[-1,-1]",
+      "expectedOutput": "[-1,-1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1],1]",
+      "output": "[0,0]",
+      "expectedOutput": "[0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1],2]",
+      "output": "[-1,-1]",
+      "expectedOutput": "[-1,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[2,2,2,2,2],2]",
+      "output": "[0,4]",
+      "expectedOutput": "[0,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3,4,5],1]",
+      "output": "[0,0]",
+      "expectedOutput": "[0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3,4,5],5]",
+      "output": "[4,4]",
+      "expectedOutput": "[4,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4,5],0]",
+      "output": "[-1,-1]",
+      "expectedOutput": "[-1,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3,4,5],6]",
+      "output": "[-1,-1]",
+      "expectedOutput": "[-1,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,1,2],1]",
+      "output": "[0,1]",
+      "expectedOutput": "[0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,2],2]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,3,3,3,3,3,3,3,9],3]",
+      "output": "[1,7]",
+      "expectedOutput": "[1,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-5,-3,-3,-1,0,2],-3]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-5,-3,-3,-1,0,2],0]",
+      "output": "[4,4]",
+      "expectedOutput": "[4,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[0,0,0,0,0,0,0,0],0]",
+      "output": "[0,7]",
+      "expectedOutput": "[0,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,3,4,4,4,5,6,7,8,9,10],4]",
+      "output": "[3,5]",
+      "expectedOutput": "[3,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[10,20,30],25]",
+      "output": "[-1,-1]",
+      "expectedOutput": "[-1,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[4,5,5,5,6,7,8,8,8,8,9],8]",
+      "output": "[6,9]",
+      "expectedOutput": "[6,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,2],1]",
+      "output": "[0,0]",
+      "expectedOutput": "[0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[1,2],2]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[[3,3],3]",
+      "output": "[0,1]",
+      "expectedOutput": "[0,1]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [5, 7, 7, 8, 8, 10], target = 8",
+        "output": "[3, 4]",
+        "expectedOutput": "[3, 4]",
+        "explanation": "8 first appears at index 3 and last appears at index 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [5, 7, 7, 8, 8, 10], target = 6",
+        "output": "[-1, -1]",
+        "expectedOutput": "[-1, -1]",
+        "explanation": "6 doesn't appear in the array"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [], target = 0",
+        "output": "[-1, -1]",
+        "expectedOutput": "[-1, -1]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[5,7,7,8,8,10],8]",
+        "output": "[3,4]",
+        "expectedOutput": "[3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[5,7,7,8,8,10],6]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[],0]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],1]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],2]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,2,2,2,2],2]",
+        "output": "[0,4]",
+        "expectedOutput": "[0,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5],1]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5],5]",
+        "output": "[4,4]",
+        "expectedOutput": "[4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5],0]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5],6]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1,2],1]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,2],2]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,3,3,3,3,3,3,3,9],3]",
+        "output": "[1,7]",
+        "expectedOutput": "[1,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-5,-3,-3,-1,0,2],-3]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-5,-3,-3,-1,0,2],0]",
+        "output": "[4,4]",
+        "expectedOutput": "[4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,0,0,0,0,0,0,0],0]",
+        "output": "[0,7]",
+        "expectedOutput": "[0,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,4,4,5,6,7,8,9,10],4]",
+        "output": "[3,5]",
+        "expectedOutput": "[3,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10,20,30],25]",
+        "output": "[-1,-1]",
+        "expectedOutput": "[-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[4,5,5,5,6,7,8,8,8,8,9],8]",
+        "output": "[6,9]",
+        "expectedOutput": "[6,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2],1]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,2],2]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[3,3],3]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def searchRange(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> searchRange(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] searchRange(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun searchRange(nums: IntArray, target: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    searchRange(nums, target) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def searchRange(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> searchRange(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] searchRange(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun searchRange(nums: IntArray, target: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    searchRange(nums, target) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def searchRange(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> searchRange(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] searchRange(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun searchRange(nums: IntArray, target: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    searchRange(nums, target) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def searchRange(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> searchRange(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] searchRange(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun searchRange(nums: IntArray, target: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    searchRange(nums, target) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(log n)",
+      "space": "O(1)",
+      "pattern": "two independent binary searches, one biased to find the leftmost match and one biased to find the rightmost match"
+    },
+    "bruteForce": {
+      "approach": "scan the array left to right, recording the first index where nums[i] == target and the last index where it happens",
+      "time": "O(n)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "two independent binary searches, one biased to find the leftmost match and one biased to find the rightmost match",
+    "time": "O(log n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "a plain binary search finds 'a' matching index, but with duplicates that could land anywhere in the run of equal values - how could you push the search toward one end?",
+      "run binary search for the leftmost occurrence: whenever nums[mid] == target, don't stop, instead keep searching the left half to see if an earlier match exists",
+      "run a second, separate binary search for the rightmost occurrence, this time continuing into the right half whenever nums[mid] == target",
+      "if the leftmost search never finds target at all, you can immediately return [-1, -1] without needing the second search"
+    ]
+  },
+  "bruteForce": {
+    "approach": "scan the array left to right, recording the first index where nums[i] == target and the last index where it happens",
+    "time": "O(n)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

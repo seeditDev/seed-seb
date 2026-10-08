@@ -1,0 +1,634 @@
+{
+  "id": "interleaving-string",
+  "questionId": "interleaving-string",
+  "slug": "interleaving-string",
+  "title": "Interleaving String",
+  "difficulty": "Medium",
+  "category": "Dp 2d",
+  "patterns": [
+    "dynamic programming",
+    "strings"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "if s1 has length m and s2 has length n, and s3 doesn't have length m + n, you can return false immediately without any DP",
+    "define dp[i][j] as true if the first i characters of s1 and the first j characters of s2 can interleave to form the first i + j characters of s3",
+    "dp[i][j] is true if EITHER the last character came from s1 (s1[i-1] == s3[i+j-1] and dp[i-1][j] is true) OR it came from s2 (s2[j-1] == s3[i+j-1] and dp[i][j-1] is true)",
+    "base case dp[0][0] = true (two empty strings interleave to an empty string); dp[i][0] and dp[0][j] are prefix checks against just s1 or just s2 respectively",
+    "fill the table and return dp[m][n]"
+  ],
+  "commonMistakes": [
+    "not checking the length of s3 upfront (m + n must equal s3.length or the answer is trivially false)",
+    "indexing s3 incorrectly - the character being matched at dp[i][j] is s3[i+j-1], not s3[i-1] or s3[j-1] alone",
+    "using OR when the recurrence needs both branches checked (from s1 or from s2), missing one and getting false negatives"
+  ],
+  "content": {
+    "problemStatement": "You're given three strings `s1`, `s2`, and `s3`. An interleaving means\n`s3` is built by repeatedly taking the next unused character from\neither `s1` or `s2` (never both at once), preserving the relative order\nof characters within each source string, until both are fully consumed.\n\n**Determine whether `s3` can be formed by interleaving `s1` and\n`s2`.**\n",
+    "constraints": [
+      "0 <= s1.length, s2.length <= 100",
+      "0 <= s3.length <= 200",
+      "strings consist of lowercase English letters"
+    ],
+    "notes": [
+      "s1 and s2 are both empty (s3 must also be empty)",
+      "s3's length doesn't equal s1.length + s2.length (immediately false)",
+      "one of s1 or s2 is empty (s3 must exactly equal the other one)",
+      "s1 and s2 share overlapping characters, creating multiple possible interleavings to check"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s1 = \"aabcc\", s2 = \"dbbca\", s3 = \"aadbbcbcac\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "One valid interleaving: aa (from s1) + dbbc (from s2) + bc (from s1) + a (from s2) + c (from s1)."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s1 = \"aabcc\", s2 = \"dbbca\", s3 = \"aadbbbaccc\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s1 = \"\", s2 = \"\", s3 = \"\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"aabcc\",\"dbbca\",\"aadbbcbcac\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"aabcc\",\"dbbca\",\"aadbbbaccc\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"\",\"\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abc\",\"\",\"abc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"ab\",\"c\",\"acb\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"\",\"\",\"a\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a\",\"b\",\"ab\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"a\",\"b\",\"ba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abc\",\"abc\",\"abcabc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abc\",\"abc\",\"abcacb\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aabb\",\"abab\",\"aababb\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"aabbcc\",\"abcabc\",\"aabbccabcabc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"aaaa\",\"aaaa\",\"aaaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"ab\",\"cd\",\"abcd\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"ab\",\"cd\",\"acbd\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"ab\",\"cd\",\"xyz\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"\",\"abc\",\"abc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"abc\",\"\",\"abd\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"aabcc\",\"dbbca\",\"aadbbbaccc\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"babaaa\",\"baaaab\",\"bbaaabaaaaab\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s1 = \"aabcc\", s2 = \"dbbca\", s3 = \"aadbbcbcac\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "One valid interleaving: aa (from s1) + dbbc (from s2) + bc (from s1) + a (from s2) + c (from s1)."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s1 = \"aabcc\", s2 = \"dbbca\", s3 = \"aadbbbaccc\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s1 = \"\", s2 = \"\", s3 = \"\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s1 = \"aabcc\", s2 = \"dbbca\", s3 = \"aadbbcbcac\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "One valid interleaving: aa (from s1) + dbbc (from s2) + bc (from s1) + a (from s2) + c (from s1)."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s1 = \"aabcc\", s2 = \"dbbca\", s3 = \"aadbbbaccc\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s1 = \"\", s2 = \"\", s3 = \"\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"aabcc\",\"dbbca\",\"aadbbcbcac\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"aabcc\",\"dbbca\",\"aadbbbaccc\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"\",\"\",\"\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"abc\",\"\",\"abc\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"ab\",\"c\",\"acb\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"\",\"\",\"a\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"a\",\"b\",\"ab\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"a\",\"b\",\"ba\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"abc\",\"abc\",\"abcabc\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"abc\",\"abc\",\"abcacb\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"aabb\",\"abab\",\"aababb\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"aabbcc\",\"abcabc\",\"aabbccabcabc\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"aaaa\",\"aaaa\",\"aaaaaaaa\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"ab\",\"cd\",\"abcd\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"ab\",\"cd\",\"acbd\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"ab\",\"cd\",\"xyz\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"\",\"abc\",\"abc\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"abc\",\"\",\"abd\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"aabcc\",\"dbbca\",\"aadbbbaccc\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"babaaa\",\"baaaab\",\"bbaaabaaaaab\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s1 = \"aabcc\", s2 = \"dbbca\", s3 = \"aadbbcbcac\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "One valid interleaving: aa (from s1) + dbbc (from s2) + bc (from s1) + a (from s2) + c (from s1)."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s1 = \"aabcc\", s2 = \"dbbca\", s3 = \"aadbbbaccc\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s1 = \"\", s2 = \"\", s3 = \"\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"aabcc\",\"dbbca\",\"aadbbcbcac\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"aabcc\",\"dbbca\",\"aadbbbaccc\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"\",\"\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abc\",\"\",\"abc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"ab\",\"c\",\"acb\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"\",\"\",\"a\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a\",\"b\",\"ab\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"a\",\"b\",\"ba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abc\",\"abc\",\"abcabc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abc\",\"abc\",\"abcacb\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aabb\",\"abab\",\"aababb\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"aabbcc\",\"abcabc\",\"aabbccabcabc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"aaaa\",\"aaaa\",\"aaaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"ab\",\"cd\",\"abcd\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"ab\",\"cd\",\"acbd\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"ab\",\"cd\",\"xyz\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"\",\"abc\",\"abc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"abc\",\"\",\"abd\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"aabcc\",\"dbbca\",\"aadbbbaccc\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"babaaa\",\"baaaab\",\"bbaaabaaaaab\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def isInterleave(self, s1, s2, s3):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isInterleave(string s1, string s2, string s3) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isInterleave(String s1, String s2, String s3) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isInterleave(s1: String, s2: String, s3: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isInterleave(s1, s2, s3) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def isInterleave(self, s1, s2, s3):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isInterleave(string s1, string s2, string s3) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isInterleave(String s1, String s2, String s3) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isInterleave(s1: String, s2: String, s3: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isInterleave(s1, s2, s3) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def isInterleave(self, s1, s2, s3):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isInterleave(string s1, string s2, string s3) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isInterleave(String s1, String s2, String s3) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isInterleave(s1: String, s2: String, s3: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isInterleave(s1, s2, s3) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def isInterleave(self, s1, s2, s3):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isInterleave(string s1, string s2, string s3) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isInterleave(String s1, String s2, String s3) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isInterleave(s1: String, s2: String, s3: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isInterleave(s1, s2, s3) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(m * n)",
+      "space": "O(m * n), reducible to O(n)",
+      "pattern": "2D dynamic programming over how many characters of s1 and s2 have been consumed"
+    },
+    "bruteForce": {
+      "approach": "recursively try, at each position of s3, whether the next character came from s1 or from s2, backtracking on mismatch",
+      "time": "O(2^(m+n))",
+      "space": "O(m + n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "2D dynamic programming over how many characters of s1 and s2 have been consumed",
+    "time": "O(m * n)",
+    "space": "O(m * n), reducible to O(n)",
+    "hint_ladder": [
+      "if s1 has length m and s2 has length n, and s3 doesn't have length m + n, you can return false immediately without any DP",
+      "define dp[i][j] as true if the first i characters of s1 and the first j characters of s2 can interleave to form the first i + j characters of s3",
+      "dp[i][j] is true if EITHER the last character came from s1 (s1[i-1] == s3[i+j-1] and dp[i-1][j] is true) OR it came from s2 (s2[j-1] == s3[i+j-1] and dp[i][j-1] is true)",
+      "base case dp[0][0] = true (two empty strings interleave to an empty string); dp[i][0] and dp[0][j] are prefix checks against just s1 or just s2 respectively",
+      "fill the table and return dp[m][n]"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try, at each position of s3, whether the next character came from s1 or from s2, backtracking on mismatch",
+    "time": "O(2^(m+n))",
+    "space": "O(m + n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

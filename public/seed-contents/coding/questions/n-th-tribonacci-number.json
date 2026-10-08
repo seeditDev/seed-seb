@@ -1,0 +1,596 @@
+{
+  "id": "n-th-tribonacci-number",
+  "questionId": "n-th-tribonacci-number",
+  "slug": "n-th-tribonacci-number",
+  "title": "N-th Tribonacci Number",
+  "difficulty": "Easy",
+  "category": "Dp 1d",
+  "patterns": [
+    "dynamic programming",
+    "fibonacci"
+  ],
+  "lists": [],
+  "hints": [
+    "how is this different from plain Fibonacci - how many previous terms does each new term depend on?",
+    "what if you built the sequence forward from T(0), T(1), T(2) instead of recursing down from n?",
+    "you only ever need the last three computed values to get the next one",
+    "iterate from 0 up to n, keeping three rolling variables and shifting them each step"
+  ],
+  "commonMistakes": [
+    "reusing the two-variable Fibonacci pattern without accounting for the third term",
+    "mixing up which of the three base cases (T(0), T(1), T(2)) apply for small n",
+    "off-by-one errors when shifting the three rolling variables forward each iteration"
+  ],
+  "content": {
+    "problemStatement": "A tribonacci sequence starts with T(0) = 0, T(1) = 1, T(2) = 1, and every term after that is the sum of the three terms before it: T(n) = T(n-1) + T(n-2) + T(n-3).\n\n**Given `n`, return T(n).**\n",
+    "constraints": [
+      "0 <= n <= 37",
+      "T(0) = 0, T(1) = 1, T(2) = 1, and T(n) = T(n-1) + T(n-2) + T(n-3) for n >= 3"
+    ],
+    "notes": [
+      "n = 0 (returns 0)",
+      "n = 1 or n = 2 (both return 1)",
+      "larger n where naive recursion becomes very slow"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 4",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "T = 0, 1, 1, 2, 4 - the 4th term is 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 6",
+        "output": "13",
+        "expectedOutput": "13",
+        "explanation": "T = 0, 1, 1, 2, 4, 7, 13"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[6]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[5]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[7]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[8]",
+        "output": "44",
+        "expectedOutput": "44",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[9]",
+        "output": "81",
+        "expectedOutput": "81",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[10]",
+        "output": "149",
+        "expectedOutput": "149",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[12]",
+        "output": "504",
+        "expectedOutput": "504",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[15]",
+        "output": "3136",
+        "expectedOutput": "3136",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[18]",
+        "output": "19513",
+        "expectedOutput": "19513",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[20]",
+        "output": "66012",
+        "expectedOutput": "66012",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[22]",
+        "output": "223317",
+        "expectedOutput": "223317",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[25]",
+        "output": "1389537",
+        "expectedOutput": "1389537",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[28]",
+        "output": "8646064",
+        "expectedOutput": "8646064",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[30]",
+        "output": "29249425",
+        "expectedOutput": "29249425",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[37]",
+        "output": "2082876103",
+        "expectedOutput": "2082876103",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 4",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "T = 0, 1, 1, 2, 4 - the 4th term is 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 6",
+      "output": "13",
+      "expectedOutput": "13",
+      "explanation": "T = 0, 1, 1, 2, 4, 7, 13"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 4",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "T = 0, 1, 1, 2, 4 - the 4th term is 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 6",
+      "output": "13",
+      "expectedOutput": "13",
+      "explanation": "T = 0, 1, 1, 2, 4, 7, 13"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[4]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[6]",
+      "output": "13",
+      "expectedOutput": "13",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[2]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[5]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[7]",
+      "output": "24",
+      "expectedOutput": "24",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[8]",
+      "output": "44",
+      "expectedOutput": "44",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[9]",
+      "output": "81",
+      "expectedOutput": "81",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[10]",
+      "output": "149",
+      "expectedOutput": "149",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[12]",
+      "output": "504",
+      "expectedOutput": "504",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[15]",
+      "output": "3136",
+      "expectedOutput": "3136",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[18]",
+      "output": "19513",
+      "expectedOutput": "19513",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[20]",
+      "output": "66012",
+      "expectedOutput": "66012",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[22]",
+      "output": "223317",
+      "expectedOutput": "223317",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[25]",
+      "output": "1389537",
+      "expectedOutput": "1389537",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[28]",
+      "output": "8646064",
+      "expectedOutput": "8646064",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[30]",
+      "output": "29249425",
+      "expectedOutput": "29249425",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[37]",
+      "output": "2082876103",
+      "expectedOutput": "2082876103",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 4",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "T = 0, 1, 1, 2, 4 - the 4th term is 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 6",
+        "output": "13",
+        "expectedOutput": "13",
+        "explanation": "T = 0, 1, 1, 2, 4, 7, 13"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[6]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[5]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[7]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[8]",
+        "output": "44",
+        "expectedOutput": "44",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[9]",
+        "output": "81",
+        "expectedOutput": "81",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[10]",
+        "output": "149",
+        "expectedOutput": "149",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[12]",
+        "output": "504",
+        "expectedOutput": "504",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[15]",
+        "output": "3136",
+        "expectedOutput": "3136",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[18]",
+        "output": "19513",
+        "expectedOutput": "19513",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[20]",
+        "output": "66012",
+        "expectedOutput": "66012",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[22]",
+        "output": "223317",
+        "expectedOutput": "223317",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[25]",
+        "output": "1389537",
+        "expectedOutput": "1389537",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[28]",
+        "output": "8646064",
+        "expectedOutput": "8646064",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[30]",
+        "output": "29249425",
+        "expectedOutput": "29249425",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[37]",
+        "output": "2082876103",
+        "expectedOutput": "2082876103",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def tribonacci(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int tribonacci(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int tribonacci(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun tribonacci(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    tribonacci(n) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def tribonacci(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int tribonacci(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int tribonacci(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun tribonacci(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    tribonacci(n) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def tribonacci(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int tribonacci(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int tribonacci(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun tribonacci(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    tribonacci(n) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def tribonacci(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int tribonacci(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int tribonacci(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun tribonacci(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    tribonacci(n) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) if only the last three values are kept, O(n) if a full array is memoized",
+      "pattern": "dynamic programming (bottom-up, O(1) space) - same idea as Fibonacci, one wider window"
+    },
+    "bruteForce": {
+      "approach": "plain recursion: T(n) = T(n-1) + T(n-2) + T(n-3), with base cases at n=0, 1, 2",
+      "time": "O(3^n) - exponential, recomputes the same subproblems repeatedly",
+      "space": "O(n) recursion stack"
+    }
+  },
+  "optimal": {
+    "pattern": "dynamic programming (bottom-up, O(1) space) - same idea as Fibonacci, one wider window",
+    "time": "O(n)",
+    "space": "O(1) if only the last three values are kept, O(n) if a full array is memoized",
+    "hint_ladder": [
+      "how is this different from plain Fibonacci - how many previous terms does each new term depend on?",
+      "what if you built the sequence forward from T(0), T(1), T(2) instead of recursing down from n?",
+      "you only ever need the last three computed values to get the next one",
+      "iterate from 0 up to n, keeping three rolling variables and shifting them each step"
+    ]
+  },
+  "bruteForce": {
+    "approach": "plain recursion: T(n) = T(n-1) + T(n-2) + T(n-3), with base cases at n=0, 1, 2",
+    "time": "O(3^n) - exponential, recomputes the same subproblems repeatedly",
+    "space": "O(n) recursion stack"
+  },
+  "isIndex0": true,
+  "level": null
+}

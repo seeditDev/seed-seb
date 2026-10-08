@@ -1,0 +1,631 @@
+{
+  "id": "last-stone-weight-ii",
+  "questionId": "last-stone-weight-ii",
+  "slug": "last-stone-weight-ii",
+  "title": "Last Stone Weight II",
+  "difficulty": "Medium",
+  "category": "Knapsack",
+  "patterns": [
+    "knapsack",
+    "subset sum",
+    "dynamic programming"
+  ],
+  "lists": [],
+  "hints": [
+    "no matter what order you smash stones in, the end result is equivalent to splitting all stones into two groups and taking the absolute difference of their sums - can you convince yourself of that by trying a small example?",
+    "if totalSum is the sum of all stones, and one group sums to s, the other group sums to totalSum - s, and the final weight is |totalSum - 2s| - to minimize that, you want s as close as possible to totalSum / 2 without exceeding it",
+    "this reduces to: what is the largest achievable subset sum s that is at most totalSum / 2? that's exactly 0/1 subset sum",
+    "define dp[s] as true if some subset of stones sums to exactly s, with dp[0] = true, and update it for each stone from high sum down to that stone's weight (same 0/1 knapsack rolling pattern)",
+    "after filling dp up to totalSum / 2, scan from totalSum / 2 down to 0 and find the largest s where dp[s] is true - the answer is totalSum - 2 * s"
+  ],
+  "commonMistakes": [
+    "trying to simulate the actual smashing process instead of recognizing the subset-sum reduction, which is both harder to reason about and less efficient",
+    "using target = totalSum instead of totalSum / 2 for the subset-sum search",
+    "iterating the subset-sum update from low to high, letting a stone be counted more than once toward the same group"
+  ],
+  "content": {
+    "problemStatement": "You have a collection of stones with given weights. Repeatedly choose\nany two stones and smash them together: if their weights are equal,\nboth are destroyed; if not, the lighter one is destroyed and the\nheavier one's weight is reduced by the lighter one's weight, becoming a\nsingle new stone. Keep smashing pairs until at most one stone remains.\n\n**Return the smallest possible weight of the last remaining stone (0 if\nnone remain), choosing which pairs to smash to minimize it.**\n",
+    "constraints": [
+      "1 <= stones.length <= 30",
+      "1 <= stones[i] <= 1000"
+    ],
+    "notes": [
+      "a single stone (no smashing possible, answer is that stone's weight)",
+      "two stones of equal weight (they fully destroy each other, answer is 0)",
+      "stones that split perfectly evenly into two equal-sum groups (answer is 0)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "stones = [2, 7, 4, 1, 8, 1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "smashing down to two piles of weight 11 and 12 (e.g. 7+4=11 vs 2+8+1+1=12) leaves a final stone of weight 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "stones = [31, 26, 33, 21, 40]",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "splitting into piles of weight 73 (33+40) and 78 (31+26+21) leaves a final stone of weight 5"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "stones = [1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "with only one stone, no smashing happens, so it remains as-is"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[2,7,4,1,8,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[31,26,33,21,40]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[2,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[10]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,4,6,8]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,2,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,5,5,5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[9,3,2,10]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[100,1]]",
+        "output": "99",
+        "expectedOutput": "99",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,4,8,16]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[3,3,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,1,1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[25,50,75,100]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1000]]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[7,7,7,7,7]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "stones = [2, 7, 4, 1, 8, 1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "smashing down to two piles of weight 11 and 12 (e.g. 7+4=11 vs 2+8+1+1=12) leaves a final stone of weight 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "stones = [31, 26, 33, 21, 40]",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "splitting into piles of weight 73 (33+40) and 78 (31+26+21) leaves a final stone of weight 5"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "stones = [1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "with only one stone, no smashing happens, so it remains as-is"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "stones = [2, 7, 4, 1, 8, 1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "smashing down to two piles of weight 11 and 12 (e.g. 7+4=11 vs 2+8+1+1=12) leaves a final stone of weight 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "stones = [31, 26, 33, 21, 40]",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "splitting into piles of weight 73 (33+40) and 78 (31+26+21) leaves a final stone of weight 5"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "stones = [1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "with only one stone, no smashing happens, so it remains as-is"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[2,7,4,1,8,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[31,26,33,21,40]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[2,2]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[10]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[2,4,6,8]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,1,2,2]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[5,5,5,5]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[9,3,2,10]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[100,1]]",
+      "output": "99",
+      "expectedOutput": "99",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,4,8,16]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[3,3,3]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,1,1,1,1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[25,50,75,100]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,4,5,6]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1000]]",
+      "output": "1000",
+      "expectedOutput": "1000",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[7,7,7,7,7]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "stones = [2, 7, 4, 1, 8, 1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "smashing down to two piles of weight 11 and 12 (e.g. 7+4=11 vs 2+8+1+1=12) leaves a final stone of weight 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "stones = [31, 26, 33, 21, 40]",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "splitting into piles of weight 73 (33+40) and 78 (31+26+21) leaves a final stone of weight 5"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "stones = [1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "with only one stone, no smashing happens, so it remains as-is"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[2,7,4,1,8,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[31,26,33,21,40]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[2,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[10]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,4,6,8]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,2,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,5,5,5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[9,3,2,10]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[100,1]]",
+        "output": "99",
+        "expectedOutput": "99",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,4,8,16]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[3,3,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,1,1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[25,50,75,100]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1000]]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[7,7,7,7,7]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def lastStoneWeightII(self, stones):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lastStoneWeightII(vector<int>& stones) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lastStoneWeightII(int[] stones) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lastStoneWeightII(stones: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lastStoneWeightII(stones) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def lastStoneWeightII(self, stones):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lastStoneWeightII(vector<int>& stones) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lastStoneWeightII(int[] stones) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lastStoneWeightII(stones: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lastStoneWeightII(stones) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def lastStoneWeightII(self, stones):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lastStoneWeightII(vector<int>& stones) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lastStoneWeightII(int[] stones) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lastStoneWeightII(stones: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lastStoneWeightII(stones) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def lastStoneWeightII(self, stones):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lastStoneWeightII(vector<int>& stones) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lastStoneWeightII(int[] stones) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lastStoneWeightII(stones: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lastStoneWeightII(stones) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n * totalSum)",
+      "space": "O(totalSum)",
+      "pattern": "knapsack (0/1 subset sum in disguise - the final weight is always |sum of one group - sum of the other|, so minimize that difference)"
+    },
+    "bruteForce": {
+      "approach": "simulate every possible order of smashing pairs (or equivalently, try every way of splitting stones into two signed groups) and track the minimum final weight - exponential in the number of stones",
+      "time": "O(2^n) to try every subset split",
+      "space": "O(n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "knapsack (0/1 subset sum in disguise - the final weight is always |sum of one group - sum of the other|, so minimize that difference)",
+    "time": "O(n * totalSum)",
+    "space": "O(totalSum)",
+    "hint_ladder": [
+      "no matter what order you smash stones in, the end result is equivalent to splitting all stones into two groups and taking the absolute difference of their sums - can you convince yourself of that by trying a small example?",
+      "if totalSum is the sum of all stones, and one group sums to s, the other group sums to totalSum - s, and the final weight is |totalSum - 2s| - to minimize that, you want s as close as possible to totalSum / 2 without exceeding it",
+      "this reduces to: what is the largest achievable subset sum s that is at most totalSum / 2? that's exactly 0/1 subset sum",
+      "define dp[s] as true if some subset of stones sums to exactly s, with dp[0] = true, and update it for each stone from high sum down to that stone's weight (same 0/1 knapsack rolling pattern)",
+      "after filling dp up to totalSum / 2, scan from totalSum / 2 down to 0 and find the largest s where dp[s] is true - the answer is totalSum - 2 * s"
+    ]
+  },
+  "bruteForce": {
+    "approach": "simulate every possible order of smashing pairs (or equivalently, try every way of splitting stones into two signed groups) and track the minimum final weight - exponential in the number of stones",
+    "time": "O(2^n) to try every subset split",
+    "space": "O(n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

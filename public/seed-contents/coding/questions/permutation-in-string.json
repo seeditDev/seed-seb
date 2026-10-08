@@ -1,0 +1,629 @@
+{
+  "id": "permutation-in-string",
+  "questionId": "permutation-in-string",
+  "slug": "permutation-in-string",
+  "title": "Permutation in String",
+  "difficulty": "Medium",
+  "category": "Sliding window",
+  "patterns": [
+    "sliding window",
+    "fixed-size window"
+  ],
+  "lists": [],
+  "hints": [
+    "a permutation of s1 has a fixed length and a fixed set of letter counts. what kind of window are you looking for in s2?",
+    "build a frequency count of s1's letters once, then slide a same-size window across s2, maintaining a frequency count of the window's letters",
+    "as the window slides by one, only two letters change: the one leaving and the one entering - update counts incrementally instead of rebuilding them",
+    "at each position, check if the window's frequency count exactly matches s1's frequency count"
+  ],
+  "commonMistakes": [
+    "recomputing the whole frequency count for every window position instead of updating it incrementally",
+    "comparing sorted substrings, which works but is slower than tracking counts directly",
+    "off-by-one on the window size, or forgetting to check the very last possible window position"
+  ],
+  "content": {
+    "problemStatement": "You're given two strings, `s1` and `s2`.\n\n**Determine whether `s2` contains a contiguous substring that is a permutation (rearrangement) of `s1`.**\n\nA permutation of `s1` uses exactly the same letters, with the same counts, in any order.\n",
+    "constraints": [
+      "1 <= s1.length <= 10^4",
+      "1 <= s2.length <= 10^4",
+      "s1 and s2 consist only of lowercase English letters"
+    ],
+    "notes": [
+      "s1 is longer than s2 (always false)",
+      "s1 equals s2 exactly",
+      "s2 contains repeated letters that overlap with s1's letters in confusing ways"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s1 = \"ab\", s2 = \"eidbaooo\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "\"ba\" inside eidbaooo uses exactly the letters a and b, a permutation of \"ab\""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s1 = \"ab\", s2 = \"eidboaoo\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s1 = \"adc\", s2 = \"dcda\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "\"cda\" is a permutation of \"adc\""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"ab\",\"eidbaooo\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"ab\",\"eidboaoo\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"adc\",\"dcda\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"hello\",\"ooolleoooleh\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\",\"a\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"b\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ab\",\"ab\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"abc\",\"bca\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abc\",\"xyzabc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abc\",\"cbaebabacd\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aa\",\"ab\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"aaa\",\"aaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"xyz\",\"xxyyzz\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abcd\",\"dcbaefgh\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aabb\",\"bbaacc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"ab\",\"aaaaaaaaaaaaaaaaaaaab\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abcde\",\"eabcdabcde\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"trinitrophenylmethylnitramine\",\"trinitrophenylmethylnitraminex\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"ab\",\"bacdgabcda\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"hello\",\"loleeh\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s1 = \"ab\", s2 = \"eidbaooo\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "\"ba\" inside eidbaooo uses exactly the letters a and b, a permutation of \"ab\""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s1 = \"ab\", s2 = \"eidboaoo\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s1 = \"adc\", s2 = \"dcda\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "\"cda\" is a permutation of \"adc\""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s1 = \"ab\", s2 = \"eidbaooo\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "\"ba\" inside eidbaooo uses exactly the letters a and b, a permutation of \"ab\""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s1 = \"ab\", s2 = \"eidboaoo\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s1 = \"adc\", s2 = \"dcda\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "\"cda\" is a permutation of \"adc\""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"ab\",\"eidbaooo\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"ab\",\"eidboaoo\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"adc\",\"dcda\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"hello\",\"ooolleoooleh\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"a\",\"a\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\",\"b\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"ab\",\"ab\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"abc\",\"bca\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"abc\",\"xyzabc\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"abc\",\"cbaebabacd\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"aa\",\"ab\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"aaa\",\"aaaaaaa\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"xyz\",\"xxyyzz\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"abcd\",\"dcbaefgh\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"aabb\",\"bbaacc\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"ab\",\"aaaaaaaaaaaaaaaaaaaab\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"abcde\",\"eabcdabcde\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"trinitrophenylmethylnitramine\",\"trinitrophenylmethylnitraminex\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"ab\",\"bacdgabcda\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"hello\",\"loleeh\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s1 = \"ab\", s2 = \"eidbaooo\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "\"ba\" inside eidbaooo uses exactly the letters a and b, a permutation of \"ab\""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s1 = \"ab\", s2 = \"eidboaoo\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s1 = \"adc\", s2 = \"dcda\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "\"cda\" is a permutation of \"adc\""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"ab\",\"eidbaooo\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"ab\",\"eidboaoo\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"adc\",\"dcda\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"hello\",\"ooolleoooleh\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\",\"a\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"b\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ab\",\"ab\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"abc\",\"bca\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abc\",\"xyzabc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abc\",\"cbaebabacd\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aa\",\"ab\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"aaa\",\"aaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"xyz\",\"xxyyzz\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abcd\",\"dcbaefgh\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aabb\",\"bbaacc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"ab\",\"aaaaaaaaaaaaaaaaaaaab\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abcde\",\"eabcdabcde\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"trinitrophenylmethylnitramine\",\"trinitrophenylmethylnitraminex\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"ab\",\"bacdgabcda\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"hello\",\"loleeh\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def checkInclusion(self, s1, s2):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool checkInclusion(string s1, string s2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean checkInclusion(String s1, String s2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun checkInclusion(s1: String, s2: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    checkInclusion(s1, s2) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def checkInclusion(self, s1, s2):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool checkInclusion(string s1, string s2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean checkInclusion(String s1, String s2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun checkInclusion(s1: String, s2: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    checkInclusion(s1, s2) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def checkInclusion(self, s1, s2):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool checkInclusion(string s1, string s2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean checkInclusion(String s1, String s2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun checkInclusion(s1: String, s2: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    checkInclusion(s1, s2) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def checkInclusion(self, s1, s2):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool checkInclusion(string s1, string s2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean checkInclusion(String s1, String s2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun checkInclusion(s1: String, s2: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    checkInclusion(s1, s2) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) (26 letters)",
+      "pattern": "fixed-size sliding window matching s1's length, comparing letter-frequency counts incrementally"
+    },
+    "bruteForce": {
+      "approach": "for every substring of s2 with the same length as s1, sort both and compare (or build and compare frequency maps)",
+      "time": "O(n * m log m) if sorting each substring, or O(n * 26) with frequency maps, where n is length of s2",
+      "space": "O(m) per substring check"
+    }
+  },
+  "optimal": {
+    "pattern": "fixed-size sliding window matching s1's length, comparing letter-frequency counts incrementally",
+    "time": "O(n)",
+    "space": "O(1) (26 letters)",
+    "hint_ladder": [
+      "a permutation of s1 has a fixed length and a fixed set of letter counts. what kind of window are you looking for in s2?",
+      "build a frequency count of s1's letters once, then slide a same-size window across s2, maintaining a frequency count of the window's letters",
+      "as the window slides by one, only two letters change: the one leaving and the one entering - update counts incrementally instead of rebuilding them",
+      "at each position, check if the window's frequency count exactly matches s1's frequency count"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every substring of s2 with the same length as s1, sort both and compare (or build and compare frequency maps)",
+    "time": "O(n * m log m) if sorting each substring, or O(n * 26) with frequency maps, where n is length of s2",
+    "space": "O(m) per substring check"
+  },
+  "isIndex0": true,
+  "level": null
+}

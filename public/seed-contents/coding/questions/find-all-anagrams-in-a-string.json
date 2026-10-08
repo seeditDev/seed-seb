@@ -1,0 +1,599 @@
+{
+  "id": "find-all-anagrams-in-a-string",
+  "questionId": "find-all-anagrams-in-a-string",
+  "slug": "find-all-anagrams-in-a-string",
+  "title": "Find All Anagrams in a String",
+  "difficulty": "Medium",
+  "category": "Sliding window",
+  "patterns": [
+    "sliding window",
+    "fixed-size window"
+  ],
+  "lists": [
+    "grind-75"
+  ],
+  "hints": [
+    "this is almost exactly the same question as checking whether one string contains a permutation of another - what's different here?",
+    "instead of returning as soon as you find one matching window, what should you do differently?",
+    "slide a window the size of p across s, maintaining a running letter-frequency count, updating incrementally as the window moves",
+    "whenever the window's frequency count matches p's, record the window's starting index and keep going instead of stopping"
+  ],
+  "commonMistakes": [
+    "stopping at the first match instead of collecting all of them",
+    "recomputing the frequency count from scratch at each window instead of updating it as you slide",
+    "returning the matched substrings instead of their starting indices"
+  ],
+  "content": {
+    "problemStatement": "You're given two strings, `s` and `p`.\n\n**Find the starting index of every substring of `s` that is an anagram of `p`, and return those indices in increasing order.**\n\nAn anagram uses exactly the same letters with the same counts, in any order.\n",
+    "constraints": [
+      "0 <= s.length <= 3 * 10^4",
+      "1 <= p.length <= 3 * 10^4",
+      "s and p consist of lowercase English letters only"
+    ],
+    "notes": [
+      "p is longer than s (answer is empty)",
+      "overlapping matches right next to each other",
+      "s and p share no letters at all"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"cbaebabacd\", p = \"abc\"",
+        "output": "[0, 6]",
+        "expectedOutput": "[0, 6]",
+        "explanation": "\"cba\" at index 0 and \"bac\" at index 6 are both anagrams of \"abc\""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"abab\", p = \"ab\"",
+        "output": "[0, 1, 2]",
+        "expectedOutput": "[0, 1, 2]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"cbaebabacd\",\"abc\"]",
+        "output": "[0,6]",
+        "expectedOutput": "[0,6]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"abab\",\"ab\"]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a\",\"a\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a\",\"ab\"]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"a\"]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"abcdefg\",\"xyz\"]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aaaaaa\",\"aa\"]",
+        "output": "[0,1,2,3,4]",
+        "expectedOutput": "[0,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"baa\",\"aa\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"cbaebabacd\",\"bac\"]",
+        "output": "[0,6]",
+        "expectedOutput": "[0,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abababab\",\"aab\"]",
+        "output": "[0,2,4]",
+        "expectedOutput": "[0,2,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"aaa\"]",
+        "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]",
+        "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"ababababababababcdcd\",\"abc\"]",
+        "output": "[14]",
+        "expectedOutput": "[14]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"zzzzz\",\"z\"]",
+        "output": "[0,1,2,3,4]",
+        "expectedOutput": "[0,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abacbabc\",\"abc\"]",
+        "output": "[1,2,3,5]",
+        "expectedOutput": "[1,2,3,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"thequickbrownfoxjumps\",\"xyz\"]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aabbccddeeffgg\",\"abc\"]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"mississippi\",\"issi\"]",
+        "output": "[1,4]",
+        "expectedOutput": "[1,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"qwertyuiopasdfgh\",\"fds\"]",
+        "output": "[11]",
+        "expectedOutput": "[11]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"aaabbbcccdddeee\",\"bcd\"]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"z\",\"zz\"]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"cbaebabacd\", p = \"abc\"",
+      "output": "[0, 6]",
+      "expectedOutput": "[0, 6]",
+      "explanation": "\"cba\" at index 0 and \"bac\" at index 6 are both anagrams of \"abc\""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"abab\", p = \"ab\"",
+      "output": "[0, 1, 2]",
+      "expectedOutput": "[0, 1, 2]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"cbaebabacd\", p = \"abc\"",
+      "output": "[0, 6]",
+      "expectedOutput": "[0, 6]",
+      "explanation": "\"cba\" at index 0 and \"bac\" at index 6 are both anagrams of \"abc\""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"abab\", p = \"ab\"",
+      "output": "[0, 1, 2]",
+      "expectedOutput": "[0, 1, 2]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"cbaebabacd\",\"abc\"]",
+      "output": "[0,6]",
+      "expectedOutput": "[0,6]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"abab\",\"ab\"]",
+      "output": "[0,1,2]",
+      "expectedOutput": "[0,1,2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"a\",\"a\"]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"a\",\"ab\"]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"\",\"a\"]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"abcdefg\",\"xyz\"]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"aaaaaa\",\"aa\"]",
+      "output": "[0,1,2,3,4]",
+      "expectedOutput": "[0,1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"baa\",\"aa\"]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"cbaebabacd\",\"bac\"]",
+      "output": "[0,6]",
+      "expectedOutput": "[0,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"abababab\",\"aab\"]",
+      "output": "[0,2,4]",
+      "expectedOutput": "[0,2,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"aaa\"]",
+      "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]",
+      "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"ababababababababcdcd\",\"abc\"]",
+      "output": "[14]",
+      "expectedOutput": "[14]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"zzzzz\",\"z\"]",
+      "output": "[0,1,2,3,4]",
+      "expectedOutput": "[0,1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"abacbabc\",\"abc\"]",
+      "output": "[1,2,3,5]",
+      "expectedOutput": "[1,2,3,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"thequickbrownfoxjumps\",\"xyz\"]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"aabbccddeeffgg\",\"abc\"]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"mississippi\",\"issi\"]",
+      "output": "[1,4]",
+      "expectedOutput": "[1,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"qwertyuiopasdfgh\",\"fds\"]",
+      "output": "[11]",
+      "expectedOutput": "[11]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"aaabbbcccdddeee\",\"bcd\"]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"z\",\"zz\"]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"cbaebabacd\", p = \"abc\"",
+        "output": "[0, 6]",
+        "expectedOutput": "[0, 6]",
+        "explanation": "\"cba\" at index 0 and \"bac\" at index 6 are both anagrams of \"abc\""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"abab\", p = \"ab\"",
+        "output": "[0, 1, 2]",
+        "expectedOutput": "[0, 1, 2]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"cbaebabacd\",\"abc\"]",
+        "output": "[0,6]",
+        "expectedOutput": "[0,6]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"abab\",\"ab\"]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a\",\"a\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a\",\"ab\"]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"a\"]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"abcdefg\",\"xyz\"]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aaaaaa\",\"aa\"]",
+        "output": "[0,1,2,3,4]",
+        "expectedOutput": "[0,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"baa\",\"aa\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"cbaebabacd\",\"bac\"]",
+        "output": "[0,6]",
+        "expectedOutput": "[0,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abababab\",\"aab\"]",
+        "output": "[0,2,4]",
+        "expectedOutput": "[0,2,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"aaa\"]",
+        "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]",
+        "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"ababababababababcdcd\",\"abc\"]",
+        "output": "[14]",
+        "expectedOutput": "[14]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"zzzzz\",\"z\"]",
+        "output": "[0,1,2,3,4]",
+        "expectedOutput": "[0,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abacbabc\",\"abc\"]",
+        "output": "[1,2,3,5]",
+        "expectedOutput": "[1,2,3,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"thequickbrownfoxjumps\",\"xyz\"]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aabbccddeeffgg\",\"abc\"]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"mississippi\",\"issi\"]",
+        "output": "[1,4]",
+        "expectedOutput": "[1,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"qwertyuiopasdfgh\",\"fds\"]",
+        "output": "[11]",
+        "expectedOutput": "[11]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"aaabbbcccdddeee\",\"bcd\"]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"z\",\"zz\"]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findAnagrams(self, s, p):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findAnagrams(string s, string p) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findAnagrams(String s, String p) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findAnagrams(s: String, p: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findAnagrams(s, p) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findAnagrams(self, s, p):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findAnagrams(string s, string p) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findAnagrams(String s, String p) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findAnagrams(s: String, p: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findAnagrams(s, p) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findAnagrams(self, s, p):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findAnagrams(string s, string p) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findAnagrams(String s, String p) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findAnagrams(s: String, p: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findAnagrams(s, p) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findAnagrams(self, s, p):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findAnagrams(string s, string p) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findAnagrams(String s, String p) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findAnagrams(s: String, p: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findAnagrams(s, p) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) (26 letters)",
+      "pattern": "fixed-size sliding window, the same shape as Permutation in String, but recording every matching index instead of stopping at the first"
+    },
+    "bruteForce": {
+      "approach": "for every substring of s the same length as p, build a frequency count and compare it to p's frequency count",
+      "time": "O(n * 26) per position, so O(n * 26) total, or worse if sorting substrings instead",
+      "space": "O(1) per check"
+    }
+  },
+  "optimal": {
+    "pattern": "fixed-size sliding window, the same shape as Permutation in String, but recording every matching index instead of stopping at the first",
+    "time": "O(n)",
+    "space": "O(1) (26 letters)",
+    "hint_ladder": [
+      "this is almost exactly the same question as checking whether one string contains a permutation of another - what's different here?",
+      "instead of returning as soon as you find one matching window, what should you do differently?",
+      "slide a window the size of p across s, maintaining a running letter-frequency count, updating incrementally as the window moves",
+      "whenever the window's frequency count matches p's, record the window's starting index and keep going instead of stopping"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every substring of s the same length as p, build a frequency count and compare it to p's frequency count",
+    "time": "O(n * 26) per position, so O(n * 26) total, or worse if sorting substrings instead",
+    "space": "O(1) per check"
+  },
+  "isIndex0": true,
+  "level": null
+}

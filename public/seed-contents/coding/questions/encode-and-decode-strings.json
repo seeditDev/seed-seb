@@ -1,0 +1,678 @@
+{
+  "id": "encode-and-decode-strings",
+  "questionId": "encode-and-decode-strings",
+  "slug": "encode-and-decode-strings",
+  "title": "Encode and Decode Strings",
+  "difficulty": "Medium",
+  "category": "Two pointers",
+  "patterns": [
+    "two pointers",
+    "design",
+    "string encoding"
+  ],
+  "lists": [
+    "blind-75"
+  ],
+  "hints": [
+    "any single-character delimiter can appear inside one of the strings themselves, which breaks a naive split-on-delimiter decode - you need a scheme where the delimiter's meaning can never be ambiguous",
+    "what if, right before each string, you wrote down how many characters long it is?",
+    "encode each string as '<length>#<string>', e.g. \"3#cat\", and concatenate all of these with no separator needed between entries",
+    "to decode, scan for the next '#', parse everything before it as a number (the length), then read exactly that many characters as the next string, and repeat from there",
+    "this works no matter what characters are inside the string, including more '#' characters or digits, because you never search for content inside the string itself - you always know its exact length up front"
+  ],
+  "commonMistakes": [
+    "using a single reserved delimiter character to join strings, which breaks when an element contains that exact character",
+    "decoding by splitting on '#' instead of reading exactly <length> characters after it, which breaks when the string content itself contains '#'",
+    "off-by-one errors when slicing out the length-prefixed substring, especially forgetting to advance the read position past both the length digits and the '#' separator",
+    "not handling the empty list or empty-string elements as a valid special case"
+  ],
+  "content": {
+    "problemStatement": "Design an encode function that takes a list of strings and joins them into\none single string, and a matching decode function that takes that single\nstring and recovers the exact original list, in order. The strings can\ncontain any characters at all, including digits, the `#` character, or\nsequences that look like your own encoding format, so a naive\njoin-with-a-delimiter scheme is not safe. For this exercise, the list is\ngiven to you as a single input string `strs`, with elements separated by\n`\"|\"`.\n\n**Encode the resulting list with your own scheme, then immediately decode what you just encoded, and return the recovered list re-joined the same way, with `\"|\"` between elements.**\n\nAn empty `strs` means an empty list, and two adjacent `\"|\"` characters mean an empty-string element sits between them.\n",
+    "constraints": [
+      "0 <= number of strings in the list <= 200",
+      "0 <= length of each string <= 200",
+      "strings may contain any characters, including digits and '#', except the '|' used by this exercise's input/output transport format"
+    ],
+    "notes": [
+      "the empty list (strs is the empty string)",
+      "a list containing one or more empty-string elements",
+      "an element that itself contains digits followed by '#', mimicking the encoding format",
+      "an element made entirely of '#' characters"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "strs = \"cat|dog\"",
+        "output": "\"cat|dog\"",
+        "expectedOutput": "\"cat|dog\"",
+        "explanation": "encoding \"cat\" and \"dog\" with a length-prefix scheme like \"3#cat3#dog\" and decoding it back recovers [\"cat\", \"dog\"] exactly"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "strs = \"4#dog|cat\"",
+        "output": "\"4#dog|cat\"",
+        "expectedOutput": "\"4#dog|cat\"",
+        "explanation": "the element \"4#dog\" looks like it could confuse a naive decoder, but a length-prefix scheme reads exactly 5 characters for it regardless of what they are, recovering it intact"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "strs = \"|a|\"",
+        "output": "\"|a|\"",
+        "expectedOutput": "\"|a|\"",
+        "explanation": "the list [\"\", \"a\", \"\"] round-trips correctly, including the empty-string elements"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a|b|c\"]",
+        "output": "a|b|c",
+        "expectedOutput": "a|b|c",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"cat|dog\"]",
+        "output": "cat|dog",
+        "expectedOutput": "cat|dog",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"|a|\"]",
+        "output": "|a|",
+        "expectedOutput": "|a|",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"4#dog|cat\"]",
+        "output": "4#dog|cat",
+        "expectedOutput": "4#dog|cat",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"3#cat|4#doge\"]",
+        "output": "3#cat|4#doge",
+        "expectedOutput": "3#cat|4#doge",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"hello world|foo\"]",
+        "output": "hello world|foo",
+        "expectedOutput": "hello world|foo",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"###|##\"]",
+        "output": "###|##",
+        "expectedOutput": "###|##",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"12345|6789\"]",
+        "output": "12345|6789",
+        "expectedOutput": "12345|6789",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"a||b||c\"]",
+        "output": "a||b||c",
+        "expectedOutput": "a||b||c",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"|x\"]",
+        "output": "|x",
+        "expectedOutput": "|x",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"x|\"]",
+        "output": "x|",
+        "expectedOutput": "x|",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"single\"]",
+        "output": "single",
+        "expectedOutput": "single",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aaaaaaaaaa\"]",
+        "output": "aaaaaaaaaa",
+        "expectedOutput": "aaaaaaaaaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"0|00|000\"]",
+        "output": "0|00|000",
+        "expectedOutput": "0|00|000",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"#1|#2|#3\"]",
+        "output": "#1|#2|#3",
+        "expectedOutput": "#1|#2|#3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"leet|code|leetcode\"]",
+        "output": "leet|code|leetcode",
+        "expectedOutput": "leet|code|leetcode",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"||\"]",
+        "output": "||",
+        "expectedOutput": "||",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"hi!|bye?\"]",
+        "output": "hi!|bye?",
+        "expectedOutput": "hi!|bye?",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"a1|b22|c333\"]",
+        "output": "a1|b22|c333",
+        "expectedOutput": "a1|b22|c333",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"ab|||cd\"]",
+        "output": "ab|||cd",
+        "expectedOutput": "ab|||cd",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "strs = \"cat|dog\"",
+      "output": "\"cat|dog\"",
+      "expectedOutput": "\"cat|dog\"",
+      "explanation": "encoding \"cat\" and \"dog\" with a length-prefix scheme like \"3#cat3#dog\" and decoding it back recovers [\"cat\", \"dog\"] exactly"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "strs = \"4#dog|cat\"",
+      "output": "\"4#dog|cat\"",
+      "expectedOutput": "\"4#dog|cat\"",
+      "explanation": "the element \"4#dog\" looks like it could confuse a naive decoder, but a length-prefix scheme reads exactly 5 characters for it regardless of what they are, recovering it intact"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "strs = \"|a|\"",
+      "output": "\"|a|\"",
+      "expectedOutput": "\"|a|\"",
+      "explanation": "the list [\"\", \"a\", \"\"] round-trips correctly, including the empty-string elements"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "strs = \"cat|dog\"",
+      "output": "\"cat|dog\"",
+      "expectedOutput": "\"cat|dog\"",
+      "explanation": "encoding \"cat\" and \"dog\" with a length-prefix scheme like \"3#cat3#dog\" and decoding it back recovers [\"cat\", \"dog\"] exactly"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "strs = \"4#dog|cat\"",
+      "output": "\"4#dog|cat\"",
+      "expectedOutput": "\"4#dog|cat\"",
+      "explanation": "the element \"4#dog\" looks like it could confuse a naive decoder, but a length-prefix scheme reads exactly 5 characters for it regardless of what they are, recovering it intact"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "strs = \"|a|\"",
+      "output": "\"|a|\"",
+      "expectedOutput": "\"|a|\"",
+      "explanation": "the list [\"\", \"a\", \"\"] round-trips correctly, including the empty-string elements"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"a\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"a|b|c\"]",
+      "output": "a|b|c",
+      "expectedOutput": "a|b|c",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"cat|dog\"]",
+      "output": "cat|dog",
+      "expectedOutput": "cat|dog",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"|a|\"]",
+      "output": "|a|",
+      "expectedOutput": "|a|",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"4#dog|cat\"]",
+      "output": "4#dog|cat",
+      "expectedOutput": "4#dog|cat",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"3#cat|4#doge\"]",
+      "output": "3#cat|4#doge",
+      "expectedOutput": "3#cat|4#doge",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"hello world|foo\"]",
+      "output": "hello world|foo",
+      "expectedOutput": "hello world|foo",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"###|##\"]",
+      "output": "###|##",
+      "expectedOutput": "###|##",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"12345|6789\"]",
+      "output": "12345|6789",
+      "expectedOutput": "12345|6789",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"a||b||c\"]",
+      "output": "a||b||c",
+      "expectedOutput": "a||b||c",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"|x\"]",
+      "output": "|x",
+      "expectedOutput": "|x",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"x|\"]",
+      "output": "x|",
+      "expectedOutput": "x|",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"single\"]",
+      "output": "single",
+      "expectedOutput": "single",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"aaaaaaaaaa\"]",
+      "output": "aaaaaaaaaa",
+      "expectedOutput": "aaaaaaaaaa",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"0|00|000\"]",
+      "output": "0|00|000",
+      "expectedOutput": "0|00|000",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"#1|#2|#3\"]",
+      "output": "#1|#2|#3",
+      "expectedOutput": "#1|#2|#3",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"leet|code|leetcode\"]",
+      "output": "leet|code|leetcode",
+      "expectedOutput": "leet|code|leetcode",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"||\"]",
+      "output": "||",
+      "expectedOutput": "||",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"hi!|bye?\"]",
+      "output": "hi!|bye?",
+      "expectedOutput": "hi!|bye?",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"a1|b22|c333\"]",
+      "output": "a1|b22|c333",
+      "expectedOutput": "a1|b22|c333",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[\"ab|||cd\"]",
+      "output": "ab|||cd",
+      "expectedOutput": "ab|||cd",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "strs = \"cat|dog\"",
+        "output": "\"cat|dog\"",
+        "expectedOutput": "\"cat|dog\"",
+        "explanation": "encoding \"cat\" and \"dog\" with a length-prefix scheme like \"3#cat3#dog\" and decoding it back recovers [\"cat\", \"dog\"] exactly"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "strs = \"4#dog|cat\"",
+        "output": "\"4#dog|cat\"",
+        "expectedOutput": "\"4#dog|cat\"",
+        "explanation": "the element \"4#dog\" looks like it could confuse a naive decoder, but a length-prefix scheme reads exactly 5 characters for it regardless of what they are, recovering it intact"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "strs = \"|a|\"",
+        "output": "\"|a|\"",
+        "expectedOutput": "\"|a|\"",
+        "explanation": "the list [\"\", \"a\", \"\"] round-trips correctly, including the empty-string elements"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a|b|c\"]",
+        "output": "a|b|c",
+        "expectedOutput": "a|b|c",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"cat|dog\"]",
+        "output": "cat|dog",
+        "expectedOutput": "cat|dog",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"|a|\"]",
+        "output": "|a|",
+        "expectedOutput": "|a|",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"4#dog|cat\"]",
+        "output": "4#dog|cat",
+        "expectedOutput": "4#dog|cat",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"3#cat|4#doge\"]",
+        "output": "3#cat|4#doge",
+        "expectedOutput": "3#cat|4#doge",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"hello world|foo\"]",
+        "output": "hello world|foo",
+        "expectedOutput": "hello world|foo",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"###|##\"]",
+        "output": "###|##",
+        "expectedOutput": "###|##",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"12345|6789\"]",
+        "output": "12345|6789",
+        "expectedOutput": "12345|6789",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"a||b||c\"]",
+        "output": "a||b||c",
+        "expectedOutput": "a||b||c",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"|x\"]",
+        "output": "|x",
+        "expectedOutput": "|x",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"x|\"]",
+        "output": "x|",
+        "expectedOutput": "x|",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"single\"]",
+        "output": "single",
+        "expectedOutput": "single",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aaaaaaaaaa\"]",
+        "output": "aaaaaaaaaa",
+        "expectedOutput": "aaaaaaaaaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"0|00|000\"]",
+        "output": "0|00|000",
+        "expectedOutput": "0|00|000",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"#1|#2|#3\"]",
+        "output": "#1|#2|#3",
+        "expectedOutput": "#1|#2|#3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"leet|code|leetcode\"]",
+        "output": "leet|code|leetcode",
+        "expectedOutput": "leet|code|leetcode",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"||\"]",
+        "output": "||",
+        "expectedOutput": "||",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"hi!|bye?\"]",
+        "output": "hi!|bye?",
+        "expectedOutput": "hi!|bye?",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"a1|b22|c333\"]",
+        "output": "a1|b22|c333",
+        "expectedOutput": "a1|b22|c333",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"ab|||cd\"]",
+        "output": "ab|||cd",
+        "expectedOutput": "ab|||cd",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def encodeDecodeRoundTrip(self, strs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string encodeDecodeRoundTrip(string strs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String encodeDecodeRoundTrip(String strs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun encodeDecodeRoundTrip(strs: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    encodeDecodeRoundTrip(strs) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def encodeDecodeRoundTrip(self, strs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string encodeDecodeRoundTrip(string strs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String encodeDecodeRoundTrip(String strs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun encodeDecodeRoundTrip(strs: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    encodeDecodeRoundTrip(strs) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def encodeDecodeRoundTrip(self, strs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string encodeDecodeRoundTrip(string strs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String encodeDecodeRoundTrip(String strs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun encodeDecodeRoundTrip(strs: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    encodeDecodeRoundTrip(strs) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def encodeDecodeRoundTrip(self, strs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string encodeDecodeRoundTrip(string strs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String encodeDecodeRoundTrip(String strs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun encodeDecodeRoundTrip(strs: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    encodeDecodeRoundTrip(strs) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(total characters) for both encode and decode",
+      "space": "O(total characters) for the encoded string",
+      "pattern": "length-prefix encoding - store each string's length before it, followed by a separator, so decode always knows exactly how many characters to read"
+    },
+    "bruteForce": {
+      "approach": "join elements with a single fixed delimiter character (like a comma), and decode by splitting on it",
+      "time": "O(total characters) for both encode and decode",
+      "space": "O(total characters) for the encoded string"
+    }
+  },
+  "optimal": {
+    "pattern": "length-prefix encoding - store each string's length before it, followed by a separator, so decode always knows exactly how many characters to read",
+    "time": "O(total characters) for both encode and decode",
+    "space": "O(total characters) for the encoded string",
+    "hint_ladder": [
+      "any single-character delimiter can appear inside one of the strings themselves, which breaks a naive split-on-delimiter decode - you need a scheme where the delimiter's meaning can never be ambiguous",
+      "what if, right before each string, you wrote down how many characters long it is?",
+      "encode each string as '<length>#<string>', e.g. \"3#cat\", and concatenate all of these with no separator needed between entries",
+      "to decode, scan for the next '#', parse everything before it as a number (the length), then read exactly that many characters as the next string, and repeat from there",
+      "this works no matter what characters are inside the string, including more '#' characters or digits, because you never search for content inside the string itself - you always know its exact length up front"
+    ]
+  },
+  "bruteForce": {
+    "approach": "join elements with a single fixed delimiter character (like a comma), and decode by splitting on it",
+    "time": "O(total characters) for both encode and decode",
+    "space": "O(total characters) for the encoded string"
+  },
+  "isIndex0": true,
+  "level": null
+}

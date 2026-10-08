@@ -1,0 +1,630 @@
+{
+  "id": "minimum-ascii-delete-sum-for-two-strings",
+  "questionId": "minimum-ascii-delete-sum-for-two-strings",
+  "slug": "minimum-ascii-delete-sum-for-two-strings",
+  "title": "Minimum ASCII Delete Sum for Two Strings",
+  "difficulty": "Easy",
+  "category": "Dp 2d",
+  "patterns": [
+    "dynamic programming",
+    "strings"
+  ],
+  "lists": [],
+  "hints": [
+    "this looks like edit distance or delete-operation-for-two-strings, but instead of counting deletions, each deletion now has a cost equal to its character's ASCII value",
+    "define dp[i][j] as the minimum total ASCII cost of deletions needed to make the first i characters of s1 and the first j characters of s2 equal",
+    "if s1[i-1] == s2[j-1], that character can stay in both for free: dp[i][j] = dp[i-1][j-1]",
+    "if they differ, you must delete one of them (whichever is cheaper): dp[i][j] = min(dp[i-1][j] + ascii(s1[i-1]), dp[i][j-1] + ascii(s2[j-1]))",
+    "base cases: dp[i][0] is the cost of deleting all of s1's first i characters (running ASCII sum), and dp[0][j] is the same for s2; fill the table and return dp[m][n]"
+  ],
+  "commonMistakes": [
+    "counting deletions (adding 1) instead of adding the actual ASCII value of the deleted character",
+    "forgetting the base case rows/columns need running ASCII sums, not just running counts",
+    "picking the wrong branch to delete from when characters differ, instead of comparing both costs and taking the minimum"
+  ],
+  "content": {
+    "problemStatement": "You're given two strings `s1` and `s2`.\n\n**Find the lowest possible sum of ASCII values of the characters you must delete (from either string) so that the two strings become identical.**\n\nUnlike simply counting deletions, here every deleted character costs its\nASCII value, so deleting an 'a' (97) is cheaper than deleting a 'z' (122).\n",
+    "constraints": [
+      "0 <= s1.length, s2.length <= 1000",
+      "strings consist of lowercase English letters"
+    ],
+    "notes": [
+      "the two strings are already identical (cost is 0)",
+      "the two strings share no characters at all (delete every character from both)",
+      "one string is empty (delete every character of the other)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s1 = \"sea\", s2 = \"eat\"",
+        "output": "231",
+        "expectedOutput": "231",
+        "explanation": "Deleting 's' (115) from \"sea\" and both 't' (116) from \"eat\" leaves \"ea\" in common... actually deleting 's' from s1 and 't' from s2 leaves \"ea\" in both, costing 115 + 116 = 231."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s1 = \"delete\", s2 = \"leet\"",
+        "output": "403",
+        "expectedOutput": "403",
+        "explanation": "Deleting \"dee\" from \"delete\" (100+101+101=302) and \"e\" from \"leet\" (101) leaves \"let\" common to both, for a total cost of 403."
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s1 = \"a\", s2 = \"a\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"sea\",\"eat\"]",
+        "output": "231",
+        "expectedOutput": "231",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"delete\",\"leet\"]",
+        "output": "403",
+        "expectedOutput": "403",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a\",\"a\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"ab\",\"cd\"]",
+        "output": "394",
+        "expectedOutput": "394",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"ab\"]",
+        "output": "195",
+        "expectedOutput": "195",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"\",\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"z\",\"a\"]",
+        "output": "219",
+        "expectedOutput": "219",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"abc\",\"abc\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"bbcedbbabb\",\"daabcdca\"]",
+        "output": "984",
+        "expectedOutput": "984",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abbbaaaaaaba\",\"aaaaaaababab\"]",
+        "output": "587",
+        "expectedOutput": "587",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"kitten\",\"sitting\"]",
+        "output": "531",
+        "expectedOutput": "531",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"zzzz\",\"aaaa\"]",
+        "output": "876",
+        "expectedOutput": "876",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"acadeadddadbbac\",\"baaccaced\"]",
+        "output": "1379",
+        "expectedOutput": "1379",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"\",\"abcdefgh\"]",
+        "output": "804",
+        "expectedOutput": "804",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abcdefgh\",\"\"]",
+        "output": "804",
+        "expectedOutput": "804",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aaaaaaaaaa\",\"aaaaa\"]",
+        "output": "485",
+        "expectedOutput": "485",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"zzyyzxxzxxy\",\"xzxxzyxyyzxyz\"]",
+        "output": "1203",
+        "expectedOutput": "1203",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"plants\",\"plant\"]",
+        "output": "115",
+        "expectedOutput": "115",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcxyz\",\"xyzabc\"]",
+        "output": "588",
+        "expectedOutput": "588",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"programming\",\"gaming\"]",
+        "output": "560",
+        "expectedOutput": "560",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s1 = \"sea\", s2 = \"eat\"",
+      "output": "231",
+      "expectedOutput": "231",
+      "explanation": "Deleting 's' (115) from \"sea\" and both 't' (116) from \"eat\" leaves \"ea\" in common... actually deleting 's' from s1 and 't' from s2 leaves \"ea\" in both, costing 115 + 116 = 231."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s1 = \"delete\", s2 = \"leet\"",
+      "output": "403",
+      "expectedOutput": "403",
+      "explanation": "Deleting \"dee\" from \"delete\" (100+101+101=302) and \"e\" from \"leet\" (101) leaves \"let\" common to both, for a total cost of 403."
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s1 = \"a\", s2 = \"a\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s1 = \"sea\", s2 = \"eat\"",
+      "output": "231",
+      "expectedOutput": "231",
+      "explanation": "Deleting 's' (115) from \"sea\" and both 't' (116) from \"eat\" leaves \"ea\" in common... actually deleting 's' from s1 and 't' from s2 leaves \"ea\" in both, costing 115 + 116 = 231."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s1 = \"delete\", s2 = \"leet\"",
+      "output": "403",
+      "expectedOutput": "403",
+      "explanation": "Deleting \"dee\" from \"delete\" (100+101+101=302) and \"e\" from \"leet\" (101) leaves \"let\" common to both, for a total cost of 403."
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s1 = \"a\", s2 = \"a\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"sea\",\"eat\"]",
+      "output": "231",
+      "expectedOutput": "231",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"delete\",\"leet\"]",
+      "output": "403",
+      "expectedOutput": "403",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"a\",\"a\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"ab\",\"cd\"]",
+      "output": "394",
+      "expectedOutput": "394",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"\",\"ab\"]",
+      "output": "195",
+      "expectedOutput": "195",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"\",\"\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"z\",\"a\"]",
+      "output": "219",
+      "expectedOutput": "219",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"abc\",\"abc\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"bbcedbbabb\",\"daabcdca\"]",
+      "output": "984",
+      "expectedOutput": "984",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"abbbaaaaaaba\",\"aaaaaaababab\"]",
+      "output": "587",
+      "expectedOutput": "587",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"kitten\",\"sitting\"]",
+      "output": "531",
+      "expectedOutput": "531",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"zzzz\",\"aaaa\"]",
+      "output": "876",
+      "expectedOutput": "876",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"acadeadddadbbac\",\"baaccaced\"]",
+      "output": "1379",
+      "expectedOutput": "1379",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"\",\"abcdefgh\"]",
+      "output": "804",
+      "expectedOutput": "804",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"abcdefgh\",\"\"]",
+      "output": "804",
+      "expectedOutput": "804",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"aaaaaaaaaa\",\"aaaaa\"]",
+      "output": "485",
+      "expectedOutput": "485",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"zzyyzxxzxxy\",\"xzxxzyxyyzxyz\"]",
+      "output": "1203",
+      "expectedOutput": "1203",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"plants\",\"plant\"]",
+      "output": "115",
+      "expectedOutput": "115",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"abcxyz\",\"xyzabc\"]",
+      "output": "588",
+      "expectedOutput": "588",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"programming\",\"gaming\"]",
+      "output": "560",
+      "expectedOutput": "560",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s1 = \"sea\", s2 = \"eat\"",
+        "output": "231",
+        "expectedOutput": "231",
+        "explanation": "Deleting 's' (115) from \"sea\" and both 't' (116) from \"eat\" leaves \"ea\" in common... actually deleting 's' from s1 and 't' from s2 leaves \"ea\" in both, costing 115 + 116 = 231."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s1 = \"delete\", s2 = \"leet\"",
+        "output": "403",
+        "expectedOutput": "403",
+        "explanation": "Deleting \"dee\" from \"delete\" (100+101+101=302) and \"e\" from \"leet\" (101) leaves \"let\" common to both, for a total cost of 403."
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s1 = \"a\", s2 = \"a\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"sea\",\"eat\"]",
+        "output": "231",
+        "expectedOutput": "231",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"delete\",\"leet\"]",
+        "output": "403",
+        "expectedOutput": "403",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a\",\"a\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"ab\",\"cd\"]",
+        "output": "394",
+        "expectedOutput": "394",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"ab\"]",
+        "output": "195",
+        "expectedOutput": "195",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"\",\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"z\",\"a\"]",
+        "output": "219",
+        "expectedOutput": "219",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"abc\",\"abc\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"bbcedbbabb\",\"daabcdca\"]",
+        "output": "984",
+        "expectedOutput": "984",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abbbaaaaaaba\",\"aaaaaaababab\"]",
+        "output": "587",
+        "expectedOutput": "587",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"kitten\",\"sitting\"]",
+        "output": "531",
+        "expectedOutput": "531",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"zzzz\",\"aaaa\"]",
+        "output": "876",
+        "expectedOutput": "876",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"acadeadddadbbac\",\"baaccaced\"]",
+        "output": "1379",
+        "expectedOutput": "1379",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"\",\"abcdefgh\"]",
+        "output": "804",
+        "expectedOutput": "804",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abcdefgh\",\"\"]",
+        "output": "804",
+        "expectedOutput": "804",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aaaaaaaaaa\",\"aaaaa\"]",
+        "output": "485",
+        "expectedOutput": "485",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"zzyyzxxzxxy\",\"xzxxzyxyyzxyz\"]",
+        "output": "1203",
+        "expectedOutput": "1203",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"plants\",\"plant\"]",
+        "output": "115",
+        "expectedOutput": "115",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcxyz\",\"xyzabc\"]",
+        "output": "588",
+        "expectedOutput": "588",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"programming\",\"gaming\"]",
+        "output": "560",
+        "expectedOutput": "560",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minimumDeleteSum(self, s1, s2):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumDeleteSum(string s1, string s2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumDeleteSum(String s1, String s2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumDeleteSum(s1: String, s2: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumDeleteSum(s1, s2) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minimumDeleteSum(self, s1, s2):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumDeleteSum(string s1, string s2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumDeleteSum(String s1, String s2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumDeleteSum(s1: String, s2: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumDeleteSum(s1, s2) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minimumDeleteSum(self, s1, s2):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumDeleteSum(string s1, string s2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumDeleteSum(String s1, String s2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumDeleteSum(s1: String, s2: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumDeleteSum(s1, s2) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minimumDeleteSum(self, s1, s2):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumDeleteSum(string s1, string s2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumDeleteSum(String s1, String s2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumDeleteSum(s1: String, s2: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumDeleteSum(s1, s2) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(m * n)",
+      "space": "O(m * n), reducible to O(min(m, n))",
+      "pattern": "2D dynamic programming over two string indices, minimizing ASCII cost instead of counting"
+    },
+    "bruteForce": {
+      "approach": "recursively try, at each position, deleting the current character from s1, deleting from s2, or keeping both if they match, summing ASCII costs and taking the minimum over all branches",
+      "time": "O(2^(m+n))",
+      "space": "O(m + n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "2D dynamic programming over two string indices, minimizing ASCII cost instead of counting",
+    "time": "O(m * n)",
+    "space": "O(m * n), reducible to O(min(m, n))",
+    "hint_ladder": [
+      "this looks like edit distance or delete-operation-for-two-strings, but instead of counting deletions, each deletion now has a cost equal to its character's ASCII value",
+      "define dp[i][j] as the minimum total ASCII cost of deletions needed to make the first i characters of s1 and the first j characters of s2 equal",
+      "if s1[i-1] == s2[j-1], that character can stay in both for free: dp[i][j] = dp[i-1][j-1]",
+      "if they differ, you must delete one of them (whichever is cheaper): dp[i][j] = min(dp[i-1][j] + ascii(s1[i-1]), dp[i][j-1] + ascii(s2[j-1]))",
+      "base cases: dp[i][0] is the cost of deleting all of s1's first i characters (running ASCII sum), and dp[0][j] is the same for s2; fill the table and return dp[m][n]"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try, at each position, deleting the current character from s1, deleting from s2, or keeping both if they match, summing ASCII costs and taking the minimum over all branches",
+    "time": "O(2^(m+n))",
+    "space": "O(m + n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

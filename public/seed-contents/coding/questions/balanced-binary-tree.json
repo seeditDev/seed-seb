@@ -1,0 +1,638 @@
+{
+  "id": "balanced-binary-tree",
+  "questionId": "balanced-binary-tree",
+  "slug": "balanced-binary-tree",
+  "title": "Balanced Binary Tree",
+  "difficulty": "Easy",
+  "category": "Tree dfs",
+  "patterns": [
+    "tree",
+    "dfs",
+    "recursion"
+  ],
+  "lists": [
+    "grind-75"
+  ],
+  "hints": [
+    "checking balance separately from computing height means you recompute the same subtree heights over and over - can you combine the two into one pass?",
+    "write a helper that returns the height of a subtree, but have it also signal when an imbalance was found anywhere below",
+    "a clean trick: have the helper return -1 as a special 'this subtree is already unbalanced' signal, instead of its real height",
+    "at each node, get the left and right heights from the recursive calls; if either is -1 or they differ by more than 1, propagate -1 upward, otherwise return 1 + max(left, right)"
+  ],
+  "commonMistakes": [
+    "only checking the height difference at the root instead of at every node in the tree",
+    "recomputing subtree height with a separate top-down call at every node, leading to unnecessary O(n^2) work",
+    "using an off-by-one height definition (counting edges instead of nodes, or vice versa) inconsistently between the height helper and the comparison"
+  ],
+  "content": {
+    "problemStatement": "Binary trees in these problems are encoded as a flat array named `tree` using complete-binary-tree (heap) indexing:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- any position at or beyond the end of the array, or holding the sentinel value `-101`, means \"no node there\"\n\n**A binary tree is height-balanced if, for every node, the heights of its left and right subtrees differ by at most 1. Given a tree encoded this way, return true if it is height-balanced and false otherwise.**\n\nAn empty tree is considered balanced.\n",
+    "constraints": [
+      "0 <= number of real nodes <= 5000",
+      "every real node value is between -100 and 100 inclusive",
+      "the sentinel value -101 marks a missing node and never appears as a real value"
+    ],
+    "notes": [
+      "empty tree, represented as [-101]",
+      "a single node with no children",
+      "a tree where the imbalance appears deep down rather than at the root",
+      "a completely skewed tree (every node has only one child)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [3, 9, 20, -101, -101, 15, 7]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "every node's left and right subtree heights differ by at most 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [1, 2, -101, 3, -101, -101, -101, 4]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "node 2 has a left subtree of height 2 (through 3, 4) and no right subtree (height 0), a difference of 2"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [-101]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "an empty tree has no node that violates the balance condition, so it counts as balanced"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[-101]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[3,9,20,-101,-101,15,7]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,-101,3,-101,-101,-101,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,-101,2,-101,-101,-101,3,-101,-101,-101,-101,-101,-101,-101,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,2,3,3,-101,-101,4,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,2,3,-101,-101,3,4,-101,-101,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,3,8,1,4,7,9,0,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,-101,-101,-101,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,-101,-101,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,0,0,0,0,-101,-101,0,0,-101,-101,-101,-101,0,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[10,5,15,2,7,12,20,1,-101,-101,-101,-101,-101,-101,-101]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,-101,-101,-101,-101,6,-101,-101,-101]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[100,-100]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,-101,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,-101]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,-101,-101,4,5,-101,-101,6,7]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7,8,-101,-101,-101,-101,-101,-101,-101]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [3, 9, 20, -101, -101, 15, 7]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "every node's left and right subtree heights differ by at most 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [1, 2, -101, 3, -101, -101, -101, 4]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "node 2 has a left subtree of height 2 (through 3, 4) and no right subtree (height 0), a difference of 2"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [-101]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "an empty tree has no node that violates the balance condition, so it counts as balanced"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [3, 9, 20, -101, -101, 15, 7]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "every node's left and right subtree heights differ by at most 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [1, 2, -101, 3, -101, -101, -101, 4]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "node 2 has a left subtree of height 2 (through 3, 4) and no right subtree (height 0), a difference of 2"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [-101]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "an empty tree has no node that violates the balance condition, so it counts as balanced"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[-101]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[3,9,20,-101,-101,15,7]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,2,-101,3,-101,-101,-101,4]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,-101,2,-101,-101,-101,3,-101,-101,-101,-101,-101,-101,-101,4]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,2,3,3,-101,-101,4,4]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,2,3,-101,-101,3,4,-101,-101,4]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[5,3,8,1,4,7,9,0,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3,4,-101,-101,-101,5]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,-101,-101,3]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[0,0,0,0,0,-101,-101,0,0,-101,-101,-101,-101,0,0]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[10,5,15,2,7,12,20,1,-101,-101,-101,-101,-101,-101,-101]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3,4,5,-101,-101,-101,-101,6,-101,-101,-101]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[100,-100]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,-101,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,4,5,6,-101]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3,-101,-101,4,5,-101,-101,6,7]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,2,3,4,5,6,7,8,-101,-101,-101,-101,-101,-101,-101]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [3, 9, 20, -101, -101, 15, 7]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "every node's left and right subtree heights differ by at most 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [1, 2, -101, 3, -101, -101, -101, 4]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "node 2 has a left subtree of height 2 (through 3, 4) and no right subtree (height 0), a difference of 2"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [-101]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "an empty tree has no node that violates the balance condition, so it counts as balanced"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[-101]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[3,9,20,-101,-101,15,7]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,-101,3,-101,-101,-101,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,-101,2,-101,-101,-101,3,-101,-101,-101,-101,-101,-101,-101,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,2,3,3,-101,-101,4,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,2,3,-101,-101,3,4,-101,-101,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,3,8,1,4,7,9,0,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,-101,-101,-101,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,-101,-101,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,0,0,0,0,-101,-101,0,0,-101,-101,-101,-101,0,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[10,5,15,2,7,12,20,1,-101,-101,-101,-101,-101,-101,-101]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,-101,-101,-101,-101,6,-101,-101,-101]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[100,-100]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,-101,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,-101]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,-101,-101,4,5,-101,-101,6,7]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7,8,-101,-101,-101,-101,-101,-101,-101]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def isBalanced(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isBalanced(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isBalanced(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isBalanced(tree: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isBalanced(tree) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def isBalanced(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isBalanced(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isBalanced(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isBalanced(tree: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isBalanced(tree) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def isBalanced(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isBalanced(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isBalanced(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isBalanced(tree: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isBalanced(tree) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def isBalanced(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isBalanced(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isBalanced(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isBalanced(tree: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isBalanced(tree) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n), visiting every node once",
+      "space": "O(h) for the recursion stack",
+      "pattern": "bottom-up postorder DFS that computes height and detects imbalance in the same pass"
+    },
+    "bruteForce": {
+      "approach": "for every node, independently compute the height of its left and right subtrees from scratch and compare, recursing into every node",
+      "time": "O(n^2) worst case, since computing height at each of the n nodes costs O(n) in a skewed tree",
+      "space": "O(h) recursion stack"
+    }
+  },
+  "optimal": {
+    "pattern": "bottom-up postorder DFS that computes height and detects imbalance in the same pass",
+    "time": "O(n), visiting every node once",
+    "space": "O(h) for the recursion stack",
+    "hint_ladder": [
+      "checking balance separately from computing height means you recompute the same subtree heights over and over - can you combine the two into one pass?",
+      "write a helper that returns the height of a subtree, but have it also signal when an imbalance was found anywhere below",
+      "a clean trick: have the helper return -1 as a special 'this subtree is already unbalanced' signal, instead of its real height",
+      "at each node, get the left and right heights from the recursive calls; if either is -1 or they differ by more than 1, propagate -1 upward, otherwise return 1 + max(left, right)"
+    ],
+    "common_mistakes": [
+      "only checking the height difference at the root instead of at every node in the tree",
+      "recomputing subtree height with a separate top-down call at every node, leading to unnecessary O(n^2) work",
+      "using an off-by-one height definition (counting edges instead of nodes, or vice versa) inconsistently between the height helper and the comparison"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every node, independently compute the height of its left and right subtrees from scratch and compare, recursing into every node",
+    "time": "O(n^2) worst case, since computing height at each of the n nodes costs O(n) in a skewed tree",
+    "space": "O(h) recursion stack"
+  },
+  "isIndex0": true,
+  "level": null
+}

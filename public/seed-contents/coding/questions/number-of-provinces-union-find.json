@@ -1,0 +1,633 @@
+{
+  "id": "number-of-provinces-union-find",
+  "questionId": "number-of-provinces-union-find",
+  "slug": "number-of-provinces-union-find",
+  "title": "Number of Provinces",
+  "difficulty": "Easy",
+  "category": "Union find",
+  "patterns": [
+    "union find",
+    "connected components"
+  ],
+  "lists": [],
+  "hints": [
+    "a province is just a connected component - how do you count connected components incrementally as you scan the matrix?",
+    "initialize each city as its own parent in a union-find structure",
+    "for every pair (i, j) with isConnected[i][j] = 1, union i and j",
+    "use path compression and union by rank/size so each union/find call is nearly O(1)",
+    "the answer is the number of distinct roots left at the end"
+  ],
+  "commonMistakes": [
+    "re-scanning the full matrix with DFS/BFS when union-find can do it in one pass over the upper triangle",
+    "forgetting path compression, causing find() to degrade toward O(n) per call on skewed unions",
+    "counting isConnected[i][i] as a real connection and double-processing the diagonal"
+  ],
+  "content": {
+    "problemStatement": "You're given n cities, and a direct-connection matrix `isConnected` where `isConnected[i][j] = 1` means city i and city j are directly connected by a road, and `isConnected[i][j] = 0` means they are not. A province is a maximal group of cities that are connected to each other, directly or indirectly through other cities.\n\n**Return the total number of provinces.**\n",
+    "constraints": [
+      "1 <= n <= 200",
+      "isConnected is an n x n matrix",
+      "isConnected[i][i] = 1 for all i",
+      "isConnected is symmetric"
+    ],
+    "notes": [
+      "a single city (1x1 matrix)",
+      "every city is its own province (identity matrix)",
+      "all cities form one giant province",
+      "connections that require chaining through an intermediate city to see the full province"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "isConnected = [[1,1,0],[1,1,0],[0,0,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "cities 0 and 1 are connected, city 2 is on its own"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "isConnected = [[1,0,0],[0,1,0],[0,0,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "no city is connected to any other, so each is its own province"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "isConnected = [[1,1,1],[1,1,1],[1,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "all three cities are directly connected to each other"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,1,0],[1,1,0],[0,0,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,0,0],[0,1,0],[0,0,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,0,0,1],[0,1,1,0],[0,1,1,1],[1,0,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,0],[0,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,1],[0,0,1,0,1,0,0,0],[0,0,0,1,0,0,0,0],[0,0,1,0,1,0,0,1],[0,0,0,0,0,1,0,0],[0,0,0,0,0,0,1,0],[0,1,0,0,1,0,0,1]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,0,0,0,0,0,0,1,0,0],[0,1,0,1,0,1,0,1,1,1],[0,0,1,1,1,0,0,0,0,0],[0,1,1,1,0,0,0,0,0,0],[0,0,1,0,1,1,1,1,0,0],[0,1,0,0,1,1,0,0,1,0],[0,0,0,0,1,0,1,0,0,0],[1,1,0,0,1,0,0,1,1,1],[0,1,0,0,0,1,0,1,1,0],[0,1,0,0,0,0,0,1,0,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,0,0,0,0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0,0,0,0],[0,0,1,0,0,0,0,0,1,0,0,0],[0,0,0,1,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0,0,0,0],[0,0,0,0,0,0,1,0,0,0,0,0],[0,0,0,0,0,0,0,1,0,0,0,0],[0,0,1,0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0,1,0,0],[0,0,0,0,0,0,0,0,0,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,1]]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,1,1,0,0,1,0,1,0,0,0,1,0,0,1],[1,1,1,1,1,0,1,0,0,1,0,1,0,0,0],[1,1,1,0,1,0,1,0,1,1,1,1,0,1,1],[0,1,0,1,1,1,0,0,0,0,1,1,1,0,0],[0,1,1,1,1,0,0,1,0,0,1,0,0,0,1],[1,0,0,1,0,1,1,1,1,0,0,0,0,0,1],[0,1,1,0,0,1,1,1,1,1,0,0,1,1,0],[1,0,0,0,1,1,1,1,1,0,1,0,0,0,0],[0,0,1,0,0,1,1,1,1,1,1,1,0,1,1],[0,1,1,0,0,0,1,0,1,1,1,1,1,0,0],[0,0,1,1,1,0,0,1,1,1,1,0,0,1,0],[1,1,1,1,0,0,0,0,1,1,0,1,1,0,1],[0,0,0,1,0,0,1,0,0,1,0,1,1,0,1],[0,0,1,0,0,0,1,0,1,0,1,0,0,1,0],[1,0,1,0,1,1,0,0,1,0,0,1,1,0,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,0,0,0,0,0],[0,1,0,0,0,0],[0,0,1,0,0,0],[0,0,0,1,0,0],[0,0,0,0,1,0],[0,0,0,0,0,1]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,1,0,1,1],[0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,1,1,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,1],[0,0,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,1,1,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,1,0,0,1,0,0,0,0,0,1,0,0,0,0,0],[0,0,1,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,1,0],[1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0],[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0],[0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0],[1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],[1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,0,1,0],[1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,1,0,0],[1,1,0,0],[0,0,1,1],[0,0,1,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,1,0,1,0,0,1,0,0],[1,1,0,1,0,1,1,0,1],[0,0,1,1,0,0,0,0,0],[1,1,1,1,1,0,1,1,0],[0,0,0,1,1,1,1,1,0],[0,1,0,0,1,1,0,1,0],[1,1,0,1,1,0,1,1,1],[0,0,0,1,1,1,1,1,1],[0,1,0,0,0,0,1,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,0,0,0,0,0,1],[0,1,0,0,0,0,0],[0,0,1,0,0,0,0],[0,0,0,1,0,0,0],[0,0,0,0,1,0,0],[0,0,0,0,0,1,0],[1,0,0,0,0,0,1]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,0,0,0,0,1,0,1,0,0,0],[0,1,0,0,0,0,0,0,1,1,1],[0,0,1,0,1,0,1,0,0,0,0],[0,0,0,1,0,0,0,0,0,0,0],[0,0,1,0,1,1,0,0,0,0,0],[1,0,0,0,1,1,0,0,1,0,0],[0,0,1,0,0,0,1,1,1,1,0],[1,0,0,0,0,0,1,1,0,0,0],[0,1,0,0,0,1,1,0,1,1,1],[0,1,0,0,0,0,1,0,1,1,1],[0,1,0,0,0,0,0,0,1,1,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1,0,0,0,0,0,0,0,0,0,0,0],[1,1,1,0,0,0,0,0,0,0,0,0,0],[0,1,1,0,0,0,0,0,0,0,0,0,0],[0,0,0,1,1,0,0,0,0,0,0,0,0],[0,0,0,1,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,1,0,0,0,0,0,0],[0,0,0,0,0,1,1,1,0,0,0,0,0],[0,0,0,0,0,0,1,1,1,0,0,0,0],[0,0,0,0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0],[0,0,0,0,0,0,0,0,0,0,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,1]]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,1,0,0,1,0,0,1,1,0,0,0,1,0],[0,0,1,0,0,1,1,1,0,1,0,0,0,0],[0,0,0,1,0,1,0,0,0,0,1,1,1,0],[0,1,0,0,1,0,0,0,0,0,1,1,0,0],[0,0,1,1,0,1,0,0,0,0,1,1,0,1],[0,0,1,0,0,0,1,0,0,1,0,1,0,0],[0,1,1,0,0,0,0,1,1,1,1,0,0,0],[0,1,0,0,0,0,0,1,1,1,1,0,0,0],[0,0,1,0,0,0,1,1,1,1,0,0,0,1],[0,0,0,1,1,1,0,1,1,0,1,0,1,0],[0,0,0,1,1,1,1,0,0,0,0,1,0,0],[0,1,0,1,0,0,0,0,0,0,1,0,1,1],[0,0,0,0,0,1,0,0,0,1,0,0,1,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "isConnected = [[1,1,0],[1,1,0],[0,0,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "cities 0 and 1 are connected, city 2 is on its own"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "isConnected = [[1,0,0],[0,1,0],[0,0,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "no city is connected to any other, so each is its own province"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "isConnected = [[1,1,1],[1,1,1],[1,1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "all three cities are directly connected to each other"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "isConnected = [[1,1,0],[1,1,0],[0,0,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "cities 0 and 1 are connected, city 2 is on its own"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "isConnected = [[1,0,0],[0,1,0],[0,0,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "no city is connected to any other, so each is its own province"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "isConnected = [[1,1,1],[1,1,1],[1,1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "all three cities are directly connected to each other"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,1,0],[1,1,0],[0,0,1]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,0,0],[0,1,0],[0,0,1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,0,0,1],[0,1,1,0],[0,1,1,1],[1,0,1,1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,1],[1,1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1,0],[0,1]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,1],[0,0,1,0,1,0,0,0],[0,0,0,1,0,0,0,0],[0,0,1,0,1,0,0,1],[0,0,0,0,0,1,0,0],[0,0,0,0,0,0,1,0],[0,1,0,0,1,0,0,1]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1,0,0,0,0,0,0,1,0,0],[0,1,0,1,0,1,0,1,1,1],[0,0,1,1,1,0,0,0,0,0],[0,1,1,1,0,0,0,0,0,0],[0,0,1,0,1,1,1,1,0,0],[0,1,0,0,1,1,0,0,1,0],[0,0,0,0,1,0,1,0,0,0],[1,1,0,0,1,0,0,1,1,1],[0,1,0,0,0,1,0,1,1,0],[0,1,0,0,0,0,0,1,0,1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1,0,0,0,0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0,0,0,0],[0,0,1,0,0,0,0,0,1,0,0,0],[0,0,0,1,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0,0,0,0],[0,0,0,0,0,0,1,0,0,0,0,0],[0,0,0,0,0,0,0,1,0,0,0,0],[0,0,1,0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0,1,0,0],[0,0,0,0,0,0,0,0,0,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,1]]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[1,1,1,0,0,1,0,1,0,0,0,1,0,0,1],[1,1,1,1,1,0,1,0,0,1,0,1,0,0,0],[1,1,1,0,1,0,1,0,1,1,1,1,0,1,1],[0,1,0,1,1,1,0,0,0,0,1,1,1,0,0],[0,1,1,1,1,0,0,1,0,0,1,0,0,0,1],[1,0,0,1,0,1,1,1,1,0,0,0,0,0,1],[0,1,1,0,0,1,1,1,1,1,0,0,1,1,0],[1,0,0,0,1,1,1,1,1,0,1,0,0,0,0],[0,0,1,0,0,1,1,1,1,1,1,1,0,1,1],[0,1,1,0,0,0,1,0,1,1,1,1,1,0,0],[0,0,1,1,1,0,0,1,1,1,1,0,0,1,0],[1,1,1,1,0,0,0,0,1,1,0,1,1,0,1],[0,0,0,1,0,0,1,0,0,1,0,1,1,0,1],[0,0,1,0,0,0,1,0,1,0,1,0,0,1,0],[1,0,1,0,1,1,0,0,1,0,0,1,1,0,1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[1,0,0,0,0,0],[0,1,0,0,0,0],[0,0,1,0,0,0],[0,0,0,1,0,0],[0,0,0,0,1,0],[0,0,0,0,0,1]]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,1,0,1,1],[0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,1,1,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,1],[0,0,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,1,1,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,1,0,0,1,0,0,0,0,0,1,0,0,0,0,0],[0,0,1,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,1,0],[1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0],[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0],[0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0],[1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],[1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,0,1,0],[1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[1,1,0,0],[1,1,0,0],[0,0,1,1],[0,0,1,1]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[1,1,0,1,0,0,1,0,0],[1,1,0,1,0,1,1,0,1],[0,0,1,1,0,0,0,0,0],[1,1,1,1,1,0,1,1,0],[0,0,0,1,1,1,1,1,0],[0,1,0,0,1,1,0,1,0],[1,1,0,1,1,0,1,1,1],[0,0,0,1,1,1,1,1,1],[0,1,0,0,0,0,1,1,1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,0,0,0,0,0,1],[0,1,0,0,0,0,0],[0,0,1,0,0,0,0],[0,0,0,1,0,0,0],[0,0,0,0,1,0,0],[0,0,0,0,0,1,0],[1,0,0,0,0,0,1]]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1,0,0,0,0,1,0,1,0,0,0],[0,1,0,0,0,0,0,0,1,1,1],[0,0,1,0,1,0,1,0,0,0,0],[0,0,0,1,0,0,0,0,0,0,0],[0,0,1,0,1,1,0,0,0,0,0],[1,0,0,0,1,1,0,0,1,0,0],[0,0,1,0,0,0,1,1,1,1,0],[1,0,0,0,0,0,1,1,0,0,0],[0,1,0,0,0,1,1,0,1,1,1],[0,1,0,0,0,0,1,0,1,1,1],[0,1,0,0,0,0,0,0,1,1,1]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,1,0,0,0,0,0,0,0,0,0,0,0],[1,1,1,0,0,0,0,0,0,0,0,0,0],[0,1,1,0,0,0,0,0,0,0,0,0,0],[0,0,0,1,1,0,0,0,0,0,0,0,0],[0,0,0,1,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,1,0,0,0,0,0,0],[0,0,0,0,0,1,1,1,0,0,0,0,0],[0,0,0,0,0,0,1,1,1,0,0,0,0],[0,0,0,0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0],[0,0,0,0,0,0,0,0,0,0,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,1]]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,1,0,0,1,0,0,1,1,0,0,0,1,0],[0,0,1,0,0,1,1,1,0,1,0,0,0,0],[0,0,0,1,0,1,0,0,0,0,1,1,1,0],[0,1,0,0,1,0,0,0,0,0,1,1,0,0],[0,0,1,1,0,1,0,0,0,0,1,1,0,1],[0,0,1,0,0,0,1,0,0,1,0,1,0,0],[0,1,1,0,0,0,0,1,1,1,1,0,0,0],[0,1,0,0,0,0,0,1,1,1,1,0,0,0],[0,0,1,0,0,0,1,1,1,1,0,0,0,1],[0,0,0,1,1,1,0,1,1,0,1,0,1,0],[0,0,0,1,1,1,1,0,0,0,0,1,0,0],[0,1,0,1,0,0,0,0,0,0,1,0,1,1],[0,0,0,0,0,1,0,0,0,1,0,0,1,1]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "isConnected = [[1,1,0],[1,1,0],[0,0,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "cities 0 and 1 are connected, city 2 is on its own"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "isConnected = [[1,0,0],[0,1,0],[0,0,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "no city is connected to any other, so each is its own province"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "isConnected = [[1,1,1],[1,1,1],[1,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "all three cities are directly connected to each other"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,1,0],[1,1,0],[0,0,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,0,0],[0,1,0],[0,0,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,0,0,1],[0,1,1,0],[0,1,1,1],[1,0,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,0],[0,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,1],[0,0,1,0,1,0,0,0],[0,0,0,1,0,0,0,0],[0,0,1,0,1,0,0,1],[0,0,0,0,0,1,0,0],[0,0,0,0,0,0,1,0],[0,1,0,0,1,0,0,1]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,0,0,0,0,0,0,1,0,0],[0,1,0,1,0,1,0,1,1,1],[0,0,1,1,1,0,0,0,0,0],[0,1,1,1,0,0,0,0,0,0],[0,0,1,0,1,1,1,1,0,0],[0,1,0,0,1,1,0,0,1,0],[0,0,0,0,1,0,1,0,0,0],[1,1,0,0,1,0,0,1,1,1],[0,1,0,0,0,1,0,1,1,0],[0,1,0,0,0,0,0,1,0,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,0,0,0,0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0,0,0,0],[0,0,1,0,0,0,0,0,1,0,0,0],[0,0,0,1,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0,0,0,0],[0,0,0,0,0,0,1,0,0,0,0,0],[0,0,0,0,0,0,0,1,0,0,0,0],[0,0,1,0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0,1,0,0],[0,0,0,0,0,0,0,0,0,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,1]]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,1,1,0,0,1,0,1,0,0,0,1,0,0,1],[1,1,1,1,1,0,1,0,0,1,0,1,0,0,0],[1,1,1,0,1,0,1,0,1,1,1,1,0,1,1],[0,1,0,1,1,1,0,0,0,0,1,1,1,0,0],[0,1,1,1,1,0,0,1,0,0,1,0,0,0,1],[1,0,0,1,0,1,1,1,1,0,0,0,0,0,1],[0,1,1,0,0,1,1,1,1,1,0,0,1,1,0],[1,0,0,0,1,1,1,1,1,0,1,0,0,0,0],[0,0,1,0,0,1,1,1,1,1,1,1,0,1,1],[0,1,1,0,0,0,1,0,1,1,1,1,1,0,0],[0,0,1,1,1,0,0,1,1,1,1,0,0,1,0],[1,1,1,1,0,0,0,0,1,1,0,1,1,0,1],[0,0,0,1,0,0,1,0,0,1,0,1,1,0,1],[0,0,1,0,0,0,1,0,1,0,1,0,0,1,0],[1,0,1,0,1,1,0,0,1,0,0,1,1,0,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,0,0,0,0,0],[0,1,0,0,0,0],[0,0,1,0,0,0],[0,0,0,1,0,0],[0,0,0,0,1,0],[0,0,0,0,0,1]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,1,0,1,1],[0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,1,1,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,1],[0,0,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,1,1,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,1,0,0,1,0,0,0,0,0,1,0,0,0,0,0],[0,0,1,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,1,0],[1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0],[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0],[0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0],[1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],[1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,0,1,0],[1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,1,0,0],[1,1,0,0],[0,0,1,1],[0,0,1,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,1,0,1,0,0,1,0,0],[1,1,0,1,0,1,1,0,1],[0,0,1,1,0,0,0,0,0],[1,1,1,1,1,0,1,1,0],[0,0,0,1,1,1,1,1,0],[0,1,0,0,1,1,0,1,0],[1,1,0,1,1,0,1,1,1],[0,0,0,1,1,1,1,1,1],[0,1,0,0,0,0,1,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,0,0,0,0,0,1],[0,1,0,0,0,0,0],[0,0,1,0,0,0,0],[0,0,0,1,0,0,0],[0,0,0,0,1,0,0],[0,0,0,0,0,1,0],[1,0,0,0,0,0,1]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,0,0,0,0,1,0,1,0,0,0],[0,1,0,0,0,0,0,0,1,1,1],[0,0,1,0,1,0,1,0,0,0,0],[0,0,0,1,0,0,0,0,0,0,0],[0,0,1,0,1,1,0,0,0,0,0],[1,0,0,0,1,1,0,0,1,0,0],[0,0,1,0,0,0,1,1,1,1,0],[1,0,0,0,0,0,1,1,0,0,0],[0,1,0,0,0,1,1,0,1,1,1],[0,1,0,0,0,0,1,0,1,1,1],[0,1,0,0,0,0,0,0,1,1,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1,0,0,0,0,0,0,0,0,0,0,0],[1,1,1,0,0,0,0,0,0,0,0,0,0],[0,1,1,0,0,0,0,0,0,0,0,0,0],[0,0,0,1,1,0,0,0,0,0,0,0,0],[0,0,0,1,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,1,0,0,0,0,0,0],[0,0,0,0,0,1,1,1,0,0,0,0,0],[0,0,0,0,0,0,1,1,1,0,0,0,0],[0,0,0,0,0,0,0,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0],[0,0,0,0,0,0,0,0,0,0,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,1]]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,1,0,0,1,0,0,1,1,0,0,0,1,0],[0,0,1,0,0,1,1,1,0,1,0,0,0,0],[0,0,0,1,0,1,0,0,0,0,1,1,1,0],[0,1,0,0,1,0,0,0,0,0,1,1,0,0],[0,0,1,1,0,1,0,0,0,0,1,1,0,1],[0,0,1,0,0,0,1,0,0,1,0,1,0,0],[0,1,1,0,0,0,0,1,1,1,1,0,0,0],[0,1,0,0,0,0,0,1,1,1,1,0,0,0],[0,0,1,0,0,0,1,1,1,1,0,0,0,1],[0,0,0,1,1,1,0,1,1,0,1,0,1,0],[0,0,0,1,1,1,1,0,0,0,0,1,0,0],[0,1,0,1,0,0,0,0,0,0,1,0,1,1],[0,0,0,0,0,1,0,0,0,1,0,0,1,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def countProvinces(self, isConnected):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countProvinces(vector<vector<int>>& isConnected) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countProvinces(int[][] isConnected) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countProvinces(isConnected: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countProvinces(isConnected) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def countProvinces(self, isConnected):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countProvinces(vector<vector<int>>& isConnected) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countProvinces(int[][] isConnected) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countProvinces(isConnected: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countProvinces(isConnected) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def countProvinces(self, isConnected):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countProvinces(vector<vector<int>>& isConnected) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countProvinces(int[][] isConnected) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countProvinces(isConnected: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countProvinces(isConnected) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def countProvinces(self, isConnected):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countProvinces(vector<vector<int>>& isConnected) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countProvinces(int[][] isConnected) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countProvinces(isConnected: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countProvinces(isConnected) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n^2 * alpha(n))",
+      "space": "O(n)",
+      "pattern": "union find over the adjacency matrix"
+    },
+    "bruteForce": {
+      "approach": "run DFS or BFS from each unvisited city over the adjacency matrix, marking every city in its province visited, counting how many traversals it takes",
+      "time": "O(n^2)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "union find over the adjacency matrix",
+    "time": "O(n^2 * alpha(n))",
+    "space": "O(n)",
+    "hint_ladder": [
+      "a province is just a connected component - how do you count connected components incrementally as you scan the matrix?",
+      "initialize each city as its own parent in a union-find structure",
+      "for every pair (i, j) with isConnected[i][j] = 1, union i and j",
+      "use path compression and union by rank/size so each union/find call is nearly O(1)",
+      "the answer is the number of distinct roots left at the end"
+    ]
+  },
+  "bruteForce": {
+    "approach": "run DFS or BFS from each unvisited city over the adjacency matrix, marking every city in its province visited, counting how many traversals it takes",
+    "time": "O(n^2)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

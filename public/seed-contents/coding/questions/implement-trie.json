@@ -1,0 +1,636 @@
+{
+  "id": "implement-trie",
+  "questionId": "implement-trie",
+  "slug": "implement-trie",
+  "title": "Implement Trie (Prefix Tree)",
+  "difficulty": "Easy",
+  "category": "Trie",
+  "patterns": [
+    "trie",
+    "simulation"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "insert, search, and startsWith all walk character by character from a shared root - what tree structure lets sibling words share the path they have in common?",
+    "define a node as a map from character to child node, plus a flag for 'a word ends here'",
+    "insert: walk from the root, creating a child node for any character that doesn't exist yet, then mark the final node's flag",
+    "search: walk from the root following each character; if you ever can't find a needed child, return false immediately, otherwise return whether the final node's flag is set",
+    "startsWith is almost identical to search, except you don't care about the final flag - just whether the walk completes without falling off the trie"
+  ],
+  "commonMistakes": [
+    "confusing search (must end exactly on a word) with startsWith (just needs the path to exist)",
+    "forgetting to mark the end-of-word flag on insert, making search always return false",
+    "not handling repeated inserts of the same word, though this should be harmless if the trie is built correctly"
+  ],
+  "content": {
+    "problemStatement": "You're given a single space-delimited sequence of operations to run\nagainst an initially empty trie (prefix tree). Each token has the form\n\"op:argument\":\n\n- `insert:word` - adds word to the trie\n- `search:word` - checks whether word was previously inserted exactly\n- `startsWith:prefix` - checks whether any inserted word starts with prefix\n\n**Simulate the tokens in order on the trie, and return a list containing\nthe result of every \"search\" and \"startsWith\" operation (1 for true, 0\nfor false), in the order they occurred.**\n\n\"insert\" tokens produce no output and should be skipped in the result\nlist.\n",
+    "constraints": [
+      "1 <= word.length, prefix.length <= 2000",
+      "word and prefix consist only of lowercase English letters",
+      "1 <= number of operations <= 3 * 10^4",
+      "ops.length <= 3 * 10^5"
+    ],
+    "notes": [
+      "search or startsWith called before any insert",
+      "inserting the same word twice",
+      "a word that is a strict prefix of another inserted word (e.g. insert 'app' then 'apple')"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"insert:apple search:apple search:app startsWith:app insert:app search:app\"",
+        "output": "[1, 0, 1, 1]",
+        "expectedOutput": "[1, 0, 1, 1]",
+        "explanation": "after inserting \"apple\": search:apple=1 (exact match), search:app=0 (not inserted as a full word yet), startsWith:app=1 (apple starts with app); after inserting \"app\": search:app=1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"insert:cat insert:car insert:card search:cat search:ca startsWith:ca startsWith:cars\"",
+        "output": "[1, 0, 1, 0]",
+        "expectedOutput": "[1, 0, 1, 0]",
+        "explanation": "\"ca\" was never inserted as a full word (search:ca=0), but cat/car/card all start with \"ca\" (startsWith:ca=1); no word starts with \"cars\""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"search:apple\"",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "explanation": "the trie is empty, so nothing can be found"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"insert:apple search:apple search:app startsWith:app insert:app search:app\"]",
+        "output": "[1,0,1,1]",
+        "expectedOutput": "[1,0,1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"insert:cat insert:car insert:card search:cat search:ca startsWith:ca startsWith:cars\"]",
+        "output": "[1,0,1,0]",
+        "expectedOutput": "[1,0,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"search:apple\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"insert:a search:a startsWith:a\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"insert:hello insert:help search:hello search:help startsWith:hel startsWith:helz\"]",
+        "output": "[1,1,1,0]",
+        "expectedOutput": "[1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"insert:a insert:b insert:c search:a search:b search:c search:d\"]",
+        "output": "[1,1,1,0]",
+        "expectedOutput": "[1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"insert:ab insert:abc search:ab search:abc startsWith:a startsWith:ab startsWith:abc startsWith:abcd\"]",
+        "output": "[1,1,1,1,1,0]",
+        "expectedOutput": "[1,1,1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"startsWith:x search:x\"]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"insert:same insert:same insert:same search:same startsWith:sam\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"insert:go insert:going insert:gone search:go search:going search:gon startsWith:go startsWith:gon\"]",
+        "output": "[1,1,0,1,1]",
+        "expectedOutput": "[1,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"insert:z search:z startsWith:z search:zz startsWith:zz\"]",
+        "output": "[1,1,0,0]",
+        "expectedOutput": "[1,1,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"insert:trie insert:tree insert:trick search:trie search:tree search:trick startsWith:tri startsWith:tre\"]",
+        "output": "[1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"insert:a insert:ab insert:abc insert:abcd search:a search:ab search:abc search:abcd startsWith:abcde\"]",
+        "output": "[1,1,1,1,0]",
+        "expectedOutput": "[1,1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"insert:cat search:cats startsWith:ca startsWith:cats search:cat\"]",
+        "output": "[0,1,0,1]",
+        "expectedOutput": "[0,1,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"insert:x insert:y insert:z startsWith:a startsWith:x startsWith:y startsWith:z\"]",
+        "output": "[0,1,1,1]",
+        "expectedOutput": "[0,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"insert:pref insert:prefix insert:prefixes search:pref search:prefix startsWith:pre startsWith:prefi\"]",
+        "output": "[1,1,1,1]",
+        "expectedOutput": "[1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"insert:aaaa search:aaaa search:aaa startsWith:aaa startsWith:aaaaa\"]",
+        "output": "[1,0,1,0]",
+        "expectedOutput": "[1,0,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"insert:hi insert:hey insert:hello startsWith:h search:hi search:hey search:hello startsWith:he\"]",
+        "output": "[1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"search:empty startsWith:empty\"]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"insert:duplicate insert:duplicate insert:duplicate startsWith:dup search:duplicate search:dup\"]",
+        "output": "[1,1,0]",
+        "expectedOutput": "[1,1,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"insert:apple search:apple search:app startsWith:app insert:app search:app\"",
+      "output": "[1, 0, 1, 1]",
+      "expectedOutput": "[1, 0, 1, 1]",
+      "explanation": "after inserting \"apple\": search:apple=1 (exact match), search:app=0 (not inserted as a full word yet), startsWith:app=1 (apple starts with app); after inserting \"app\": search:app=1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"insert:cat insert:car insert:card search:cat search:ca startsWith:ca startsWith:cars\"",
+      "output": "[1, 0, 1, 0]",
+      "expectedOutput": "[1, 0, 1, 0]",
+      "explanation": "\"ca\" was never inserted as a full word (search:ca=0), but cat/car/card all start with \"ca\" (startsWith:ca=1); no word starts with \"cars\""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"search:apple\"",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "explanation": "the trie is empty, so nothing can be found"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"insert:apple search:apple search:app startsWith:app insert:app search:app\"",
+      "output": "[1, 0, 1, 1]",
+      "expectedOutput": "[1, 0, 1, 1]",
+      "explanation": "after inserting \"apple\": search:apple=1 (exact match), search:app=0 (not inserted as a full word yet), startsWith:app=1 (apple starts with app); after inserting \"app\": search:app=1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"insert:cat insert:car insert:card search:cat search:ca startsWith:ca startsWith:cars\"",
+      "output": "[1, 0, 1, 0]",
+      "expectedOutput": "[1, 0, 1, 0]",
+      "explanation": "\"ca\" was never inserted as a full word (search:ca=0), but cat/car/card all start with \"ca\" (startsWith:ca=1); no word starts with \"cars\""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"search:apple\"",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "explanation": "the trie is empty, so nothing can be found"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"insert:apple search:apple search:app startsWith:app insert:app search:app\"]",
+      "output": "[1,0,1,1]",
+      "expectedOutput": "[1,0,1,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"insert:cat insert:car insert:card search:cat search:ca startsWith:ca startsWith:cars\"]",
+      "output": "[1,0,1,0]",
+      "expectedOutput": "[1,0,1,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"search:apple\"]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"insert:a search:a startsWith:a\"]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"insert:hello insert:help search:hello search:help startsWith:hel startsWith:helz\"]",
+      "output": "[1,1,1,0]",
+      "expectedOutput": "[1,1,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"insert:a insert:b insert:c search:a search:b search:c search:d\"]",
+      "output": "[1,1,1,0]",
+      "expectedOutput": "[1,1,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"insert:ab insert:abc search:ab search:abc startsWith:a startsWith:ab startsWith:abc startsWith:abcd\"]",
+      "output": "[1,1,1,1,1,0]",
+      "expectedOutput": "[1,1,1,1,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"startsWith:x search:x\"]",
+      "output": "[0,0]",
+      "expectedOutput": "[0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"insert:same insert:same insert:same search:same startsWith:sam\"]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"insert:go insert:going insert:gone search:go search:going search:gon startsWith:go startsWith:gon\"]",
+      "output": "[1,1,0,1,1]",
+      "expectedOutput": "[1,1,0,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"insert:z search:z startsWith:z search:zz startsWith:zz\"]",
+      "output": "[1,1,0,0]",
+      "expectedOutput": "[1,1,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"insert:trie insert:tree insert:trick search:trie search:tree search:trick startsWith:tri startsWith:tre\"]",
+      "output": "[1,1,1,1,1]",
+      "expectedOutput": "[1,1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"insert:a insert:ab insert:abc insert:abcd search:a search:ab search:abc search:abcd startsWith:abcde\"]",
+      "output": "[1,1,1,1,0]",
+      "expectedOutput": "[1,1,1,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"insert:cat search:cats startsWith:ca startsWith:cats search:cat\"]",
+      "output": "[0,1,0,1]",
+      "expectedOutput": "[0,1,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"insert:x insert:y insert:z startsWith:a startsWith:x startsWith:y startsWith:z\"]",
+      "output": "[0,1,1,1]",
+      "expectedOutput": "[0,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"insert:pref insert:prefix insert:prefixes search:pref search:prefix startsWith:pre startsWith:prefi\"]",
+      "output": "[1,1,1,1]",
+      "expectedOutput": "[1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"insert:aaaa search:aaaa search:aaa startsWith:aaa startsWith:aaaaa\"]",
+      "output": "[1,0,1,0]",
+      "expectedOutput": "[1,0,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"insert:hi insert:hey insert:hello startsWith:h search:hi search:hey search:hello startsWith:he\"]",
+      "output": "[1,1,1,1,1]",
+      "expectedOutput": "[1,1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"search:empty startsWith:empty\"]",
+      "output": "[0,0]",
+      "expectedOutput": "[0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"insert:duplicate insert:duplicate insert:duplicate startsWith:dup search:duplicate search:dup\"]",
+      "output": "[1,1,0]",
+      "expectedOutput": "[1,1,0]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"insert:apple search:apple search:app startsWith:app insert:app search:app\"",
+        "output": "[1, 0, 1, 1]",
+        "expectedOutput": "[1, 0, 1, 1]",
+        "explanation": "after inserting \"apple\": search:apple=1 (exact match), search:app=0 (not inserted as a full word yet), startsWith:app=1 (apple starts with app); after inserting \"app\": search:app=1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"insert:cat insert:car insert:card search:cat search:ca startsWith:ca startsWith:cars\"",
+        "output": "[1, 0, 1, 0]",
+        "expectedOutput": "[1, 0, 1, 0]",
+        "explanation": "\"ca\" was never inserted as a full word (search:ca=0), but cat/car/card all start with \"ca\" (startsWith:ca=1); no word starts with \"cars\""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"search:apple\"",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "explanation": "the trie is empty, so nothing can be found"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"insert:apple search:apple search:app startsWith:app insert:app search:app\"]",
+        "output": "[1,0,1,1]",
+        "expectedOutput": "[1,0,1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"insert:cat insert:car insert:card search:cat search:ca startsWith:ca startsWith:cars\"]",
+        "output": "[1,0,1,0]",
+        "expectedOutput": "[1,0,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"search:apple\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"insert:a search:a startsWith:a\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"insert:hello insert:help search:hello search:help startsWith:hel startsWith:helz\"]",
+        "output": "[1,1,1,0]",
+        "expectedOutput": "[1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"insert:a insert:b insert:c search:a search:b search:c search:d\"]",
+        "output": "[1,1,1,0]",
+        "expectedOutput": "[1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"insert:ab insert:abc search:ab search:abc startsWith:a startsWith:ab startsWith:abc startsWith:abcd\"]",
+        "output": "[1,1,1,1,1,0]",
+        "expectedOutput": "[1,1,1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"startsWith:x search:x\"]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"insert:same insert:same insert:same search:same startsWith:sam\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"insert:go insert:going insert:gone search:go search:going search:gon startsWith:go startsWith:gon\"]",
+        "output": "[1,1,0,1,1]",
+        "expectedOutput": "[1,1,0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"insert:z search:z startsWith:z search:zz startsWith:zz\"]",
+        "output": "[1,1,0,0]",
+        "expectedOutput": "[1,1,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"insert:trie insert:tree insert:trick search:trie search:tree search:trick startsWith:tri startsWith:tre\"]",
+        "output": "[1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"insert:a insert:ab insert:abc insert:abcd search:a search:ab search:abc search:abcd startsWith:abcde\"]",
+        "output": "[1,1,1,1,0]",
+        "expectedOutput": "[1,1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"insert:cat search:cats startsWith:ca startsWith:cats search:cat\"]",
+        "output": "[0,1,0,1]",
+        "expectedOutput": "[0,1,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"insert:x insert:y insert:z startsWith:a startsWith:x startsWith:y startsWith:z\"]",
+        "output": "[0,1,1,1]",
+        "expectedOutput": "[0,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"insert:pref insert:prefix insert:prefixes search:pref search:prefix startsWith:pre startsWith:prefi\"]",
+        "output": "[1,1,1,1]",
+        "expectedOutput": "[1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"insert:aaaa search:aaaa search:aaa startsWith:aaa startsWith:aaaaa\"]",
+        "output": "[1,0,1,0]",
+        "expectedOutput": "[1,0,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"insert:hi insert:hey insert:hello startsWith:h search:hi search:hey search:hello startsWith:he\"]",
+        "output": "[1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"search:empty startsWith:empty\"]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"insert:duplicate insert:duplicate insert:duplicate startsWith:dup search:duplicate search:dup\"]",
+        "output": "[1,1,0]",
+        "expectedOutput": "[1,1,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def trieOperations(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> trieOperations(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] trieOperations(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun trieOperations(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    trieOperations(ops) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def trieOperations(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> trieOperations(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] trieOperations(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun trieOperations(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    trieOperations(ops) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def trieOperations(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> trieOperations(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] trieOperations(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun trieOperations(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    trieOperations(ops) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def trieOperations(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> trieOperations(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] trieOperations(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun trieOperations(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    trieOperations(ops) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(m) per operation, where m is the length of the word or prefix involved",
+      "space": "O(total characters inserted)",
+      "pattern": "a real trie: each node holds a map from character to child node, plus a boolean marking whether a word ends there"
+    },
+    "bruteForce": {
+      "approach": "keep a plain list of inserted words; for search do an exact-match scan of the list, for startsWith scan the list checking each word's prefix",
+      "time": "O(n * m) per query, where n is the number of inserted words and m is word length",
+      "space": "O(n * m) to store the words"
+    }
+  },
+  "optimal": {
+    "pattern": "a real trie: each node holds a map from character to child node, plus a boolean marking whether a word ends there",
+    "time": "O(m) per operation, where m is the length of the word or prefix involved",
+    "space": "O(total characters inserted)",
+    "hint_ladder": [
+      "insert, search, and startsWith all walk character by character from a shared root - what tree structure lets sibling words share the path they have in common?",
+      "define a node as a map from character to child node, plus a flag for 'a word ends here'",
+      "insert: walk from the root, creating a child node for any character that doesn't exist yet, then mark the final node's flag",
+      "search: walk from the root following each character; if you ever can't find a needed child, return false immediately, otherwise return whether the final node's flag is set",
+      "startsWith is almost identical to search, except you don't care about the final flag - just whether the walk completes without falling off the trie"
+    ]
+  },
+  "bruteForce": {
+    "approach": "keep a plain list of inserted words; for search do an exact-match scan of the list, for startsWith scan the list checking each word's prefix",
+    "time": "O(n * m) per query, where n is the number of inserted words and m is word length",
+    "space": "O(n * m) to store the words"
+  },
+  "isIndex0": true,
+  "level": null
+}

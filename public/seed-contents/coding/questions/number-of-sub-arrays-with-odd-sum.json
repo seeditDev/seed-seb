@@ -1,0 +1,628 @@
+{
+  "id": "number-of-sub-arrays-with-odd-sum",
+  "questionId": "number-of-sub-arrays-with-odd-sum",
+  "slug": "number-of-sub-arrays-with-odd-sum",
+  "title": "Number of Sub-arrays With Odd Sum",
+  "difficulty": "Medium",
+  "category": "Prefix sum",
+  "patterns": [
+    "prefix sum"
+  ],
+  "lists": [],
+  "hints": [
+    "a subarray's sum is odd exactly when the prefix sum right before it and the prefix sum right after it have DIFFERENT parity - why?",
+    "because subtracting two prefix sums of the same parity always gives an even result, and different parities always give an odd result",
+    "keep two running counts as you scan: how many prefix sums seen so far (including the empty prefix, sum 0) are even, and how many are odd",
+    "at each new prefix sum, if it's odd, it pairs with every EVEN prefix sum seen before to form odd subarrays (and vice versa) - add the appropriate counter to your answer, then update the counters, taking the modulo as you go"
+  ],
+  "commonMistakes": [
+    "forgetting to seed the even-count with 1 for the empty prefix (sum 0) before scanning starts",
+    "not applying the modulo operation during accumulation, allowing overflow in languages with fixed-size integers",
+    "mixing up which counter (even or odd) pairs with the current prefix sum's parity to produce an odd subarray"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of integers `arr`.\n\n**Count how many contiguous subarrays have an odd sum, and return the count modulo 1,000,000,007 since it can be large.**\n",
+    "constraints": [
+      "1 <= arr.length <= 10^5",
+      "-100 <= arr[i] <= 100",
+      "the answer is returned modulo 1,000,000,007"
+    ],
+    "notes": [
+      "every element is even (answer is 0)",
+      "every element is odd",
+      "a single element array"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "arr = [1, 3, 5]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "arr = [2, 4, 6]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "arr = [1, 2, 3, 4, 5, 6, 7]",
+        "output": "16",
+        "expectedOutput": "16",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,3,5]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2,4,6]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,1,1]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,4,6,8,10]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,3,5,7,9]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[2,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[5,9,12,20,12,16,4,4,16,15,16,16,10,3,5]]",
+        "output": "60",
+        "expectedOutput": "60",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,2,2,2,2,2,2,2,2,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-7,0,-2,5,-5,6,-10,-4,6,1,-6,7,-10,6,-1,10,-8,-2,6,1]]",
+        "output": "108",
+        "expectedOutput": "108",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0,0,0,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[5,3,1,7,9,2,4]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,0,1,0,1,0,1]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "arr = [1, 3, 5]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "arr = [2, 4, 6]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "arr = [1, 2, 3, 4, 5, 6, 7]",
+      "output": "16",
+      "expectedOutput": "16",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "arr = [1, 3, 5]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "arr = [2, 4, 6]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "arr = [1, 2, 3, 4, 5, 6, 7]",
+      "output": "16",
+      "expectedOutput": "16",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,3,5]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[2,4,6]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3,4,5,6,7]]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[2]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[2,2]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,1,1,1]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[2,4,6,8,10]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,3,5,7,9]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[2,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[5,9,12,20,12,16,4,4,16,15,16,16,10,3,5]]",
+      "output": "60",
+      "expectedOutput": "60",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+      "output": "30",
+      "expectedOutput": "30",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[2,2,2,2,2,2,2,2,2,2]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,3]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[-7,0,-2,5,-5,6,-10,-4,6,1,-6,7,-10,6,-1,10,-8,-2,6,1]]",
+      "output": "108",
+      "expectedOutput": "108",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[0,0,0,1]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[5,3,1,7,9,2,4]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,0,1,0,1,0,1]]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "arr = [1, 3, 5]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "arr = [2, 4, 6]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "arr = [1, 2, 3, 4, 5, 6, 7]",
+        "output": "16",
+        "expectedOutput": "16",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,3,5]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2,4,6]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,1,1]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,4,6,8,10]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,3,5,7,9]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[2,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[5,9,12,20,12,16,4,4,16,15,16,16,10,3,5]]",
+        "output": "60",
+        "expectedOutput": "60",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,2,2,2,2,2,2,2,2,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-7,0,-2,5,-5,6,-10,-4,6,1,-6,7,-10,6,-1,10,-8,-2,6,1]]",
+        "output": "108",
+        "expectedOutput": "108",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0,0,0,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[5,3,1,7,9,2,4]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,0,1,0,1,0,1]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def numOfSubarrays(self, arr):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numOfSubarrays(vector<int>& arr) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numOfSubarrays(int[] arr) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numOfSubarrays(arr: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numOfSubarrays(arr) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def numOfSubarrays(self, arr):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numOfSubarrays(vector<int>& arr) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numOfSubarrays(int[] arr) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numOfSubarrays(arr: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numOfSubarrays(arr) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def numOfSubarrays(self, arr):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numOfSubarrays(vector<int>& arr) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numOfSubarrays(int[] arr) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numOfSubarrays(arr: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numOfSubarrays(arr) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def numOfSubarrays(self, arr):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numOfSubarrays(vector<int>& arr) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numOfSubarrays(int[] arr) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numOfSubarrays(arr: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numOfSubarrays(arr) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) (just two counters)",
+      "pattern": "prefix sum parity - a subarray's sum is odd exactly when its two boundary prefix sums have different parity, so track counts of even and odd prefix sums seen so far"
+    },
+    "bruteForce": {
+      "approach": "check every subarray's sum directly (or via a prefix sum array) and count how many are odd",
+      "time": "O(n^2)",
+      "space": "O(n) if using a prefix sum array"
+    }
+  },
+  "optimal": {
+    "pattern": "prefix sum parity - a subarray's sum is odd exactly when its two boundary prefix sums have different parity, so track counts of even and odd prefix sums seen so far",
+    "time": "O(n)",
+    "space": "O(1) (just two counters)",
+    "hint_ladder": [
+      "a subarray's sum is odd exactly when the prefix sum right before it and the prefix sum right after it have DIFFERENT parity - why?",
+      "because subtracting two prefix sums of the same parity always gives an even result, and different parities always give an odd result",
+      "keep two running counts as you scan: how many prefix sums seen so far (including the empty prefix, sum 0) are even, and how many are odd",
+      "at each new prefix sum, if it's odd, it pairs with every EVEN prefix sum seen before to form odd subarrays (and vice versa) - add the appropriate counter to your answer, then update the counters, taking the modulo as you go"
+    ]
+  },
+  "bruteForce": {
+    "approach": "check every subarray's sum directly (or via a prefix sum array) and count how many are odd",
+    "time": "O(n^2)",
+    "space": "O(n) if using a prefix sum array"
+  },
+  "isIndex0": true,
+  "level": null
+}

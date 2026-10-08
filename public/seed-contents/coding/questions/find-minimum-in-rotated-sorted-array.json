@@ -1,0 +1,632 @@
+{
+  "id": "find-minimum-in-rotated-sorted-array",
+  "questionId": "find-minimum-in-rotated-sorted-array",
+  "slug": "find-minimum-in-rotated-sorted-array",
+  "title": "Find Minimum in Rotated Sorted Array",
+  "difficulty": "Medium",
+  "category": "Binary search",
+  "patterns": [
+    "binary search"
+  ],
+  "lists": [
+    "blind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "the minimum sits exactly at the point where the array 'wraps' - everything before it is bigger than everything after it",
+    "compare nums[mid] to nums[right]: if nums[mid] > nums[right], the minimum must be somewhere to the right of mid; otherwise it's at mid or to the left",
+    "unlike a normal binary search, when nums[mid] <= nums[right] you can't rule out mid itself being the answer, so right should move to mid, not mid - 1",
+    "keep narrowing until left and right meet - that position holds the minimum"
+  ],
+  "commonMistakes": [
+    "comparing nums[mid] to nums[left] instead of nums[right], which doesn't reliably tell you which side the minimum is on",
+    "setting right = mid - 1 when nums[mid] <= nums[right], accidentally skipping over the minimum itself",
+    "assuming the array is always rotated and mishandling the already-sorted case"
+  ],
+  "content": {
+    "problemStatement": "An array of distinct integers, originally sorted in ascending order, has\nbeen rotated an unknown number of positions to the right.\n\n**Return the minimum element in the array.**\n\nYou must do this faster than a plain linear scan.\n",
+    "constraints": [
+      "1 <= nums.length <= 5000",
+      "-5000 <= nums[i] <= 5000",
+      "all integers in nums are unique",
+      "nums is sorted in ascending order and rotated between 1 and nums.length times"
+    ],
+    "notes": [
+      "array is not rotated at all",
+      "array has a single element",
+      "the minimum is at the very last index"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 4, 5, 1, 2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the array was [1,2,3,4,5] rotated so 1 ended up after 5"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [4, 5, 6, 7, 0, 1, 2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [11, 13, 15, 17]",
+        "output": "11",
+        "expectedOutput": "11",
+        "explanation": "the array wasn't actually rotated (or was rotated a full cycle), so the minimum is just the first element"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[3,4,5,1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[4,5,6,7,0,1,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[11,13,15,17]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[2,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,3,4,5,6,7,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[7,1,2,3,4,5,6]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[6,7,1,2,3,4,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[3,1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[30,40,50,10,20]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[5,6,7,8,9,10,1,2,3,4]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[9,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[100,1,2,3,4,5,6,7,8,9]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,1,2,3,4,5,6,7,8,9,10,11,12,13,14]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[4,5,6,7,8,9,10,11,12,13,1,2,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[50,60,70,80,90,10,20,30,40]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 4, 5, 1, 2]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the array was [1,2,3,4,5] rotated so 1 ended up after 5"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [4, 5, 6, 7, 0, 1, 2]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [11, 13, 15, 17]",
+      "output": "11",
+      "expectedOutput": "11",
+      "explanation": "the array wasn't actually rotated (or was rotated a full cycle), so the minimum is just the first element"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 4, 5, 1, 2]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the array was [1,2,3,4,5] rotated so 1 ended up after 5"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [4, 5, 6, 7, 0, 1, 2]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [11, 13, 15, 17]",
+      "output": "11",
+      "expectedOutput": "11",
+      "explanation": "the array wasn't actually rotated (or was rotated a full cycle), so the minimum is just the first element"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[3,4,5,1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[4,5,6,7,0,1,2]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[11,13,15,17]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[2,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[2,3,4,5,6,7,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[7,1,2,3,4,5,6]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[6,7,1,2,3,4,5]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4,5,6,7]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[3,1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[30,40,50,10,20]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[5,6,7,8,9,10,1,2,3,4]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[9,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[100,1,2,3,4,5,6,7,8,9]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,1,2,3,4,5,6,7,8,9,10,11,12,13,14]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[4,5,6,7,8,9,10,11,12,13,1,2,3]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[50,60,70,80,90,10,20,30,40]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 4, 5, 1, 2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the array was [1,2,3,4,5] rotated so 1 ended up after 5"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [4, 5, 6, 7, 0, 1, 2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [11, 13, 15, 17]",
+        "output": "11",
+        "expectedOutput": "11",
+        "explanation": "the array wasn't actually rotated (or was rotated a full cycle), so the minimum is just the first element"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[3,4,5,1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[4,5,6,7,0,1,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[11,13,15,17]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[2,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,3,4,5,6,7,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[7,1,2,3,4,5,6]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[6,7,1,2,3,4,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[3,1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[30,40,50,10,20]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[5,6,7,8,9,10,1,2,3,4]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[9,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[100,1,2,3,4,5,6,7,8,9]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,1,2,3,4,5,6,7,8,9,10,11,12,13,14]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[4,5,6,7,8,9,10,11,12,13,1,2,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[50,60,70,80,90,10,20,30,40]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findMin(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMin(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findMin(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMin(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMin(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findMin(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMin(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findMin(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMin(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMin(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findMin(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMin(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findMin(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMin(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMin(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findMin(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMin(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findMin(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findMin(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findMin(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(log n)",
+      "space": "O(1)",
+      "pattern": "binary search that homes in on the rotation point by comparing the middle element to the rightmost element"
+    },
+    "bruteForce": {
+      "approach": "linear scan tracking the smallest value seen",
+      "time": "O(n)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "binary search that homes in on the rotation point by comparing the middle element to the rightmost element",
+    "time": "O(log n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "the minimum sits exactly at the point where the array 'wraps' - everything before it is bigger than everything after it",
+      "compare nums[mid] to nums[right]: if nums[mid] > nums[right], the minimum must be somewhere to the right of mid; otherwise it's at mid or to the left",
+      "unlike a normal binary search, when nums[mid] <= nums[right] you can't rule out mid itself being the answer, so right should move to mid, not mid - 1",
+      "keep narrowing until left and right meet - that position holds the minimum"
+    ]
+  },
+  "bruteForce": {
+    "approach": "linear scan tracking the smallest value seen",
+    "time": "O(n)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

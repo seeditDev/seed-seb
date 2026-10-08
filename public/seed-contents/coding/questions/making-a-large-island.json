@@ -1,0 +1,632 @@
+{
+  "id": "making-a-large-island",
+  "questionId": "making-a-large-island",
+  "slug": "making-a-large-island",
+  "title": "Making a Large Island",
+  "difficulty": "Hard",
+  "category": "Union find",
+  "patterns": [
+    "union find",
+    "grid",
+    "connected components"
+  ],
+  "lists": [],
+  "hints": [
+    "first pass: union every land cell with its land neighbors (right and below is enough), and track each component's size",
+    "if there is no 0 cell anywhere, the answer is just the total number of land cells - nothing to improve",
+    "second pass: for every 0 cell, look at its up to 4 neighbors, collect the DISTINCT island roots among them (a set, not a list, so the same island isn't double-counted)",
+    "the candidate size for flipping that 0 is 1 (itself) plus the sum of the sizes of those distinct neighboring islands",
+    "track the maximum candidate size across all 0 cells; if the grid has no 0 cells at all, fall back to the total land count"
+  ],
+  "commonMistakes": [
+    "double-counting a neighbor island's size when two of the flipped cell's four neighbors belong to the same island",
+    "forgetting the case where the grid is all 1s, which has no 0 to flip and needs its own answer path",
+    "not handling the all-0 grid, where the best you can do is a single flipped cell of size 1"
+  ],
+  "content": {
+    "problemStatement": "You're given an n x n binary `grid` where each cell is 1 (land) or 0\n(water). An island is a maximal group of land cells connected\nhorizontally or vertically, and you may change at most one 0 to a 1 (or\nchange nothing at all).\n\n**Return the size of the largest island achievable.**\n",
+    "constraints": [
+      "1 <= n <= 500",
+      "grid[i][j] is 0 or 1"
+    ],
+    "notes": [
+      "the grid is entirely land already (no 0 to flip)",
+      "the grid is entirely water (flip exactly one cell to get a size-1 island)",
+      "a 0 cell bordered by two different islands that both get absorbed into the flip",
+      "a 0 cell bordered on multiple sides by the SAME island, which should only be counted once"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "grid = [[1,0],[0,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "flipping either 0 connects both existing 1-cell islands into a size-3 island"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[1,1],[1,0]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "flipping the remaining 0 makes the whole grid one island"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "grid = [[1,1],[1,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "the grid is already all land, so nothing can be improved"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,0],[0,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,1],[1,0]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,0,1],[0,0,0],[1,0,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,1,0],[1,0,0],[0,0,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0,0,0],[0,0,0],[0,0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,1,1],[1,0,1],[1,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,0,1,0,0,0,1,1],[0,0,0,0,1,1,0,1],[0,0,0,1,1,0,0,0],[1,1,0,0,1,0,1,1],[0,1,0,1,1,1,1,0],[1,0,1,1,1,0,1,1],[0,1,0,0,1,0,0,1],[1,1,1,1,1,1,0,1]]]",
+        "output": "31",
+        "expectedOutput": "31",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,0,0,1,1,0,0,0,0,0],[0,0,0,1,0,1,0,0,0,0],[0,1,0,1,0,0,0,0,0,1],[0,0,0,1,0,0,0,1,1,0],[1,0,0,1,0,0,0,1,0,0],[1,0,0,0,0,0,1,0,0,1],[0,0,0,0,1,0,0,0,0,0],[0,0,0,0,1,0,0,1,0,0],[0,1,1,0,0,1,0,0,0,0],[1,0,1,0,0,0,0,1,0,0]]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,0,0,0,1,0,0,1,1,1,1,1],[0,1,1,1,1,1,1,0,0,1,1,0],[1,0,0,0,1,0,0,1,1,0,1,0],[0,0,1,0,0,1,1,0,0,1,1,1],[0,0,0,1,0,1,0,1,1,1,1,0],[1,1,0,0,0,0,0,1,1,1,1,1],[0,1,1,1,1,1,0,1,1,1,0,1],[0,1,0,1,0,0,1,1,1,1,1,1],[0,1,1,1,1,1,1,1,0,0,1,1],[1,1,0,0,0,1,0,1,1,1,1,1],[1,1,1,1,0,0,1,0,1,0,1,0],[1,1,0,0,0,0,1,1,0,1,1,0]]]",
+        "output": "77",
+        "expectedOutput": "77",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,0,1,0,1,1,0,0,0,1,0,1,1,0,1],[1,0,0,1,1,1,0,1,0,0,0,0,0,0,0],[0,0,1,0,0,1,1,0,1,1,0,0,0,0,0],[1,0,0,1,0,0,1,0,1,0,1,0,0,1,1],[0,1,0,1,1,1,0,0,1,0,1,0,0,1,1],[0,1,0,1,1,1,0,0,1,1,0,1,0,0,0],[1,1,0,0,1,1,1,1,1,1,1,1,1,0,0],[0,1,0,0,0,1,0,0,0,0,1,0,1,0,0],[1,1,0,1,1,0,0,1,1,1,0,0,1,0,0],[1,0,1,1,1,1,1,1,0,1,1,0,1,1,0],[0,1,0,0,0,0,0,0,1,0,0,1,0,0,1],[1,1,0,1,1,0,0,1,1,1,0,1,1,1,1],[0,0,1,1,1,1,0,0,1,1,0,0,0,1,1],[0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],[1,1,0,0,0,0,0,1,0,1,0,0,0,0,0]]]",
+        "output": "52",
+        "expectedOutput": "52",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[1,0,0,0,0,0,1,0,0],[0,0,1,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[1,0,0,1,0,0,0,0,1],[0,0,0,0,0,1,0,0,0],[0,0,1,0,0,0,0,0,0]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,1,1,1,1,1,1,1,1],[1,0,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,0,1],[1,0,1,1,1,1,1,1,1],[1,1,0,1,1,0,1,1,1],[1,1,1,1,1,1,1,0,1],[1,0,1,0,1,1,1,1,1],[1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,0,1,1]]]",
+        "output": "73",
+        "expectedOutput": "73",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,0],[1,0]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[0,1,0],[1,1,1],[0,1,0]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,1,0,0],[1,1,0,0],[0,0,1,1],[0,0,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "grid = [[1,0],[0,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "flipping either 0 connects both existing 1-cell islands into a size-3 island"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "grid = [[1,1],[1,0]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "flipping the remaining 0 makes the whole grid one island"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "grid = [[1,1],[1,1]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "the grid is already all land, so nothing can be improved"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "grid = [[1,0],[0,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "flipping either 0 connects both existing 1-cell islands into a size-3 island"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "grid = [[1,1],[1,0]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "flipping the remaining 0 makes the whole grid one island"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "grid = [[1,1],[1,1]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "the grid is already all land, so nothing can be improved"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,0],[0,1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,1],[1,0]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1,1],[1,1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[0,0],[0,0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,0,1],[0,0,0],[1,0,1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,1,0],[1,0,0],[0,0,1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[0,0,0],[0,0,0],[0,0,0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[1,1,1],[1,0,1],[1,1,1]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[1,0,1,0,0,0,1,1],[0,0,0,0,1,1,0,1],[0,0,0,1,1,0,0,0],[1,1,0,0,1,0,1,1],[0,1,0,1,1,1,1,0],[1,0,1,1,1,0,1,1],[0,1,0,0,1,0,0,1],[1,1,1,1,1,1,0,1]]]",
+      "output": "31",
+      "expectedOutput": "31",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1,0,0,1,1,0,0,0,0,0],[0,0,0,1,0,1,0,0,0,0],[0,1,0,1,0,0,0,0,0,1],[0,0,0,1,0,0,0,1,1,0],[1,0,0,1,0,0,0,1,0,0],[1,0,0,0,0,0,1,0,0,1],[0,0,0,0,1,0,0,0,0,0],[0,0,0,0,1,0,0,1,0,0],[0,1,1,0,0,1,0,0,0,0],[1,0,1,0,0,0,0,1,0,0]]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,0,0,0,1,0,0,1,1,1,1,1],[0,1,1,1,1,1,1,0,0,1,1,0],[1,0,0,0,1,0,0,1,1,0,1,0],[0,0,1,0,0,1,1,0,0,1,1,1],[0,0,0,1,0,1,0,1,1,1,1,0],[1,1,0,0,0,0,0,1,1,1,1,1],[0,1,1,1,1,1,0,1,1,1,0,1],[0,1,0,1,0,0,1,1,1,1,1,1],[0,1,1,1,1,1,1,1,0,0,1,1],[1,1,0,0,0,1,0,1,1,1,1,1],[1,1,1,1,0,0,1,0,1,0,1,0],[1,1,0,0,0,0,1,1,0,1,1,0]]]",
+      "output": "77",
+      "expectedOutput": "77",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[0,0,1,0,1,1,0,0,0,1,0,1,1,0,1],[1,0,0,1,1,1,0,1,0,0,0,0,0,0,0],[0,0,1,0,0,1,1,0,1,1,0,0,0,0,0],[1,0,0,1,0,0,1,0,1,0,1,0,0,1,1],[0,1,0,1,1,1,0,0,1,0,1,0,0,1,1],[0,1,0,1,1,1,0,0,1,1,0,1,0,0,0],[1,1,0,0,1,1,1,1,1,1,1,1,1,0,0],[0,1,0,0,0,1,0,0,0,0,1,0,1,0,0],[1,1,0,1,1,0,0,1,1,1,0,0,1,0,0],[1,0,1,1,1,1,1,1,0,1,1,0,1,1,0],[0,1,0,0,0,0,0,0,1,0,0,1,0,0,1],[1,1,0,1,1,0,0,1,1,1,0,1,1,1,1],[0,0,1,1,1,1,0,0,1,1,0,0,0,1,1],[0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],[1,1,0,0,0,0,0,1,0,1,0,0,0,0,0]]]",
+      "output": "52",
+      "expectedOutput": "52",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[1,0,0,0,0,0,1,0,0],[0,0,1,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[1,0,0,1,0,0,0,0,1],[0,0,0,0,0,1,0,0,0],[0,0,1,0,0,0,0,0,0]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,1,1,1,1,1,1,1,1],[1,0,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,0,1],[1,0,1,1,1,1,1,1,1],[1,1,0,1,1,0,1,1,1],[1,1,1,1,1,1,1,0,1],[1,0,1,0,1,1,1,1,1],[1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,0,1,1]]]",
+      "output": "73",
+      "expectedOutput": "73",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1,0],[1,0]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[0,1,0],[1,1,1],[0,1,0]]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,1,0,0],[1,1,0,0],[0,0,1,1],[0,0,1,1]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "grid = [[1,0],[0,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "flipping either 0 connects both existing 1-cell islands into a size-3 island"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[1,1],[1,0]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "flipping the remaining 0 makes the whole grid one island"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "grid = [[1,1],[1,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "the grid is already all land, so nothing can be improved"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,0],[0,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,1],[1,0]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,0,1],[0,0,0],[1,0,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,1,0],[1,0,0],[0,0,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0,0,0],[0,0,0],[0,0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,1,1],[1,0,1],[1,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,0,1,0,0,0,1,1],[0,0,0,0,1,1,0,1],[0,0,0,1,1,0,0,0],[1,1,0,0,1,0,1,1],[0,1,0,1,1,1,1,0],[1,0,1,1,1,0,1,1],[0,1,0,0,1,0,0,1],[1,1,1,1,1,1,0,1]]]",
+        "output": "31",
+        "expectedOutput": "31",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,0,0,1,1,0,0,0,0,0],[0,0,0,1,0,1,0,0,0,0],[0,1,0,1,0,0,0,0,0,1],[0,0,0,1,0,0,0,1,1,0],[1,0,0,1,0,0,0,1,0,0],[1,0,0,0,0,0,1,0,0,1],[0,0,0,0,1,0,0,0,0,0],[0,0,0,0,1,0,0,1,0,0],[0,1,1,0,0,1,0,0,0,0],[1,0,1,0,0,0,0,1,0,0]]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,0,0,0,1,0,0,1,1,1,1,1],[0,1,1,1,1,1,1,0,0,1,1,0],[1,0,0,0,1,0,0,1,1,0,1,0],[0,0,1,0,0,1,1,0,0,1,1,1],[0,0,0,1,0,1,0,1,1,1,1,0],[1,1,0,0,0,0,0,1,1,1,1,1],[0,1,1,1,1,1,0,1,1,1,0,1],[0,1,0,1,0,0,1,1,1,1,1,1],[0,1,1,1,1,1,1,1,0,0,1,1],[1,1,0,0,0,1,0,1,1,1,1,1],[1,1,1,1,0,0,1,0,1,0,1,0],[1,1,0,0,0,0,1,1,0,1,1,0]]]",
+        "output": "77",
+        "expectedOutput": "77",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,0,1,0,1,1,0,0,0,1,0,1,1,0,1],[1,0,0,1,1,1,0,1,0,0,0,0,0,0,0],[0,0,1,0,0,1,1,0,1,1,0,0,0,0,0],[1,0,0,1,0,0,1,0,1,0,1,0,0,1,1],[0,1,0,1,1,1,0,0,1,0,1,0,0,1,1],[0,1,0,1,1,1,0,0,1,1,0,1,0,0,0],[1,1,0,0,1,1,1,1,1,1,1,1,1,0,0],[0,1,0,0,0,1,0,0,0,0,1,0,1,0,0],[1,1,0,1,1,0,0,1,1,1,0,0,1,0,0],[1,0,1,1,1,1,1,1,0,1,1,0,1,1,0],[0,1,0,0,0,0,0,0,1,0,0,1,0,0,1],[1,1,0,1,1,0,0,1,1,1,0,1,1,1,1],[0,0,1,1,1,1,0,0,1,1,0,0,0,1,1],[0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],[1,1,0,0,0,0,0,1,0,1,0,0,0,0,0]]]",
+        "output": "52",
+        "expectedOutput": "52",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[1,0,0,0,0,0,1,0,0],[0,0,1,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[1,0,0,1,0,0,0,0,1],[0,0,0,0,0,1,0,0,0],[0,0,1,0,0,0,0,0,0]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,1,1,1,1,1,1,1,1],[1,0,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,0,1],[1,0,1,1,1,1,1,1,1],[1,1,0,1,1,0,1,1,1],[1,1,1,1,1,1,1,0,1],[1,0,1,0,1,1,1,1,1],[1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,0,1,1]]]",
+        "output": "73",
+        "expectedOutput": "73",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,0],[1,0]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[0,1,0],[1,1,1],[0,1,0]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,1,0,0],[1,1,0,0],[0,0,1,1],[0,0,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def largestIsland(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int largestIsland(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int largestIsland(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun largestIsland(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    largestIsland(grid) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def largestIsland(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int largestIsland(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int largestIsland(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun largestIsland(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    largestIsland(grid) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def largestIsland(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int largestIsland(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int largestIsland(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun largestIsland(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    largestIsland(grid) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def largestIsland(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int largestIsland(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int largestIsland(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun largestIsland(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    largestIsland(grid) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n^2 * alpha(n^2))",
+      "space": "O(n^2)",
+      "pattern": "union find with pre-labeled components and neighbor lookups"
+    },
+    "bruteForce": {
+      "approach": "for every 0 cell, temporarily flip it to 1 and run a full flood-fill to measure the resulting island size, then flip it back; track the maximum seen",
+      "time": "O(n^4)",
+      "space": "O(n^2)"
+    }
+  },
+  "optimal": {
+    "pattern": "union find with pre-labeled components and neighbor lookups",
+    "time": "O(n^2 * alpha(n^2))",
+    "space": "O(n^2)",
+    "hint_ladder": [
+      "first pass: union every land cell with its land neighbors (right and below is enough), and track each component's size",
+      "if there is no 0 cell anywhere, the answer is just the total number of land cells - nothing to improve",
+      "second pass: for every 0 cell, look at its up to 4 neighbors, collect the DISTINCT island roots among them (a set, not a list, so the same island isn't double-counted)",
+      "the candidate size for flipping that 0 is 1 (itself) plus the sum of the sizes of those distinct neighboring islands",
+      "track the maximum candidate size across all 0 cells; if the grid has no 0 cells at all, fall back to the total land count"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every 0 cell, temporarily flip it to 1 and run a full flood-fill to measure the resulting island size, then flip it back; track the maximum seen",
+    "time": "O(n^4)",
+    "space": "O(n^2)"
+  },
+  "isIndex0": true,
+  "level": null
+}

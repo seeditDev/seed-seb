@@ -1,0 +1,630 @@
+{
+  "id": "decode-ways",
+  "questionId": "decode-ways",
+  "slug": "decode-ways",
+  "title": "Decode Ways",
+  "difficulty": "Hard",
+  "category": "Dp 1d",
+  "patterns": [
+    "dynamic programming",
+    "string"
+  ],
+  "lists": [
+    "blind-75"
+  ],
+  "hints": [
+    "define ways(i) as the number of valid decodings of the first i characters of s - what is ways(0), the empty prefix?",
+    "the last decoded group ending at position i-1 is either a single digit or a pair of digits - under what conditions is each of those a legal group?",
+    "ways(i) picks up a contribution from ways(i-1) only if s[i-1] is not '0', and a contribution from ways(i-2) only if the two-digit number s[i-2:i] falls between 10 and 26",
+    "iterate i from 1 to n, adding both contributions when valid, and roll the last two ways values forward instead of storing a full array"
+  ],
+  "commonMistakes": [
+    "forgetting that a single '0' is never a valid one-digit group, which silently breaks the recurrence for any string containing a lone 0",
+    "allowing two-digit groups starting with '0' (like '05') to count as valid, when only 10-26 are legal",
+    "not handling the leading character of the whole string specially when it happens to be '0', which should make the entire answer 0"
+  ],
+  "content": {
+    "problemStatement": "A message made only of uppercase letters A through Z was encoded into\ndigits by mapping 'A' -> \"1\", 'B' -> \"2\", ..., 'Z' -> \"26\", producing a\ndigit string `s`.\n\n**Return the number of distinct ways `s` could have been decoded back into letters.**\n\nA digit string with a leading zero in any decoded group is not a valid encoding of anything.\n",
+    "constraints": [
+      "1 <= s.length <= 100",
+      "s consists of digits '0' through '9'"
+    ],
+    "notes": [
+      "a string that is just '0' (0 ways)",
+      "a two-digit group starting with a nonzero digit but exceeding 26, like '27' (only splits as single digits)",
+      "a '0' appearing after a digit that can't absorb it, like '90' (0 ways, since '9' alone leaves an orphan leading zero)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"12\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "\"12\" could be read as \"1\"+\"2\" (AB) or as \"12\" (L)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"226\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "\"2\"+\"2\"+\"6\" (BBF), \"22\"+\"6\" (VF), or \"2\"+\"26\" (BZ)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"0\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "a leading zero can never map to a valid letter, so there are no valid decodings"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"12\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"226\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"0\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"10\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"27\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"1\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"100\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"110\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"06\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"2101\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"1234\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"11106\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"301\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"10011\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"123456789\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"111111111111111111\"]",
+        "output": "4181",
+        "expectedOutput": "4181",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"2611055971756562\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"5\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"30\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"102\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"12\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "\"12\" could be read as \"1\"+\"2\" (AB) or as \"12\" (L)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"226\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "\"2\"+\"2\"+\"6\" (BBF), \"22\"+\"6\" (VF), or \"2\"+\"26\" (BZ)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"0\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "a leading zero can never map to a valid letter, so there are no valid decodings"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"12\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "\"12\" could be read as \"1\"+\"2\" (AB) or as \"12\" (L)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"226\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "\"2\"+\"2\"+\"6\" (BBF), \"22\"+\"6\" (VF), or \"2\"+\"26\" (BZ)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"0\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "a leading zero can never map to a valid letter, so there are no valid decodings"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"12\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"226\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"0\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"10\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"27\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"1\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"100\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"110\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"06\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"2101\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"1234\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"11106\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"301\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"10011\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"123456789\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"111111111111111111\"]",
+      "output": "4181",
+      "expectedOutput": "4181",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"2611055971756562\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"5\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"30\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"102\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"12\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "\"12\" could be read as \"1\"+\"2\" (AB) or as \"12\" (L)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"226\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "\"2\"+\"2\"+\"6\" (BBF), \"22\"+\"6\" (VF), or \"2\"+\"26\" (BZ)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"0\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "a leading zero can never map to a valid letter, so there are no valid decodings"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"12\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"226\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"0\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"10\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"27\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"1\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"100\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"110\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"06\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"2101\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"1234\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"11106\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"301\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"10011\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"123456789\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"111111111111111111\"]",
+        "output": "4181",
+        "expectedOutput": "4181",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"2611055971756562\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"5\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"30\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"102\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def numDecodings(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numDecodings(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numDecodings(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numDecodings(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numDecodings(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def numDecodings(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numDecodings(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numDecodings(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numDecodings(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numDecodings(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def numDecodings(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numDecodings(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numDecodings(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numDecodings(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numDecodings(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def numDecodings(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numDecodings(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numDecodings(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numDecodings(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numDecodings(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) if only the last two values are kept, O(n) if a full array is memoized",
+      "pattern": "dynamic programming - let ways(i) be the number of ways to decode the prefix s[0:i]"
+    },
+    "bruteForce": {
+      "approach": "recursively try decoding the next one digit and, if valid, the next two digits from the current position, summing the number of ways each branch completes the rest of the string",
+      "time": "O(2^n) - exponential, recomputes the same suffixes repeatedly",
+      "space": "O(n) recursion stack"
+    }
+  },
+  "optimal": {
+    "pattern": "dynamic programming - let ways(i) be the number of ways to decode the prefix s[0:i]",
+    "time": "O(n)",
+    "space": "O(1) if only the last two values are kept, O(n) if a full array is memoized",
+    "hint_ladder": [
+      "define ways(i) as the number of valid decodings of the first i characters of s - what is ways(0), the empty prefix?",
+      "the last decoded group ending at position i-1 is either a single digit or a pair of digits - under what conditions is each of those a legal group?",
+      "ways(i) picks up a contribution from ways(i-1) only if s[i-1] is not '0', and a contribution from ways(i-2) only if the two-digit number s[i-2:i] falls between 10 and 26",
+      "iterate i from 1 to n, adding both contributions when valid, and roll the last two ways values forward instead of storing a full array"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try decoding the next one digit and, if valid, the next two digits from the current position, summing the number of ways each branch completes the rest of the string",
+    "time": "O(2^n) - exponential, recomputes the same suffixes repeatedly",
+    "space": "O(n) recursion stack"
+  },
+  "isIndex0": true,
+  "level": null
+}

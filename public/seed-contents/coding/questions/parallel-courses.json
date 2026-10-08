@@ -1,0 +1,631 @@
+{
+  "id": "parallel-courses",
+  "questionId": "parallel-courses",
+  "slug": "parallel-courses",
+  "title": "Parallel Courses",
+  "difficulty": "Medium",
+  "category": "Topological sort",
+  "patterns": [
+    "topological sort",
+    "graph",
+    "bfs layers"
+  ],
+  "lists": [],
+  "hints": [
+    "if you could take unlimited courses at once, what determines how many semesters you need - the total number of courses, or something about the dependency chains?",
+    "think in terms of Kahn's algorithm, but process the zero-in-degree queue one full layer (semester) at a time instead of one node at a time",
+    "each semester, take every course currently available (in-degree 0), remove their outgoing edges, and see what becomes available for the next semester",
+    "the number of semesters is the number of layers you process; if you finish fewer than n courses total, return -1"
+  ],
+  "commonMistakes": [
+    "counting semesters per node instead of per layer, e.g. incrementing a counter for every node processed instead of once per BFS layer",
+    "not detecting the impossible case and returning a semester count instead of -1",
+    "off-by-one in the semester count when there's exactly one course with no prerequisites"
+  ],
+  "content": {
+    "problemStatement": "There are n courses, labeled 0 to n - 1, and a list of prerequisite pairs `relations`, where each pair `[a, b]` means course a requires course b to be completed first. In one semester you may take any number of courses at once, as long as every prerequisite for each of them has already been completed in an earlier semester.\n\n**Return the minimum number of semesters needed to complete all n courses, or -1 if it's impossible because a cycle exists.**\n",
+    "constraints": [
+      "1 <= n <= 5000",
+      "each pair [a, b] has 0 <= a, b < n",
+      "there is at most one prerequisite pair between any given a and b"
+    ],
+    "notes": [
+      "a cycle exists somewhere in the graph - return -1",
+      "n = 1 with no relations - still needs exactly 1 semester",
+      "no relations at all, with several independent courses - still just 1 semester",
+      "disconnected components with chains of different lengths - the answer is driven by the longest chain"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 3, relations = [[1, 0], [2, 1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "course 0 must come first, then 1, then 2 - a strict chain needing 3 semesters"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 3, relations = []",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "no prerequisites at all, so all 3 courses can be taken together in a single semester"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 4, relations = [[1, 0], [2, 0], [3, 1], [3, 2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "semester 1: course 0; semester 2: courses 1 and 2 together; semester 3: course 3"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[3,[[1,0],[2,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,[]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[4,[[1,0],[2,0],[3,1],[3,2]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[2,[[1,0],[0,1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,[]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[10,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[8,[[1,0],[2,0],[3,0],[4,1],[4,2],[4,3]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[6,[[1,0],[2,1],[0,2]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[12,[[1,0],[2,1],[3,2],[7,6],[8,7]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[20,[[1,0],[2,0],[2,1],[3,0],[3,1],[4,1],[4,2],[5,2],[5,0],[6,2],[6,0],[7,5],[7,3],[8,0],[8,3],[9,6],[9,7],[10,1],[10,7],[11,2],[11,3],[12,1],[12,4],[13,3],[13,10],[14,0],[14,1],[15,5],[15,11],[16,8],[16,11],[17,1],[17,8],[18,17],[18,13],[19,16],[19,8]]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[5,[[0,0]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[1,[]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[4,[]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[7,[[1,0],[2,0],[3,1],[3,2],[4,3],[5,3],[6,4]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[9,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[15,[[1,0],[2,0],[3,0],[4,1],[4,2],[4,3],[5,4]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[3,[[0,1],[1,2],[2,0]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[10,[[1,0],[3,2],[5,4],[7,6],[9,8]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[25,[[1,0],[2,1],[2,0],[3,0],[3,1],[4,0],[4,3],[5,4],[5,2],[6,4],[6,3],[7,1],[7,3],[8,6],[8,5],[9,6],[9,3],[10,7],[10,4],[11,0],[11,5],[12,4],[12,11],[13,6],[13,2],[14,9],[14,12],[15,14],[15,12],[16,1],[16,4],[17,4],[17,16],[18,8],[18,15],[19,11],[19,17],[20,2],[20,17],[21,17],[21,15],[22,12],[22,6],[23,7],[23,9],[24,19],[24,1]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[6,[[1,0],[2,1],[3,2],[4,3],[5,4],[0,5]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 3, relations = [[1, 0], [2, 1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "course 0 must come first, then 1, then 2 - a strict chain needing 3 semesters"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 3, relations = []",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "no prerequisites at all, so all 3 courses can be taken together in a single semester"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 4, relations = [[1, 0], [2, 0], [3, 1], [3, 2]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "semester 1: course 0; semester 2: courses 1 and 2 together; semester 3: course 3"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 3, relations = [[1, 0], [2, 1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "course 0 must come first, then 1, then 2 - a strict chain needing 3 semesters"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 3, relations = []",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "no prerequisites at all, so all 3 courses can be taken together in a single semester"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 4, relations = [[1, 0], [2, 0], [3, 1], [3, 2]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "semester 1: course 0; semester 2: courses 1 and 2 together; semester 3: course 3"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[3,[[1,0],[2,1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[3,[]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[4,[[1,0],[2,0],[3,1],[3,2]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[2,[[1,0],[0,1]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[1,[]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[10,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8]]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[8,[[1,0],[2,0],[3,0],[4,1],[4,2],[4,3]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[6,[[1,0],[2,1],[0,2]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[12,[[1,0],[2,1],[3,2],[7,6],[8,7]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[20,[[1,0],[2,0],[2,1],[3,0],[3,1],[4,1],[4,2],[5,2],[5,0],[6,2],[6,0],[7,5],[7,3],[8,0],[8,3],[9,6],[9,7],[10,1],[10,7],[11,2],[11,3],[12,1],[12,4],[13,3],[13,10],[14,0],[14,1],[15,5],[15,11],[16,8],[16,11],[17,1],[17,8],[18,17],[18,13],[19,16],[19,8]]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[5,[[0,0]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[1,[]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[4,[]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[7,[[1,0],[2,0],[3,1],[3,2],[4,3],[5,3],[6,4]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[9,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[15,[[1,0],[2,0],[3,0],[4,1],[4,2],[4,3],[5,4]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[3,[[0,1],[1,2],[2,0]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[10,[[1,0],[3,2],[5,4],[7,6],[9,8]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[25,[[1,0],[2,1],[2,0],[3,0],[3,1],[4,0],[4,3],[5,4],[5,2],[6,4],[6,3],[7,1],[7,3],[8,6],[8,5],[9,6],[9,3],[10,7],[10,4],[11,0],[11,5],[12,4],[12,11],[13,6],[13,2],[14,9],[14,12],[15,14],[15,12],[16,1],[16,4],[17,4],[17,16],[18,8],[18,15],[19,11],[19,17],[20,2],[20,17],[21,17],[21,15],[22,12],[22,6],[23,7],[23,9],[24,19],[24,1]]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[6,[[1,0],[2,1],[3,2],[4,3],[5,4],[0,5]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 3, relations = [[1, 0], [2, 1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "course 0 must come first, then 1, then 2 - a strict chain needing 3 semesters"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 3, relations = []",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "no prerequisites at all, so all 3 courses can be taken together in a single semester"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 4, relations = [[1, 0], [2, 0], [3, 1], [3, 2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "semester 1: course 0; semester 2: courses 1 and 2 together; semester 3: course 3"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[3,[[1,0],[2,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,[]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[4,[[1,0],[2,0],[3,1],[3,2]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[2,[[1,0],[0,1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,[]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[10,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[8,[[1,0],[2,0],[3,0],[4,1],[4,2],[4,3]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[6,[[1,0],[2,1],[0,2]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[12,[[1,0],[2,1],[3,2],[7,6],[8,7]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[20,[[1,0],[2,0],[2,1],[3,0],[3,1],[4,1],[4,2],[5,2],[5,0],[6,2],[6,0],[7,5],[7,3],[8,0],[8,3],[9,6],[9,7],[10,1],[10,7],[11,2],[11,3],[12,1],[12,4],[13,3],[13,10],[14,0],[14,1],[15,5],[15,11],[16,8],[16,11],[17,1],[17,8],[18,17],[18,13],[19,16],[19,8]]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[5,[[0,0]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[1,[]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[4,[]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[7,[[1,0],[2,0],[3,1],[3,2],[4,3],[5,3],[6,4]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[9,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[15,[[1,0],[2,0],[3,0],[4,1],[4,2],[4,3],[5,4]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[3,[[0,1],[1,2],[2,0]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[10,[[1,0],[3,2],[5,4],[7,6],[9,8]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[25,[[1,0],[2,1],[2,0],[3,0],[3,1],[4,0],[4,3],[5,4],[5,2],[6,4],[6,3],[7,1],[7,3],[8,6],[8,5],[9,6],[9,3],[10,7],[10,4],[11,0],[11,5],[12,4],[12,11],[13,6],[13,2],[14,9],[14,12],[15,14],[15,12],[16,1],[16,4],[17,4],[17,16],[18,8],[18,15],[19,11],[19,17],[20,2],[20,17],[21,17],[21,15],[22,12],[22,6],[23,7],[23,9],[24,19],[24,1]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[6,[[1,0],[2,1],[3,2],[4,3],[5,4],[0,5]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minimumSemesters(self, n, relations):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumSemesters(int n, vector<vector<int>>& relations) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumSemesters(int n, int[][] relations) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumSemesters(n: Int, relations: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumSemesters(n, relations) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minimumSemesters(self, n, relations):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumSemesters(int n, vector<vector<int>>& relations) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumSemesters(int n, int[][] relations) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumSemesters(n: Int, relations: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumSemesters(n, relations) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minimumSemesters(self, n, relations):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumSemesters(int n, vector<vector<int>>& relations) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumSemesters(int n, int[][] relations) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumSemesters(n: Int, relations: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumSemesters(n, relations) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minimumSemesters(self, n, relations):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumSemesters(int n, vector<vector<int>>& relations) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumSemesters(int n, int[][] relations) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumSemesters(n: Int, relations: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumSemesters(n, relations) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(V + E)",
+      "space": "O(V + E)",
+      "pattern": "Kahn's algorithm processed one full BFS layer (semester) at a time"
+    },
+    "bruteForce": {
+      "approach": "repeatedly scan all remaining courses each round, take every course whose prerequisites are already completed, and count rounds until nothing remains or nothing new can be taken (a cycle)",
+      "time": "O(n^2 + n * m)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "Kahn's algorithm processed one full BFS layer (semester) at a time",
+    "time": "O(V + E)",
+    "space": "O(V + E)",
+    "hint_ladder": [
+      "if you could take unlimited courses at once, what determines how many semesters you need - the total number of courses, or something about the dependency chains?",
+      "think in terms of Kahn's algorithm, but process the zero-in-degree queue one full layer (semester) at a time instead of one node at a time",
+      "each semester, take every course currently available (in-degree 0), remove their outgoing edges, and see what becomes available for the next semester",
+      "the number of semesters is the number of layers you process; if you finish fewer than n courses total, return -1"
+    ]
+  },
+  "bruteForce": {
+    "approach": "repeatedly scan all remaining courses each round, take every course whose prerequisites are already completed, and count rounds until nothing remains or nothing new can be taken (a cycle)",
+    "time": "O(n^2 + n * m)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

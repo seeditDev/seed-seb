@@ -1,0 +1,677 @@
+{
+  "id": "implement-queue-using-stacks",
+  "questionId": "implement-queue-using-stacks",
+  "slug": "implement-queue-using-stacks",
+  "title": "Implement Queue using Stacks",
+  "difficulty": "Easy",
+  "category": "Stack",
+  "patterns": [
+    "stack",
+    "queue",
+    "design"
+  ],
+  "lists": [
+    "grind-75"
+  ],
+  "hints": [
+    "a stack gives you last-in-first-out access, but you need first-in-first-out - how could two stacks combined reverse order back to the order you need?",
+    "what if all pushes go into one stack, and pops/peeks come from a second stack that holds elements in reverse order?",
+    "when the second (output) stack is empty and you need to pop or peek, dump the entire first (input) stack into it - that reverses it into the correct front-to-back order",
+    "as long as you only refill the output stack when it's empty, each element only ever gets moved twice total, so operations are O(1) amortized"
+  ],
+  "commonMistakes": [
+    "popping from the input stack directly for a queue pop, which gives the most recently pushed element instead of the oldest",
+    "transferring elements between stacks on every single operation instead of only when the output stack is empty, losing the amortized efficiency",
+    "forgetting that empty must check both the input and output stacks, not just one",
+    "not preserving relative order when transferring between stacks (must pop-and-push one at a time so the order reverses)"
+  ],
+  "content": {
+    "problemStatement": "You need to implement a first-in-first-out (FIFO) queue, but the only\nbuilding block available to you internally is a stack, which is\nlast-in-first-out. You're given a space-delimited sequence of operations\nto run against this queue, starting from an empty queue. Each token is\none of:\n\n- `\"push_<value>\"` - add value to the back of the queue\n- `\"pop\"` - remove and report the value at the front\n- `\"peek\"` - report the value at the front without removing it\n- `\"empty\"` - report 1 if the queue is currently empty, 0 otherwise\n\n**Simulate the operations in order, and return a list containing the result of every \"pop\", \"peek\", and \"empty\" operation, in the order they occurred.**\n\nYou can assume \"pop\" and \"peek\" are never called on an empty queue.\n",
+    "constraints": [
+      "tokens are separated by single spaces, and push tokens join the operation and value with an underscore",
+      "push values fit in a standard 32-bit integer and may be negative",
+      "pop and peek are never called while the queue is empty",
+      "1 <= number of operations <= 100"
+    ],
+    "notes": [
+      "empty called on a queue that has never had anything pushed",
+      "interleaved pushes and pops, not just push-then-pop-everything",
+      "a push happening between two pops of earlier-pushed elements",
+      "many pushes in a row before any pop or peek"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"push_1 push_2 peek pop empty\"",
+        "output": "[1, 1, 0]",
+        "expectedOutput": "[1, 1, 0]",
+        "explanation": "queue holds [1,2] front-to-back; peek reports 1; pop removes and reports 1, leaving [2]; empty reports 0 since [2] remains"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"push_5 pop empty\"",
+        "output": "[5, 1]",
+        "expectedOutput": "[5, 1]",
+        "explanation": "pop removes and reports the only element, 5; empty then reports 1 since the queue is now empty"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"push_3 push_4 pop push_5 peek pop pop empty\"",
+        "output": "[3, 4, 4, 5, 1]",
+        "expectedOutput": "[3, 4, 4, 5, 1]",
+        "explanation": "FIFO order is preserved even though push_5 happens after the first pop: pop->3, peek/pop see 4 then 5, then the queue is empty"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"push_1 push_2 peek pop empty\"]",
+        "output": "[1,1,0]",
+        "expectedOutput": "[1,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"push_5 pop empty\"]",
+        "output": "[5,1]",
+        "expectedOutput": "[5,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"push_3 push_4 pop push_5 peek pop pop empty\"]",
+        "output": "[3,4,4,5,1]",
+        "expectedOutput": "[3,4,4,5,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"push_7 peek pop empty\"]",
+        "output": "[7,7,1]",
+        "expectedOutput": "[7,7,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"push_1 push_2 push_3 pop pop pop empty\"]",
+        "output": "[1,2,3,1]",
+        "expectedOutput": "[1,2,3,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"push_-1 push_-2 pop peek\"]",
+        "output": "[-1,-2]",
+        "expectedOutput": "[-1,-2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"push_0 push_0 pop pop empty\"]",
+        "output": "[0,0,1]",
+        "expectedOutput": "[0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"empty\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"push_10 empty pop empty\"]",
+        "output": "[0,10,1]",
+        "expectedOutput": "[0,10,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"push_1 push_2 push_3 push_4 pop pop peek\"]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"push_100 push_200 push_300 pop push_400 pop pop empty\"]",
+        "output": "[100,200,300,0]",
+        "expectedOutput": "[100,200,300,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"push_5 push_5 push_5 pop pop pop empty\"]",
+        "output": "[5,5,5,1]",
+        "expectedOutput": "[5,5,5,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"push_1 pop push_2 pop push_3 pop empty\"]",
+        "output": "[1,2,3,1]",
+        "expectedOutput": "[1,2,3,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"push_9 push_8 peek pop peek pop empty\"]",
+        "output": "[9,9,8,8,1]",
+        "expectedOutput": "[9,9,8,8,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"push_2 push_4 push_6 push_8 pop pop pop pop empty\"]",
+        "output": "[2,4,6,8,1]",
+        "expectedOutput": "[2,4,6,8,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"push_1000000 pop empty\"]",
+        "output": "[1000000,1]",
+        "expectedOutput": "[1000000,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"push_-1000000 pop empty\"]",
+        "output": "[-1000000,1]",
+        "expectedOutput": "[-1000000,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"push_1 push_2 empty pop empty pop empty\"]",
+        "output": "[0,1,0,2,1]",
+        "expectedOutput": "[0,1,0,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"push_42 peek peek peek pop empty\"]",
+        "output": "[42,42,42,42,1]",
+        "expectedOutput": "[42,42,42,42,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"push_1 push_2 push_3 push_4 push_5 pop pop pop pop pop empty\"]",
+        "output": "[1,2,3,4,5,1]",
+        "expectedOutput": "[1,2,3,4,5,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"push_3 push_1 push_4 push_1 push_5 pop pop pop pop pop empty\"]",
+        "output": "[3,1,4,1,5,1]",
+        "expectedOutput": "[3,1,4,1,5,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"push_6 push_7 pop push_8 push_9 pop pop pop empty\"]",
+        "output": "[6,7,8,9,1]",
+        "expectedOutput": "[6,7,8,9,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"push_1 push_2 peek pop empty\"",
+      "output": "[1, 1, 0]",
+      "expectedOutput": "[1, 1, 0]",
+      "explanation": "queue holds [1,2] front-to-back; peek reports 1; pop removes and reports 1, leaving [2]; empty reports 0 since [2] remains"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"push_5 pop empty\"",
+      "output": "[5, 1]",
+      "expectedOutput": "[5, 1]",
+      "explanation": "pop removes and reports the only element, 5; empty then reports 1 since the queue is now empty"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"push_3 push_4 pop push_5 peek pop pop empty\"",
+      "output": "[3, 4, 4, 5, 1]",
+      "expectedOutput": "[3, 4, 4, 5, 1]",
+      "explanation": "FIFO order is preserved even though push_5 happens after the first pop: pop->3, peek/pop see 4 then 5, then the queue is empty"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"push_1 push_2 peek pop empty\"",
+      "output": "[1, 1, 0]",
+      "expectedOutput": "[1, 1, 0]",
+      "explanation": "queue holds [1,2] front-to-back; peek reports 1; pop removes and reports 1, leaving [2]; empty reports 0 since [2] remains"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"push_5 pop empty\"",
+      "output": "[5, 1]",
+      "expectedOutput": "[5, 1]",
+      "explanation": "pop removes and reports the only element, 5; empty then reports 1 since the queue is now empty"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"push_3 push_4 pop push_5 peek pop pop empty\"",
+      "output": "[3, 4, 4, 5, 1]",
+      "expectedOutput": "[3, 4, 4, 5, 1]",
+      "explanation": "FIFO order is preserved even though push_5 happens after the first pop: pop->3, peek/pop see 4 then 5, then the queue is empty"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"push_1 push_2 peek pop empty\"]",
+      "output": "[1,1,0]",
+      "expectedOutput": "[1,1,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"push_5 pop empty\"]",
+      "output": "[5,1]",
+      "expectedOutput": "[5,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"push_3 push_4 pop push_5 peek pop pop empty\"]",
+      "output": "[3,4,4,5,1]",
+      "expectedOutput": "[3,4,4,5,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"push_7 peek pop empty\"]",
+      "output": "[7,7,1]",
+      "expectedOutput": "[7,7,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"push_1 push_2 push_3 pop pop pop empty\"]",
+      "output": "[1,2,3,1]",
+      "expectedOutput": "[1,2,3,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"push_-1 push_-2 pop peek\"]",
+      "output": "[-1,-2]",
+      "expectedOutput": "[-1,-2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"push_0 push_0 pop pop empty\"]",
+      "output": "[0,0,1]",
+      "expectedOutput": "[0,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"empty\"]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"push_10 empty pop empty\"]",
+      "output": "[0,10,1]",
+      "expectedOutput": "[0,10,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"push_1 push_2 push_3 push_4 pop pop peek\"]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"push_100 push_200 push_300 pop push_400 pop pop empty\"]",
+      "output": "[100,200,300,0]",
+      "expectedOutput": "[100,200,300,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"push_5 push_5 push_5 pop pop pop empty\"]",
+      "output": "[5,5,5,1]",
+      "expectedOutput": "[5,5,5,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"push_1 pop push_2 pop push_3 pop empty\"]",
+      "output": "[1,2,3,1]",
+      "expectedOutput": "[1,2,3,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"push_9 push_8 peek pop peek pop empty\"]",
+      "output": "[9,9,8,8,1]",
+      "expectedOutput": "[9,9,8,8,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"push_2 push_4 push_6 push_8 pop pop pop pop empty\"]",
+      "output": "[2,4,6,8,1]",
+      "expectedOutput": "[2,4,6,8,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"push_1000000 pop empty\"]",
+      "output": "[1000000,1]",
+      "expectedOutput": "[1000000,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"push_-1000000 pop empty\"]",
+      "output": "[-1000000,1]",
+      "expectedOutput": "[-1000000,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"push_1 push_2 empty pop empty pop empty\"]",
+      "output": "[0,1,0,2,1]",
+      "expectedOutput": "[0,1,0,2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"push_42 peek peek peek pop empty\"]",
+      "output": "[42,42,42,42,1]",
+      "expectedOutput": "[42,42,42,42,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"push_1 push_2 push_3 push_4 push_5 pop pop pop pop pop empty\"]",
+      "output": "[1,2,3,4,5,1]",
+      "expectedOutput": "[1,2,3,4,5,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"push_3 push_1 push_4 push_1 push_5 pop pop pop pop pop empty\"]",
+      "output": "[3,1,4,1,5,1]",
+      "expectedOutput": "[3,1,4,1,5,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[\"push_6 push_7 pop push_8 push_9 pop pop pop empty\"]",
+      "output": "[6,7,8,9,1]",
+      "expectedOutput": "[6,7,8,9,1]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"push_1 push_2 peek pop empty\"",
+        "output": "[1, 1, 0]",
+        "expectedOutput": "[1, 1, 0]",
+        "explanation": "queue holds [1,2] front-to-back; peek reports 1; pop removes and reports 1, leaving [2]; empty reports 0 since [2] remains"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"push_5 pop empty\"",
+        "output": "[5, 1]",
+        "expectedOutput": "[5, 1]",
+        "explanation": "pop removes and reports the only element, 5; empty then reports 1 since the queue is now empty"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"push_3 push_4 pop push_5 peek pop pop empty\"",
+        "output": "[3, 4, 4, 5, 1]",
+        "expectedOutput": "[3, 4, 4, 5, 1]",
+        "explanation": "FIFO order is preserved even though push_5 happens after the first pop: pop->3, peek/pop see 4 then 5, then the queue is empty"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"push_1 push_2 peek pop empty\"]",
+        "output": "[1,1,0]",
+        "expectedOutput": "[1,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"push_5 pop empty\"]",
+        "output": "[5,1]",
+        "expectedOutput": "[5,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"push_3 push_4 pop push_5 peek pop pop empty\"]",
+        "output": "[3,4,4,5,1]",
+        "expectedOutput": "[3,4,4,5,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"push_7 peek pop empty\"]",
+        "output": "[7,7,1]",
+        "expectedOutput": "[7,7,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"push_1 push_2 push_3 pop pop pop empty\"]",
+        "output": "[1,2,3,1]",
+        "expectedOutput": "[1,2,3,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"push_-1 push_-2 pop peek\"]",
+        "output": "[-1,-2]",
+        "expectedOutput": "[-1,-2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"push_0 push_0 pop pop empty\"]",
+        "output": "[0,0,1]",
+        "expectedOutput": "[0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"empty\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"push_10 empty pop empty\"]",
+        "output": "[0,10,1]",
+        "expectedOutput": "[0,10,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"push_1 push_2 push_3 push_4 pop pop peek\"]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"push_100 push_200 push_300 pop push_400 pop pop empty\"]",
+        "output": "[100,200,300,0]",
+        "expectedOutput": "[100,200,300,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"push_5 push_5 push_5 pop pop pop empty\"]",
+        "output": "[5,5,5,1]",
+        "expectedOutput": "[5,5,5,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"push_1 pop push_2 pop push_3 pop empty\"]",
+        "output": "[1,2,3,1]",
+        "expectedOutput": "[1,2,3,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"push_9 push_8 peek pop peek pop empty\"]",
+        "output": "[9,9,8,8,1]",
+        "expectedOutput": "[9,9,8,8,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"push_2 push_4 push_6 push_8 pop pop pop pop empty\"]",
+        "output": "[2,4,6,8,1]",
+        "expectedOutput": "[2,4,6,8,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"push_1000000 pop empty\"]",
+        "output": "[1000000,1]",
+        "expectedOutput": "[1000000,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"push_-1000000 pop empty\"]",
+        "output": "[-1000000,1]",
+        "expectedOutput": "[-1000000,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"push_1 push_2 empty pop empty pop empty\"]",
+        "output": "[0,1,0,2,1]",
+        "expectedOutput": "[0,1,0,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"push_42 peek peek peek pop empty\"]",
+        "output": "[42,42,42,42,1]",
+        "expectedOutput": "[42,42,42,42,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"push_1 push_2 push_3 push_4 push_5 pop pop pop pop pop empty\"]",
+        "output": "[1,2,3,4,5,1]",
+        "expectedOutput": "[1,2,3,4,5,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"push_3 push_1 push_4 push_1 push_5 pop pop pop pop pop empty\"]",
+        "output": "[3,1,4,1,5,1]",
+        "expectedOutput": "[3,1,4,1,5,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"push_6 push_7 pop push_8 push_9 pop pop pop empty\"]",
+        "output": "[6,7,8,9,1]",
+        "expectedOutput": "[6,7,8,9,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def queueOperations(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> queueOperations(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] queueOperations(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun queueOperations(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    queueOperations(ops) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def queueOperations(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> queueOperations(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] queueOperations(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun queueOperations(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    queueOperations(ops) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def queueOperations(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> queueOperations(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] queueOperations(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun queueOperations(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    queueOperations(ops) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def queueOperations(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> queueOperations(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] queueOperations(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun queueOperations(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    queueOperations(ops) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(1) amortized per operation",
+      "space": "O(n)",
+      "pattern": "two stacks: an input stack for pushes, an output stack for pop/peek, refilled lazily"
+    },
+    "bruteForce": {
+      "approach": "for every pop or peek, reverse the entire input stack into a temporary stack to reach the bottom (oldest) element, use it, then reverse everything back",
+      "time": "O(n) per pop/peek operation",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "two stacks: an input stack for pushes, an output stack for pop/peek, refilled lazily",
+    "time": "O(1) amortized per operation",
+    "space": "O(n)",
+    "hint_ladder": [
+      "a stack gives you last-in-first-out access, but you need first-in-first-out - how could two stacks combined reverse order back to the order you need?",
+      "what if all pushes go into one stack, and pops/peeks come from a second stack that holds elements in reverse order?",
+      "when the second (output) stack is empty and you need to pop or peek, dump the entire first (input) stack into it - that reverses it into the correct front-to-back order",
+      "as long as you only refill the output stack when it's empty, each element only ever gets moved twice total, so operations are O(1) amortized"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every pop or peek, reverse the entire input stack into a temporary stack to reach the bottom (oldest) element, use it, then reverse everything back",
+    "time": "O(n) per pop/peek operation",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

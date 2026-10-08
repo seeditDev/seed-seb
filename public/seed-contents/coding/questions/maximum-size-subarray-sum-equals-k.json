@@ -1,0 +1,597 @@
+{
+  "id": "maximum-size-subarray-sum-equals-k",
+  "questionId": "maximum-size-subarray-sum-equals-k",
+  "slug": "maximum-size-subarray-sum-equals-k",
+  "title": "Maximum Size Subarray Sum Equals k",
+  "difficulty": "Medium",
+  "category": "Prefix sum",
+  "patterns": [
+    "prefix sum",
+    "hash map"
+  ],
+  "lists": [],
+  "hints": [
+    "you want the longest subarray summing to k. if you know the running prefix sum at index i, what earlier prefix sum value would you need to have seen for the gap to sum to exactly k?",
+    "prefixSum[i] - k - if that value was seen at some earlier index j, the subarray from j+1 to i sums to k",
+    "keep a hash map from prefix sum value to the EARLIEST index it occurred at (seed sum 0 at index -1, for subarrays starting from index 0)",
+    "at each index, look up prefixSum[i] - k in the map; if found at index j, the length i - j is a candidate for the longest answer - only insert a NEW sum into the map if it hasn't been seen before, to preserve earliest indices"
+  ],
+  "commonMistakes": [
+    "overwriting an existing prefix sum's stored index with a later one, which shortens the subarray you'd find",
+    "forgetting to seed prefix sum 0 at index -1",
+    "confusing this with 'count subarrays summing to k' (which just counts occurrences) instead of tracking the longest length, which needs first-occurrence indices"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of integers `nums` and an integer `k`.\n\n**Return the length of the longest contiguous subarray that sums to exactly `k`, or 0 if no such subarray exists.**\n",
+    "constraints": [
+      "1 <= nums.length <= 2 * 10^5",
+      "-10^4 <= nums[i] <= 10^4",
+      "-10^9 <= k <= 10^9"
+    ],
+    "notes": [
+      "no subarray sums to k (return 0)",
+      "the entire array sums to k",
+      "multiple subarrays sum to k, of different lengths"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, -1, 5, -2, 3], k = 3",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "the subarray [1, -1, 5, -2] sums to 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-2, -1, 2, 1], k = 1",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the subarray [-1, 2] sums to 1"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,-1,5,-2,3],3]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-2,-1,2,1],1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3],100]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0,0,0],0]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3],6]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,-1,1,1,1],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[3,4,7,2,-3,1,4,2],7]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,0,5,1,-2,-3,-4,-3,-3,-2,5,-2,-5,2,4],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5],15]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[5,-5,5,-5,5],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,1,1,1,1],3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-2,2,-2,2],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-2,-1,-1,-3,-2,0,1,-1,1,1,-1,-2,2,3,1,1,2,2,2,-3],2]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,20,30],60]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,-1,0],0]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[2,-1,2,3,-4,5],5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],10]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-5,-10,15,20,-30],5]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, -1, 5, -2, 3], k = 3",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "the subarray [1, -1, 5, -2] sums to 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-2, -1, 2, 1], k = 1",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the subarray [-1, 2] sums to 1"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, -1, 5, -2, 3], k = 3",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "the subarray [1, -1, 5, -2] sums to 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-2, -1, 2, 1], k = 1",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the subarray [-1, 2] sums to 1"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,-1,5,-2,3],3]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[-2,-1,2,1],1]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3],100]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1],2]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[0,0,0],0]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3],6]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[-1,-1,1,1,1],0]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[3,4,7,2,-3,1,4,2],7]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,0,5,1,-2,-3,-4,-3,-3,-2,5,-2,-5,2,4],0]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5],15]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[5,-5,5,-5,5],0]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,1,1,1,1,1],3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-2,2,-2,2],0]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-2,-1,-1,-3,-2,0,1,-1,1,1,-1,-2,2,3,1,1,2,2,2,-3],2]",
+      "output": "19",
+      "expectedOutput": "19",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[10,20,30],60]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,-1,0],0]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[2,-1,2,3,-4,5],5]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],10]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[-5,-10,15,20,-30],5]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, -1, 5, -2, 3], k = 3",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "the subarray [1, -1, 5, -2] sums to 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-2, -1, 2, 1], k = 1",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the subarray [-1, 2] sums to 1"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,-1,5,-2,3],3]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-2,-1,2,1],1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3],100]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0,0,0],0]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3],6]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,-1,1,1,1],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[3,4,7,2,-3,1,4,2],7]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,0,5,1,-2,-3,-4,-3,-3,-2,5,-2,-5,2,4],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5],15]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[5,-5,5,-5,5],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,1,1,1,1],3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-2,2,-2,2],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-2,-1,-1,-3,-2,0,1,-1,1,1,-1,-2,2,3,1,1,2,2,2,-3],2]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,20,30],60]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,-1,0],0]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[2,-1,2,3,-4,5],5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],10]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-5,-10,15,20,-30],5]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def maxSubArrayLen(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxSubArrayLen(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxSubArrayLen(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxSubArrayLen(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxSubArrayLen(nums, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def maxSubArrayLen(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxSubArrayLen(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxSubArrayLen(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxSubArrayLen(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxSubArrayLen(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def maxSubArrayLen(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxSubArrayLen(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxSubArrayLen(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxSubArrayLen(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxSubArrayLen(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def maxSubArrayLen(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxSubArrayLen(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxSubArrayLen(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxSubArrayLen(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxSubArrayLen(nums, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n)",
+      "pattern": "prefix sum with a hash map storing the FIRST index each running sum occurred at - a subarray from j+1 to i sums to k exactly when prefixSum[i] - prefixSum[j] == k"
+    },
+    "bruteForce": {
+      "approach": "check every subarray's sum directly (or via a prefix sum array) and track the longest one that equals k",
+      "time": "O(n^2)",
+      "space": "O(n) if using a prefix sum array"
+    }
+  },
+  "optimal": {
+    "pattern": "prefix sum with a hash map storing the FIRST index each running sum occurred at - a subarray from j+1 to i sums to k exactly when prefixSum[i] - prefixSum[j] == k",
+    "time": "O(n)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "you want the longest subarray summing to k. if you know the running prefix sum at index i, what earlier prefix sum value would you need to have seen for the gap to sum to exactly k?",
+      "prefixSum[i] - k - if that value was seen at some earlier index j, the subarray from j+1 to i sums to k",
+      "keep a hash map from prefix sum value to the EARLIEST index it occurred at (seed sum 0 at index -1, for subarrays starting from index 0)",
+      "at each index, look up prefixSum[i] - k in the map; if found at index j, the length i - j is a candidate for the longest answer - only insert a NEW sum into the map if it hasn't been seen before, to preserve earliest indices"
+    ]
+  },
+  "bruteForce": {
+    "approach": "check every subarray's sum directly (or via a prefix sum array) and track the longest one that equals k",
+    "time": "O(n^2)",
+    "space": "O(n) if using a prefix sum array"
+  },
+  "isIndex0": true,
+  "level": null
+}

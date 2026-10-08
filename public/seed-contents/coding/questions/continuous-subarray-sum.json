@@ -1,0 +1,651 @@
+{
+  "id": "continuous-subarray-sum",
+  "questionId": "continuous-subarray-sum",
+  "slug": "continuous-subarray-sum",
+  "title": "Continuous Subarray Sum",
+  "difficulty": "Medium",
+  "category": "Prefix sum",
+  "patterns": [
+    "prefix sum",
+    "hash map"
+  ],
+  "lists": [],
+  "hints": [
+    "this is the same divisibility idea as counting subarrays divisible by k, but now you only need a yes/no answer, with a minimum length requirement - what changes?",
+    "you only care about the EARLIEST index a remainder was seen, since that gives the longest possible gap for that remainder",
+    "keep a hash map from remainder to the first index it occurred at (seed remainder 0 at index -1, to allow subarrays starting from index 0)",
+    "if the current remainder has been seen before at index j, and the current index i satisfies i - j >= 2, you've found a valid subarray"
+  ],
+  "commonMistakes": [
+    "not seeding remainder 0 at index -1, which misses valid subarrays starting at index 0",
+    "overwriting a remainder's stored index every time it's seen again, instead of keeping only the first occurrence",
+    "forgetting the length >= 2 requirement and accepting single-element matches"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of integers, `nums`, and an integer `k`.\n\n**Determine whether `nums` has a contiguous subarray of length at least 2 whose sum is a multiple of `k`.**\n\nA sum of 0 counts as a multiple of every k.\n",
+    "constraints": [
+      "1 <= nums.length <= 20",
+      "-10^4 <= nums[i] <= 10^4",
+      "1 <= k <= 200",
+      "a qualifying subarray must have length at least 2"
+    ],
+    "notes": [
+      "the only valid subarray is the entire array",
+      "no subarray of length 2 or more is a multiple of k",
+      "an array of length 1 (never valid, since length must be at least 2)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [23, 2, 4, 6, 7], k = 6",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the subarray [2, 4] sums to 6, a multiple of 6"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [23, 2, 6, 4, 7], k = 6",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the subarray [23, 2, 6, 4, 7] sums to 42, a multiple of 6"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [23, 2, 6, 4, 7], k = 13",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[23,2,4,6,7],6]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[23,2,6,4,7],6]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[23,2,6,4,7],13]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1],2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[0,0],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0],5]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[5],5]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,0],2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,4],6]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3],5]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,0,0,0],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,12],6]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[6,6],6]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7],100]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,3,1,9,4,8,7,5,7,4,9,1,1,8,6],7]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,0,0,0,0],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,1,1,1,1,1],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-1,-2,-3,4],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-3,0,-3,2,1,-5,5,-4,3,4,0,0,0,4,2,4,2,-4,-4,-1],4]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,3,3,3],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,5,9,13],4]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [23, 2, 4, 6, 7], k = 6",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the subarray [2, 4] sums to 6, a multiple of 6"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [23, 2, 6, 4, 7], k = 6",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the subarray [23, 2, 6, 4, 7] sums to 42, a multiple of 6"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [23, 2, 6, 4, 7], k = 13",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [23, 2, 4, 6, 7], k = 6",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the subarray [2, 4] sums to 6, a multiple of 6"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [23, 2, 6, 4, 7], k = 6",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the subarray [23, 2, 6, 4, 7] sums to 42, a multiple of 6"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [23, 2, 6, 4, 7], k = 13",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[23,2,4,6,7],6]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[23,2,6,4,7],6]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[23,2,6,4,7],13]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,1],2]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[0,0],1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[0],5]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[5],5]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,0],2]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[2,4],6]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3],5]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[5,0,0,0],3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,12],6]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[6,6],6]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3,4,5,6,7],100]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[2,3,1,9,4,8,7,5,7,4,9,1,1,8,6],7]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[0,0,0,0,0],3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,1,1,1,1,1],3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[-1,-2,-3,4],3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[-3,0,-3,2,1,-5,5,-4,3,4,0,0,0,4,2,4,2,-4,-4,-1],4]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[3,3,3,3],3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[1,5,9,13],4]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [23, 2, 4, 6, 7], k = 6",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the subarray [2, 4] sums to 6, a multiple of 6"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [23, 2, 6, 4, 7], k = 6",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the subarray [23, 2, 6, 4, 7] sums to 42, a multiple of 6"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [23, 2, 6, 4, 7], k = 13",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[23,2,4,6,7],6]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[23,2,6,4,7],6]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[23,2,6,4,7],13]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1],2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[0,0],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0],5]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[5],5]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,0],2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,4],6]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3],5]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,0,0,0],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,12],6]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[6,6],6]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7],100]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,3,1,9,4,8,7,5,7,4,9,1,1,8,6],7]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,0,0,0,0],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,1,1,1,1,1],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-1,-2,-3,4],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-3,0,-3,2,1,-5,5,-4,3,4,0,0,0,4,2,4,2,-4,-4,-1],4]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,3,3,3],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,5,9,13],4]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def checkSubarraySum(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool checkSubarraySum(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean checkSubarraySum(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun checkSubarraySum(nums: IntArray, k: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    checkSubarraySum(nums, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def checkSubarraySum(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool checkSubarraySum(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean checkSubarraySum(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun checkSubarraySum(nums: IntArray, k: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    checkSubarraySum(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def checkSubarraySum(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool checkSubarraySum(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean checkSubarraySum(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun checkSubarraySum(nums: IntArray, k: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    checkSubarraySum(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def checkSubarraySum(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool checkSubarraySum(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean checkSubarraySum(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun checkSubarraySum(nums: IntArray, k: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    checkSubarraySum(nums, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(k)",
+      "pattern": "same remainder-matching idea as counting subarrays divisible by k, but tracking the FIRST index each remainder appeared at, to enforce the length-at-least-2 requirement"
+    },
+    "bruteForce": {
+      "approach": "check every subarray of length at least 2 directly, computing its sum and testing divisibility by k",
+      "time": "O(n^2)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "same remainder-matching idea as counting subarrays divisible by k, but tracking the FIRST index each remainder appeared at, to enforce the length-at-least-2 requirement",
+    "time": "O(n)",
+    "space": "O(k)",
+    "hint_ladder": [
+      "this is the same divisibility idea as counting subarrays divisible by k, but now you only need a yes/no answer, with a minimum length requirement - what changes?",
+      "you only care about the EARLIEST index a remainder was seen, since that gives the longest possible gap for that remainder",
+      "keep a hash map from remainder to the first index it occurred at (seed remainder 0 at index -1, to allow subarrays starting from index 0)",
+      "if the current remainder has been seen before at index j, and the current index i satisfies i - j >= 2, you've found a valid subarray"
+    ]
+  },
+  "bruteForce": {
+    "approach": "check every subarray of length at least 2 directly, computing its sum and testing divisibility by k",
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

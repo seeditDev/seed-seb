@@ -1,0 +1,631 @@
+{
+  "id": "longest-palindromic-subsequence",
+  "questionId": "longest-palindromic-subsequence",
+  "slug": "longest-palindromic-subsequence",
+  "title": "Longest Palindromic Subsequence",
+  "difficulty": "Medium",
+  "category": "Dp 2d",
+  "patterns": [
+    "dynamic programming",
+    "strings",
+    "palindrome"
+  ],
+  "lists": [],
+  "hints": [
+    "a palindrome is symmetric - if you fix the leftmost and rightmost characters of a substring, when can they both be part of the palindromic subsequence?",
+    "define dp[i][j] as the length of the longest palindromic subsequence within s[i..j] (inclusive)",
+    "if s[i] == s[j] (and i != j), those two characters bookend a palindrome, so dp[i][j] = 2 + dp[i+1][j-1]",
+    "if s[i] != s[j], the best you can do is drop one end or the other: dp[i][j] = max(dp[i+1][j], dp[i][j-1])",
+    "base case: dp[i][i] = 1 for every single character; fill the table by increasing substring length, and the answer is dp[0][n-1]"
+  ],
+  "commonMistakes": [
+    "filling the table in the wrong order - dp[i][j] depends on dp[i+1][j-1], dp[i+1][j], and dp[i][j-1], all of which need shorter substrings computed first",
+    "forgetting the i == j base case of 1 for single characters",
+    "confusing this with longest palindromic substring, which requires contiguous characters and has a different recurrence"
+  ],
+  "content": {
+    "problemStatement": "You're given a string `s`. Unlike a substring, a subsequence does not\nneed to use consecutive characters, it just needs to preserve their\nrelative order.\n\n**Find the length of the longest subsequence of `s` that reads the same\nforwards and backwards.**\n",
+    "constraints": [
+      "1 <= s.length <= 1000",
+      "s consists of lowercase English letters"
+    ],
+    "notes": [
+      "a string of length 1 (always a palindrome of length 1)",
+      "the whole string is already a palindrome",
+      "a string with no repeated characters (answer is 1)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"bbbab\"",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "One longest palindromic subsequence is \"bbbb\"."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"cbbd\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "One longest palindromic subsequence is \"bb\"."
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"a\"",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"bbbab\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"cbbd\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abcde\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"agbdba\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"z\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aa\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"ab\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"racecar\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaaaaaaaaa\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aaaaaaababba\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"cacccabbabaccca\"]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abcbdba\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abacdfgdcaba\"]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"eadcacbbbd\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"character\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"zxyzxy\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"bbabbaaaabbbaa\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcdefedcba\"]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"abcdefghijklmnop\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"bbbab\"",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "One longest palindromic subsequence is \"bbbb\"."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"cbbd\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "One longest palindromic subsequence is \"bb\"."
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"a\"",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"bbbab\"",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "One longest palindromic subsequence is \"bbbb\"."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"cbbd\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "One longest palindromic subsequence is \"bb\"."
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"a\"",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"bbbab\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"cbbd\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"a\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"abcde\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"agbdba\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"z\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"aa\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"ab\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"racecar\"]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"aaaaaaaaaa\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"aaaaaaababba\"]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"cacccabbabaccca\"]",
+      "output": "13",
+      "expectedOutput": "13",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"abcbdba\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"abacdfgdcaba\"]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"eadcacbbbd\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"character\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"zxyzxy\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"bbabbaaaabbbaa\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"abcdefedcba\"]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"abcdefghijklmnop\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"bbbab\"",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "One longest palindromic subsequence is \"bbbb\"."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"cbbd\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "One longest palindromic subsequence is \"bb\"."
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"a\"",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"bbbab\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"cbbd\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abcde\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"agbdba\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"z\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aa\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"ab\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"racecar\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaaaaaaaaa\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aaaaaaababba\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"cacccabbabaccca\"]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abcbdba\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abacdfgdcaba\"]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"eadcacbbbd\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"character\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"zxyzxy\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"bbabbaaaabbbaa\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcdefedcba\"]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"abcdefghijklmnop\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def longestPalindromeSubseq(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestPalindromeSubseq(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestPalindromeSubseq(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestPalindromeSubseq(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestPalindromeSubseq(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def longestPalindromeSubseq(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestPalindromeSubseq(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestPalindromeSubseq(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestPalindromeSubseq(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestPalindromeSubseq(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def longestPalindromeSubseq(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestPalindromeSubseq(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestPalindromeSubseq(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestPalindromeSubseq(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestPalindromeSubseq(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def longestPalindromeSubseq(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestPalindromeSubseq(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestPalindromeSubseq(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestPalindromeSubseq(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestPalindromeSubseq(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n^2)",
+      "space": "O(n^2), reducible to O(n)",
+      "pattern": "2D dynamic programming over substring boundaries (interval DP), or equivalently the LCS of s and its reverse"
+    },
+    "bruteForce": {
+      "approach": "recursively try, at each pair of outer indices, whether to include both end characters (if equal) or drop one end, exploring all subsequence choices",
+      "time": "O(2^n)",
+      "space": "O(n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "2D dynamic programming over substring boundaries (interval DP), or equivalently the LCS of s and its reverse",
+    "time": "O(n^2)",
+    "space": "O(n^2), reducible to O(n)",
+    "hint_ladder": [
+      "a palindrome is symmetric - if you fix the leftmost and rightmost characters of a substring, when can they both be part of the palindromic subsequence?",
+      "define dp[i][j] as the length of the longest palindromic subsequence within s[i..j] (inclusive)",
+      "if s[i] == s[j] (and i != j), those two characters bookend a palindrome, so dp[i][j] = 2 + dp[i+1][j-1]",
+      "if s[i] != s[j], the best you can do is drop one end or the other: dp[i][j] = max(dp[i+1][j], dp[i][j-1])",
+      "base case: dp[i][i] = 1 for every single character; fill the table by increasing substring length, and the answer is dp[0][n-1]"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try, at each pair of outer indices, whether to include both end characters (if equal) or drop one end, exploring all subsequence choices",
+    "time": "O(2^n)",
+    "space": "O(n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,599 @@
+{
+  "id": "assign-cookies",
+  "questionId": "assign-cookies",
+  "slug": "assign-cookies",
+  "title": "Assign Cookies",
+  "difficulty": "Easy",
+  "category": "Greedy",
+  "patterns": [
+    "greedy",
+    "sorting",
+    "two pointers"
+  ],
+  "lists": [],
+  "hints": [
+    "if you're going to satisfy the least-greedy child, does it ever help to waste a big cookie on them?",
+    "sort both greed factors and cookie sizes ascending",
+    "walk both sorted lists with two pointers - if the current cookie satisfies the current child, use it and advance both pointers, otherwise the cookie is too small for anyone remaining, so advance only the cookie pointer",
+    "why is it safe to give the smallest sufficient cookie to the smallest greed child, rather than saving that cookie for later? because any child it could satisfy, it can satisfy now, and a bigger cookie might be needed by a greedier child later"
+  ],
+  "commonMistakes": [
+    "matching the largest cookie to the largest greed factor first (greedy from the wrong end wastes big cookies on children who could have been satisfied by small ones, satisfying fewer children overall)",
+    "forgetting to sort one or both arrays before the two-pointer sweep",
+    "advancing both pointers even when the current cookie is too small to satisfy the current child"
+  ],
+  "content": {
+    "problemStatement": "You're a parent trying to make your children happy with cookies. Each child `i` has a greed factor `g[i]`, the minimum cookie size that will satisfy them, and each cookie `j` has a size `s[j]`.\n\n**Return the maximum number of children you can make content, where a child is content only if they receive one cookie of size at least their greed factor.**\n\nEach cookie can be given to at most one child.\n",
+    "constraints": [
+      "1 <= number of children, number of cookies (either may be 0)",
+      "each cookie can be given to at most one child",
+      "a child is content only if their assigned cookie size >= their greed factor"
+    ],
+    "notes": [
+      "no cookies at all (answer is 0)",
+      "no children at all (answer is 0)",
+      "every cookie is too small for every child",
+      "more cookies than children"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "g = [1, 2, 3], s = [1, 1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "only the cookie of size 1 can satisfy the child with greed 1, the other cookie satisfies nobody"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "g = [1, 2], s = [1, 2, 3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "give the size-1 cookie to the child with greed 1 and the size-2 cookie to the child with greed 2"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3],[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2],[1,2,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[7,8,9,10],[5,6,7,8]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1,1],[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[],[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1],[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[],[1,2,3]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,5,5],[1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,1,1],[5,5,5]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[10,9,8,7],[1,2,3]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[3,4,4,6,7,9,11,18,18,22,22,22,22,25,27,35,36,36,45,50],[1,1,2,3,5,6,6,7,9,10,11,16,21,25,28,29,39,43,47,50]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[38,56,74,62,34,61,5,99,40,44,67,62,27,78,82,68,73,41,2,51,99,83,66,56,88],[69,82,86,77,63,67,86,54,48,66,5,97,83,24,93,11,63,85,34,22,43,44,71,51,10,93,59,50,74,100]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1],[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,2],[1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3],[3,2,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[9,9,9,9,9],[1,2,3,4,5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5],[9,9,9,9,9]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[4,4,4],[1,2,3,4,5,6]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "g = [1, 2, 3], s = [1, 1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "only the cookie of size 1 can satisfy the child with greed 1, the other cookie satisfies nobody"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "g = [1, 2], s = [1, 2, 3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "give the size-1 cookie to the child with greed 1 and the size-2 cookie to the child with greed 2"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "g = [1, 2, 3], s = [1, 1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "only the cookie of size 1 can satisfy the child with greed 1, the other cookie satisfies nobody"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "g = [1, 2], s = [1, 2, 3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "give the size-1 cookie to the child with greed 1 and the size-2 cookie to the child with greed 2"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3],[1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2],[1,2,3]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[7,8,9,10],[5,6,7,8]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,1,1],[]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[],[]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1],[]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[],[1,2,3]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[5,5,5],[1,1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,1,1],[5,5,5]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[10,9,8,7],[1,2,3]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[3,4,4,6,7,9,11,18,18,22,22,22,22,25,27,35,36,36,45,50],[1,1,2,3,5,6,6,7,9,10,11,16,21,25,28,29,39,43,47,50]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[38,56,74,62,34,61,5,99,40,44,67,62,27,78,82,68,73,41,2,51,99,83,66,56,88],[69,82,86,77,63,67,86,54,48,66,5,97,83,24,93,11,63,85,34,22,43,44,71,51,10,93,59,50,74,100]]",
+      "output": "24",
+      "expectedOutput": "24",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1],[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[2,2],[1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,3],[3,2,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[9,9,9,9,9],[1,2,3,4,5]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,4,5],[9,9,9,9,9]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[4,4,4],[1,2,3,4,5,6]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "g = [1, 2, 3], s = [1, 1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "only the cookie of size 1 can satisfy the child with greed 1, the other cookie satisfies nobody"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "g = [1, 2], s = [1, 2, 3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "give the size-1 cookie to the child with greed 1 and the size-2 cookie to the child with greed 2"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3],[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2],[1,2,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[7,8,9,10],[5,6,7,8]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1,1],[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[],[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1],[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[],[1,2,3]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,5,5],[1,1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,1,1],[5,5,5]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[10,9,8,7],[1,2,3]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[3,4,4,6,7,9,11,18,18,22,22,22,22,25,27,35,36,36,45,50],[1,1,2,3,5,6,6,7,9,10,11,16,21,25,28,29,39,43,47,50]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[38,56,74,62,34,61,5,99,40,44,67,62,27,78,82,68,73,41,2,51,99,83,66,56,88],[69,82,86,77,63,67,86,54,48,66,5,97,83,24,93,11,63,85,34,22,43,44,71,51,10,93,59,50,74,100]]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1],[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,2],[1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3],[3,2,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[9,9,9,9,9],[1,2,3,4,5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5],[9,9,9,9,9]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[4,4,4],[1,2,3,4,5,6]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findContentChildren(self, g, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findContentChildren(vector<int>& g, vector<int>& s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findContentChildren(int[] g, int[] s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findContentChildren(g: IntArray, s: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findContentChildren(g, s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findContentChildren(self, g, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findContentChildren(vector<int>& g, vector<int>& s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findContentChildren(int[] g, int[] s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findContentChildren(g: IntArray, s: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findContentChildren(g, s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findContentChildren(self, g, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findContentChildren(vector<int>& g, vector<int>& s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findContentChildren(int[] g, int[] s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findContentChildren(g: IntArray, s: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findContentChildren(g, s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findContentChildren(self, g, s):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findContentChildren(vector<int>& g, vector<int>& s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findContentChildren(int[] g, int[] s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findContentChildren(g: IntArray, s: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findContentChildren(g, s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log n + m log m)",
+      "space": "O(1) beyond sorting",
+      "pattern": "sort both arrays, greedily match the least greedy child with the smallest cookie that satisfies them"
+    },
+    "bruteForce": {
+      "approach": "for each child in order of greed, scan all remaining cookies for the smallest one that satisfies them",
+      "time": "O(n^2)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "sort both arrays, greedily match the least greedy child with the smallest cookie that satisfies them",
+    "time": "O(n log n + m log m)",
+    "space": "O(1) beyond sorting",
+    "hint_ladder": [
+      "if you're going to satisfy the least-greedy child, does it ever help to waste a big cookie on them?",
+      "sort both greed factors and cookie sizes ascending",
+      "walk both sorted lists with two pointers - if the current cookie satisfies the current child, use it and advance both pointers, otherwise the cookie is too small for anyone remaining, so advance only the cookie pointer",
+      "why is it safe to give the smallest sufficient cookie to the smallest greed child, rather than saving that cookie for later? because any child it could satisfy, it can satisfy now, and a bigger cookie might be needed by a greedier child later"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each child in order of greed, scan all remaining cookies for the smallest one that satisfies them",
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

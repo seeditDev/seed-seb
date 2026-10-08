@@ -1,0 +1,629 @@
+{
+  "id": "maximal-rectangle",
+  "questionId": "maximal-rectangle",
+  "slug": "maximal-rectangle",
+  "title": "Maximal Rectangle",
+  "difficulty": "Hard",
+  "category": "Monotonic stack",
+  "patterns": [
+    "monotonic stack",
+    "matrix",
+    "dynamic programming"
+  ],
+  "lists": [],
+  "hints": [
+    "you've likely solved 'largest rectangle in histogram' for a single row of bar heights - can you turn each row of this matrix into a histogram problem?",
+    "build a running array heights[col], where heights[col] is the number of consecutive 1s ending at the current row, in that column, going upward (0 resets it). update this array as you move down one row at a time",
+    "after updating heights for the current row, that array IS a histogram - the largest all-1s rectangle whose bottom edge is this row (and which doesn't extend below it) is exactly the largest rectangle in that histogram",
+    "run the monotonic stack largest-rectangle-in-histogram routine on the heights array once per row, and keep a running maximum across all rows - the overall answer is the max over every row's histogram result"
+  ],
+  "commonMistakes": [
+    "forgetting to reset a column's running height to 0 when the current row's cell is 0",
+    "recomputing each row's histogram result with an O(cols^2) approach instead of reusing the O(cols) monotonic stack routine, making the whole solution needlessly slower",
+    "mutating the input matrix in place in a way that breaks the height accumulation across rows"
+  ],
+  "content": {
+    "problemStatement": "You're given a 2D binary `matrix` containing only 0s and 1s.\n\n**Find the largest rectangle, made up entirely of 1s, that can be formed within the matrix using contiguous rows and columns, and return its area.**\n",
+    "constraints": [
+      "matrix contains only the values 0 and 1",
+      "1 <= number of rows, number of columns"
+    ],
+    "notes": [
+      "a matrix of all zeros (answer 0)",
+      "a matrix of all ones (answer is the full area)",
+      "a matrix with a single row or a single column"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "matrix = [[1,0,1,0,0],[1,0,1,1,1],[1,1,1,1,1],[1,0,0,1,0]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "the largest all-1s rectangle spans rows 1-2 and columns 2-4, giving a 2x3 rectangle of area 6"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "matrix = [[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "matrix = [[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,0,1,0,0],[1,0,1,1,1],[1,1,1,1,1],[1,0,0,1,0]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1],[1,0]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1],[1],[1],[1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,1,1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,0,1],[1,0,1],[1,1,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[0,1,1,0,1],[1,1,0,1,1],[0,1,1,1,0],[1,1,1,1,1],[0,0,1,1,0]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,0,0,1,1,1,0,1],[0,1,1,1,1,0,1,1],[0,0,0,0,0,1,1,0],[0,1,0,0,1,1,1,1],[0,1,0,0,0,1,0,0],[0,1,0,1,0,1,1,0],[1,1,1,1,0,0,0,0],[0,1,1,1,0,1,0,1]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,1,1,1,1,1,1,1,1,1]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1],[1],[1],[1],[1],[1],[1],[1],[1],[1]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,1,1,0,1,1,0,0,1,0,0,1],[1,1,1,1,0,1,1,0,1,0,1,1],[0,1,0,1,0,1,1,0,1,0,0,0],[1,1,1,1,1,0,0,0,0,1,1,0],[1,0,1,0,0,1,1,0,0,0,0,1],[1,0,1,0,1,0,0,1,1,0,0,1],[0,1,1,0,0,1,1,0,1,0,0,0],[1,1,1,0,0,0,0,1,0,0,0,1],[1,1,0,1,1,0,1,1,1,0,1,1],[1,0,1,0,1,0,0,0,1,0,1,1]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,1,0,0,1,1],[1,1,0,0,1,1],[0,0,0,0,0,0],[1,1,1,1,1,1]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1]]]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,0,0,0,0],[1,1,1,1,0],[1,1,1,1,1],[0,1,1,1,0]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "matrix = [[1,0,1,0,0],[1,0,1,1,1],[1,1,1,1,1],[1,0,0,1,0]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "the largest all-1s rectangle spans rows 1-2 and columns 2-4, giving a 2x3 rectangle of area 6"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "matrix = [[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "matrix = [[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "matrix = [[1,0,1,0,0],[1,0,1,1,1],[1,1,1,1,1],[1,0,0,1,0]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "the largest all-1s rectangle spans rows 1-2 and columns 2-4, giving a 2x3 rectangle of area 6"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "matrix = [[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "matrix = [[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,0,1,0,0],[1,0,1,1,1],[1,1,1,1,1],[1,0,0,1,0]]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1,1],[1,1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[0,0],[0,0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,1],[1,0]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1],[1],[1],[1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,1,1,1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1,0,1],[1,0,1],[1,1,1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[0,1,1,0,1],[1,1,0,1,1],[0,1,1,1,0],[1,1,1,1,1],[0,0,1,1,0]]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[0,0,0,1,1,1,0,1],[0,1,1,1,1,0,1,1],[0,0,0,0,0,1,1,0],[0,1,0,0,1,1,1,1],[0,1,0,0,0,1,0,0],[0,1,0,1,0,1,1,0],[1,1,1,1,0,0,0,0],[0,1,1,1,0,1,0,1]]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[1,1,1,1,1,1,1,1,1,1]]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1],[1],[1],[1],[1],[1],[1],[1],[1],[1]]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[0,1,1,0,1,1,0,0,1,0,0,1],[1,1,1,1,0,1,1,0,1,0,1,1],[0,1,0,1,0,1,1,0,1,0,0,0],[1,1,1,1,1,0,0,0,0,1,1,0],[1,0,1,0,0,1,1,0,0,0,0,1],[1,0,1,0,1,0,0,1,1,0,0,1],[0,1,1,0,0,1,1,0,1,0,0,0],[1,1,1,0,0,0,0,1,0,0,0,1],[1,1,0,1,1,0,1,1,1,0,1,1],[1,0,1,0,1,0,0,0,1,0,1,1]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,1,0,0,1,1],[1,1,0,0,1,1],[0,0,0,0,0,0],[1,1,1,1,1,1]]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1]]]",
+      "output": "36",
+      "expectedOutput": "36",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,0,0,0,0],[1,1,1,1,0],[1,1,1,1,1],[0,1,1,1,0]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "matrix = [[1,0,1,0,0],[1,0,1,1,1],[1,1,1,1,1],[1,0,0,1,0]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "the largest all-1s rectangle spans rows 1-2 and columns 2-4, giving a 2x3 rectangle of area 6"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "matrix = [[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "matrix = [[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,0,1,0,0],[1,0,1,1,1],[1,1,1,1,1],[1,0,0,1,0]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1],[1,0]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1],[1],[1],[1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,1,1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,0,1],[1,0,1],[1,1,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[0,1,1,0,1],[1,1,0,1,1],[0,1,1,1,0],[1,1,1,1,1],[0,0,1,1,0]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,0,0,1,1,1,0,1],[0,1,1,1,1,0,1,1],[0,0,0,0,0,1,1,0],[0,1,0,0,1,1,1,1],[0,1,0,0,0,1,0,0],[0,1,0,1,0,1,1,0],[1,1,1,1,0,0,0,0],[0,1,1,1,0,1,0,1]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,1,1,1,1,1,1,1,1,1]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1],[1],[1],[1],[1],[1],[1],[1],[1],[1]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,1,1,0,1,1,0,0,1,0,0,1],[1,1,1,1,0,1,1,0,1,0,1,1],[0,1,0,1,0,1,1,0,1,0,0,0],[1,1,1,1,1,0,0,0,0,1,1,0],[1,0,1,0,0,1,1,0,0,0,0,1],[1,0,1,0,1,0,0,1,1,0,0,1],[0,1,1,0,0,1,1,0,1,0,0,0],[1,1,1,0,0,0,0,1,0,0,0,1],[1,1,0,1,1,0,1,1,1,0,1,1],[1,0,1,0,1,0,0,0,1,0,1,1]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,1,0,0,1,1],[1,1,0,0,1,1],[0,0,0,0,0,0],[1,1,1,1,1,1]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1]]]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,0,0,0,0],[1,1,1,1,0],[1,1,1,1,1],[0,1,1,1,0]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def maximalRectangle(self, matrix):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maximalRectangle(vector<vector<int>>& matrix) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maximalRectangle(int[][] matrix) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maximalRectangle(matrix: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maximalRectangle(matrix) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def maximalRectangle(self, matrix):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maximalRectangle(vector<vector<int>>& matrix) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maximalRectangle(int[][] matrix) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maximalRectangle(matrix: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maximalRectangle(matrix) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def maximalRectangle(self, matrix):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maximalRectangle(vector<vector<int>>& matrix) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maximalRectangle(int[][] matrix) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maximalRectangle(matrix: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maximalRectangle(matrix) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def maximalRectangle(self, matrix):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maximalRectangle(vector<vector<int>>& matrix) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maximalRectangle(int[][] matrix) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maximalRectangle(matrix: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maximalRectangle(matrix) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(rows * cols)",
+      "space": "O(cols) for the running histogram and stack",
+      "pattern": "reduce each row to a 'histogram' of consecutive 1s built upward from that row, then reuse the largest-rectangle-in-histogram monotonic stack technique per row"
+    },
+    "bruteForce": {
+      "approach": "for every pair of row and column boundaries, check whether the enclosed rectangle is made entirely of 1s, and track the maximum area among valid ones",
+      "time": "O(rows^2 * cols^2 * rows * cols) in the naive form",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "reduce each row to a 'histogram' of consecutive 1s built upward from that row, then reuse the largest-rectangle-in-histogram monotonic stack technique per row",
+    "time": "O(rows * cols)",
+    "space": "O(cols) for the running histogram and stack",
+    "hint_ladder": [
+      "you've likely solved 'largest rectangle in histogram' for a single row of bar heights - can you turn each row of this matrix into a histogram problem?",
+      "build a running array heights[col], where heights[col] is the number of consecutive 1s ending at the current row, in that column, going upward (0 resets it). update this array as you move down one row at a time",
+      "after updating heights for the current row, that array IS a histogram - the largest all-1s rectangle whose bottom edge is this row (and which doesn't extend below it) is exactly the largest rectangle in that histogram",
+      "run the monotonic stack largest-rectangle-in-histogram routine on the heights array once per row, and keep a running maximum across all rows - the overall answer is the max over every row's histogram result"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every pair of row and column boundaries, check whether the enclosed rectangle is made entirely of 1s, and track the maximum area among valid ones",
+    "time": "O(rows^2 * cols^2 * rows * cols) in the naive form",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

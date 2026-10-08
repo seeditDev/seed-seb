@@ -1,0 +1,632 @@
+{
+  "id": "broken-calculator",
+  "questionId": "broken-calculator",
+  "slug": "broken-calculator",
+  "title": "Broken Calculator",
+  "difficulty": "Medium",
+  "category": "Greedy",
+  "patterns": [
+    "greedy",
+    "backward reasoning"
+  ],
+  "lists": [],
+  "hints": [
+    "going forward from startValue, doubling can wildly overshoot target, making the search space huge - what happens if you instead think about the operations in reverse, starting from target?",
+    "in reverse, 'subtract 1' becomes 'add 1', and 'double' becomes 'divide by 2' - but you can only reverse a double if the current number is even",
+    "when target is even, is there ever a reason to add 1 twice instead of just dividing by 2 once? dividing by 2 covers more ground in a single step, so whenever target is even, always prefer halving",
+    "when target is odd, you have no choice but to add 1 first (to make it even), since you can't reverse a double on an odd number",
+    "keep applying this (halve if even, else add 1) until target <= startValue, then the remaining gap is closed purely by 'subtract 1' operations in the forward direction, costing exactly startValue - target more steps - why is this final stretch always just a straight subtraction, with no more doubling useful? because once target has dropped to or below startValue, any further reverse-doubling would only make target smaller than necessary, forcing extra add-1 steps to compensate, which is never better than direct subtraction"
+  ],
+  "commonMistakes": [
+    "trying to greedily decide forward from startValue whether to double or subtract first, which doesn't have an obvious safe local rule the way the reverse direction does",
+    "continuing to divide by 2 in reverse even after target has dropped below startValue, instead of switching to plain subtraction for the remaining gap",
+    "not handling target < startValue specially, forgetting that doubling is never useful when you only need to decrease"
+  ],
+  "content": {
+    "problemStatement": "A broken calculator starts showing `startValue`. It supports exactly two operations: double the displayed number, or subtract 1 from it.\n\n**Return the minimum number of operations needed to make the display show `target`.**\n",
+    "constraints": [
+      "1 <= startValue",
+      "1 <= target",
+      "operations are only 'double' and 'subtract 1'"
+    ],
+    "notes": [
+      "startValue equals target (0 operations needed)",
+      "target is smaller than startValue (only subtraction is ever useful)",
+      "target is much larger than startValue (doubling dominates)",
+      "startValue = 1"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "startValue = 2, target = 3",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "double 2 to get 4, then subtract 1 to get 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "startValue = 5, target = 8",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "subtract 1 from 5 to get 4, then double to get 8"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "startValue = 3, target = 10",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "double 3 to get 6, double 6 to get 12, subtract 1 to get 11... a shorter path is double to 6, subtract 1 to 5, double to 10, both take 3 operations"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[2,3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[5,8]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[3,10]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[5,5]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[1,1000000000]",
+        "output": "39",
+        "expectedOutput": "39",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[10,1]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[100,1]",
+        "output": "99",
+        "expectedOutput": "99",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[1,2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[1,3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[7,4]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[2,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[1024,1]",
+        "output": "1023",
+        "expectedOutput": "1023",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[3,7]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[6,15]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[1000,3000]",
+        "output": "252",
+        "expectedOutput": "252",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[17,29]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[1,100]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[50,1]",
+        "output": "49",
+        "expectedOutput": "49",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[999999999,1000000000]",
+        "output": "500000000",
+        "expectedOutput": "500000000",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "startValue = 2, target = 3",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "double 2 to get 4, then subtract 1 to get 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "startValue = 5, target = 8",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "subtract 1 from 5 to get 4, then double to get 8"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "startValue = 3, target = 10",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "double 3 to get 6, double 6 to get 12, subtract 1 to get 11... a shorter path is double to 6, subtract 1 to 5, double to 10, both take 3 operations"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "startValue = 2, target = 3",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "double 2 to get 4, then subtract 1 to get 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "startValue = 5, target = 8",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "subtract 1 from 5 to get 4, then double to get 8"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "startValue = 3, target = 10",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "double 3 to get 6, double 6 to get 12, subtract 1 to get 11... a shorter path is double to 6, subtract 1 to 5, double to 10, both take 3 operations"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[2,3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[5,8]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[3,10]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[5,5]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[1,1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[1,1000000000]",
+      "output": "39",
+      "expectedOutput": "39",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[10,1]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[100,1]",
+      "output": "99",
+      "expectedOutput": "99",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[1,2]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[1,3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[7,4]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[2,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[1024,1]",
+      "output": "1023",
+      "expectedOutput": "1023",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[3,7]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[6,15]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[1000,3000]",
+      "output": "252",
+      "expectedOutput": "252",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[17,29]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[1,100]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[50,1]",
+      "output": "49",
+      "expectedOutput": "49",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[999999999,1000000000]",
+      "output": "500000000",
+      "expectedOutput": "500000000",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "startValue = 2, target = 3",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "double 2 to get 4, then subtract 1 to get 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "startValue = 5, target = 8",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "subtract 1 from 5 to get 4, then double to get 8"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "startValue = 3, target = 10",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "double 3 to get 6, double 6 to get 12, subtract 1 to get 11... a shorter path is double to 6, subtract 1 to 5, double to 10, both take 3 operations"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[2,3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[5,8]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[3,10]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[5,5]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[1,1000000000]",
+        "output": "39",
+        "expectedOutput": "39",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[10,1]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[100,1]",
+        "output": "99",
+        "expectedOutput": "99",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[1,2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[1,3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[7,4]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[2,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[1024,1]",
+        "output": "1023",
+        "expectedOutput": "1023",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[3,7]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[6,15]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[1000,3000]",
+        "output": "252",
+        "expectedOutput": "252",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[17,29]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[1,100]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[50,1]",
+        "output": "49",
+        "expectedOutput": "49",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[999999999,1000000000]",
+        "output": "500000000",
+        "expectedOutput": "500000000",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def brokenCalc(self, startValue, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int brokenCalc(int startValue, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int brokenCalc(int startValue, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun brokenCalc(startValue: Int, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    brokenCalc(startValue, target) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def brokenCalc(self, startValue, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int brokenCalc(int startValue, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int brokenCalc(int startValue, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun brokenCalc(startValue: Int, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    brokenCalc(startValue, target) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def brokenCalc(self, startValue, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int brokenCalc(int startValue, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int brokenCalc(int startValue, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun brokenCalc(startValue: Int, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    brokenCalc(startValue, target) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def brokenCalc(self, startValue, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int brokenCalc(int startValue, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int brokenCalc(int startValue, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun brokenCalc(startValue: Int, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    brokenCalc(startValue, target) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(log target)",
+      "space": "O(1)",
+      "pattern": "reason backward from target: undoing a double is only possible (as integer division) when the number is even, undoing a subtract-1 is always adding 1, so greedily halve whenever possible and add 1 otherwise, until target drops to startValue or below"
+    },
+    "bruteForce": {
+      "approach": "BFS/DFS forward from startValue, trying both double and subtract-1 at every reachable value, until target is found",
+      "time": "exponential (unbounded branching forward, since doubling can overshoot arbitrarily)",
+      "space": "exponential"
+    }
+  },
+  "optimal": {
+    "pattern": "reason backward from target: undoing a double is only possible (as integer division) when the number is even, undoing a subtract-1 is always adding 1, so greedily halve whenever possible and add 1 otherwise, until target drops to startValue or below",
+    "time": "O(log target)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "going forward from startValue, doubling can wildly overshoot target, making the search space huge - what happens if you instead think about the operations in reverse, starting from target?",
+      "in reverse, 'subtract 1' becomes 'add 1', and 'double' becomes 'divide by 2' - but you can only reverse a double if the current number is even",
+      "when target is even, is there ever a reason to add 1 twice instead of just dividing by 2 once? dividing by 2 covers more ground in a single step, so whenever target is even, always prefer halving",
+      "when target is odd, you have no choice but to add 1 first (to make it even), since you can't reverse a double on an odd number",
+      "keep applying this (halve if even, else add 1) until target <= startValue, then the remaining gap is closed purely by 'subtract 1' operations in the forward direction, costing exactly startValue - target more steps - why is this final stretch always just a straight subtraction, with no more doubling useful? because once target has dropped to or below startValue, any further reverse-doubling would only make target smaller than necessary, forcing extra add-1 steps to compensate, which is never better than direct subtraction"
+    ]
+  },
+  "bruteForce": {
+    "approach": "BFS/DFS forward from startValue, trying both double and subtract-1 at every reachable value, until target is found",
+    "time": "exponential (unbounded branching forward, since doubling can overshoot arbitrarily)",
+    "space": "exponential"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,634 @@
+{
+  "id": "partition-equal-subset-sum",
+  "questionId": "partition-equal-subset-sum",
+  "slug": "partition-equal-subset-sum",
+  "title": "Partition Equal Subset Sum",
+  "difficulty": "Medium",
+  "category": "Knapsack",
+  "patterns": [
+    "knapsack",
+    "subset sum",
+    "dynamic programming"
+  ],
+  "lists": [
+    "grind-75"
+  ],
+  "hints": [
+    "if the total sum is odd, is an equal split even possible? what does that tell you about a necessary first check?",
+    "if the total is even, the problem becomes: does some subset of nums sum to exactly totalSum / 2? (the rest automatically sums to the other half)",
+    "this is 0/1 subset sum - define dp[s] as true if some subset of the numbers processed so far sums to exactly s, with dp[0] = true always",
+    "for each number num, update dp[s] = dp[s] OR dp[s - num] for every s from the target down to num - the high-to-low direction matters, same reasoning as the 0/1 knapsack rolling array",
+    "after processing every number, the answer is dp[totalSum / 2]"
+  ],
+  "commonMistakes": [
+    "forgetting the odd-total-sum early exit, and trying to search for a target that can never be reached",
+    "iterating the subset-sum update from low to high, which lets a single number be used more than once (turns it into unbounded, giving wrong answers)",
+    "using target = totalSum instead of totalSum / 2"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of positive integers `nums`, where every element must belong to exactly one of two subsets.\n\n**Determine whether it's possible to split the list into two subsets such that the sum of elements in each subset is equal.**\n",
+    "constraints": [
+      "1 <= nums.length <= 200",
+      "1 <= nums[i] <= 100",
+      "the sum of all elements in nums does not exceed 20000"
+    ],
+    "notes": [
+      "total sum is odd (immediately impossible, return false)",
+      "a single element array (can never be split into two non-empty... actually only impossible unless trivially handled by sum being 0, which can't happen with positive integers, so always false)",
+      "an array where one element equals half the total sum exactly"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 5, 11, 5]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "one subset is [1, 5, 5] summing to 11, the other is [11] also summing to 11"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 5]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the total sum is 11, which is odd, so it can never be split into two equal halves"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "one subset is [1, 4] summing to 5, the other is [2, 3] also summing to 5"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,5,11,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[100]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,2,3,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,2,2,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[14,9,8,4,3,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[3,3,3,4,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,1,1,2,2,2,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,3,5,7,9]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[100,100]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,4,8,16,32]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[5,5,5,5,5,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[23,13,11,7,6,5,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,4,6,8,10]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 5, 11, 5]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "one subset is [1, 5, 5] summing to 11, the other is [11] also summing to 11"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 5]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the total sum is 11, which is odd, so it can never be split into two equal halves"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "one subset is [1, 4] summing to 5, the other is [2, 3] also summing to 5"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 5, 11, 5]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "one subset is [1, 5, 5] summing to 11, the other is [11] also summing to 11"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 5]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the total sum is 11, which is odd, so it can never be split into two equal halves"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "one subset is [1, 4] summing to 5, the other is [2, 3] also summing to 5"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,5,11,5]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3,5]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3,4]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[100]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[2,2,3,5]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,5]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[2,2,2,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[14,9,8,4,3,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5,6,7]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[3,3,3,4,5]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,1,1,1,2,2,2,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,3,5,7,9]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[100,100]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,4,8,16,32]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[5,5,5,5,5,5]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[23,13,11,7,6,5,5]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[2,4,6,8,10]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,1,1,1,1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 5, 11, 5]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "one subset is [1, 5, 5] summing to 11, the other is [11] also summing to 11"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 5]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the total sum is 11, which is odd, so it can never be split into two equal halves"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "one subset is [1, 4] summing to 5, the other is [2, 3] also summing to 5"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,5,11,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[100]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,2,3,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,2,2,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[14,9,8,4,3,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[3,3,3,4,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,1,1,2,2,2,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,3,5,7,9]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[100,100]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,4,8,16,32]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[5,5,5,5,5,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[23,13,11,7,6,5,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,4,6,8,10]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def canPartition(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canPartition(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canPartition(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canPartition(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canPartition(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def canPartition(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canPartition(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canPartition(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canPartition(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canPartition(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def canPartition(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canPartition(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canPartition(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canPartition(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canPartition(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def canPartition(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canPartition(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canPartition(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canPartition(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canPartition(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n * totalSum)",
+      "space": "O(totalSum)",
+      "pattern": "knapsack (0/1 subset sum - can some subset hit an exact target of totalSum / 2?)"
+    },
+    "bruteForce": {
+      "approach": "try every possible subset of nums (2^n possibilities) and check if any subset's sum equals exactly half the total sum",
+      "time": "O(2^n)",
+      "space": "O(n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "knapsack (0/1 subset sum - can some subset hit an exact target of totalSum / 2?)",
+    "time": "O(n * totalSum)",
+    "space": "O(totalSum)",
+    "hint_ladder": [
+      "if the total sum is odd, is an equal split even possible? what does that tell you about a necessary first check?",
+      "if the total is even, the problem becomes: does some subset of nums sum to exactly totalSum / 2? (the rest automatically sums to the other half)",
+      "this is 0/1 subset sum - define dp[s] as true if some subset of the numbers processed so far sums to exactly s, with dp[0] = true always",
+      "for each number num, update dp[s] = dp[s] OR dp[s - num] for every s from the target down to num - the high-to-low direction matters, same reasoning as the 0/1 knapsack rolling array",
+      "after processing every number, the answer is dp[totalSum / 2]"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every possible subset of nums (2^n possibilities) and check if any subset's sum equals exactly half the total sum",
+    "time": "O(2^n)",
+    "space": "O(n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

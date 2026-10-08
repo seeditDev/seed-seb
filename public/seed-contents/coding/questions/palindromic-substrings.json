@@ -1,0 +1,653 @@
+{
+  "id": "palindromic-substrings",
+  "questionId": "palindromic-substrings",
+  "slug": "palindromic-substrings",
+  "title": "Palindromic Substrings",
+  "difficulty": "Medium",
+  "category": "Two pointers",
+  "patterns": [
+    "two pointers",
+    "strings",
+    "dynamic programming"
+  ],
+  "lists": [
+    "blind-75"
+  ],
+  "hints": [
+    "instead of checking every substring, try every possible center (2n-1 of them, including between-character centers) and expand outward",
+    "for each center, every successful expansion step (where the two sides still match) represents one more valid palindromic substring found",
+    "so for a given center, the number of palindromes centered there equals the number of steps you can expand before the two sides mismatch or go out of bounds, including the zero-expansion base case",
+    "sum the count of successful expansions across all 2n-1 centers to get the total"
+  ],
+  "commonMistakes": [
+    "only counting odd-length palindromes and forgetting the n-1 even-length centers between characters",
+    "counting distinct palindromic substrings (deduplicating by text) instead of counting every valid start/end position pair",
+    "off-by-one errors that miss the single-character base case at each center"
+  ],
+  "content": {
+    "problemStatement": "You're given a string `s`.\n\n**Count how many substrings of `s` are palindromes.**\n\nSubstrings are counted by position, not by distinct text, so if the same sequence of characters appears as a palindrome starting at two different indices, both count separately. A single character always counts as a palindrome of length 1.\n",
+    "constraints": [
+      "1 <= s.length <= 1000",
+      "s consists of lowercase English letters only",
+      "substrings are counted by starting/ending position, so repeated identical substrings each count"
+    ],
+    "notes": [
+      "a string of all the same character (maximizes the count)",
+      "a string with no repeated characters at all (count equals the length)",
+      "a single character string"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"abc\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "the only palindromic substrings are \"a\", \"b\", and \"c\""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"aaa\"",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "\"a\", \"a\", \"a\" (3 single letters), \"aa\", \"aa\" (2 overlapping pairs), and \"aaa\" itself"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"aba\"",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "\"a\", \"b\", \"a\" (3 single letters) plus \"aba\" itself"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"abc\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"aaa\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"aba\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"aa\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"ab\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abcd\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aaaa\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"racecar\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abab\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"noon\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"xyzzyx\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"banana\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"zzzzz\"]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abcba\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aabb\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abccba\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"mnop\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"aaab\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"baab\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"aabaa\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"abc\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "the only palindromic substrings are \"a\", \"b\", and \"c\""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"aaa\"",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "\"a\", \"a\", \"a\" (3 single letters), \"aa\", \"aa\" (2 overlapping pairs), and \"aaa\" itself"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"aba\"",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "\"a\", \"b\", \"a\" (3 single letters) plus \"aba\" itself"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"abc\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "the only palindromic substrings are \"a\", \"b\", and \"c\""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"aaa\"",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "\"a\", \"a\", \"a\" (3 single letters), \"aa\", \"aa\" (2 overlapping pairs), and \"aaa\" itself"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"aba\"",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "\"a\", \"b\", \"a\" (3 single letters) plus \"aba\" itself"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"abc\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"aaa\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"aba\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"a\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"aa\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"ab\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"abcd\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"aaaa\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"racecar\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"abab\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"noon\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"xyzzyx\"]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"banana\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"zzzzz\"]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"abcba\"]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"aabb\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"abccba\"]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"mnop\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"aaab\"]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"baab\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"aabaa\"]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"abc\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "the only palindromic substrings are \"a\", \"b\", and \"c\""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"aaa\"",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "\"a\", \"a\", \"a\" (3 single letters), \"aa\", \"aa\" (2 overlapping pairs), and \"aaa\" itself"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"aba\"",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "\"a\", \"b\", \"a\" (3 single letters) plus \"aba\" itself"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"abc\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"aaa\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"aba\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"aa\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"ab\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abcd\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aaaa\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"racecar\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abab\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"noon\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"xyzzyx\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"banana\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"zzzzz\"]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abcba\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aabb\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abccba\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"mnop\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"aaab\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"baab\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"aabaa\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def countSubstrings(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countSubstrings(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countSubstrings(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countSubstrings(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countSubstrings(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def countSubstrings(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countSubstrings(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countSubstrings(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countSubstrings(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countSubstrings(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def countSubstrings(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countSubstrings(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countSubstrings(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countSubstrings(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countSubstrings(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def countSubstrings(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countSubstrings(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countSubstrings(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countSubstrings(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countSubstrings(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n^2)",
+      "space": "O(1) extra",
+      "pattern": "expand around center for every possible center, counting successful expansions"
+    },
+    "bruteForce": {
+      "approach": "check every possible substring (i, j) for being a palindrome and count the ones that are",
+      "time": "O(n^3)",
+      "space": "O(1) extra"
+    }
+  },
+  "optimal": {
+    "pattern": "expand around center for every possible center, counting successful expansions",
+    "time": "O(n^2)",
+    "space": "O(1) extra",
+    "hint_ladder": [
+      "instead of checking every substring, try every possible center (2n-1 of them, including between-character centers) and expand outward",
+      "for each center, every successful expansion step (where the two sides still match) represents one more valid palindromic substring found",
+      "so for a given center, the number of palindromes centered there equals the number of steps you can expand before the two sides mismatch or go out of bounds, including the zero-expansion base case",
+      "sum the count of successful expansions across all 2n-1 centers to get the total"
+    ]
+  },
+  "bruteForce": {
+    "approach": "check every possible substring (i, j) for being a palindrome and count the ones that are",
+    "time": "O(n^3)",
+    "space": "O(1) extra"
+  },
+  "isIndex0": true,
+  "level": null
+}

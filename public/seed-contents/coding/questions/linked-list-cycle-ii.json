@@ -1,0 +1,650 @@
+{
+  "id": "linked-list-cycle-ii",
+  "questionId": "linked-list-cycle-ii",
+  "slug": "linked-list-cycle-ii",
+  "title": "Linked List Cycle II",
+  "difficulty": "Medium",
+  "category": "Fast slow pointers",
+  "patterns": [
+    "fast & slow pointers",
+    "cycle detection",
+    "linked list"
+  ],
+  "lists": [],
+  "hints": [
+    "first, can you even tell if there's a cycle at all? that's a smaller version of this same problem",
+    "run fast (2 steps) and slow (1 step) pointers from the head until they meet somewhere inside the cycle - if fast reaches the end instead, there's no cycle, return -1",
+    "once they meet, there's a neat trick: the distance from the head to the cycle's start equals the distance from the meeting point back around to the cycle's start",
+    "reset one pointer to the head, keep the other at the meeting point, and move both one step at a time - the node where they meet again is the start of the cycle"
+  ],
+  "commonMistakes": [
+    "returning the meeting point of fast/slow instead of continuing to find the actual cycle start",
+    "not handling pos = -1 as no-cycle and instead returning some index",
+    "forgetting to reset one pointer to the head before the second phase of the walk"
+  ],
+  "content": {
+    "problemStatement": "A singly linked list is described by an array `nums`, where `nums[i]`\nis the value of the i-th node and node i normally points to node i+1.\nYou're also given an integer `pos`: the 0-indexed position that the\nlast node's next pointer connects back to, instead of ending the list\nnormally. Reason about the list as if traversing it with a next\npointer that wraps around to index `pos` after the last element when\n`pos != -1`.\n\n**Return the 0-indexed position in `nums` where the cycle begins, or -1\nif there is no cycle.**\n\nIf `pos` is -1, the list has no cycle.\n",
+    "constraints": [
+      "-1 <= pos < nums.length",
+      "1 <= nums.length <= 10^4"
+    ],
+    "notes": [
+      "pos = -1 (no cycle, return -1)",
+      "cycle begins at the head (pos = 0)",
+      "single-node list that cycles to itself (pos = 0)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 2, 0, -4], pos = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the cycle begins at index 1 (value 2)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2], pos = 0",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "the cycle begins at index 0 (value 1)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3], pos = -1",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "no cycle exists"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[3,2,0,-4],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3],-1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],-1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5],4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5],-1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,4,3,2,1,0],2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],-1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,1,1,1,1],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-1,-2,-3,-4],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],10]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],-1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[9,8,7,6,5,4,3,2,1],-1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],29]",
+        "output": "29",
+        "expectedOutput": "29",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7,8],3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[2,3],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 2, 0, -4], pos = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the cycle begins at index 1 (value 2)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2], pos = 0",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "the cycle begins at index 0 (value 1)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3], pos = -1",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "no cycle exists"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 2, 0, -4], pos = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the cycle begins at index 1 (value 2)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2], pos = 0",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "the cycle begins at index 0 (value 1)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3], pos = -1",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "no cycle exists"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[3,2,0,-4],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2],0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3],-1]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1],-1]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1],0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,3,4,5],0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3,4,5],4]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3,4,5],-1]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[5,4,3,2,1,0],2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],5]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],-1]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,1,1,1,1],0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[-1,-2,-3,-4],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],10]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],-1]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[9,8,7,6,5,4,3,2,1],-1]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],29]",
+      "output": "29",
+      "expectedOutput": "29",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,2,3,4,5,6,7,8],3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[2,3],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 2, 0, -4], pos = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the cycle begins at index 1 (value 2)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2], pos = 0",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "the cycle begins at index 0 (value 1)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3], pos = -1",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "no cycle exists"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[3,2,0,-4],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3],-1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],-1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5],4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5],-1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,4,3,2,1,0],2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],-1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,1,1,1,1],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-1,-2,-3,-4],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],10]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],-1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[9,8,7,6,5,4,3,2,1],-1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],29]",
+        "output": "29",
+        "expectedOutput": "29",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7,8],3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[2,3],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def detectCycleStart(self, nums, pos):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int detectCycleStart(vector<int>& nums, int pos) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int detectCycleStart(int[] nums, int pos) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun detectCycleStart(nums: IntArray, pos: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    detectCycleStart(nums, pos) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def detectCycleStart(self, nums, pos):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int detectCycleStart(vector<int>& nums, int pos) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int detectCycleStart(int[] nums, int pos) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun detectCycleStart(nums: IntArray, pos: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    detectCycleStart(nums, pos) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def detectCycleStart(self, nums, pos):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int detectCycleStart(vector<int>& nums, int pos) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int detectCycleStart(int[] nums, int pos) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun detectCycleStart(nums: IntArray, pos: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    detectCycleStart(nums, pos) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def detectCycleStart(self, nums, pos):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int detectCycleStart(vector<int>& nums, int pos) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int detectCycleStart(int[] nums, int pos) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun detectCycleStart(nums: IntArray, pos: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    detectCycleStart(nums, pos) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "Floyd's cycle detection: find the meeting point with fast/slow pointers, then use the mathematical property that a pointer from the head and a pointer from the meeting point, both moving one step at a time, meet exactly at the cycle's start"
+    },
+    "bruteForce": {
+      "approach": "walk the list tracking visited indices in a hash set; the first index you revisit is where the cycle begins, if you fall off the end there's no cycle",
+      "time": "O(n)",
+      "space": "O(n) for the visited set"
+    }
+  },
+  "optimal": {
+    "pattern": "Floyd's cycle detection: find the meeting point with fast/slow pointers, then use the mathematical property that a pointer from the head and a pointer from the meeting point, both moving one step at a time, meet exactly at the cycle's start",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "first, can you even tell if there's a cycle at all? that's a smaller version of this same problem",
+      "run fast (2 steps) and slow (1 step) pointers from the head until they meet somewhere inside the cycle - if fast reaches the end instead, there's no cycle, return -1",
+      "once they meet, there's a neat trick: the distance from the head to the cycle's start equals the distance from the meeting point back around to the cycle's start",
+      "reset one pointer to the head, keep the other at the meeting point, and move both one step at a time - the node where they meet again is the start of the cycle"
+    ]
+  },
+  "bruteForce": {
+    "approach": "walk the list tracking visited indices in a hash set; the first index you revisit is where the cycle begins, if you fall off the end there's no cycle",
+    "time": "O(n)",
+    "space": "O(n) for the visited set"
+  },
+  "isIndex0": true,
+  "level": null
+}

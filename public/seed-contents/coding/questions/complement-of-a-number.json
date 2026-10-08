@@ -1,0 +1,626 @@
+{
+  "id": "complement-of-a-number",
+  "questionId": "complement-of-a-number",
+  "slug": "complement-of-a-number",
+  "title": "Complement of a Number",
+  "difficulty": "Medium",
+  "category": "Bit manipulation",
+  "patterns": [
+    "bit manipulation"
+  ],
+  "lists": [],
+  "hints": [
+    "flipping every bit of n is the same as XOR-ing n with a value that has a 1 in every position n occupies - what mask do you need?",
+    "you need a mask of all 1s that's exactly as wide as n's binary representation, not wider (extra leading 1s would flip bits n doesn't have)",
+    "find the smallest power of two greater than n (call it p) - then p - 1 is exactly a same-width all-ones mask, e.g. n=5 needs width 3, p=8, mask=7 (111)",
+    "the answer is n XOR mask, where mask is built by starting at 1 and left-shifting until it exceeds n, then subtracting 1"
+  ],
+  "commonMistakes": [
+    "using a fixed 32-bit mask (like flipping all bits of a standard integer) instead of a mask sized to n's own bit width, which gives a huge wrong answer",
+    "off-by-one when finding the smallest power of two greater than n (using >= vs > incorrectly)",
+    "forgetting the special case n = 0 has no bits to flip, if 0 is allowed by the constraints"
+  ],
+  "content": {
+    "problemStatement": "You're given a non-negative integer `n`.\n\n**Return the complement of `n`, formed by flipping every bit within `n`'s own minimal binary representation, as an integer.**\n\nThe flip only applies to the bits `n` actually needs, with no leading zero padding beyond that width.\n",
+    "constraints": [
+      "1 <= n <= 10^9"
+    ],
+    "notes": [
+      "n = 1 (complement is 0)",
+      "n whose binary form is all 1s (e.g. 7 = 111), complement is 0",
+      "n that is a power of two (e.g. 8 = 1000), complement is all 1s below that bit"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 5",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "5 is 101 in binary, flipping every bit gives 010 = 2"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 1",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "1 is 1 in binary, flipping gives 0"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 10",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "10 is 1010 in binary, flipping every bit gives 0101 = 5"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[5]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[7]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[10]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[4]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[6]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[8]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[15]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[16]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[100]",
+        "output": "27",
+        "expectedOutput": "27",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[127]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[128]",
+        "output": "127",
+        "expectedOutput": "127",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[255]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[256]",
+        "output": "255",
+        "expectedOutput": "255",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[1000000000]",
+        "output": "73741823",
+        "expectedOutput": "73741823",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[999999999]",
+        "output": "73741824",
+        "expectedOutput": "73741824",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[511]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[512]",
+        "output": "511",
+        "expectedOutput": "511",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 5",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "5 is 101 in binary, flipping every bit gives 010 = 2"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 1",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "1 is 1 in binary, flipping gives 0"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 10",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "10 is 1010 in binary, flipping every bit gives 0101 = 5"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 5",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "5 is 101 in binary, flipping every bit gives 010 = 2"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 1",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "1 is 1 in binary, flipping gives 0"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 10",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "10 is 1010 in binary, flipping every bit gives 0101 = 5"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[5]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[7]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[10]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[2]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[3]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[4]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[6]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[8]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[15]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[16]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[100]",
+      "output": "27",
+      "expectedOutput": "27",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[127]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[128]",
+      "output": "127",
+      "expectedOutput": "127",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[255]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[256]",
+      "output": "255",
+      "expectedOutput": "255",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[1000000000]",
+      "output": "73741823",
+      "expectedOutput": "73741823",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[999999999]",
+      "output": "73741824",
+      "expectedOutput": "73741824",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[511]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[512]",
+      "output": "511",
+      "expectedOutput": "511",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 5",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "5 is 101 in binary, flipping every bit gives 010 = 2"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 1",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "1 is 1 in binary, flipping gives 0"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 10",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "10 is 1010 in binary, flipping every bit gives 0101 = 5"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[5]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[7]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[10]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[4]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[6]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[8]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[15]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[16]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[100]",
+        "output": "27",
+        "expectedOutput": "27",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[127]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[128]",
+        "output": "127",
+        "expectedOutput": "127",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[255]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[256]",
+        "output": "255",
+        "expectedOutput": "255",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[1000000000]",
+        "output": "73741823",
+        "expectedOutput": "73741823",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[999999999]",
+        "output": "73741824",
+        "expectedOutput": "73741824",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[511]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[512]",
+        "output": "511",
+        "expectedOutput": "511",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def bitwiseComplement(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int bitwiseComplement(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int bitwiseComplement(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun bitwiseComplement(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    bitwiseComplement(n) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def bitwiseComplement(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int bitwiseComplement(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int bitwiseComplement(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun bitwiseComplement(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    bitwiseComplement(n) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def bitwiseComplement(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int bitwiseComplement(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int bitwiseComplement(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun bitwiseComplement(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    bitwiseComplement(n) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def bitwiseComplement(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int bitwiseComplement(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int bitwiseComplement(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun bitwiseComplement(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    bitwiseComplement(n) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(log n)",
+      "space": "O(1)",
+      "pattern": "bit manipulation (build a same-width mask of all 1s, then XOR)"
+    },
+    "bruteForce": {
+      "approach": "convert n to a binary string, flip each character ('0' <-> '1'), then parse the flipped string back into an integer",
+      "time": "O(log n)",
+      "space": "O(log n) for the string"
+    }
+  },
+  "optimal": {
+    "pattern": "bit manipulation (build a same-width mask of all 1s, then XOR)",
+    "time": "O(log n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "flipping every bit of n is the same as XOR-ing n with a value that has a 1 in every position n occupies - what mask do you need?",
+      "you need a mask of all 1s that's exactly as wide as n's binary representation, not wider (extra leading 1s would flip bits n doesn't have)",
+      "find the smallest power of two greater than n (call it p) - then p - 1 is exactly a same-width all-ones mask, e.g. n=5 needs width 3, p=8, mask=7 (111)",
+      "the answer is n XOR mask, where mask is built by starting at 1 and left-shifting until it exceeds n, then subtracting 1"
+    ]
+  },
+  "bruteForce": {
+    "approach": "convert n to a binary string, flip each character ('0' <-> '1'), then parse the flipped string back into an integer",
+    "time": "O(log n)",
+    "space": "O(log n) for the string"
+  },
+  "isIndex0": true,
+  "level": null
+}

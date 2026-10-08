@@ -1,0 +1,633 @@
+{
+  "id": "minimum-window-substring",
+  "questionId": "minimum-window-substring",
+  "slug": "minimum-window-substring",
+  "title": "Minimum Window Substring",
+  "difficulty": "Hard",
+  "category": "Sliding window",
+  "patterns": [
+    "sliding window",
+    "variable-size window"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "this is the same grow-then-shrink shape as Minimum Size Subarray Sum, but 'valid' now means something more complex than a sum. how would you check validity here without rescanning the whole window every time?",
+    "build a frequency count of what t requires; as you grow the window to the right, track how many of those requirements are currently satisfied",
+    "once every requirement is satisfied, the window is valid - try shrinking from the left one character at a time, updating your satisfied-count, and record the window if it's still valid and shorter than your best so far",
+    "stop shrinking the moment removing the left character would break a requirement, then go back to growing the right edge"
+  ],
+  "commonMistakes": [
+    "recomputing whether the window is valid from scratch after every single character move, instead of tracking a running count of satisfied requirements",
+    "not handling duplicate characters in t correctly (needing 2 of a character means having only 1 doesn't satisfy that requirement)",
+    "shrinking past the point of validity, or forgetting to record the best window before continuing to shrink"
+  ],
+  "content": {
+    "problemStatement": "You're given two strings, `s` and `t`.\n\n**Find the shortest substring of `s` that contains every character of `t`, and return it, or an empty string if no such substring exists.**\n\nMatching means duplicate counts too: if `t` has two 'a's, the substring must have at least two 'a's as well.\n",
+    "constraints": [
+      "0 <= s.length <= 10^5",
+      "0 <= t.length <= 10^5",
+      "s and t consist of uppercase and lowercase English letters"
+    ],
+    "notes": [
+      "t is longer than s (always impossible)",
+      "t requires more of a character than s contains in total",
+      "s already equals t"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"ADOBECODEBANC\", t = \"ABC\"",
+        "output": "\"BANC\"",
+        "expectedOutput": "\"BANC\"",
+        "explanation": "\"BANC\" is the shortest substring of s containing an A, a B, and a C"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"a\", t = \"a\"",
+        "output": "\"a\"",
+        "expectedOutput": "\"a\"",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"a\", t = \"aa\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": "t needs two a's, but s only has one, so no valid window exists"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"ADOBECODEBANC\",\"ABC\"]",
+        "output": "BANC",
+        "expectedOutput": "BANC",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a\",\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a\",\"aa\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"ab\",\"b\"]",
+        "output": "b",
+        "expectedOutput": "b",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"a\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"bba\",\"ab\"]",
+        "output": "ba",
+        "expectedOutput": "ba",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aa\",\"aa\"]",
+        "output": "aa",
+        "expectedOutput": "aa",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abc\",\"abc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaflslflsldkalskaOfsdcvcvC\",\"Cba\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"ADOBECODEBANC\",\"AABC\"]",
+        "output": "ADOBECODEBA",
+        "expectedOutput": "ADOBECODEBA",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"cabwefgewcwaefgcf\",\"cae\"]",
+        "output": "cwae",
+        "expectedOutput": "cwae",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abcdebdde\",\"bde\"]",
+        "output": "deb",
+        "expectedOutput": "deb",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"aaaaaaaaaaaabbbbbcdd\",\"abcdd\"]",
+        "output": "abbbbbcdd",
+        "expectedOutput": "abbbbbcdd",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"xyz\",\"xyz\"]",
+        "output": "xyz",
+        "expectedOutput": "xyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aabbccddeeffgghhiijj\",\"ghij\"]",
+        "output": "ghhiij",
+        "expectedOutput": "ghhiij",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"thisisatestwindowproblem\",\"wist\"]",
+        "output": "stwi",
+        "expectedOutput": "stwi",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"aaaaaa\",\"aaa\"]",
+        "output": "aaa",
+        "expectedOutput": "aaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"baaaaaaaaaaaaaaaaaaaaab\",\"ab\"]",
+        "output": "ba",
+        "expectedOutput": "ba",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"abcabcabcabcabc\",\"cab\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"ADOBECODEBANC\", t = \"ABC\"",
+      "output": "\"BANC\"",
+      "expectedOutput": "\"BANC\"",
+      "explanation": "\"BANC\" is the shortest substring of s containing an A, a B, and a C"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"a\", t = \"a\"",
+      "output": "\"a\"",
+      "expectedOutput": "\"a\"",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"a\", t = \"aa\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": "t needs two a's, but s only has one, so no valid window exists"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"ADOBECODEBANC\", t = \"ABC\"",
+      "output": "\"BANC\"",
+      "expectedOutput": "\"BANC\"",
+      "explanation": "\"BANC\" is the shortest substring of s containing an A, a B, and a C"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"a\", t = \"a\"",
+      "output": "\"a\"",
+      "expectedOutput": "\"a\"",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"a\", t = \"aa\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": "t needs two a's, but s only has one, so no valid window exists"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"ADOBECODEBANC\",\"ABC\"]",
+      "output": "BANC",
+      "expectedOutput": "BANC",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"a\",\"a\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"a\",\"aa\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"ab\",\"b\"]",
+      "output": "b",
+      "expectedOutput": "b",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"\",\"a\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\",\"\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"bba\",\"ab\"]",
+      "output": "ba",
+      "expectedOutput": "ba",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"aa\",\"aa\"]",
+      "output": "aa",
+      "expectedOutput": "aa",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"abc\",\"abc\"]",
+      "output": "abc",
+      "expectedOutput": "abc",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"aaflslflsldkalskaOfsdcvcvC\",\"Cba\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"ADOBECODEBANC\",\"AABC\"]",
+      "output": "ADOBECODEBA",
+      "expectedOutput": "ADOBECODEBA",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"cabwefgewcwaefgcf\",\"cae\"]",
+      "output": "cwae",
+      "expectedOutput": "cwae",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"abcdebdde\",\"bde\"]",
+      "output": "deb",
+      "expectedOutput": "deb",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"aaaaaaaaaaaabbbbbcdd\",\"abcdd\"]",
+      "output": "abbbbbcdd",
+      "expectedOutput": "abbbbbcdd",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"xyz\",\"xyz\"]",
+      "output": "xyz",
+      "expectedOutput": "xyz",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"aabbccddeeffgghhiijj\",\"ghij\"]",
+      "output": "ghhiij",
+      "expectedOutput": "ghhiij",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"thisisatestwindowproblem\",\"wist\"]",
+      "output": "stwi",
+      "expectedOutput": "stwi",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"aaaaaa\",\"aaa\"]",
+      "output": "aaa",
+      "expectedOutput": "aaa",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"baaaaaaaaaaaaaaaaaaaaab\",\"ab\"]",
+      "output": "ba",
+      "expectedOutput": "ba",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"abcabcabcabcabc\",\"cab\"]",
+      "output": "abc",
+      "expectedOutput": "abc",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"ADOBECODEBANC\", t = \"ABC\"",
+        "output": "\"BANC\"",
+        "expectedOutput": "\"BANC\"",
+        "explanation": "\"BANC\" is the shortest substring of s containing an A, a B, and a C"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"a\", t = \"a\"",
+        "output": "\"a\"",
+        "expectedOutput": "\"a\"",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"a\", t = \"aa\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": "t needs two a's, but s only has one, so no valid window exists"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"ADOBECODEBANC\",\"ABC\"]",
+        "output": "BANC",
+        "expectedOutput": "BANC",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a\",\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a\",\"aa\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"ab\",\"b\"]",
+        "output": "b",
+        "expectedOutput": "b",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"a\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"bba\",\"ab\"]",
+        "output": "ba",
+        "expectedOutput": "ba",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aa\",\"aa\"]",
+        "output": "aa",
+        "expectedOutput": "aa",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abc\",\"abc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaflslflsldkalskaOfsdcvcvC\",\"Cba\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"ADOBECODEBANC\",\"AABC\"]",
+        "output": "ADOBECODEBA",
+        "expectedOutput": "ADOBECODEBA",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"cabwefgewcwaefgcf\",\"cae\"]",
+        "output": "cwae",
+        "expectedOutput": "cwae",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abcdebdde\",\"bde\"]",
+        "output": "deb",
+        "expectedOutput": "deb",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"aaaaaaaaaaaabbbbbcdd\",\"abcdd\"]",
+        "output": "abbbbbcdd",
+        "expectedOutput": "abbbbbcdd",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"xyz\",\"xyz\"]",
+        "output": "xyz",
+        "expectedOutput": "xyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aabbccddeeffgghhiijj\",\"ghij\"]",
+        "output": "ghhiij",
+        "expectedOutput": "ghhiij",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"thisisatestwindowproblem\",\"wist\"]",
+        "output": "stwi",
+        "expectedOutput": "stwi",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"aaaaaa\",\"aaa\"]",
+        "output": "aaa",
+        "expectedOutput": "aaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"baaaaaaaaaaaaaaaaaaaaab\",\"ab\"]",
+        "output": "ba",
+        "expectedOutput": "ba",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"abcabcabcabcabc\",\"cab\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minWindow(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    string minWindow(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String minWindow(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minWindow(s: String, t: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minWindow(s, t) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minWindow(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    string minWindow(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String minWindow(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minWindow(s: String, t: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minWindow(s, t) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minWindow(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    string minWindow(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String minWindow(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minWindow(s: String, t: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minWindow(s, t) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minWindow(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    string minWindow(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String minWindow(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minWindow(s: String, t: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minWindow(s, t) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n + m)",
+      "space": "O(m) for the character requirement counts",
+      "pattern": "variable-size sliding window, grown until it's valid, then shrunk from the left as far as possible while staying valid"
+    },
+    "bruteForce": {
+      "approach": "for every possible substring of s, check whether it contains all of t's required characters, tracking the shortest valid one",
+      "time": "O(n^2 * m) or worse, checking each substring's character counts against t",
+      "space": "O(m)"
+    }
+  },
+  "optimal": {
+    "pattern": "variable-size sliding window, grown until it's valid, then shrunk from the left as far as possible while staying valid",
+    "time": "O(n + m)",
+    "space": "O(m) for the character requirement counts",
+    "hint_ladder": [
+      "this is the same grow-then-shrink shape as Minimum Size Subarray Sum, but 'valid' now means something more complex than a sum. how would you check validity here without rescanning the whole window every time?",
+      "build a frequency count of what t requires; as you grow the window to the right, track how many of those requirements are currently satisfied",
+      "once every requirement is satisfied, the window is valid - try shrinking from the left one character at a time, updating your satisfied-count, and record the window if it's still valid and shorter than your best so far",
+      "stop shrinking the moment removing the left character would break a requirement, then go back to growing the right edge"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every possible substring of s, check whether it contains all of t's required characters, tracking the shortest valid one",
+    "time": "O(n^2 * m) or worse, checking each substring's character counts against t",
+    "space": "O(m)"
+  },
+  "isIndex0": true,
+  "level": null
+}

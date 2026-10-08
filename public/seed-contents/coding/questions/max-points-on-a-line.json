@@ -1,0 +1,680 @@
+{
+  "id": "max-points-on-a-line",
+  "questionId": "max-points-on-a-line",
+  "slug": "max-points-on-a-line",
+  "title": "Max Points on a Line",
+  "difficulty": "Hard",
+  "category": "Hash map",
+  "patterns": [
+    "hash map",
+    "geometry",
+    "math"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "a line is determined by any two points on it - so a natural brute force checks every pair, but you're redoing a lot of work: fix one point and think about what varies",
+    "for a fixed point i, every other point j defines a slope from i to j; points that share the same slope from i lie on the same line through i",
+    "count how many other points share each slope from i using a hash map, the best line through i has (max count) + 1 points (the +1 is i itself)",
+    "represent slope as a reduced fraction (dy/dx divided by their gcd) with a consistent sign convention, not a floating point division, to avoid precision bugs and to treat vertical lines (dx = 0) as their own bucket",
+    "repeat for every point as the fixed point and take the global maximum; since all points are guaranteed unique you don't need special handling for duplicate coordinates"
+  ],
+  "commonMistakes": [
+    "using floating point slope (dy / dx) directly, which causes precision mismatches for points that are mathematically on the same line",
+    "not reducing dx/dy to lowest terms with a consistent sign, so the same true slope ends up in two different hash map buckets",
+    "forgetting to special-case dx = 0 (a vertical line), which would otherwise divide by zero",
+    "forgetting to add 1 for the fixed point itself when computing the count for a given slope bucket",
+    "recomputing the whole thing with O(n^3) nested pair-checking when the O(n^2) per-point slope grouping is both simpler and faster"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of `points` on the X-Y plane, where `points[i] = [xi, yi]`.\n\n**Return the maximum number of points that all lie on the same straight line.**\n",
+    "constraints": [
+      "1 <= points.length <= 300",
+      "points[i].length == 2",
+      "-10^4 <= x_i, y_i <= 10^4",
+      "all points are unique"
+    ],
+    "notes": [
+      "only one point (answer is 1)",
+      "only two points (any two points trivially define a line, answer is 2)",
+      "a vertical line (all points share the same x coordinate, undefined slope)",
+      "a horizontal line (all points share the same y coordinate, slope 0)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "points = [[1,1],[2,2],[3,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "all three points lie on the line y = x"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "points = [[1,1],[3,2],[5,3],[4,1],[2,3],[1,4]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "four of the six points lie on a single line"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "points = [[0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "a single point trivially lies on a line"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,1],[2,2],[3,3]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,1],[3,2],[5,3],[4,1],[2,3],[1,4]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1],[1,2],[1,3],[1,4]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[-1,-1],[0,0],[1,1],[5,2]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1],[2,2],[3,3],[4,5]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0,1],[0,0],[0,-1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[5,5],[5,3],[5,-1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,2],[3,4],[5,6],[7,8]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[2,2],[3,3],[4,4],[1,5]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,0],[1,0],[2,0],[3,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,1],[2,2],[2,1],[3,3]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,0],[10,10],[3,3],[2,7]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[-1,-1],[0,0],[1,1],[2,2]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,-1],[2,-2],[3,-3],[0,5]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[2,3]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,0],[1,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[3,3],[1,1],[2,2],[4,5],[5,4]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1],[2,2],[3,3],[-1,-1],[4,4]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[6,0],[5,0],[4,0],[3,0],[2,0],[1,0],[0,0]]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[0,0],[1,2],[2,4],[3,7]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[[1,1],[0,0],[-1,-1],[2,3]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "points = [[1,1],[2,2],[3,3]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "all three points lie on the line y = x"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "points = [[1,1],[3,2],[5,3],[4,1],[2,3],[1,4]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "four of the six points lie on a single line"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "points = [[0,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "a single point trivially lies on a line"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "points = [[1,1],[2,2],[3,3]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "all three points lie on the line y = x"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "points = [[1,1],[3,2],[5,3],[4,1],[2,3],[1,4]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "four of the six points lie on a single line"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "points = [[0,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "a single point trivially lies on a line"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,1],[2,2],[3,3]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,1],[3,2],[5,3],[4,1],[2,3],[1,4]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[0,0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1,1],[1,2],[1,3],[1,4]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[-1,-1],[0,0],[1,1],[5,2]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,1],[2,2],[3,3],[4,5]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[0,1],[0,0],[0,-1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[5,5],[5,3],[5,-1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1,2],[3,4],[5,6],[7,8]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[2,2],[3,3],[4,4],[1,5]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[0,0],[1,0],[2,0],[3,1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[1,1],[2,2],[2,1],[3,3]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[0,0],[10,10],[3,3],[2,7]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[-1,-1],[0,0],[1,1],[2,2]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[1,-1],[2,-2],[3,-3],[0,5]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[2,3]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[0,0],[1,1]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[3,3],[1,1],[2,2],[4,5],[5,4]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,1],[2,2],[3,3],[-1,-1],[4,4]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[6,0],[5,0],[4,0],[3,0],[2,0],[1,0],[0,0]]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[[0,0],[1,2],[2,4],[3,7]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[[[1,1],[0,0],[-1,-1],[2,3]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "points = [[1,1],[2,2],[3,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "all three points lie on the line y = x"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "points = [[1,1],[3,2],[5,3],[4,1],[2,3],[1,4]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "four of the six points lie on a single line"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "points = [[0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "a single point trivially lies on a line"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,1],[2,2],[3,3]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,1],[3,2],[5,3],[4,1],[2,3],[1,4]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1],[1,2],[1,3],[1,4]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[-1,-1],[0,0],[1,1],[5,2]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1],[2,2],[3,3],[4,5]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0,1],[0,0],[0,-1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[5,5],[5,3],[5,-1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,2],[3,4],[5,6],[7,8]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[2,2],[3,3],[4,4],[1,5]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,0],[1,0],[2,0],[3,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,1],[2,2],[2,1],[3,3]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,0],[10,10],[3,3],[2,7]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[-1,-1],[0,0],[1,1],[2,2]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,-1],[2,-2],[3,-3],[0,5]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[2,3]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,0],[1,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[3,3],[1,1],[2,2],[4,5],[5,4]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1],[2,2],[3,3],[-1,-1],[4,4]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[6,0],[5,0],[4,0],[3,0],[2,0],[1,0],[0,0]]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[0,0],[1,2],[2,4],[3,7]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[[1,1],[0,0],[-1,-1],[2,3]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def maxPoints(self, points):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxPoints(vector<vector<int>>& points) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxPoints(int[][] points) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxPoints(points: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxPoints(points) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def maxPoints(self, points):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxPoints(vector<vector<int>>& points) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxPoints(int[][] points) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxPoints(points: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxPoints(points) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def maxPoints(self, points):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxPoints(vector<vector<int>>& points) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxPoints(int[][] points) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxPoints(points: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxPoints(points) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def maxPoints(self, points):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxPoints(vector<vector<int>>& points) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxPoints(int[][] points) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxPoints(points: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxPoints(points) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n^2)",
+      "space": "O(n) for the slope map at each point",
+      "pattern": "for each point, group every other point by the slope of the line through them, using a hash map of slope -> count"
+    },
+    "bruteForce": {
+      "approach": "try every pair of points as defining a line, then for each pair count how many of the other points also fall on it; take the max over all pairs (O(n^3) if the point-on-line check is O(n), or track visited lines to prune duplicate work)",
+      "time": "O(n^3)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "for each point, group every other point by the slope of the line through them, using a hash map of slope -> count",
+    "time": "O(n^2)",
+    "space": "O(n) for the slope map at each point",
+    "hint_ladder": [
+      "a line is determined by any two points on it - so a natural brute force checks every pair, but you're redoing a lot of work: fix one point and think about what varies",
+      "for a fixed point i, every other point j defines a slope from i to j; points that share the same slope from i lie on the same line through i",
+      "count how many other points share each slope from i using a hash map, the best line through i has (max count) + 1 points (the +1 is i itself)",
+      "represent slope as a reduced fraction (dy/dx divided by their gcd) with a consistent sign convention, not a floating point division, to avoid precision bugs and to treat vertical lines (dx = 0) as their own bucket",
+      "repeat for every point as the fixed point and take the global maximum; since all points are guaranteed unique you don't need special handling for duplicate coordinates"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every pair of points as defining a line, then for each pair count how many of the other points also fall on it; take the max over all pairs (O(n^3) if the point-on-line check is O(n), or track visited lines to prune duplicate work)",
+    "time": "O(n^3)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

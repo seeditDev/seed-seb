@@ -1,0 +1,634 @@
+{
+  "id": "maximal-square",
+  "questionId": "maximal-square",
+  "slug": "maximal-square",
+  "title": "Maximal Square",
+  "difficulty": "Medium",
+  "category": "Dp 2d",
+  "patterns": [
+    "dynamic programming",
+    "grid",
+    "matrix"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "a square of side k ending at cell (i, j) as its bottom-right corner requires that cell, the cell above it, the cell to its left, and the cell diagonally above-left to all support at least a square of side k-1",
+    "define dp[i][j] as the side length of the largest all-1s square whose bottom-right corner is exactly cell (i, j)",
+    "if matrix[i][j] == 0, dp[i][j] = 0 (no square can end there); if matrix[i][j] == 1, dp[i][j] = 1 + min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])",
+    "the first row and first column can only ever support a square of side 1 (or 0), since there's no room above or to the left to extend",
+    "track the maximum dp value seen while filling the table, and the answer is that maximum squared (area, not side length)"
+  ],
+  "commonMistakes": [
+    "returning the maximum side length instead of squaring it to get the area",
+    "taking the max of the three neighbors instead of the min - a square is only as strong as its weakest supporting side",
+    "forgetting to handle the first row/column specially, since dp[i-1][j-1] would be out of bounds there"
+  ],
+  "content": {
+    "problemStatement": "You're given a `matrix` of 0s and 1s.\n\n**Find the largest square containing only 1s, with all four sides aligned to the grid, and return its area.**\n",
+    "constraints": [
+      "1 <= rows <= 300",
+      "1 <= cols <= 300",
+      "matrix[i][j] is either 0 or 1"
+    ],
+    "notes": [
+      "a matrix of all zeros (answer is 0)",
+      "a matrix of all ones (answer is rows * cols if square, or min(rows, cols) squared otherwise)",
+      "a single row or single column (largest square can only be 1x1)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "matrix = [[1,0,1,0,0],[1,0,1,1,1],[1,1,1,1,1],[1,0,0,1,0]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "The largest all-1s square is 2x2, giving an area of 4."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "matrix = [[0,1],[1,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "matrix = [[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,0,1,0,0],[1,0,1,1,1],[1,1,1,1,1],[1,0,0,1,0]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0,1],[1,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,1,1,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1],[1],[1],[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,1,0,1,1,1,0,1],[1,0,0,1,1,1,1,1],[1,1,0,0,1,0,0,1],[1,0,1,1,1,1,1,1],[1,1,0,1,1,0,1,1],[0,1,1,1,1,1,1,1],[0,1,1,0,1,1,1,0],[1,0,0,0,1,1,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,0,1,1,0,0,1,1,0,1],[0,1,1,1,0,1,1,1,0,1],[0,1,1,1,1,1,0,0,1,1],[1,0,1,1,1,1,0,1,1,1],[0,1,1,1,1,1,1,1,0,1],[1,0,1,0,1,1,0,1,1,1],[0,1,0,0,1,0,1,1,1,1],[0,0,1,1,0,0,0,1,1,0],[0,1,1,1,0,1,1,0,1,0],[0,0,0,1,0,1,1,1,1,0]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1]]]",
+        "output": "144",
+        "expectedOutput": "144",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[0,1,1,1,1,1,1],[0,1,1,1,1,1,0],[1,1,0,1,1,1,1],[1,1,1,1,0,1,1],[1,1,1,1,1,1,1],[1,1,1,0,1,1,1],[1,1,1,1,0,1,1],[1,0,1,0,1,1,0],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,0,0,1],[1,1,1,1,0,1,1]]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,1,1,0,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,0,1,1,1,1,1],[1,0,1,1,1,0,1,1,1,0,0,1],[0,1,1,1,1,1,0,0,1,1,1,0],[1,1,1,1,0,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,0,0],[1,1,1,0,1,1,1,1,1,1,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,1,1,1,1,1,0,1,1,1,1],[1,0,1,1,1,1,0,1,1,1,0],[1,1,0,0,1,1,1,1,0,0,0],[1,0,0,1,1,1,1,0,1,0,0],[0,0,1,1,0,1,1,1,1,1,0],[0,1,1,0,1,1,0,0,1,1,0],[0,1,1,0,0,0,1,1,0,1,1],[1,1,0,1,0,1,1,1,0,1,0],[0,0,1,1,1,1,1,1,0,0,0],[1,0,1,0,1,0,0,1,0,0,0],[0,0,0,0,1,1,0,1,0,1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,0,0,1,0,0,1,1,1,1,1,0,0,1],[1,1,1,1,1,1,1,0,1,1,1,0,0,0],[1,1,1,1,0,1,1,1,1,0,1,0,1,0],[0,1,0,1,1,1,1,1,1,0,1,0,0,1],[0,1,0,1,1,1,1,0,1,1,0,1,1,1],[1,1,1,1,1,1,1,1,0,1,0,1,0,0],[1,1,1,0,1,1,0,0,1,1,1,1,1,1],[1,1,0,1,1,1,0,0,0,0,0,0,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1,0,1],[1,1,0,1],[0,0,0,0],[1,1,1,1],[1,1,1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,0,1,1,1,1,1,1,0,1,1,1,0],[1,0,1,1,1,0,1,0,0,1,1,1,0],[1,1,1,0,0,1,0,1,1,1,0,0,0],[1,0,0,0,0,1,0,0,0,1,1,0,1],[1,0,0,1,1,1,0,1,0,1,0,0,1],[1,0,0,1,1,1,0,1,0,1,1,1,1],[1,0,0,1,1,0,1,1,0,1,1,0,1],[1,1,1,1,1,1,1,1,1,1,0,1,1],[1,0,0,0,0,0,1,0,1,0,0,1,0],[1,1,1,0,1,1,1,0,1,1,1,0,1],[1,1,0,1,0,1,0,0,1,0,1,1,1],[0,1,1,1,0,0,0,1,1,1,1,1,1],[1,0,1,0,0,0,0,1,1,0,1,1,0]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "matrix = [[1,0,1,0,0],[1,0,1,1,1],[1,1,1,1,1],[1,0,0,1,0]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "The largest all-1s square is 2x2, giving an area of 4."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "matrix = [[0,1],[1,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "matrix = [[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "matrix = [[1,0,1,0,0],[1,0,1,1,1],[1,1,1,1,1],[1,0,0,1,0]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "The largest all-1s square is 2x2, giving an area of 4."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "matrix = [[0,1],[1,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "matrix = [[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,0,1,0,0],[1,0,1,1,1],[1,1,1,1,1],[1,0,0,1,0]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[0,1],[1,0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1,1],[1,1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,1],[1,1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,1,1,1,1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1],[1],[1],[1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1,1,0,1,1,1,0,1],[1,0,0,1,1,1,1,1],[1,1,0,0,1,0,0,1],[1,0,1,1,1,1,1,1],[1,1,0,1,1,0,1,1],[0,1,1,1,1,1,1,1],[0,1,1,0,1,1,1,0],[1,0,0,0,1,1,1,1]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[1,0,1,1,0,0,1,1,0,1],[0,1,1,1,0,1,1,1,0,1],[0,1,1,1,1,1,0,0,1,1],[1,0,1,1,1,1,0,1,1,1],[0,1,1,1,1,1,1,1,0,1],[1,0,1,0,1,1,0,1,1,1],[0,1,0,0,1,0,1,1,1,1],[0,0,1,1,0,0,0,1,1,0],[0,1,1,1,0,1,1,0,1,0],[0,0,0,1,0,1,1,1,1,0]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1]]]",
+      "output": "144",
+      "expectedOutput": "144",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[0,1,1,1,1,1,1],[0,1,1,1,1,1,0],[1,1,0,1,1,1,1],[1,1,1,1,0,1,1],[1,1,1,1,1,1,1],[1,1,1,0,1,1,1],[1,1,1,1,0,1,1],[1,0,1,0,1,1,0],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,0,0,1],[1,1,1,1,0,1,1]]]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[1,1,1,0,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,0,1,1,1,1,1],[1,0,1,1,1,0,1,1,1,0,0,1],[0,1,1,1,1,1,0,0,1,1,1,0],[1,1,1,1,0,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,0,0],[1,1,1,0,1,1,1,1,1,1,1,1]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[1,1,1,1,1,1,0,1,1,1,1],[1,0,1,1,1,1,0,1,1,1,0],[1,1,0,0,1,1,1,1,0,0,0],[1,0,0,1,1,1,1,0,1,0,0],[0,0,1,1,0,1,1,1,1,1,0],[0,1,1,0,1,1,0,0,1,1,0],[0,1,1,0,0,0,1,1,0,1,1],[1,1,0,1,0,1,1,1,0,1,0],[0,0,1,1,1,1,1,1,0,0,0],[1,0,1,0,1,0,0,1,0,0,0],[0,0,0,0,1,1,0,1,0,1,1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1,0,0,1,0,0,1,1,1,1,1,0,0,1],[1,1,1,1,1,1,1,0,1,1,1,0,0,0],[1,1,1,1,0,1,1,1,1,0,1,0,1,0],[0,1,0,1,1,1,1,1,1,0,1,0,0,1],[0,1,0,1,1,1,1,0,1,1,0,1,1,1],[1,1,1,1,1,1,1,1,0,1,0,1,0,0],[1,1,1,0,1,1,0,0,1,1,1,1,1,1],[1,1,0,1,1,1,0,0,0,0,0,0,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,1,0,1],[1,1,0,1],[0,0,0,0],[1,1,1,1],[1,1,1,1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,0,1,1,1,1,1,1,0,1,1,1,0],[1,0,1,1,1,0,1,0,0,1,1,1,0],[1,1,1,0,0,1,0,1,1,1,0,0,0],[1,0,0,0,0,1,0,0,0,1,1,0,1],[1,0,0,1,1,1,0,1,0,1,0,0,1],[1,0,0,1,1,1,0,1,0,1,1,1,1],[1,0,0,1,1,0,1,1,0,1,1,0,1],[1,1,1,1,1,1,1,1,1,1,0,1,1],[1,0,0,0,0,0,1,0,1,0,0,1,0],[1,1,1,0,1,1,1,0,1,1,1,0,1],[1,1,0,1,0,1,0,0,1,0,1,1,1],[0,1,1,1,0,0,0,1,1,1,1,1,1],[1,0,1,0,0,0,0,1,1,0,1,1,0]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "matrix = [[1,0,1,0,0],[1,0,1,1,1],[1,1,1,1,1],[1,0,0,1,0]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "The largest all-1s square is 2x2, giving an area of 4."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "matrix = [[0,1],[1,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "matrix = [[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,0,1,0,0],[1,0,1,1,1],[1,1,1,1,1],[1,0,0,1,0]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0,1],[1,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,1,1,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1],[1],[1],[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,1,0,1,1,1,0,1],[1,0,0,1,1,1,1,1],[1,1,0,0,1,0,0,1],[1,0,1,1,1,1,1,1],[1,1,0,1,1,0,1,1],[0,1,1,1,1,1,1,1],[0,1,1,0,1,1,1,0],[1,0,0,0,1,1,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,0,1,1,0,0,1,1,0,1],[0,1,1,1,0,1,1,1,0,1],[0,1,1,1,1,1,0,0,1,1],[1,0,1,1,1,1,0,1,1,1],[0,1,1,1,1,1,1,1,0,1],[1,0,1,0,1,1,0,1,1,1],[0,1,0,0,1,0,1,1,1,1],[0,0,1,1,0,0,0,1,1,0],[0,1,1,1,0,1,1,0,1,0],[0,0,0,1,0,1,1,1,1,0]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1]]]",
+        "output": "144",
+        "expectedOutput": "144",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[0,1,1,1,1,1,1],[0,1,1,1,1,1,0],[1,1,0,1,1,1,1],[1,1,1,1,0,1,1],[1,1,1,1,1,1,1],[1,1,1,0,1,1,1],[1,1,1,1,0,1,1],[1,0,1,0,1,1,0],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,0,0,1],[1,1,1,1,0,1,1]]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,1,1,0,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,0,1,1,1,1,1],[1,0,1,1,1,0,1,1,1,0,0,1],[0,1,1,1,1,1,0,0,1,1,1,0],[1,1,1,1,0,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,0,0],[1,1,1,0,1,1,1,1,1,1,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,1,1,1,1,1,0,1,1,1,1],[1,0,1,1,1,1,0,1,1,1,0],[1,1,0,0,1,1,1,1,0,0,0],[1,0,0,1,1,1,1,0,1,0,0],[0,0,1,1,0,1,1,1,1,1,0],[0,1,1,0,1,1,0,0,1,1,0],[0,1,1,0,0,0,1,1,0,1,1],[1,1,0,1,0,1,1,1,0,1,0],[0,0,1,1,1,1,1,1,0,0,0],[1,0,1,0,1,0,0,1,0,0,0],[0,0,0,0,1,1,0,1,0,1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,0,0,1,0,0,1,1,1,1,1,0,0,1],[1,1,1,1,1,1,1,0,1,1,1,0,0,0],[1,1,1,1,0,1,1,1,1,0,1,0,1,0],[0,1,0,1,1,1,1,1,1,0,1,0,0,1],[0,1,0,1,1,1,1,0,1,1,0,1,1,1],[1,1,1,1,1,1,1,1,0,1,0,1,0,0],[1,1,1,0,1,1,0,0,1,1,1,1,1,1],[1,1,0,1,1,1,0,0,0,0,0,0,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1,0,1],[1,1,0,1],[0,0,0,0],[1,1,1,1],[1,1,1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,0,1,1,1,1,1,1,0,1,1,1,0],[1,0,1,1,1,0,1,0,0,1,1,1,0],[1,1,1,0,0,1,0,1,1,1,0,0,0],[1,0,0,0,0,1,0,0,0,1,1,0,1],[1,0,0,1,1,1,0,1,0,1,0,0,1],[1,0,0,1,1,1,0,1,0,1,1,1,1],[1,0,0,1,1,0,1,1,0,1,1,0,1],[1,1,1,1,1,1,1,1,1,1,0,1,1],[1,0,0,0,0,0,1,0,1,0,0,1,0],[1,1,1,0,1,1,1,0,1,1,1,0,1],[1,1,0,1,0,1,0,0,1,0,1,1,1],[0,1,1,1,0,0,0,1,1,1,1,1,1],[1,0,1,0,0,0,0,1,1,0,1,1,0]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def maximalSquare(self, matrix):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maximalSquare(vector<vector<int>>& matrix) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maximalSquare(int[][] matrix) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maximalSquare(matrix: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maximalSquare(matrix) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def maximalSquare(self, matrix):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maximalSquare(vector<vector<int>>& matrix) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maximalSquare(int[][] matrix) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maximalSquare(matrix: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maximalSquare(matrix) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def maximalSquare(self, matrix):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maximalSquare(vector<vector<int>>& matrix) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maximalSquare(int[][] matrix) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maximalSquare(matrix: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maximalSquare(matrix) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def maximalSquare(self, matrix):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maximalSquare(vector<vector<int>>& matrix) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maximalSquare(int[][] matrix) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maximalSquare(matrix: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maximalSquare(matrix) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(m * n)",
+      "space": "O(m * n), reducible to O(n)",
+      "pattern": "2D dynamic programming where each cell stores the largest square ending at it"
+    },
+    "bruteForce": {
+      "approach": "for every cell that is 1, try expanding a square from it as far as possible by checking each larger side length against the raw matrix, tracking the largest side found",
+      "time": "O((m*n)^2) in the worst case",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "2D dynamic programming where each cell stores the largest square ending at it",
+    "time": "O(m * n)",
+    "space": "O(m * n), reducible to O(n)",
+    "hint_ladder": [
+      "a square of side k ending at cell (i, j) as its bottom-right corner requires that cell, the cell above it, the cell to its left, and the cell diagonally above-left to all support at least a square of side k-1",
+      "define dp[i][j] as the side length of the largest all-1s square whose bottom-right corner is exactly cell (i, j)",
+      "if matrix[i][j] == 0, dp[i][j] = 0 (no square can end there); if matrix[i][j] == 1, dp[i][j] = 1 + min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])",
+      "the first row and first column can only ever support a square of side 1 (or 0), since there's no room above or to the left to extend",
+      "track the maximum dp value seen while filling the table, and the answer is that maximum squared (area, not side length)"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every cell that is 1, try expanding a square from it as far as possible by checking each larger side length against the raw matrix, tracking the largest side found",
+    "time": "O((m*n)^2) in the worst case",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

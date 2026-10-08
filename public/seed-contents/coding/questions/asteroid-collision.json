@@ -1,0 +1,670 @@
+{
+  "id": "asteroid-collision",
+  "questionId": "asteroid-collision",
+  "slug": "asteroid-collision",
+  "title": "Asteroid Collision",
+  "difficulty": "Medium",
+  "category": "Stack",
+  "patterns": [
+    "stack"
+  ],
+  "lists": [],
+  "hints": [
+    "a collision only happens between a right-mover and a later left-mover, and the outcome of one collision can trigger another with whatever survived just before it - which structure lets you 'undo' the most recent survivor easily?",
+    "walk through asteroids left to right, keeping a stack of surviving asteroids so far. push right-movers directly, they can't collide yet",
+    "when a left-mover arrives, it may need to fight the top of the stack repeatedly: while the stack top is a smaller positive asteroid, pop it (it explodes) and keep checking the new top",
+    "after that loop, if the stack top is now a positive asteroid of equal size, pop it and discard the left-mover too (both explode); if the top is positive and still bigger, discard the left-mover; if the stack is empty or the top is also negative, push the left-mover"
+  ],
+  "commonMistakes": [
+    "only checking the immediate previous asteroid once instead of looping while the current asteroid keeps winning against the stack top",
+    "mishandling the equal-size case (forgetting both should be destroyed, not just one)",
+    "treating a negative asteroid meeting another negative asteroid (or positive meeting positive) as a collision when same-direction asteroids never collide"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of integers representing asteroids in a row, all moving at the same speed. Each asteroid's absolute value is its size, and its sign is its direction: positive means moving right, negative means moving left.\n\n**Return the state of the asteroids after all collisions have been resolved, from left to right.**\n\nWhen two moving asteroids meet, the smaller one explodes; if they're the same size, both explode. Two asteroids moving in the same direction never collide.\n",
+    "constraints": [
+      "0 <= asteroids.length <= 10^4",
+      "-1000 <= asteroids[i] <= 1000",
+      "asteroids[i] != 0"
+    ],
+    "notes": [
+      "all asteroids moving the same direction (no collisions at all)",
+      "a chain of collisions where one surviving asteroid then collides again with the next one",
+      "equal-size collision where both asteroids are destroyed"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "asteroids = [5, 10, -5]",
+        "output": "[5, 10]",
+        "expectedOutput": "[5, 10]",
+        "explanation": "10 (moving right) collides with -5 (moving left); 10 is bigger, so -5 explodes and 10 survives; 5 was already moving right and never meets anything"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "asteroids = [8, -8]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "equal sizes moving toward each other - both explode"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "asteroids = [10, 2, -5]",
+        "output": "[10]",
+        "expectedOutput": "[10]",
+        "explanation": "2 (moving right) collides with -5 (moving left) first; 2 is smaller so it explodes; then -5 collides with 10; -5 is smaller so it explodes; 10 survives untouched"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[5,10,-5]]",
+        "output": "[5,10]",
+        "expectedOutput": "[5,10]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[8,-8]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[10,2,-5]]",
+        "output": "[10]",
+        "expectedOutput": "[10]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,-2,-2,-2]]",
+        "output": "[-2,-2,-2]",
+        "expectedOutput": "[-2,-2,-2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-1]]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4]]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-1,-2,-3,-4]]",
+        "output": "[-1,-2,-3,-4]",
+        "expectedOutput": "[-1,-2,-3,-4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[5,-5]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,-2]]",
+        "output": "[-2]",
+        "expectedOutput": "[-2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[3,-1]]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-2,2,1,-2]]",
+        "output": "[-2]",
+        "expectedOutput": "[-2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,1,1,-1,-1,-1,-1]]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[10,-10,10,-10]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[3,10,4,-4]]",
+        "output": "[3,10]",
+        "expectedOutput": "[3,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[8,-8,-8]]",
+        "output": "[-8]",
+        "expectedOutput": "[-8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-5,10,15]]",
+        "output": "[-5,10,15]",
+        "expectedOutput": "[-5,10,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[5,10,-15]]",
+        "output": "[-15]",
+        "expectedOutput": "[-15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,-1,-2,-2]]",
+        "output": "[-2,-2]",
+        "expectedOutput": "[-2,-2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[14,2,8,-9,-4,-3,-1,-2,-5,-19]]",
+        "output": "[-19]",
+        "expectedOutput": "[-19]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[-3,-1,4,-2,7,-8,9,-6,2,-1]]",
+        "output": "[-3,-1,-8,9,2]",
+        "expectedOutput": "[-3,-1,-8,9,2]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "asteroids = [5, 10, -5]",
+      "output": "[5, 10]",
+      "expectedOutput": "[5, 10]",
+      "explanation": "10 (moving right) collides with -5 (moving left); 10 is bigger, so -5 explodes and 10 survives; 5 was already moving right and never meets anything"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "asteroids = [8, -8]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "equal sizes moving toward each other - both explode"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "asteroids = [10, 2, -5]",
+      "output": "[10]",
+      "expectedOutput": "[10]",
+      "explanation": "2 (moving right) collides with -5 (moving left) first; 2 is smaller so it explodes; then -5 collides with 10; -5 is smaller so it explodes; 10 survives untouched"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "asteroids = [5, 10, -5]",
+      "output": "[5, 10]",
+      "expectedOutput": "[5, 10]",
+      "explanation": "10 (moving right) collides with -5 (moving left); 10 is bigger, so -5 explodes and 10 survives; 5 was already moving right and never meets anything"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "asteroids = [8, -8]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "equal sizes moving toward each other - both explode"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "asteroids = [10, 2, -5]",
+      "output": "[10]",
+      "expectedOutput": "[10]",
+      "explanation": "2 (moving right) collides with -5 (moving left) first; 2 is smaller so it explodes; then -5 collides with 10; -5 is smaller so it explodes; 10 survives untouched"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[5,10,-5]]",
+      "output": "[5,10]",
+      "expectedOutput": "[5,10]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[8,-8]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[10,2,-5]]",
+      "output": "[10]",
+      "expectedOutput": "[10]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,-2,-2,-2]]",
+      "output": "[-2,-2,-2]",
+      "expectedOutput": "[-2,-2,-2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[-1]]",
+      "output": "[-1]",
+      "expectedOutput": "[-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3,4]]",
+      "output": "[1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-1,-2,-3,-4]]",
+      "output": "[-1,-2,-3,-4]",
+      "expectedOutput": "[-1,-2,-3,-4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[5,-5]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,-2]]",
+      "output": "[-2]",
+      "expectedOutput": "[-2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[3,-1]]",
+      "output": "[3]",
+      "expectedOutput": "[3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[-2,2,1,-2]]",
+      "output": "[-2]",
+      "expectedOutput": "[-2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,1,1,-1,-1,-1,-1]]",
+      "output": "[-1]",
+      "expectedOutput": "[-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[10,-10,10,-10]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[3,10,4,-4]]",
+      "output": "[3,10]",
+      "expectedOutput": "[3,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[8,-8,-8]]",
+      "output": "[-8]",
+      "expectedOutput": "[-8]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[-5,10,15]]",
+      "output": "[-5,10,15]",
+      "expectedOutput": "[-5,10,15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[5,10,-15]]",
+      "output": "[-15]",
+      "expectedOutput": "[-15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,-1,-2,-2]]",
+      "output": "[-2,-2]",
+      "expectedOutput": "[-2,-2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[14,2,8,-9,-4,-3,-1,-2,-5,-19]]",
+      "output": "[-19]",
+      "expectedOutput": "[-19]",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[[-3,-1,4,-2,7,-8,9,-6,2,-1]]",
+      "output": "[-3,-1,-8,9,2]",
+      "expectedOutput": "[-3,-1,-8,9,2]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "asteroids = [5, 10, -5]",
+        "output": "[5, 10]",
+        "expectedOutput": "[5, 10]",
+        "explanation": "10 (moving right) collides with -5 (moving left); 10 is bigger, so -5 explodes and 10 survives; 5 was already moving right and never meets anything"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "asteroids = [8, -8]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "equal sizes moving toward each other - both explode"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "asteroids = [10, 2, -5]",
+        "output": "[10]",
+        "expectedOutput": "[10]",
+        "explanation": "2 (moving right) collides with -5 (moving left) first; 2 is smaller so it explodes; then -5 collides with 10; -5 is smaller so it explodes; 10 survives untouched"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[5,10,-5]]",
+        "output": "[5,10]",
+        "expectedOutput": "[5,10]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[8,-8]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[10,2,-5]]",
+        "output": "[10]",
+        "expectedOutput": "[10]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,-2,-2,-2]]",
+        "output": "[-2,-2,-2]",
+        "expectedOutput": "[-2,-2,-2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-1]]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4]]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-1,-2,-3,-4]]",
+        "output": "[-1,-2,-3,-4]",
+        "expectedOutput": "[-1,-2,-3,-4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[5,-5]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,-2]]",
+        "output": "[-2]",
+        "expectedOutput": "[-2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[3,-1]]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-2,2,1,-2]]",
+        "output": "[-2]",
+        "expectedOutput": "[-2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,1,1,-1,-1,-1,-1]]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[10,-10,10,-10]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[3,10,4,-4]]",
+        "output": "[3,10]",
+        "expectedOutput": "[3,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[8,-8,-8]]",
+        "output": "[-8]",
+        "expectedOutput": "[-8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-5,10,15]]",
+        "output": "[-5,10,15]",
+        "expectedOutput": "[-5,10,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[5,10,-15]]",
+        "output": "[-15]",
+        "expectedOutput": "[-15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,-1,-2,-2]]",
+        "output": "[-2,-2]",
+        "expectedOutput": "[-2,-2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[14,2,8,-9,-4,-3,-1,-2,-5,-19]]",
+        "output": "[-19]",
+        "expectedOutput": "[-19]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[-3,-1,4,-2,7,-8,9,-6,2,-1]]",
+        "output": "[-3,-1,-8,9,2]",
+        "expectedOutput": "[-3,-1,-8,9,2]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def asteroidCollision(self, asteroids):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> asteroidCollision(vector<int>& asteroids) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] asteroidCollision(int[] asteroids) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun asteroidCollision(asteroids: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    asteroidCollision(asteroids) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def asteroidCollision(self, asteroids):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> asteroidCollision(vector<int>& asteroids) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] asteroidCollision(int[] asteroids) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun asteroidCollision(asteroids: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    asteroidCollision(asteroids) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def asteroidCollision(self, asteroids):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> asteroidCollision(vector<int>& asteroids) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] asteroidCollision(int[] asteroids) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun asteroidCollision(asteroids: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    asteroidCollision(asteroids) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def asteroidCollision(self, asteroids):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> asteroidCollision(vector<int>& asteroids) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] asteroidCollision(int[] asteroids) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun asteroidCollision(asteroids: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    asteroidCollision(asteroids) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n)",
+      "pattern": "stack (only the most recently surviving asteroid can collide with the next one)"
+    },
+    "bruteForce": {
+      "approach": "repeatedly scan the array for any adjacent right-moving-then-left-moving pair and resolve that one collision, rebuilding the array, until no more collisions are found",
+      "time": "O(n^2) in the worst case",
+      "space": "O(n) per rebuild"
+    }
+  },
+  "optimal": {
+    "pattern": "stack (only the most recently surviving asteroid can collide with the next one)",
+    "time": "O(n)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "a collision only happens between a right-mover and a later left-mover, and the outcome of one collision can trigger another with whatever survived just before it - which structure lets you 'undo' the most recent survivor easily?",
+      "walk through asteroids left to right, keeping a stack of surviving asteroids so far. push right-movers directly, they can't collide yet",
+      "when a left-mover arrives, it may need to fight the top of the stack repeatedly: while the stack top is a smaller positive asteroid, pop it (it explodes) and keep checking the new top",
+      "after that loop, if the stack top is now a positive asteroid of equal size, pop it and discard the left-mover too (both explode); if the top is positive and still bigger, discard the left-mover; if the stack is empty or the top is also negative, push the left-mover"
+    ]
+  },
+  "bruteForce": {
+    "approach": "repeatedly scan the array for any adjacent right-moving-then-left-moving pair and resolve that one collision, rebuilding the array, until no more collisions are found",
+    "time": "O(n^2) in the worst case",
+    "space": "O(n) per rebuild"
+  },
+  "isIndex0": true,
+  "level": null
+}

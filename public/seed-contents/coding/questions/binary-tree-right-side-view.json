@@ -1,0 +1,674 @@
+{
+  "id": "binary-tree-right-side-view",
+  "questionId": "binary-tree-right-side-view",
+  "slug": "binary-tree-right-side-view",
+  "title": "Binary Tree Right Side View",
+  "difficulty": "Medium",
+  "category": "Tree bfs",
+  "patterns": [
+    "tree bfs",
+    "queue"
+  ],
+  "lists": [
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "you only need one value per level - which position in a left-to-right level order traversal is that?",
+    "process the queue one full level at a time, the same way you would for a normal level order traversal",
+    "as you drain a level's nodes left to right, just keep overwriting a 'last value seen this level' variable",
+    "after finishing each level's batch, that last-seen value is exactly the one visible from the right - append it to the result"
+  ],
+  "commonMistakes": [
+    "enqueuing children in left-then-right order but reading the FIRST node of each level instead of the last",
+    "trying a DFS-right-first approach but forgetting to only record a value the first time a new depth is reached, which then gets overwritten incorrectly by a later left-subtree visit at the same depth",
+    "skipping levels that only contain a lone left-child node, assuming the rightmost visible node must have come from a right-child position"
+  ],
+  "content": {
+    "problemStatement": "A binary tree is given as a plain integer array named `tree`, using a complete-binary-tree (heap) index layout:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array bounds **and** its value isn't the sentinel `-101`, which means \"no node here\"\n\nFor example, `[1, 2, 3, -101, 4]` encodes this tree:\n\n```\n      1\n     / \\\n    2   3\n     \\\n      4\n```\n\nNode 2 has no left child but does have a right child, 4.\n\n**Imagine standing to the right of the tree and looking straight at it: for every level, only the rightmost node is visible. Return the values you would see, ordered from the top level down to the bottom level.**\n",
+    "constraints": [
+      "1 <= tree.length <= 2000",
+      "-100 <= tree[i] <= 100 for every real node value",
+      "tree[i] == -101 marks a missing node and never appears as a real value"
+    ],
+    "notes": [
+      "a single-node tree",
+      "a tree that is entirely a left-leaning chain, where the only node per level happens to be the left child",
+      "a level whose deepest-going node comes from a left subtree while a shallower right subtree has already ended"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [3, 9, 20, -101, -101, 15, 7]",
+        "output": "[3, 20, 7]",
+        "expectedOutput": "[3, 20, 7]",
+        "explanation": "level 0's only node is 3; level 1's rightmost node is 20; level 2's rightmost node is 7"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, 4, 5, 6, 7]",
+        "output": "[1, 3, 7]",
+        "expectedOutput": "[1, 3, 7]",
+        "explanation": "the rightmost value at each level of a perfectly complete tree is always its rightmost child"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, -101, 4]",
+        "output": "[1, 3, 4]",
+        "expectedOutput": "[1, 3, 4]",
+        "explanation": "level 2's only real node is 4 (node 2's right child), so it is the rightmost, and only, node visible there"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[3,9,20,-101,-101,15,7]]",
+        "output": "[3,20,7]",
+        "expectedOutput": "[3,20,7]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "[1,3,7]",
+        "expectedOutput": "[1,3,7]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,-101,4]]",
+        "output": "[1,3,4]",
+        "expectedOutput": "[1,3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[42]]",
+        "output": "[42]",
+        "expectedOutput": "[42]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-17]]",
+        "output": "[-17]",
+        "expectedOutput": "[-17]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[10,11,-101,12,-101,-101,-101,13,-101,-101,-101,-101,-101,-101,-101,14]]",
+        "output": "[10,11,12,13,14]",
+        "expectedOutput": "[10,11,12,13,14]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-5,-101,-4,-101,-101,-101,-3,-101,-101,-101,-101,-101,-101,-101,-2,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,0]]",
+        "output": "[-5,-4,-3,-2,-1,0]",
+        "expectedOutput": "[-5,-4,-3,-2,-1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,-101,3,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,6,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,8]]",
+        "output": "[1,2,3,4,5,6,7,8]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "[1,3,7]",
+        "expectedOutput": "[1,3,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "[1,3,7,15]",
+        "expectedOutput": "[1,3,7,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-22,27,20,-24,-101,-101,19,-6,2,-101,-101,-101,-101,-101,29,16,28,26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,17,5,-101,-101,-5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-11,-20]]",
+        "output": "[-22,20,19,29,26,-5,-20]",
+        "expectedOutput": "[-22,20,19,29,26,-5,-20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-66,-37,-101,12,75,-101,-101,-79,62,13,33,-101,-101,-101,-101,-101,-101,-101,-24,-20,-57,-101,28,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-18,-32,-72,10,-101,-101,-101,-101,77,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-69,-101,47,36]]",
+        "output": "[-66,-37,75,33,28,77,36]",
+        "expectedOutput": "[-66,-37,75,33,28,77,36]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-40,20,21,-32,40,33,5,-101,9,-84,-62,66,64,-101,-101,-101,-101,-14,-91,-101,-66,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,47,52,-101,-101,-101,-101,74,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-44,-101,-101,-101,-101,-101,-101,-101,-101,-101,46,46,66,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,72]]",
+        "output": "[-40,21,5,64,-66,4,-4,72]",
+        "expectedOutput": "[-40,21,5,64,-66,4,-4,72]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-40,22,-94,60,95,46,29,-101,91,40,-56,97,-101,68,10,-101,-101,-101,12,-34,-91,-101,-9,-101,-101,-101,-101,-101,-85,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-75,65,-101,-101,-101,-101,-98,-100,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,40,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-29,-101,-7,12,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-94,-101,-101,-101,-101,67,39]]",
+        "output": "[-40,-94,29,10,-26,40,12,39]",
+        "expectedOutput": "[-40,-94,29,10,-26,40,12,39]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[9,-7,10,10,-5,-1,2,3,-101,-5,-101,2,0,-8,1,-1,-101,-101,-101,-101,-9,-101,-101,-101,6,-101,-101,3,-101,-101,-101,-8]]",
+        "output": "[9,10,2,1,3,-8]",
+        "expectedOutput": "[9,10,2,1,3,-8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,-101,5,-101,7,-101,-101,-101,-101,-101,-101,-101,15]]",
+        "output": "[1,3,7,15]",
+        "expectedOutput": "[1,3,7,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,-101,3]]",
+        "output": "[1,3]",
+        "expectedOutput": "[1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[-1,-2,-3,-4,-5,-6,-7]]",
+        "output": "[-1,-3,-7]",
+        "expectedOutput": "[-1,-3,-7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[0,0,0,0,0,0,0]]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [3, 9, 20, -101, -101, 15, 7]",
+      "output": "[3, 20, 7]",
+      "expectedOutput": "[3, 20, 7]",
+      "explanation": "level 0's only node is 3; level 1's rightmost node is 20; level 2's rightmost node is 7"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, 4, 5, 6, 7]",
+      "output": "[1, 3, 7]",
+      "expectedOutput": "[1, 3, 7]",
+      "explanation": "the rightmost value at each level of a perfectly complete tree is always its rightmost child"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, -101, 4]",
+      "output": "[1, 3, 4]",
+      "expectedOutput": "[1, 3, 4]",
+      "explanation": "level 2's only real node is 4 (node 2's right child), so it is the rightmost, and only, node visible there"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [3, 9, 20, -101, -101, 15, 7]",
+      "output": "[3, 20, 7]",
+      "expectedOutput": "[3, 20, 7]",
+      "explanation": "level 0's only node is 3; level 1's rightmost node is 20; level 2's rightmost node is 7"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, 4, 5, 6, 7]",
+      "output": "[1, 3, 7]",
+      "expectedOutput": "[1, 3, 7]",
+      "explanation": "the rightmost value at each level of a perfectly complete tree is always its rightmost child"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, -101, 4]",
+      "output": "[1, 3, 4]",
+      "expectedOutput": "[1, 3, 4]",
+      "explanation": "level 2's only real node is 4 (node 2's right child), so it is the rightmost, and only, node visible there"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[3,9,20,-101,-101,15,7]]",
+      "output": "[3,20,7]",
+      "expectedOutput": "[3,20,7]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3,4,5,6,7]]",
+      "output": "[1,3,7]",
+      "expectedOutput": "[1,3,7]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3,-101,4]]",
+      "output": "[1,3,4]",
+      "expectedOutput": "[1,3,4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[42]]",
+      "output": "[42]",
+      "expectedOutput": "[42]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[-17]]",
+      "output": "[-17]",
+      "expectedOutput": "[-17]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[0]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[10,11,-101,12,-101,-101,-101,13,-101,-101,-101,-101,-101,-101,-101,14]]",
+      "output": "[10,11,12,13,14]",
+      "expectedOutput": "[10,11,12,13,14]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-5,-101,-4,-101,-101,-101,-3,-101,-101,-101,-101,-101,-101,-101,-2,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,0]]",
+      "output": "[-5,-4,-3,-2,-1,0]",
+      "expectedOutput": "[-5,-4,-3,-2,-1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,-101,3,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,6,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,8]]",
+      "output": "[1,2,3,4,5,6,7,8]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5,6,7]]",
+      "output": "[1,3,7]",
+      "expectedOutput": "[1,3,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+      "output": "[1,3,7,15]",
+      "expectedOutput": "[1,3,7,15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[-22,27,20,-24,-101,-101,19,-6,2,-101,-101,-101,-101,-101,29,16,28,26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,17,5,-101,-101,-5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-11,-20]]",
+      "output": "[-22,20,19,29,26,-5,-20]",
+      "expectedOutput": "[-22,20,19,29,26,-5,-20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-66,-37,-101,12,75,-101,-101,-79,62,13,33,-101,-101,-101,-101,-101,-101,-101,-24,-20,-57,-101,28,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-18,-32,-72,10,-101,-101,-101,-101,77,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-69,-101,47,36]]",
+      "output": "[-66,-37,75,33,28,77,36]",
+      "expectedOutput": "[-66,-37,75,33,28,77,36]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-40,20,21,-32,40,33,5,-101,9,-84,-62,66,64,-101,-101,-101,-101,-14,-91,-101,-66,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,47,52,-101,-101,-101,-101,74,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-44,-101,-101,-101,-101,-101,-101,-101,-101,-101,46,46,66,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,72]]",
+      "output": "[-40,21,5,64,-66,4,-4,72]",
+      "expectedOutput": "[-40,21,5,64,-66,4,-4,72]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[-40,22,-94,60,95,46,29,-101,91,40,-56,97,-101,68,10,-101,-101,-101,12,-34,-91,-101,-9,-101,-101,-101,-101,-101,-85,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-75,65,-101,-101,-101,-101,-98,-100,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,40,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-29,-101,-7,12,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-94,-101,-101,-101,-101,67,39]]",
+      "output": "[-40,-94,29,10,-26,40,12,39]",
+      "expectedOutput": "[-40,-94,29,10,-26,40,12,39]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[9,-7,10,10,-5,-1,2,3,-101,-5,-101,2,0,-8,1,-1,-101,-101,-101,-101,-9,-101,-101,-101,6,-101,-101,3,-101,-101,-101,-8]]",
+      "output": "[9,10,2,1,3,-8]",
+      "expectedOutput": "[9,10,2,1,3,-8]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,-101,5,-101,7,-101,-101,-101,-101,-101,-101,-101,15]]",
+      "output": "[1,3,7,15]",
+      "expectedOutput": "[1,3,7,15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2]]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,-101,3]]",
+      "output": "[1,3]",
+      "expectedOutput": "[1,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[-1,-2,-3,-4,-5,-6,-7]]",
+      "output": "[-1,-3,-7]",
+      "expectedOutput": "[-1,-3,-7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[[0,0,0,0,0,0,0]]",
+      "output": "[0,0,0]",
+      "expectedOutput": "[0,0,0]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [3, 9, 20, -101, -101, 15, 7]",
+        "output": "[3, 20, 7]",
+        "expectedOutput": "[3, 20, 7]",
+        "explanation": "level 0's only node is 3; level 1's rightmost node is 20; level 2's rightmost node is 7"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, 4, 5, 6, 7]",
+        "output": "[1, 3, 7]",
+        "expectedOutput": "[1, 3, 7]",
+        "explanation": "the rightmost value at each level of a perfectly complete tree is always its rightmost child"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, -101, 4]",
+        "output": "[1, 3, 4]",
+        "expectedOutput": "[1, 3, 4]",
+        "explanation": "level 2's only real node is 4 (node 2's right child), so it is the rightmost, and only, node visible there"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[3,9,20,-101,-101,15,7]]",
+        "output": "[3,20,7]",
+        "expectedOutput": "[3,20,7]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "[1,3,7]",
+        "expectedOutput": "[1,3,7]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,-101,4]]",
+        "output": "[1,3,4]",
+        "expectedOutput": "[1,3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[42]]",
+        "output": "[42]",
+        "expectedOutput": "[42]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-17]]",
+        "output": "[-17]",
+        "expectedOutput": "[-17]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[10,11,-101,12,-101,-101,-101,13,-101,-101,-101,-101,-101,-101,-101,14]]",
+        "output": "[10,11,12,13,14]",
+        "expectedOutput": "[10,11,12,13,14]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-5,-101,-4,-101,-101,-101,-3,-101,-101,-101,-101,-101,-101,-101,-2,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,0]]",
+        "output": "[-5,-4,-3,-2,-1,0]",
+        "expectedOutput": "[-5,-4,-3,-2,-1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,-101,3,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,6,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,8]]",
+        "output": "[1,2,3,4,5,6,7,8]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "[1,3,7]",
+        "expectedOutput": "[1,3,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "[1,3,7,15]",
+        "expectedOutput": "[1,3,7,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-22,27,20,-24,-101,-101,19,-6,2,-101,-101,-101,-101,-101,29,16,28,26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,17,5,-101,-101,-5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-11,-20]]",
+        "output": "[-22,20,19,29,26,-5,-20]",
+        "expectedOutput": "[-22,20,19,29,26,-5,-20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-66,-37,-101,12,75,-101,-101,-79,62,13,33,-101,-101,-101,-101,-101,-101,-101,-24,-20,-57,-101,28,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-18,-32,-72,10,-101,-101,-101,-101,77,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-69,-101,47,36]]",
+        "output": "[-66,-37,75,33,28,77,36]",
+        "expectedOutput": "[-66,-37,75,33,28,77,36]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-40,20,21,-32,40,33,5,-101,9,-84,-62,66,64,-101,-101,-101,-101,-14,-91,-101,-66,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,47,52,-101,-101,-101,-101,74,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-44,-101,-101,-101,-101,-101,-101,-101,-101,-101,46,46,66,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,72]]",
+        "output": "[-40,21,5,64,-66,4,-4,72]",
+        "expectedOutput": "[-40,21,5,64,-66,4,-4,72]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-40,22,-94,60,95,46,29,-101,91,40,-56,97,-101,68,10,-101,-101,-101,12,-34,-91,-101,-9,-101,-101,-101,-101,-101,-85,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-75,65,-101,-101,-101,-101,-98,-100,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,40,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-29,-101,-7,12,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-94,-101,-101,-101,-101,67,39]]",
+        "output": "[-40,-94,29,10,-26,40,12,39]",
+        "expectedOutput": "[-40,-94,29,10,-26,40,12,39]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[9,-7,10,10,-5,-1,2,3,-101,-5,-101,2,0,-8,1,-1,-101,-101,-101,-101,-9,-101,-101,-101,6,-101,-101,3,-101,-101,-101,-8]]",
+        "output": "[9,10,2,1,3,-8]",
+        "expectedOutput": "[9,10,2,1,3,-8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,-101,5,-101,7,-101,-101,-101,-101,-101,-101,-101,15]]",
+        "output": "[1,3,7,15]",
+        "expectedOutput": "[1,3,7,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,-101,3]]",
+        "output": "[1,3]",
+        "expectedOutput": "[1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[-1,-2,-3,-4,-5,-6,-7]]",
+        "output": "[-1,-3,-7]",
+        "expectedOutput": "[-1,-3,-7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[0,0,0,0,0,0,0]]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def rightSideView(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> rightSideView(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] rightSideView(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun rightSideView(tree: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    rightSideView(tree) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def rightSideView(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> rightSideView(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] rightSideView(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun rightSideView(tree: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    rightSideView(tree) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def rightSideView(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> rightSideView(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] rightSideView(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun rightSideView(tree: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    rightSideView(tree) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def rightSideView(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> rightSideView(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] rightSideView(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun rightSideView(tree: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    rightSideView(tree) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the queue in the worst case",
+      "pattern": "BFS with a queue, processing one level at a time and keeping only the last node's value from each level"
+    },
+    "bruteForce": {
+      "approach": "recursive DFS that visits right child before left child, recording the first value seen at each new depth",
+      "time": "O(n)",
+      "space": "O(n) for the output, plus O(h) recursion stack"
+    }
+  },
+  "optimal": {
+    "pattern": "BFS with a queue, processing one level at a time and keeping only the last node's value from each level",
+    "time": "O(n)",
+    "space": "O(n) for the queue in the worst case",
+    "hint_ladder": [
+      "you only need one value per level - which position in a left-to-right level order traversal is that?",
+      "process the queue one full level at a time, the same way you would for a normal level order traversal",
+      "as you drain a level's nodes left to right, just keep overwriting a 'last value seen this level' variable",
+      "after finishing each level's batch, that last-seen value is exactly the one visible from the right - append it to the result"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursive DFS that visits right child before left child, recording the first value seen at each new depth",
+    "time": "O(n)",
+    "space": "O(n) for the output, plus O(h) recursion stack"
+  },
+  "isIndex0": true,
+  "level": null
+}

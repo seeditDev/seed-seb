@@ -1,0 +1,636 @@
+{
+  "id": "coin-change",
+  "questionId": "coin-change",
+  "slug": "coin-change",
+  "title": "Coin Change",
+  "difficulty": "Easy",
+  "category": "Knapsack",
+  "patterns": [
+    "knapsack",
+    "unbounded knapsack",
+    "dynamic programming"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "any coin can be reused any number of times, and you're minimizing a count - what's the smallest subproblem you can define, in terms of a smaller remaining amount?",
+    "define dp[a] as the fewest coins needed to make exactly amount a, with dp[0] = 0",
+    "for a given a, try using each coin c as the last coin placed: dp[a] = 1 + dp[a - c], but only if a - c >= 0 and dp[a - c] is reachable",
+    "dp[a] is the minimum of that expression over every coin c that fits, or 'unreachable' if none of them lead anywhere",
+    "use a sentinel like infinity (or amount + 1) to mark unreachable amounts, build dp up from 0 to amount, and convert the sentinel to -1 only at the very end"
+  ],
+  "commonMistakes": [
+    "returning 0 or -1 too early instead of properly propagating 'unreachable' through the DP as a large sentinel value",
+    "checking amount == 0 only at the top level instead of handling dp[0] = 0 as a real base case inside the table",
+    "off-by-one on the loop bound, never considering a coin exactly equal to the remaining amount"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of coin denominations, `coins`, and a target `amount`.\nEach denomination is available in unlimited supply.\n\n**Return the fewest number of coins needed to make exactly that amount.**\n\nIf it's impossible to make the amount with the given coins, return -1.\n",
+    "constraints": [
+      "1 <= coins.length <= 12",
+      "1 <= coins[i] <= 2^31 - 1",
+      "0 <= amount <= 10^4"
+    ],
+    "notes": [
+      "amount is 0 (always 0 coins needed)",
+      "amount cannot be formed by any combination of coins (return -1)",
+      "a coin denomination equal to the amount itself"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "coins = [1, 2, 5], amount = 11",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "11 = 5 + 5 + 1, using 3 coins"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "coins = [2], amount = 3",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "only even amounts are reachable with a single coin of value 2"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "coins = [1], amount = 0",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "zero coins are needed to make an amount of 0"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,5],11]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2],3]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,3,4,5],7]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2],4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[5],5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,5],100]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,5,10],3]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[3,7],1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,3,4,5],23]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[186,419,83,408],6249]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[2],1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,5],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[7],7]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3],6]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[5,10,25],30]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[9,6],11]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1],1000]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[4,5,6],7]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "coins = [1, 2, 5], amount = 11",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "11 = 5 + 5 + 1, using 3 coins"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "coins = [2], amount = 3",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "only even amounts are reachable with a single coin of value 2"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "coins = [1], amount = 0",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "zero coins are needed to make an amount of 0"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "coins = [1, 2, 5], amount = 11",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "11 = 5 + 5 + 1, using 3 coins"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "coins = [2], amount = 3",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "only even amounts are reachable with a single coin of value 2"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "coins = [1], amount = 0",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "zero coins are needed to make an amount of 0"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,5],11]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[2],3]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1],0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,3,4,5],7]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1],0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[2],4]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[5],5]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,5],100]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[2,5,10],3]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[3,7],1]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,3,4,5],23]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[186,419,83,408],6249]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[2],1]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,5],0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[7],7]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,3],6]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[5,10,25],30]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[9,6],11]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1],1000]",
+      "output": "1000",
+      "expectedOutput": "1000",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[4,5,6],7]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "coins = [1, 2, 5], amount = 11",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "11 = 5 + 5 + 1, using 3 coins"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "coins = [2], amount = 3",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "only even amounts are reachable with a single coin of value 2"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "coins = [1], amount = 0",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "zero coins are needed to make an amount of 0"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,5],11]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2],3]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,3,4,5],7]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2],4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[5],5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,5],100]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,5,10],3]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[3,7],1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,3,4,5],23]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[186,419,83,408],6249]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[2],1]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,5],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[7],7]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3],6]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[5,10,25],30]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[9,6],11]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1],1000]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[4,5,6],7]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def coinChange(self, coins, amount):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int coinChange(vector<int>& coins, int amount) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int coinChange(int[] coins, int amount) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun coinChange(coins: IntArray, amount: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    coinChange(coins, amount) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def coinChange(self, coins, amount):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int coinChange(vector<int>& coins, int amount) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int coinChange(int[] coins, int amount) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun coinChange(coins: IntArray, amount: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    coinChange(coins, amount) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def coinChange(self, coins, amount):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int coinChange(vector<int>& coins, int amount) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int coinChange(int[] coins, int amount) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun coinChange(coins: IntArray, amount: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    coinChange(coins, amount) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def coinChange(self, coins, amount):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int coinChange(vector<int>& coins, int amount) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int coinChange(int[] coins, int amount) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun coinChange(coins: IntArray, amount: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    coinChange(coins, amount) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(amount * number of coins)",
+      "space": "O(amount)",
+      "pattern": "knapsack (unbounded, bottom-up DP over amount, minimizing coin count)"
+    },
+    "bruteForce": {
+      "approach": "recursively try every coin at each remaining amount, taking the minimum count over all choices, without caching repeated subproblems",
+      "time": "exponential in amount",
+      "space": "O(amount) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "knapsack (unbounded, bottom-up DP over amount, minimizing coin count)",
+    "time": "O(amount * number of coins)",
+    "space": "O(amount)",
+    "hint_ladder": [
+      "any coin can be reused any number of times, and you're minimizing a count - what's the smallest subproblem you can define, in terms of a smaller remaining amount?",
+      "define dp[a] as the fewest coins needed to make exactly amount a, with dp[0] = 0",
+      "for a given a, try using each coin c as the last coin placed: dp[a] = 1 + dp[a - c], but only if a - c >= 0 and dp[a - c] is reachable",
+      "dp[a] is the minimum of that expression over every coin c that fits, or 'unreachable' if none of them lead anywhere",
+      "use a sentinel like infinity (or amount + 1) to mark unreachable amounts, build dp up from 0 to amount, and convert the sentinel to -1 only at the very end"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try every coin at each remaining amount, taking the minimum count over all choices, without caching repeated subproblems",
+    "time": "exponential in amount",
+    "space": "O(amount) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

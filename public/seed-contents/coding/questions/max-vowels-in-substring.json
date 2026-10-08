@@ -1,0 +1,628 @@
+{
+  "id": "max-vowels-in-substring",
+  "questionId": "max-vowels-in-substring",
+  "slug": "max-vowels-in-substring",
+  "title": "Maximum Vowels in a Substring of Given Length",
+  "difficulty": "Easy",
+  "category": "Sliding window",
+  "patterns": [
+    "sliding window",
+    "fixed-size window"
+  ],
+  "lists": [],
+  "hints": [
+    "when the window slides over by one character, what actually changes about the vowel count?",
+    "only two characters change status: the one leaving the window on the left, and the one entering on the right",
+    "count vowels in the first k characters once, then as you slide right, subtract 1 if the outgoing character was a vowel, and add 1 if the incoming character is a vowel",
+    "track the max count seen as you slide across the rest of the string"
+  ],
+  "commonMistakes": [
+    "recounting the whole window's vowels at every position instead of updating incrementally",
+    "forgetting to check the incoming character before or after updating the pointer, causing an off-by-one",
+    "not treating both uppercase and lowercase as vowels if the problem's test data includes them (this version assumes lowercase input)"
+  ],
+  "content": {
+    "problemStatement": "You're given a string `s` and a window size `k`.\n\n**Find the maximum number of vowels (a, e, i, o, u) contained in any substring of `s` with length `k`.**\n",
+    "constraints": [
+      "1 <= k <= length of s",
+      "the window size k is fixed"
+    ],
+    "notes": [
+      "k equals the length of the string",
+      "no vowels at all",
+      "the whole string is vowels"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"abciiidef\", k = 3",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "\"iii\" has 3 vowels, the most of any length-3 substring"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"aeiou\", k = 2",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"leetcode\", k = 3",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"abciiidef\",3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"aeiou\",2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"leetcode\",3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"rhythms\",4]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\",1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"b\",1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aeiou\",5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"bcdfg\",3]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abcdeabcde\",5]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"thequickbrownfoxjumpsoverthelazydog\",4]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaa\",10]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"bbbbbbbbbbbbbbbbbbbb\",10]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"xyzaeioupqrs\",4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"supercalifragilisticexpialidocious\",6]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aeiouaeiouaeiou\",3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"zzzzzaeiouzzzzz\",5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"consciousnessisaflowingstream\",7]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"oneaeitwoioouthreeae\",2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"mississippi\",4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"educationalvowelstest\",8]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"abciiidef\", k = 3",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "\"iii\" has 3 vowels, the most of any length-3 substring"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"aeiou\", k = 2",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"leetcode\", k = 3",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"abciiidef\", k = 3",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "\"iii\" has 3 vowels, the most of any length-3 substring"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"aeiou\", k = 2",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"leetcode\", k = 3",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"abciiidef\",3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"aeiou\",2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"leetcode\",3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"rhythms\",4]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"a\",1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"b\",1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"aeiou\",5]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"bcdfg\",3]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"abcdeabcde\",5]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"thequickbrownfoxjumpsoverthelazydog\",4]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"aaaaaaaaaaaaaaaaaaaa\",10]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"bbbbbbbbbbbbbbbbbbbb\",10]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"xyzaeioupqrs\",4]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"supercalifragilisticexpialidocious\",6]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"aeiouaeiouaeiou\",3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"zzzzzaeiouzzzzz\",5]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"consciousnessisaflowingstream\",7]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"oneaeitwoioouthreeae\",2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"mississippi\",4]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"educationalvowelstest\",8]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"abciiidef\", k = 3",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "\"iii\" has 3 vowels, the most of any length-3 substring"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"aeiou\", k = 2",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"leetcode\", k = 3",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"abciiidef\",3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"aeiou\",2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"leetcode\",3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"rhythms\",4]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\",1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"b\",1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aeiou\",5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"bcdfg\",3]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abcdeabcde\",5]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"thequickbrownfoxjumpsoverthelazydog\",4]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaa\",10]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"bbbbbbbbbbbbbbbbbbbb\",10]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"xyzaeioupqrs\",4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"supercalifragilisticexpialidocious\",6]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aeiouaeiouaeiou\",3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"zzzzzaeiouzzzzz\",5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"consciousnessisaflowingstream\",7]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"oneaeitwoioouthreeae\",2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"mississippi\",4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"educationalvowelstest\",8]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def maxVowels(self, s, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxVowels(string s, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxVowels(String s, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxVowels(s: String, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxVowels(s, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def maxVowels(self, s, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxVowels(string s, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxVowels(String s, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxVowels(s: String, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxVowels(s, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def maxVowels(self, s, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxVowels(string s, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxVowels(String s, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxVowels(s: String, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxVowels(s, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def maxVowels(self, s, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxVowels(string s, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maxVowels(String s, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxVowels(s: String, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxVowels(s, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "sliding window - count vowels in the first window, then update by one character as the window slides"
+    },
+    "bruteForce": {
+      "approach": "for every starting index, count vowels in the next k characters from scratch, tracking the max",
+      "time": "O(n * k)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "sliding window - count vowels in the first window, then update by one character as the window slides",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "when the window slides over by one character, what actually changes about the vowel count?",
+      "only two characters change status: the one leaving the window on the left, and the one entering on the right",
+      "count vowels in the first k characters once, then as you slide right, subtract 1 if the outgoing character was a vowel, and add 1 if the incoming character is a vowel",
+      "track the max count seen as you slide across the rest of the string"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every starting index, count vowels in the next k characters from scratch, tracking the max",
+    "time": "O(n * k)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

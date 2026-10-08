@@ -1,0 +1,632 @@
+{
+  "id": "map-sum-pairs",
+  "questionId": "map-sum-pairs",
+  "slug": "map-sum-pairs",
+  "title": "Map Sum Pairs",
+  "difficulty": "Medium",
+  "category": "Trie",
+  "patterns": [
+    "trie",
+    "simulation"
+  ],
+  "lists": [],
+  "hints": [
+    "sum needs 'total value of everything under this prefix' fast - which structure groups keys by shared prefix paths?",
+    "insert every key into a trie; at each node along the insertion path, keep a running total of values for all keys that pass through that node",
+    "the tricky part is overwriting: if a key is inserted again with a new value, you must add the DIFFERENCE (new value minus old value) to every node on its path, not just add the new value on top",
+    "keep a separate map from key to its current value so you always know the old value to subtract when an overwrite happens",
+    "sum:prefix then just walks the trie along prefix and returns the cached total at that final node (or 0 if the walk falls off the trie)"
+  ],
+  "commonMistakes": [
+    "adding the new value to node totals on re-insert instead of adding the delta, which double-counts the key's contribution",
+    "not keeping a key -> value map to look up the old value before an overwrite",
+    "returning 0 for sum when the walk falls off the trie but forgetting this also applies when prefix is longer than any stored key"
+  ],
+  "content": {
+    "problemStatement": "You're given a single space-delimited sequence of `ops` to run against an\ninitially empty key-value map. Each token has one of two forms:\n`\"insert:key,val\"` sets `key`'s value to the integer `val` (overwriting\nany previous value for that key), and `\"sum:prefix\"` asks for the sum of\nthe values of every currently stored key that starts with `prefix` (0 if\nnone match).\n\n**Simulate the tokens in order and return a list containing the result of every \"sum\" operation, in the order they occurred.**\n",
+    "constraints": [
+      "1 <= key.length <= 50",
+      "key consists of lowercase English letters",
+      "-10^6 <= val <= 10^6",
+      "1 <= number of operations <= 1000"
+    ],
+    "notes": [
+      "the same key inserted twice with different values (second value wins entirely, not added)",
+      "sum called with a prefix equal to an entire key",
+      "an inserted value that is negative"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"insert:apple,3 sum:ap insert:app,2 sum:ap\"",
+        "output": "[3, 5]",
+        "expectedOutput": "[3, 5]",
+        "explanation": "after inserting apple=3, sum:ap = 3; after also inserting app=2, sum:ap = 3 + 2 = 5"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"insert:a,1 insert:a,5 sum:a\"",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "explanation": "inserting key \"a\" again overwrites its value from 1 to 5"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"insert:dog,1 insert:doggy,2 insert:door,3 sum:do sum:dog sum:cat\"",
+        "output": "[6, 3, 0]",
+        "expectedOutput": "[6, 3, 0]",
+        "explanation": "\"do\" matches all three keys (1+2+3=6); \"dog\" matches dog and doggy (1+2=3); \"cat\" matches nothing (0)"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"insert:apple,3 sum:ap insert:app,2 sum:ap\"]",
+        "output": "[3,5]",
+        "expectedOutput": "[3,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"insert:a,1 insert:a,5 sum:a\"]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"insert:dog,1 insert:doggy,2 insert:door,3 sum:do sum:dog sum:cat\"]",
+        "output": "[6,3,0]",
+        "expectedOutput": "[6,3,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"insert:x,10 sum:x sum:y\"]",
+        "output": "[10,0]",
+        "expectedOutput": "[10,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"insert:neg,-5 sum:neg\"]",
+        "output": "[-5]",
+        "expectedOutput": "[-5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"insert:a,0 sum:a\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"insert:abc,10 insert:ab,5 insert:a,2 sum:a sum:ab sum:abc sum:abcd\"]",
+        "output": "[17,15,10,0]",
+        "expectedOutput": "[17,15,10,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"insert:x,1 insert:y,2 insert:z,3 sum:x sum:y sum:z sum:xyz\"]",
+        "output": "[1,2,3,0]",
+        "expectedOutput": "[1,2,3,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"insert:key,100 insert:key,200 insert:key,-50 sum:key\"]",
+        "output": "[-50]",
+        "expectedOutput": "[-50]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"sum:nokey\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"insert:aa,1 insert:aa,1 insert:aa,1 sum:aa sum:a\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"insert:cat,5 insert:cats,3 insert:catalog,7 sum:cat sum:cats sum:ca\"]",
+        "output": "[15,3,15]",
+        "expectedOutput": "[15,3,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"insert:one,1 sum:one insert:one,2 sum:one insert:one,3 sum:one\"]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"insert:p,-1 insert:pp,-2 insert:ppp,-3 sum:p sum:pp sum:ppp\"]",
+        "output": "[-6,-5,-3]",
+        "expectedOutput": "[-6,-5,-3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"insert:m,1000000 sum:m\"]",
+        "output": "[1000000]",
+        "expectedOutput": "[1000000]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"insert:abc,1 sum:abcdef\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"insert:a,1 insert:b,2 insert:c,3 sum:a sum:b sum:c sum:d\"]",
+        "output": "[1,2,3,0]",
+        "expectedOutput": "[1,2,3,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"insert:same,10 insert:same,20 insert:same,30 insert:same,40 sum:same\"]",
+        "output": "[40]",
+        "expectedOutput": "[40]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"insert:dog,1 insert:doge,2 insert:doggo,3 sum:dog sum:doge sum:d\"]",
+        "output": "[6,2,6]",
+        "expectedOutput": "[6,2,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"insert:foo,7 insert:foobar,3 sum:foo sum:foob sum:bar\"]",
+        "output": "[10,3,0]",
+        "expectedOutput": "[10,3,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"insert:apple,3 sum:ap insert:app,2 sum:ap\"",
+      "output": "[3, 5]",
+      "expectedOutput": "[3, 5]",
+      "explanation": "after inserting apple=3, sum:ap = 3; after also inserting app=2, sum:ap = 3 + 2 = 5"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"insert:a,1 insert:a,5 sum:a\"",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "explanation": "inserting key \"a\" again overwrites its value from 1 to 5"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"insert:dog,1 insert:doggy,2 insert:door,3 sum:do sum:dog sum:cat\"",
+      "output": "[6, 3, 0]",
+      "expectedOutput": "[6, 3, 0]",
+      "explanation": "\"do\" matches all three keys (1+2+3=6); \"dog\" matches dog and doggy (1+2=3); \"cat\" matches nothing (0)"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"insert:apple,3 sum:ap insert:app,2 sum:ap\"",
+      "output": "[3, 5]",
+      "expectedOutput": "[3, 5]",
+      "explanation": "after inserting apple=3, sum:ap = 3; after also inserting app=2, sum:ap = 3 + 2 = 5"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"insert:a,1 insert:a,5 sum:a\"",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "explanation": "inserting key \"a\" again overwrites its value from 1 to 5"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"insert:dog,1 insert:doggy,2 insert:door,3 sum:do sum:dog sum:cat\"",
+      "output": "[6, 3, 0]",
+      "expectedOutput": "[6, 3, 0]",
+      "explanation": "\"do\" matches all three keys (1+2+3=6); \"dog\" matches dog and doggy (1+2=3); \"cat\" matches nothing (0)"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"insert:apple,3 sum:ap insert:app,2 sum:ap\"]",
+      "output": "[3,5]",
+      "expectedOutput": "[3,5]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"insert:a,1 insert:a,5 sum:a\"]",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"insert:dog,1 insert:doggy,2 insert:door,3 sum:do sum:dog sum:cat\"]",
+      "output": "[6,3,0]",
+      "expectedOutput": "[6,3,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"insert:x,10 sum:x sum:y\"]",
+      "output": "[10,0]",
+      "expectedOutput": "[10,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"insert:neg,-5 sum:neg\"]",
+      "output": "[-5]",
+      "expectedOutput": "[-5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"insert:a,0 sum:a\"]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"insert:abc,10 insert:ab,5 insert:a,2 sum:a sum:ab sum:abc sum:abcd\"]",
+      "output": "[17,15,10,0]",
+      "expectedOutput": "[17,15,10,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"insert:x,1 insert:y,2 insert:z,3 sum:x sum:y sum:z sum:xyz\"]",
+      "output": "[1,2,3,0]",
+      "expectedOutput": "[1,2,3,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"insert:key,100 insert:key,200 insert:key,-50 sum:key\"]",
+      "output": "[-50]",
+      "expectedOutput": "[-50]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"sum:nokey\"]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"insert:aa,1 insert:aa,1 insert:aa,1 sum:aa sum:a\"]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"insert:cat,5 insert:cats,3 insert:catalog,7 sum:cat sum:cats sum:ca\"]",
+      "output": "[15,3,15]",
+      "expectedOutput": "[15,3,15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"insert:one,1 sum:one insert:one,2 sum:one insert:one,3 sum:one\"]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"insert:p,-1 insert:pp,-2 insert:ppp,-3 sum:p sum:pp sum:ppp\"]",
+      "output": "[-6,-5,-3]",
+      "expectedOutput": "[-6,-5,-3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"insert:m,1000000 sum:m\"]",
+      "output": "[1000000]",
+      "expectedOutput": "[1000000]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"insert:abc,1 sum:abcdef\"]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"insert:a,1 insert:b,2 insert:c,3 sum:a sum:b sum:c sum:d\"]",
+      "output": "[1,2,3,0]",
+      "expectedOutput": "[1,2,3,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"insert:same,10 insert:same,20 insert:same,30 insert:same,40 sum:same\"]",
+      "output": "[40]",
+      "expectedOutput": "[40]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"insert:dog,1 insert:doge,2 insert:doggo,3 sum:dog sum:doge sum:d\"]",
+      "output": "[6,2,6]",
+      "expectedOutput": "[6,2,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"insert:foo,7 insert:foobar,3 sum:foo sum:foob sum:bar\"]",
+      "output": "[10,3,0]",
+      "expectedOutput": "[10,3,0]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"insert:apple,3 sum:ap insert:app,2 sum:ap\"",
+        "output": "[3, 5]",
+        "expectedOutput": "[3, 5]",
+        "explanation": "after inserting apple=3, sum:ap = 3; after also inserting app=2, sum:ap = 3 + 2 = 5"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"insert:a,1 insert:a,5 sum:a\"",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "explanation": "inserting key \"a\" again overwrites its value from 1 to 5"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"insert:dog,1 insert:doggy,2 insert:door,3 sum:do sum:dog sum:cat\"",
+        "output": "[6, 3, 0]",
+        "expectedOutput": "[6, 3, 0]",
+        "explanation": "\"do\" matches all three keys (1+2+3=6); \"dog\" matches dog and doggy (1+2=3); \"cat\" matches nothing (0)"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"insert:apple,3 sum:ap insert:app,2 sum:ap\"]",
+        "output": "[3,5]",
+        "expectedOutput": "[3,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"insert:a,1 insert:a,5 sum:a\"]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"insert:dog,1 insert:doggy,2 insert:door,3 sum:do sum:dog sum:cat\"]",
+        "output": "[6,3,0]",
+        "expectedOutput": "[6,3,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"insert:x,10 sum:x sum:y\"]",
+        "output": "[10,0]",
+        "expectedOutput": "[10,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"insert:neg,-5 sum:neg\"]",
+        "output": "[-5]",
+        "expectedOutput": "[-5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"insert:a,0 sum:a\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"insert:abc,10 insert:ab,5 insert:a,2 sum:a sum:ab sum:abc sum:abcd\"]",
+        "output": "[17,15,10,0]",
+        "expectedOutput": "[17,15,10,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"insert:x,1 insert:y,2 insert:z,3 sum:x sum:y sum:z sum:xyz\"]",
+        "output": "[1,2,3,0]",
+        "expectedOutput": "[1,2,3,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"insert:key,100 insert:key,200 insert:key,-50 sum:key\"]",
+        "output": "[-50]",
+        "expectedOutput": "[-50]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"sum:nokey\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"insert:aa,1 insert:aa,1 insert:aa,1 sum:aa sum:a\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"insert:cat,5 insert:cats,3 insert:catalog,7 sum:cat sum:cats sum:ca\"]",
+        "output": "[15,3,15]",
+        "expectedOutput": "[15,3,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"insert:one,1 sum:one insert:one,2 sum:one insert:one,3 sum:one\"]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"insert:p,-1 insert:pp,-2 insert:ppp,-3 sum:p sum:pp sum:ppp\"]",
+        "output": "[-6,-5,-3]",
+        "expectedOutput": "[-6,-5,-3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"insert:m,1000000 sum:m\"]",
+        "output": "[1000000]",
+        "expectedOutput": "[1000000]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"insert:abc,1 sum:abcdef\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"insert:a,1 insert:b,2 insert:c,3 sum:a sum:b sum:c sum:d\"]",
+        "output": "[1,2,3,0]",
+        "expectedOutput": "[1,2,3,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"insert:same,10 insert:same,20 insert:same,30 insert:same,40 sum:same\"]",
+        "output": "[40]",
+        "expectedOutput": "[40]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"insert:dog,1 insert:doge,2 insert:doggo,3 sum:dog sum:doge sum:d\"]",
+        "output": "[6,2,6]",
+        "expectedOutput": "[6,2,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"insert:foo,7 insert:foobar,3 sum:foo sum:foob sum:bar\"]",
+        "output": "[10,3,0]",
+        "expectedOutput": "[10,3,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def mapSumResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> mapSumResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] mapSumResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun mapSumResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    mapSumResults(ops) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def mapSumResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> mapSumResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] mapSumResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun mapSumResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    mapSumResults(ops) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def mapSumResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> mapSumResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] mapSumResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun mapSumResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    mapSumResults(ops) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def mapSumResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> mapSumResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] mapSumResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun mapSumResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    mapSumResults(ops) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(m) per insert or sum operation, where m is key/prefix length",
+      "space": "O(total key characters)",
+      "pattern": "a trie where each node caches the sum of values of all keys passing through it, updated incrementally on insert (careful to subtract out any prior value on overwrite)"
+    },
+    "bruteForce": {
+      "approach": "keep a hash map from key to its current value; for each sum query, scan every stored key and add its value if the key starts with prefix",
+      "time": "O(k * m) per sum query, where k is the number of distinct keys and m is average key length",
+      "space": "O(k * m)"
+    }
+  },
+  "optimal": {
+    "pattern": "a trie where each node caches the sum of values of all keys passing through it, updated incrementally on insert (careful to subtract out any prior value on overwrite)",
+    "time": "O(m) per insert or sum operation, where m is key/prefix length",
+    "space": "O(total key characters)",
+    "hint_ladder": [
+      "sum needs 'total value of everything under this prefix' fast - which structure groups keys by shared prefix paths?",
+      "insert every key into a trie; at each node along the insertion path, keep a running total of values for all keys that pass through that node",
+      "the tricky part is overwriting: if a key is inserted again with a new value, you must add the DIFFERENCE (new value minus old value) to every node on its path, not just add the new value on top",
+      "keep a separate map from key to its current value so you always know the old value to subtract when an overwrite happens",
+      "sum:prefix then just walks the trie along prefix and returns the cached total at that final node (or 0 if the walk falls off the trie)"
+    ]
+  },
+  "bruteForce": {
+    "approach": "keep a hash map from key to its current value; for each sum query, scan every stored key and add its value if the key starts with prefix",
+    "time": "O(k * m) per sum query, where k is the number of distinct keys and m is average key length",
+    "space": "O(k * m)"
+  },
+  "isIndex0": true,
+  "level": null
+}

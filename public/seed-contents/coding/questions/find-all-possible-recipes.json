@@ -1,0 +1,631 @@
+{
+  "id": "find-all-possible-recipes",
+  "questionId": "find-all-possible-recipes",
+  "slug": "find-all-possible-recipes",
+  "title": "Find All Possible Recipes",
+  "difficulty": "Medium",
+  "category": "Topological sort",
+  "patterns": [
+    "topological sort",
+    "graph",
+    "kahn's algorithm"
+  ],
+  "lists": [],
+  "hints": [
+    "a recipe becomes makeable only once every single one of its ingredients is available - and an ingredient becoming available can unlock more recipes, cascading forward",
+    "this cascade is exactly Kahn's algorithm: build an in-degree count for every recipe (how many ingredients it still needs), and start the queue with all supply items already marked available",
+    "when you pop an available item, look at everything it's an ingredient for, and decrement that recipe's remaining-ingredient count; if it hits zero, the recipe just became available too - enqueue it",
+    "once the queue is empty, you have the full set of items that ever became available; intersect that with recipesToCheck and sort the result ascending"
+  ],
+  "commonMistakes": [
+    "not accounting for recipe cycles, which silently loop forever or incorrectly mark cyclic recipes as makeable",
+    "forgetting that a recipe can itself be an ingredient for another recipe (multi-level dependency), and only checking one level of ingredients",
+    "not sorting the final result, or including recipe indices that were never actually satisfied"
+  ],
+  "content": {
+    "problemStatement": "There are `n` items, labeled 0 to n - 1, where recipes and base supplies\nshare this same numbering. You're given a list of edges, where each edge\n`[ingredient, recipe]` means `ingredient` is required to make `recipe`,\nplus `supplies`, a list of item indices already available as raw\ningredients, and `recipesToCheck`, a list of item indices to test.\n\n**Return every index from `recipesToCheck` that can actually be made, in ascending order.**\n\nAn item can be made if every one of its required ingredients is available, where an ingredient counts as available if it's in `supplies`, or if it is itself a recipe that can be made, using the same rule recursively.\n",
+    "constraints": [
+      "1 <= n <= 200",
+      "each edge [ingredient, recipe] has 0 <= ingredient, recipe < n",
+      "supplies and recipesToCheck contain valid item indices in range [0, n)"
+    ],
+    "notes": [
+      "two recipes that require each other, forming a cycle - neither can ever be made",
+      "a recipe needing an ingredient that is never supplied and never itself makeable",
+      "no edges at all - nothing beyond the initial supplies is makeable",
+      "a recipe that requires several other recipes chained several levels deep"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 6, edges = [[0, 2], [1, 2], [2, 3], [0, 4], [5, 4]], supplies = [0, 1], recipesToCheck = [2, 3, 4]",
+        "output": "[2, 3]",
+        "expectedOutput": "[2, 3]",
+        "explanation": "item 2 needs 0 and 1 (both supplied), so it can be made; item 3 needs 2 (now makeable), so it can be made too; item 4 needs 0 and 5, but 5 is never available"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 3, edges = [[0, 1], [1, 2]], supplies = [0], recipesToCheck = [1, 2]",
+        "output": "[1, 2]",
+        "expectedOutput": "[1, 2]",
+        "explanation": "item 1 needs only 0 (supplied), and item 2 needs only item 1 (now makeable), so both can be made"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 4, edges = [[0, 1], [2, 1]], supplies = [0], recipesToCheck = [1, 3]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "item 1 needs both 0 and 2, but 2 is never available; item 3 has no connection to any supply at all"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[6,[[0,2],[1,2],[2,3],[0,4],[5,4]],[0,1],[2,3,4]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,[[0,1],[1,2]],[0],[1,2]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[4,[[0,1],[2,1]],[0],[1,3]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[5,[],[0,1,2],[3,4]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[3,[[0,1],[0,2]],[0],[1,2]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[10,[[0,3],[1,3],[3,4],[2,5],[5,6],[6,7],[7,8],[8,9]],[0,1,2],[3,4,5,6,7,8,9]]",
+        "output": "[3,4,5,6,7,8,9]",
+        "expectedOutput": "[3,4,5,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[6,[[0,1],[1,2],[2,1],[3,4]],[0,3],[1,2,4]]",
+        "output": "[4]",
+        "expectedOutput": "[4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[5,[],[0,1,2],[0,1,2,3,4]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[16,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15]],[0],[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[7,[[0,3],[1,3],[2,3],[3,4],[5,4],[4,6]],[0,1,2],[3,4,6]]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[20,[[3,5],[1,5],[3,6],[1,6],[4,7],[1,7],[0,8],[3,8],[8,9],[2,9],[6,10],[5,10],[1,11],[2,11],[3,12],[11,12],[0,13],[8,13],[13,14],[12,14],[10,15],[0,15],[10,16],[1,16],[12,17],[14,17],[17,18],[9,18],[13,19],[9,19]],[0,1,2,3,4],[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+        "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[8,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0]],[],[0,1,2,3,4,5,6,7]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[6,[[0,2],[1,2],[2,3],[2,4],[3,5],[4,5]],[0,1],[2,3,4,5]]",
+        "output": "[2,3,4,5]",
+        "expectedOutput": "[2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[1,[],[0],[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[10,[[0,5],[1,5],[2,5],[5,6],[6,7],[3,8],[4,8],[8,9]],[0,1,2,3,4],[5,6,7,8,9]]",
+        "output": "[5,6,7,8,9]",
+        "expectedOutput": "[5,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[5,[[0,1],[0,2],[1,3],[2,3]],[0],[1,2,3,4]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[7,[[0,1],[1,2],[2,0],[3,4],[4,5],[5,6]],[3],[0,1,2,4,5,6]]",
+        "output": "[4,5,6]",
+        "expectedOutput": "[4,5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[12,[[0,3],[1,3],[2,3],[3,4],[3,5],[4,6],[5,7],[6,8],[7,8],[8,9],[9,10],[10,11]],[0,1,2],[3,4,5,6,7,8,9,10,11]]",
+        "output": "[3,4,5,6,7,8,9,10,11]",
+        "expectedOutput": "[3,4,5,6,7,8,9,10,11]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[4,[[0,1]],[2,3],[0,1]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[6,[[0,1],[2,1],[1,3],[3,4],[3,5]],[0],[1,3,4,5]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 6, edges = [[0, 2], [1, 2], [2, 3], [0, 4], [5, 4]], supplies = [0, 1], recipesToCheck = [2, 3, 4]",
+      "output": "[2, 3]",
+      "expectedOutput": "[2, 3]",
+      "explanation": "item 2 needs 0 and 1 (both supplied), so it can be made; item 3 needs 2 (now makeable), so it can be made too; item 4 needs 0 and 5, but 5 is never available"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 3, edges = [[0, 1], [1, 2]], supplies = [0], recipesToCheck = [1, 2]",
+      "output": "[1, 2]",
+      "expectedOutput": "[1, 2]",
+      "explanation": "item 1 needs only 0 (supplied), and item 2 needs only item 1 (now makeable), so both can be made"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 4, edges = [[0, 1], [2, 1]], supplies = [0], recipesToCheck = [1, 3]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "item 1 needs both 0 and 2, but 2 is never available; item 3 has no connection to any supply at all"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 6, edges = [[0, 2], [1, 2], [2, 3], [0, 4], [5, 4]], supplies = [0, 1], recipesToCheck = [2, 3, 4]",
+      "output": "[2, 3]",
+      "expectedOutput": "[2, 3]",
+      "explanation": "item 2 needs 0 and 1 (both supplied), so it can be made; item 3 needs 2 (now makeable), so it can be made too; item 4 needs 0 and 5, but 5 is never available"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 3, edges = [[0, 1], [1, 2]], supplies = [0], recipesToCheck = [1, 2]",
+      "output": "[1, 2]",
+      "expectedOutput": "[1, 2]",
+      "explanation": "item 1 needs only 0 (supplied), and item 2 needs only item 1 (now makeable), so both can be made"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 4, edges = [[0, 1], [2, 1]], supplies = [0], recipesToCheck = [1, 3]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "item 1 needs both 0 and 2, but 2 is never available; item 3 has no connection to any supply at all"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[6,[[0,2],[1,2],[2,3],[0,4],[5,4]],[0,1],[2,3,4]]",
+      "output": "[2,3]",
+      "expectedOutput": "[2,3]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[3,[[0,1],[1,2]],[0],[1,2]]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[4,[[0,1],[2,1]],[0],[1,3]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[5,[],[0,1,2],[3,4]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[3,[[0,1],[0,2]],[0],[1,2]]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[10,[[0,3],[1,3],[3,4],[2,5],[5,6],[6,7],[7,8],[8,9]],[0,1,2],[3,4,5,6,7,8,9]]",
+      "output": "[3,4,5,6,7,8,9]",
+      "expectedOutput": "[3,4,5,6,7,8,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[6,[[0,1],[1,2],[2,1],[3,4]],[0,3],[1,2,4]]",
+      "output": "[4]",
+      "expectedOutput": "[4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[5,[],[0,1,2],[0,1,2,3,4]]",
+      "output": "[0,1,2]",
+      "expectedOutput": "[0,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[16,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15]],[0],[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+      "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+      "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[7,[[0,3],[1,3],[2,3],[3,4],[5,4],[4,6]],[0,1,2],[3,4,6]]",
+      "output": "[3]",
+      "expectedOutput": "[3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[20,[[3,5],[1,5],[3,6],[1,6],[4,7],[1,7],[0,8],[3,8],[8,9],[2,9],[6,10],[5,10],[1,11],[2,11],[3,12],[11,12],[0,13],[8,13],[13,14],[12,14],[10,15],[0,15],[10,16],[1,16],[12,17],[14,17],[17,18],[9,18],[13,19],[9,19]],[0,1,2,3,4],[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+      "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+      "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[8,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0]],[],[0,1,2,3,4,5,6,7]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[6,[[0,2],[1,2],[2,3],[2,4],[3,5],[4,5]],[0,1],[2,3,4,5]]",
+      "output": "[2,3,4,5]",
+      "expectedOutput": "[2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[1,[],[0],[0]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[10,[[0,5],[1,5],[2,5],[5,6],[6,7],[3,8],[4,8],[8,9]],[0,1,2,3,4],[5,6,7,8,9]]",
+      "output": "[5,6,7,8,9]",
+      "expectedOutput": "[5,6,7,8,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[5,[[0,1],[0,2],[1,3],[2,3]],[0],[1,2,3,4]]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[7,[[0,1],[1,2],[2,0],[3,4],[4,5],[5,6]],[3],[0,1,2,4,5,6]]",
+      "output": "[4,5,6]",
+      "expectedOutput": "[4,5,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[12,[[0,3],[1,3],[2,3],[3,4],[3,5],[4,6],[5,7],[6,8],[7,8],[8,9],[9,10],[10,11]],[0,1,2],[3,4,5,6,7,8,9,10,11]]",
+      "output": "[3,4,5,6,7,8,9,10,11]",
+      "expectedOutput": "[3,4,5,6,7,8,9,10,11]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[4,[[0,1]],[2,3],[0,1]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[6,[[0,1],[2,1],[1,3],[3,4],[3,5]],[0],[1,3,4,5]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 6, edges = [[0, 2], [1, 2], [2, 3], [0, 4], [5, 4]], supplies = [0, 1], recipesToCheck = [2, 3, 4]",
+        "output": "[2, 3]",
+        "expectedOutput": "[2, 3]",
+        "explanation": "item 2 needs 0 and 1 (both supplied), so it can be made; item 3 needs 2 (now makeable), so it can be made too; item 4 needs 0 and 5, but 5 is never available"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 3, edges = [[0, 1], [1, 2]], supplies = [0], recipesToCheck = [1, 2]",
+        "output": "[1, 2]",
+        "expectedOutput": "[1, 2]",
+        "explanation": "item 1 needs only 0 (supplied), and item 2 needs only item 1 (now makeable), so both can be made"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 4, edges = [[0, 1], [2, 1]], supplies = [0], recipesToCheck = [1, 3]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "item 1 needs both 0 and 2, but 2 is never available; item 3 has no connection to any supply at all"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[6,[[0,2],[1,2],[2,3],[0,4],[5,4]],[0,1],[2,3,4]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,[[0,1],[1,2]],[0],[1,2]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[4,[[0,1],[2,1]],[0],[1,3]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[5,[],[0,1,2],[3,4]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[3,[[0,1],[0,2]],[0],[1,2]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[10,[[0,3],[1,3],[3,4],[2,5],[5,6],[6,7],[7,8],[8,9]],[0,1,2],[3,4,5,6,7,8,9]]",
+        "output": "[3,4,5,6,7,8,9]",
+        "expectedOutput": "[3,4,5,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[6,[[0,1],[1,2],[2,1],[3,4]],[0,3],[1,2,4]]",
+        "output": "[4]",
+        "expectedOutput": "[4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[5,[],[0,1,2],[0,1,2,3,4]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[16,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15]],[0],[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[7,[[0,3],[1,3],[2,3],[3,4],[5,4],[4,6]],[0,1,2],[3,4,6]]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[20,[[3,5],[1,5],[3,6],[1,6],[4,7],[1,7],[0,8],[3,8],[8,9],[2,9],[6,10],[5,10],[1,11],[2,11],[3,12],[11,12],[0,13],[8,13],[13,14],[12,14],[10,15],[0,15],[10,16],[1,16],[12,17],[14,17],[17,18],[9,18],[13,19],[9,19]],[0,1,2,3,4],[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+        "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[8,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0]],[],[0,1,2,3,4,5,6,7]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[6,[[0,2],[1,2],[2,3],[2,4],[3,5],[4,5]],[0,1],[2,3,4,5]]",
+        "output": "[2,3,4,5]",
+        "expectedOutput": "[2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[1,[],[0],[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[10,[[0,5],[1,5],[2,5],[5,6],[6,7],[3,8],[4,8],[8,9]],[0,1,2,3,4],[5,6,7,8,9]]",
+        "output": "[5,6,7,8,9]",
+        "expectedOutput": "[5,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[5,[[0,1],[0,2],[1,3],[2,3]],[0],[1,2,3,4]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[7,[[0,1],[1,2],[2,0],[3,4],[4,5],[5,6]],[3],[0,1,2,4,5,6]]",
+        "output": "[4,5,6]",
+        "expectedOutput": "[4,5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[12,[[0,3],[1,3],[2,3],[3,4],[3,5],[4,6],[5,7],[6,8],[7,8],[8,9],[9,10],[10,11]],[0,1,2],[3,4,5,6,7,8,9,10,11]]",
+        "output": "[3,4,5,6,7,8,9,10,11]",
+        "expectedOutput": "[3,4,5,6,7,8,9,10,11]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[4,[[0,1]],[2,3],[0,1]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[6,[[0,1],[2,1],[1,3],[3,4],[3,5]],[0],[1,3,4,5]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findAllRecipes(self, n, edges, supplies, recipesToCheck):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findAllRecipes(int n, vector<vector<int>>& edges, vector<int>& supplies, vector<int>& recipesToCheck) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findAllRecipes(int n, int[][] edges, int[] supplies, int[] recipesToCheck) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findAllRecipes(n: Int, edges: Array<IntArray>, supplies: IntArray, recipesToCheck: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findAllRecipes(n, edges, supplies, recipesToCheck) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findAllRecipes(self, n, edges, supplies, recipesToCheck):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findAllRecipes(int n, vector<vector<int>>& edges, vector<int>& supplies, vector<int>& recipesToCheck) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findAllRecipes(int n, int[][] edges, int[] supplies, int[] recipesToCheck) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findAllRecipes(n: Int, edges: Array<IntArray>, supplies: IntArray, recipesToCheck: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findAllRecipes(n, edges, supplies, recipesToCheck) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findAllRecipes(self, n, edges, supplies, recipesToCheck):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findAllRecipes(int n, vector<vector<int>>& edges, vector<int>& supplies, vector<int>& recipesToCheck) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findAllRecipes(int n, int[][] edges, int[] supplies, int[] recipesToCheck) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findAllRecipes(n: Int, edges: Array<IntArray>, supplies: IntArray, recipesToCheck: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findAllRecipes(n, edges, supplies, recipesToCheck) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findAllRecipes(self, n, edges, supplies, recipesToCheck):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findAllRecipes(int n, vector<vector<int>>& edges, vector<int>& supplies, vector<int>& recipesToCheck) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findAllRecipes(int n, int[][] edges, int[] supplies, int[] recipesToCheck) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findAllRecipes(n: Int, edges: Array<IntArray>, supplies: IntArray, recipesToCheck: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findAllRecipes(n, edges, supplies, recipesToCheck) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(V + E)",
+      "space": "O(V + E)",
+      "pattern": "Kahn's algorithm: seed the queue with all supplies, and cascade availability forward through the ingredient-to-recipe edges"
+    },
+    "bruteForce": {
+      "approach": "for each recipe in recipesToCheck, recursively try to make it by resolving each of its ingredients, tracking a 'currently being resolved' set to avoid infinite loops, redoing this work independently for every query",
+      "time": "O(Q * (V + E))",
+      "space": "O(V)"
+    }
+  },
+  "optimal": {
+    "pattern": "Kahn's algorithm: seed the queue with all supplies, and cascade availability forward through the ingredient-to-recipe edges",
+    "time": "O(V + E)",
+    "space": "O(V + E)",
+    "hint_ladder": [
+      "a recipe becomes makeable only once every single one of its ingredients is available - and an ingredient becoming available can unlock more recipes, cascading forward",
+      "this cascade is exactly Kahn's algorithm: build an in-degree count for every recipe (how many ingredients it still needs), and start the queue with all supply items already marked available",
+      "when you pop an available item, look at everything it's an ingredient for, and decrement that recipe's remaining-ingredient count; if it hits zero, the recipe just became available too - enqueue it",
+      "once the queue is empty, you have the full set of items that ever became available; intersect that with recipesToCheck and sort the result ascending"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each recipe in recipesToCheck, recursively try to make it by resolving each of its ingredients, tracking a 'currently being resolved' set to avoid infinite loops, redoing this work independently for every query",
+    "time": "O(Q * (V + E))",
+    "space": "O(V)"
+  },
+  "isIndex0": true,
+  "level": null
+}

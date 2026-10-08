@@ -1,0 +1,629 @@
+{
+  "id": "find-all-numbers-disappeared-in-an-array",
+  "questionId": "find-all-numbers-disappeared-in-an-array",
+  "slug": "find-all-numbers-disappeared-in-an-array",
+  "title": "Find All Numbers Disappeared in an Array",
+  "difficulty": "Easy",
+  "category": "Cyclic sort",
+  "patterns": [
+    "cyclic sort",
+    "array"
+  ],
+  "lists": [],
+  "hints": [
+    "every value v in [1, n] wants to sit at index v-1. what happens if you rearrange the array so every value is at its 'home' index, wherever possible?",
+    "walk through the array, and while nums[i] isn't already at its home index and that home index doesn't already hold the correct value, swap it there",
+    "duplicates mean two copies of the same value both want the same home index - only one can have it, so a slot with no correct owner stays 'wrong'",
+    "after placement, scan the array: any index i where nums[i] != i+1 tells you that i+1 is one of the missing numbers"
+  ],
+  "commonMistakes": [
+    "using O(n) extra space with a hash set when the problem is intended to be solved with O(1) extra space via in-place placement",
+    "infinite looping when swapping duplicate values that both want the same target index, because the swap condition doesn't check if the target already holds the correct value",
+    "forgetting to convert between value and index (value v belongs at index v-1, not index v)"
+  ],
+  "content": {
+    "problemStatement": "You're given an array `nums` of length `n` where every value is in the\nrange `[1, n]`. Some values appear twice and others don't appear at all.\n\n**Return a list of all the numbers in `[1, n]` that are missing from the array, in ascending order.**\n",
+    "constraints": [
+      "array length is n, every value is in range [1, n]",
+      "some values may appear twice, some may be missing entirely",
+      "return missing numbers in ascending order"
+    ],
+    "notes": [
+      "no numbers are missing (empty result)",
+      "every number is duplicated except one, so almost the whole range is missing",
+      "array of length 1"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [4, 3, 2, 7, 8, 2, 3, 1]",
+        "output": "[5, 6]",
+        "expectedOutput": "[5, 6]",
+        "explanation": "n = 8, and 5 and 6 never appear in the array"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 1]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "explanation": "n = 2, 1 appears twice, 2 never appears"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "every number from 1 to 3 is present, nothing is missing"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[4,3,2,7,8,2,3,1]]",
+        "output": "[5,6]",
+        "expectedOutput": "[5,6]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,1]]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[2,2,2]]",
+        "output": "[1,3]",
+        "expectedOutput": "[1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,2]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[3,3,3]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,5,5,5,5]]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[2,1,4,3]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,3,3,5,5]]",
+        "output": "[2,4]",
+        "expectedOutput": "[2,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,1,4,5,1,7,8,1,10,11,1,13,14,1,16,17,1,19,20]]",
+        "output": "[3,6,9,12,15,18]",
+        "expectedOutput": "[3,6,9,12,15,18]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[27,23,16,20,8,26,7,13,2,19,3,29,5,17,12,1,15,6,14,10,28,11,21,9,25,18,30,4,24,22]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,1,2,2,3,3,4,4,5,5]]",
+        "output": "[6,7,8,9,10]",
+        "expectedOutput": "[6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[4,3,2,7,8,2,3,1,4,4]]",
+        "output": "[5,6,9,10]",
+        "expectedOutput": "[5,6,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,10,10,10,10,10,10,10,10,10,10]]",
+        "output": "[11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[2,3,4,5,6,7,8,9,10,1]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,1,1,6,7,8,9,10]]",
+        "output": "[2,3,4,5]",
+        "expectedOutput": "[2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[6,5,4,3,2,1,1]]",
+        "output": "[7]",
+        "expectedOutput": "[7]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [4, 3, 2, 7, 8, 2, 3, 1]",
+      "output": "[5, 6]",
+      "expectedOutput": "[5, 6]",
+      "explanation": "n = 8, and 5 and 6 never appear in the array"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 1]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "explanation": "n = 2, 1 appears twice, 2 never appears"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "every number from 1 to 3 is present, nothing is missing"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [4, 3, 2, 7, 8, 2, 3, 1]",
+      "output": "[5, 6]",
+      "expectedOutput": "[5, 6]",
+      "explanation": "n = 8, and 5 and 6 never appear in the array"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 1]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "explanation": "n = 2, 1 appears twice, 2 never appears"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "every number from 1 to 3 is present, nothing is missing"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[4,3,2,7,8,2,3,1]]",
+      "output": "[5,6]",
+      "expectedOutput": "[5,6]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,1]]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[2,2,2]]",
+      "output": "[1,3]",
+      "expectedOutput": "[1,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[2,2]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[3,3,3]]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3,4,5]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[5,5,5,5,5]]",
+      "output": "[1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[2,1,4,3]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,3,3,5,5]]",
+      "output": "[2,4]",
+      "expectedOutput": "[2,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+      "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+      "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,1,4,5,1,7,8,1,10,11,1,13,14,1,16,17,1,19,20]]",
+      "output": "[3,6,9,12,15,18]",
+      "expectedOutput": "[3,6,9,12,15,18]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[27,23,16,20,8,26,7,13,2,19,3,29,5,17,12,1,15,6,14,10,28,11,21,9,25,18,30,4,24,22]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,1,2,2,3,3,4,4,5,5]]",
+      "output": "[6,7,8,9,10]",
+      "expectedOutput": "[6,7,8,9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[4,3,2,7,8,2,3,1,4,4]]",
+      "output": "[5,6,9,10]",
+      "expectedOutput": "[5,6,9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,10,10,10,10,10,10,10,10,10,10]]",
+      "output": "[11,12,13,14,15,16,17,18,19,20]",
+      "expectedOutput": "[11,12,13,14,15,16,17,18,19,20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[2,3,4,5,6,7,8,9,10,1]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,1,1,1,1,6,7,8,9,10]]",
+      "output": "[2,3,4,5]",
+      "expectedOutput": "[2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[6,5,4,3,2,1,1]]",
+      "output": "[7]",
+      "expectedOutput": "[7]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [4, 3, 2, 7, 8, 2, 3, 1]",
+        "output": "[5, 6]",
+        "expectedOutput": "[5, 6]",
+        "explanation": "n = 8, and 5 and 6 never appear in the array"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 1]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "explanation": "n = 2, 1 appears twice, 2 never appears"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "every number from 1 to 3 is present, nothing is missing"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[4,3,2,7,8,2,3,1]]",
+        "output": "[5,6]",
+        "expectedOutput": "[5,6]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,1]]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[2,2,2]]",
+        "output": "[1,3]",
+        "expectedOutput": "[1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,2]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[3,3,3]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,5,5,5,5]]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[2,1,4,3]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,3,3,5,5]]",
+        "output": "[2,4]",
+        "expectedOutput": "[2,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,1,4,5,1,7,8,1,10,11,1,13,14,1,16,17,1,19,20]]",
+        "output": "[3,6,9,12,15,18]",
+        "expectedOutput": "[3,6,9,12,15,18]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[27,23,16,20,8,26,7,13,2,19,3,29,5,17,12,1,15,6,14,10,28,11,21,9,25,18,30,4,24,22]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,1,2,2,3,3,4,4,5,5]]",
+        "output": "[6,7,8,9,10]",
+        "expectedOutput": "[6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[4,3,2,7,8,2,3,1,4,4]]",
+        "output": "[5,6,9,10]",
+        "expectedOutput": "[5,6,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,10,10,10,10,10,10,10,10,10,10]]",
+        "output": "[11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[2,3,4,5,6,7,8,9,10,1]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,1,1,6,7,8,9,10]]",
+        "output": "[2,3,4,5]",
+        "expectedOutput": "[2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[6,5,4,3,2,1,1]]",
+        "output": "[7]",
+        "expectedOutput": "[7]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findDisappearedNumbers(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findDisappearedNumbers(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findDisappearedNumbers(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findDisappearedNumbers(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findDisappearedNumbers(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findDisappearedNumbers(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findDisappearedNumbers(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findDisappearedNumbers(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findDisappearedNumbers(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findDisappearedNumbers(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findDisappearedNumbers(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findDisappearedNumbers(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findDisappearedNumbers(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findDisappearedNumbers(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findDisappearedNumbers(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findDisappearedNumbers(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findDisappearedNumbers(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findDisappearedNumbers(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findDisappearedNumbers(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findDisappearedNumbers(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra, ignoring the output list",
+      "pattern": "cyclic sort: place each value v at index v-1, then any index i whose value isn't i+1 marks a missing number i+1"
+    },
+    "bruteForce": {
+      "approach": "use a hash set or boolean array of size n to mark which values appeared, then collect the ones that never got marked",
+      "time": "O(n)",
+      "space": "O(n) for the marker set"
+    }
+  },
+  "optimal": {
+    "pattern": "cyclic sort: place each value v at index v-1, then any index i whose value isn't i+1 marks a missing number i+1",
+    "time": "O(n)",
+    "space": "O(1) extra, ignoring the output list",
+    "hint_ladder": [
+      "every value v in [1, n] wants to sit at index v-1. what happens if you rearrange the array so every value is at its 'home' index, wherever possible?",
+      "walk through the array, and while nums[i] isn't already at its home index and that home index doesn't already hold the correct value, swap it there",
+      "duplicates mean two copies of the same value both want the same home index - only one can have it, so a slot with no correct owner stays 'wrong'",
+      "after placement, scan the array: any index i where nums[i] != i+1 tells you that i+1 is one of the missing numbers"
+    ]
+  },
+  "bruteForce": {
+    "approach": "use a hash set or boolean array of size n to mark which values appeared, then collect the ones that never got marked",
+    "time": "O(n)",
+    "space": "O(n) for the marker set"
+  },
+  "isIndex0": true,
+  "level": null
+}

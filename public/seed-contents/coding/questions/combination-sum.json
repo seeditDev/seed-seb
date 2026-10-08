@@ -1,0 +1,633 @@
+{
+  "id": "combination-sum",
+  "questionId": "combination-sum",
+  "slug": "combination-sum",
+  "title": "Combination Sum",
+  "difficulty": "Medium",
+  "category": "Backtracking",
+  "patterns": [
+    "backtracking"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "since a number can be reused, this isn't quite like Combinations - but you still want to avoid generating [2, 3] and [3, 2] as two different results",
+    "fix an order: only allow picking a candidate at or after the index of the last one you picked, so combinations always come out non-decreasing",
+    "recurse with (start index, remaining target); at each call, try every candidate from start to the end, and if you pick candidates[i], recurse with start = i (not i + 1, since it can repeat) and remaining -= candidates[i]",
+    "record the current combination when remaining hits exactly 0, and stop that branch (return) if remaining goes negative or you run out of candidates - then undo the last pick before trying the next candidate at this position"
+  ],
+  "commonMistakes": [
+    "recursing with start = i + 1 after picking candidates[i], which prevents reusing the same number and gives the wrong answer",
+    "not pruning when remaining goes negative, wasting time exploring impossible branches",
+    "allowing candidates to be picked in any order without a start index, producing duplicate combinations like both [2, 3] and [3, 2]"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of distinct positive integers, `candidates`, and a\n`target` number. The same candidate number may be reused any number of\ntimes within a single combination.\n\n**Return every unique combination of `candidates` that sums exactly to `target`.**\n\nNo two combinations in the result should have the same multiset of numbers.\n",
+    "constraints": [
+      "1 <= candidates.length <= 30",
+      "1 <= candidates[i] <= 40",
+      "all elements of candidates are distinct",
+      "1 <= target <= 40"
+    ],
+    "notes": [
+      "target smaller than every candidate (answer is empty)",
+      "target exactly equal to one candidate",
+      "only one candidate value available, requiring it to be reused many times"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "candidates = [2, 3, 6, 7], target = 7",
+        "output": "[[2, 2, 3], [7]]",
+        "expectedOutput": "[[2, 2, 3], [7]]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "candidates = [2, 3, 5], target = 8",
+        "output": "[[2, 2, 2, 2], [2, 3, 3], [3, 5]]",
+        "expectedOutput": "[[2, 2, 2, 2], [2, 3, 3], [3, 5]]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "candidates = [2], target = 1",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "the smallest candidate already exceeds the target"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[2,3,6,7],7]",
+        "output": "[[2,2,3],[7]]",
+        "expectedOutput": "[[2,2,3],[7]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2,3,5],8]",
+        "output": "[[2,2,2,2],[2,3,3],[3,5]]",
+        "expectedOutput": "[[2,2,2,2],[2,3,3],[3,5]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[2],1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[3,5],8]",
+        "output": "[[3,5]]",
+        "expectedOutput": "[[3,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[2],2]",
+        "output": "[[2]]",
+        "expectedOutput": "[[2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[3],9]",
+        "output": "[[3,3,3]]",
+        "expectedOutput": "[[3,3,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,3,5],1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[7,3,2],18]",
+        "output": "[[2,2,2,2,2,2,2,2,2],[2,2,2,2,2,2,3,3],[2,2,2,2,3,7],[2,2,2,3,3,3,3],[2,2,7,7],[2,3,3,3,7],[3,3,3,3,3,3]]",
+        "expectedOutput": "[[2,2,2,2,2,2,2,2,2],[2,2,2,2,2,2,3,3],[2,2,2,2,3,7],[2,2,2,3,3,3,3],[2,2,7,7],[2,3,3,3,7],[3,3,3,3,3,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,3,6,7],18]",
+        "output": "[[2,2,2,2,2,2,2,2,2],[2,2,2,2,2,2,3,3],[2,2,2,2,2,2,6],[2,2,2,2,3,7],[2,2,2,3,3,3,3],[2,2,2,3,3,6],[2,2,2,6,6],[2,2,7,7],[2,3,3,3,7],[2,3,6,7],[3,3,3,3,3,3],[3,3,3,3,6],[3,3,6,6],[6,6,6]]",
+        "expectedOutput": "[[2,2,2,2,2,2,2,2,2],[2,2,2,2,2,2,3,3],[2,2,2,2,2,2,6],[2,2,2,2,3,7],[2,2,2,3,3,3,3],[2,2,2,3,3,6],[2,2,2,6,6],[2,2,7,7],[2,3,3,3,7],[2,3,6,7],[3,3,3,3,3,3],[3,3,3,3,6],[3,3,6,6],[6,6,6]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[5,10,15],30]",
+        "output": "[[5,5,5,5,5,5],[5,5,5,5,10],[5,5,5,15],[5,5,10,10],[5,10,15],[10,10,10],[15,15]]",
+        "expectedOutput": "[[5,5,5,5,5,5],[5,5,5,5,10],[5,5,5,15],[5,5,10,10],[5,10,15],[10,10,10],[15,15]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[4],11]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[2,4],8]",
+        "output": "[[2,2,2,2],[2,2,4],[4,4]]",
+        "expectedOutput": "[[2,2,2,2],[2,2,4],[4,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,4,5],6]",
+        "output": "[[3,3]]",
+        "expectedOutput": "[[3,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1],5]",
+        "output": "[[1,1,1,1,1]]",
+        "expectedOutput": "[[1,1,1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[8,9,10],27]",
+        "output": "[[8,9,10],[9,9,9]]",
+        "expectedOutput": "[[8,9,10],[9,9,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[2,3],5]",
+        "output": "[[2,3]]",
+        "expectedOutput": "[[2,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[5],5]",
+        "output": "[[5]]",
+        "expectedOutput": "[[5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,5],13]",
+        "output": "[[3,5,5]]",
+        "expectedOutput": "[[3,5,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,5,7],10]",
+        "output": "[[2,2,2,2,2],[5,5]]",
+        "expectedOutput": "[[2,2,2,2,2],[5,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[9],1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "candidates = [2, 3, 6, 7], target = 7",
+      "output": "[[2, 2, 3], [7]]",
+      "expectedOutput": "[[2, 2, 3], [7]]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "candidates = [2, 3, 5], target = 8",
+      "output": "[[2, 2, 2, 2], [2, 3, 3], [3, 5]]",
+      "expectedOutput": "[[2, 2, 2, 2], [2, 3, 3], [3, 5]]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "candidates = [2], target = 1",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "the smallest candidate already exceeds the target"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "candidates = [2, 3, 6, 7], target = 7",
+      "output": "[[2, 2, 3], [7]]",
+      "expectedOutput": "[[2, 2, 3], [7]]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "candidates = [2, 3, 5], target = 8",
+      "output": "[[2, 2, 2, 2], [2, 3, 3], [3, 5]]",
+      "expectedOutput": "[[2, 2, 2, 2], [2, 3, 3], [3, 5]]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "candidates = [2], target = 1",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "the smallest candidate already exceeds the target"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[2,3,6,7],7]",
+      "output": "[[2,2,3],[7]]",
+      "expectedOutput": "[[2,2,3],[7]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[2,3,5],8]",
+      "output": "[[2,2,2,2],[2,3,3],[3,5]]",
+      "expectedOutput": "[[2,2,2,2],[2,3,3],[3,5]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[2],1]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[3,5],8]",
+      "output": "[[3,5]]",
+      "expectedOutput": "[[3,5]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[2],2]",
+      "output": "[[2]]",
+      "expectedOutput": "[[2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[3],9]",
+      "output": "[[3,3,3]]",
+      "expectedOutput": "[[3,3,3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[2,3,5],1]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[7,3,2],18]",
+      "output": "[[2,2,2,2,2,2,2,2,2],[2,2,2,2,2,2,3,3],[2,2,2,2,3,7],[2,2,2,3,3,3,3],[2,2,7,7],[2,3,3,3,7],[3,3,3,3,3,3]]",
+      "expectedOutput": "[[2,2,2,2,2,2,2,2,2],[2,2,2,2,2,2,3,3],[2,2,2,2,3,7],[2,2,2,3,3,3,3],[2,2,7,7],[2,3,3,3,7],[3,3,3,3,3,3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[2,3,6,7],18]",
+      "output": "[[2,2,2,2,2,2,2,2,2],[2,2,2,2,2,2,3,3],[2,2,2,2,2,2,6],[2,2,2,2,3,7],[2,2,2,3,3,3,3],[2,2,2,3,3,6],[2,2,2,6,6],[2,2,7,7],[2,3,3,3,7],[2,3,6,7],[3,3,3,3,3,3],[3,3,3,3,6],[3,3,6,6],[6,6,6]]",
+      "expectedOutput": "[[2,2,2,2,2,2,2,2,2],[2,2,2,2,2,2,3,3],[2,2,2,2,2,2,6],[2,2,2,2,3,7],[2,2,2,3,3,3,3],[2,2,2,3,3,6],[2,2,2,6,6],[2,2,7,7],[2,3,3,3,7],[2,3,6,7],[3,3,3,3,3,3],[3,3,3,3,6],[3,3,6,6],[6,6,6]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[5,10,15],30]",
+      "output": "[[5,5,5,5,5,5],[5,5,5,5,10],[5,5,5,15],[5,5,10,10],[5,10,15],[10,10,10],[15,15]]",
+      "expectedOutput": "[[5,5,5,5,5,5],[5,5,5,5,10],[5,5,5,15],[5,5,10,10],[5,10,15],[10,10,10],[15,15]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[4],11]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[2,4],8]",
+      "output": "[[2,2,2,2],[2,2,4],[4,4]]",
+      "expectedOutput": "[[2,2,2,2],[2,2,4],[4,4]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[3,4,5],6]",
+      "output": "[[3,3]]",
+      "expectedOutput": "[[3,3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1],5]",
+      "output": "[[1,1,1,1,1]]",
+      "expectedOutput": "[[1,1,1,1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[8,9,10],27]",
+      "output": "[[8,9,10],[9,9,9]]",
+      "expectedOutput": "[[8,9,10],[9,9,9]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[2,3],5]",
+      "output": "[[2,3]]",
+      "expectedOutput": "[[2,3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[5],5]",
+      "output": "[[5]]",
+      "expectedOutput": "[[5]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[3,5],13]",
+      "output": "[[3,5,5]]",
+      "expectedOutput": "[[3,5,5]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[2,5,7],10]",
+      "output": "[[2,2,2,2,2],[5,5]]",
+      "expectedOutput": "[[2,2,2,2,2],[5,5]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[9],1]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "candidates = [2, 3, 6, 7], target = 7",
+        "output": "[[2, 2, 3], [7]]",
+        "expectedOutput": "[[2, 2, 3], [7]]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "candidates = [2, 3, 5], target = 8",
+        "output": "[[2, 2, 2, 2], [2, 3, 3], [3, 5]]",
+        "expectedOutput": "[[2, 2, 2, 2], [2, 3, 3], [3, 5]]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "candidates = [2], target = 1",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "the smallest candidate already exceeds the target"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[2,3,6,7],7]",
+        "output": "[[2,2,3],[7]]",
+        "expectedOutput": "[[2,2,3],[7]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2,3,5],8]",
+        "output": "[[2,2,2,2],[2,3,3],[3,5]]",
+        "expectedOutput": "[[2,2,2,2],[2,3,3],[3,5]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[2],1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[3,5],8]",
+        "output": "[[3,5]]",
+        "expectedOutput": "[[3,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[2],2]",
+        "output": "[[2]]",
+        "expectedOutput": "[[2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[3],9]",
+        "output": "[[3,3,3]]",
+        "expectedOutput": "[[3,3,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,3,5],1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[7,3,2],18]",
+        "output": "[[2,2,2,2,2,2,2,2,2],[2,2,2,2,2,2,3,3],[2,2,2,2,3,7],[2,2,2,3,3,3,3],[2,2,7,7],[2,3,3,3,7],[3,3,3,3,3,3]]",
+        "expectedOutput": "[[2,2,2,2,2,2,2,2,2],[2,2,2,2,2,2,3,3],[2,2,2,2,3,7],[2,2,2,3,3,3,3],[2,2,7,7],[2,3,3,3,7],[3,3,3,3,3,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,3,6,7],18]",
+        "output": "[[2,2,2,2,2,2,2,2,2],[2,2,2,2,2,2,3,3],[2,2,2,2,2,2,6],[2,2,2,2,3,7],[2,2,2,3,3,3,3],[2,2,2,3,3,6],[2,2,2,6,6],[2,2,7,7],[2,3,3,3,7],[2,3,6,7],[3,3,3,3,3,3],[3,3,3,3,6],[3,3,6,6],[6,6,6]]",
+        "expectedOutput": "[[2,2,2,2,2,2,2,2,2],[2,2,2,2,2,2,3,3],[2,2,2,2,2,2,6],[2,2,2,2,3,7],[2,2,2,3,3,3,3],[2,2,2,3,3,6],[2,2,2,6,6],[2,2,7,7],[2,3,3,3,7],[2,3,6,7],[3,3,3,3,3,3],[3,3,3,3,6],[3,3,6,6],[6,6,6]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[5,10,15],30]",
+        "output": "[[5,5,5,5,5,5],[5,5,5,5,10],[5,5,5,15],[5,5,10,10],[5,10,15],[10,10,10],[15,15]]",
+        "expectedOutput": "[[5,5,5,5,5,5],[5,5,5,5,10],[5,5,5,15],[5,5,10,10],[5,10,15],[10,10,10],[15,15]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[4],11]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[2,4],8]",
+        "output": "[[2,2,2,2],[2,2,4],[4,4]]",
+        "expectedOutput": "[[2,2,2,2],[2,2,4],[4,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,4,5],6]",
+        "output": "[[3,3]]",
+        "expectedOutput": "[[3,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1],5]",
+        "output": "[[1,1,1,1,1]]",
+        "expectedOutput": "[[1,1,1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[8,9,10],27]",
+        "output": "[[8,9,10],[9,9,9]]",
+        "expectedOutput": "[[8,9,10],[9,9,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[2,3],5]",
+        "output": "[[2,3]]",
+        "expectedOutput": "[[2,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[5],5]",
+        "output": "[[5]]",
+        "expectedOutput": "[[5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,5],13]",
+        "output": "[[3,5,5]]",
+        "expectedOutput": "[[3,5,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,5,7],10]",
+        "output": "[[2,2,2,2,2],[5,5]]",
+        "expectedOutput": "[[2,2,2,2,2],[5,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[9],1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def combinationSum(self, candidates, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> combinationSum(vector<int>& candidates, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] combinationSum(int[] candidates, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun combinationSum(candidates: IntArray, target: Int): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    combinationSum(candidates, target) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def combinationSum(self, candidates, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> combinationSum(vector<int>& candidates, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] combinationSum(int[] candidates, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun combinationSum(candidates: IntArray, target: Int): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    combinationSum(candidates, target) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def combinationSum(self, candidates, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> combinationSum(vector<int>& candidates, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] combinationSum(int[] candidates, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun combinationSum(candidates: IntArray, target: Int): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    combinationSum(candidates, target) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def combinationSum(self, candidates, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> combinationSum(vector<int>& candidates, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] combinationSum(int[] candidates, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun combinationSum(candidates: IntArray, target: Int): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    combinationSum(candidates, target) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "exponential in the worst case, bounded by target / min(candidates)",
+      "space": "O(target / min(candidates)) recursion depth, excluding output",
+      "pattern": "backtracking with a 'start' index (not a 'used' set) so the same candidate can repeat, but only in non-decreasing order"
+    },
+    "bruteForce": {
+      "approach": "recursively try every sequence of candidate picks up to depth target (since the smallest candidate is at least 1), pruning once the running sum exceeds target, then dedupe by sorting each combination",
+      "time": "exponential in target / smallest candidate, with extra work for dedup",
+      "space": "O(target) recursion depth plus dedup storage"
+    }
+  },
+  "optimal": {
+    "pattern": "backtracking with a 'start' index (not a 'used' set) so the same candidate can repeat, but only in non-decreasing order",
+    "time": "exponential in the worst case, bounded by target / min(candidates)",
+    "space": "O(target / min(candidates)) recursion depth, excluding output",
+    "hint_ladder": [
+      "since a number can be reused, this isn't quite like Combinations - but you still want to avoid generating [2, 3] and [3, 2] as two different results",
+      "fix an order: only allow picking a candidate at or after the index of the last one you picked, so combinations always come out non-decreasing",
+      "recurse with (start index, remaining target); at each call, try every candidate from start to the end, and if you pick candidates[i], recurse with start = i (not i + 1, since it can repeat) and remaining -= candidates[i]",
+      "record the current combination when remaining hits exactly 0, and stop that branch (return) if remaining goes negative or you run out of candidates - then undo the last pick before trying the next candidate at this position"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try every sequence of candidate picks up to depth target (since the smallest candidate is at least 1), pruning once the running sum exceeds target, then dedupe by sorting each combination",
+    "time": "exponential in target / smallest candidate, with extra work for dedup",
+    "space": "O(target) recursion depth plus dedup storage"
+  },
+  "isIndex0": true,
+  "level": null
+}

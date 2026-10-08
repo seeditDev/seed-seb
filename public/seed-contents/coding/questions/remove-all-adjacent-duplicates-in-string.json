@@ -1,0 +1,628 @@
+{
+  "id": "remove-all-adjacent-duplicates-in-string",
+  "questionId": "remove-all-adjacent-duplicates-in-string",
+  "slug": "remove-all-adjacent-duplicates-in-string",
+  "title": "Remove All Adjacent Duplicates In String",
+  "difficulty": "Easy",
+  "category": "Stack",
+  "patterns": [
+    "stack"
+  ],
+  "lists": [],
+  "hints": [
+    "removing a pair can expose a brand new pair right next to where it was - rescanning from scratch each time is wasteful. can you resolve everything in a single left-to-right pass?",
+    "what if you built the result incrementally, and whenever the next letter matches the last letter you've kept so far, you undo keeping that last letter instead of adding the new one?",
+    "a stack models this directly: for each character, if it equals the top of the stack, pop; otherwise push it",
+    "the final stack contents, read bottom to top, are exactly the answer"
+  ],
+  "commonMistakes": [
+    "only removing the first pair found and stopping instead of continuing through the whole string in one pass",
+    "not handling a newly exposed pair that forms right after a removal (why the stack approach works and a single non-cascading scan doesn't)",
+    "building the result with string concatenation in a loop instead of an efficient stack/list, which is slow but not incorrect"
+  ],
+  "content": {
+    "problemStatement": "You're given a string of lowercase letters.\n\n**Repeatedly find two adjacent and equal letters anywhere in the string and remove both of them, until no two adjacent letters are equal, then return the final string.**\n",
+    "constraints": [
+      "0 <= s.length <= 10^5",
+      "s consists only of lowercase English letters",
+      "the result contains no two adjacent equal characters"
+    ],
+    "notes": [
+      "no adjacent duplicates at all (string unchanged)",
+      "entire string collapses to empty",
+      "empty input string"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"abbaca\"",
+        "output": "\"ca\"",
+        "expectedOutput": "\"ca\"",
+        "explanation": "\"abbaca\" -> remove \"bb\" -> \"aaca\" -> remove \"aa\" -> \"ca\", no more adjacent duplicates"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"azxxzy\"",
+        "output": "\"ay\"",
+        "expectedOutput": "\"ay\"",
+        "explanation": "\"azxxzy\" -> remove \"xx\" -> \"azzy\" -> remove \"zz\" -> \"ay\""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"aaaaaaaa\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": "removing pairs repeatedly empties an even-length run of the same letter entirely"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"abbaca\"]",
+        "output": "ca",
+        "expectedOutput": "ca",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"azxxzy\"]",
+        "output": "ay",
+        "expectedOutput": "ay",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"aaaaaaaa\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abcd\"]",
+        "output": "abcd",
+        "expectedOutput": "abcd",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aa\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aab\"]",
+        "output": "b",
+        "expectedOutput": "b",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"aabbcc\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abccba\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aabbccddeeffgg\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"xyyzzy\"]",
+        "output": "xy",
+        "expectedOutput": "xy",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"aabaa\"]",
+        "output": "b",
+        "expectedOutput": "b",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"aaaaaaaaaaaaaaaa\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abcba\"]",
+        "output": "abcba",
+        "expectedOutput": "abcba",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"zzzzzzzzzzz\"]",
+        "output": "z",
+        "expectedOutput": "z",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"mississippi\"]",
+        "output": "m",
+        "expectedOutput": "m",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"b\"]",
+        "output": "b",
+        "expectedOutput": "b",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"ab\"]",
+        "output": "ab",
+        "expectedOutput": "ab",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"baab\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"abbaca\"",
+      "output": "\"ca\"",
+      "expectedOutput": "\"ca\"",
+      "explanation": "\"abbaca\" -> remove \"bb\" -> \"aaca\" -> remove \"aa\" -> \"ca\", no more adjacent duplicates"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"azxxzy\"",
+      "output": "\"ay\"",
+      "expectedOutput": "\"ay\"",
+      "explanation": "\"azxxzy\" -> remove \"xx\" -> \"azzy\" -> remove \"zz\" -> \"ay\""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"aaaaaaaa\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": "removing pairs repeatedly empties an even-length run of the same letter entirely"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"abbaca\"",
+      "output": "\"ca\"",
+      "expectedOutput": "\"ca\"",
+      "explanation": "\"abbaca\" -> remove \"bb\" -> \"aaca\" -> remove \"aa\" -> \"ca\", no more adjacent duplicates"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"azxxzy\"",
+      "output": "\"ay\"",
+      "expectedOutput": "\"ay\"",
+      "explanation": "\"azxxzy\" -> remove \"xx\" -> \"azzy\" -> remove \"zz\" -> \"ay\""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"aaaaaaaa\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": "removing pairs repeatedly empties an even-length run of the same letter entirely"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"abbaca\"]",
+      "output": "ca",
+      "expectedOutput": "ca",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"azxxzy\"]",
+      "output": "ay",
+      "expectedOutput": "ay",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"aaaaaaaa\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"abcd\"]",
+      "output": "abcd",
+      "expectedOutput": "abcd",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"aa\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"aab\"]",
+      "output": "b",
+      "expectedOutput": "b",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"aabbcc\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"abccba\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"aabbccddeeffgg\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"xyyzzy\"]",
+      "output": "xy",
+      "expectedOutput": "xy",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"aabaa\"]",
+      "output": "b",
+      "expectedOutput": "b",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"aaaaaaaaaaaaaaaa\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"abcba\"]",
+      "output": "abcba",
+      "expectedOutput": "abcba",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"zzzzzzzzzzz\"]",
+      "output": "z",
+      "expectedOutput": "z",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"mississippi\"]",
+      "output": "m",
+      "expectedOutput": "m",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"b\"]",
+      "output": "b",
+      "expectedOutput": "b",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"ab\"]",
+      "output": "ab",
+      "expectedOutput": "ab",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"baab\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"abbaca\"",
+        "output": "\"ca\"",
+        "expectedOutput": "\"ca\"",
+        "explanation": "\"abbaca\" -> remove \"bb\" -> \"aaca\" -> remove \"aa\" -> \"ca\", no more adjacent duplicates"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"azxxzy\"",
+        "output": "\"ay\"",
+        "expectedOutput": "\"ay\"",
+        "explanation": "\"azxxzy\" -> remove \"xx\" -> \"azzy\" -> remove \"zz\" -> \"ay\""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"aaaaaaaa\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": "removing pairs repeatedly empties an even-length run of the same letter entirely"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"abbaca\"]",
+        "output": "ca",
+        "expectedOutput": "ca",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"azxxzy\"]",
+        "output": "ay",
+        "expectedOutput": "ay",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"aaaaaaaa\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abcd\"]",
+        "output": "abcd",
+        "expectedOutput": "abcd",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aa\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aab\"]",
+        "output": "b",
+        "expectedOutput": "b",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"aabbcc\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abccba\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aabbccddeeffgg\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"xyyzzy\"]",
+        "output": "xy",
+        "expectedOutput": "xy",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"aabaa\"]",
+        "output": "b",
+        "expectedOutput": "b",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"aaaaaaaaaaaaaaaa\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"abcba\"]",
+        "output": "abcba",
+        "expectedOutput": "abcba",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"zzzzzzzzzzz\"]",
+        "output": "z",
+        "expectedOutput": "z",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"mississippi\"]",
+        "output": "m",
+        "expectedOutput": "m",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"b\"]",
+        "output": "b",
+        "expectedOutput": "b",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"ab\"]",
+        "output": "ab",
+        "expectedOutput": "ab",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"baab\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def removeDuplicates(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    string removeDuplicates(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String removeDuplicates(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeDuplicates(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeDuplicates(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def removeDuplicates(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    string removeDuplicates(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String removeDuplicates(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeDuplicates(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeDuplicates(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def removeDuplicates(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    string removeDuplicates(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String removeDuplicates(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeDuplicates(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeDuplicates(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def removeDuplicates(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    string removeDuplicates(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String removeDuplicates(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeDuplicates(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeDuplicates(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n)",
+      "pattern": "stack (cancel matching neighbor on push)"
+    },
+    "bruteForce": {
+      "approach": "repeatedly scan the string left to right for the first adjacent equal pair, remove it, and restart the scan, until a full scan finds no pair",
+      "time": "O(n^2) in the worst case (repeated rescans)",
+      "space": "O(n) for the mutable copy each pass"
+    }
+  },
+  "optimal": {
+    "pattern": "stack (cancel matching neighbor on push)",
+    "time": "O(n)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "removing a pair can expose a brand new pair right next to where it was - rescanning from scratch each time is wasteful. can you resolve everything in a single left-to-right pass?",
+      "what if you built the result incrementally, and whenever the next letter matches the last letter you've kept so far, you undo keeping that last letter instead of adding the new one?",
+      "a stack models this directly: for each character, if it equals the top of the stack, pop; otherwise push it",
+      "the final stack contents, read bottom to top, are exactly the answer"
+    ]
+  },
+  "bruteForce": {
+    "approach": "repeatedly scan the string left to right for the first adjacent equal pair, remove it, and restart the scan, until a full scan finds no pair",
+    "time": "O(n^2) in the worst case (repeated rescans)",
+    "space": "O(n) for the mutable copy each pass"
+  },
+  "isIndex0": true,
+  "level": null
+}

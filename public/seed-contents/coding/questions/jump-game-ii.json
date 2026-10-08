@@ -1,0 +1,599 @@
+{
+  "id": "jump-game-ii",
+  "questionId": "jump-game-ii",
+  "slug": "jump-game-ii",
+  "title": "Jump Game II",
+  "difficulty": "Medium",
+  "category": "Dp 1d",
+  "patterns": [
+    "dynamic programming",
+    "greedy"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "think of this like a breadth-first search over 'how far can I get in k jumps' - what does the boundary of jump k look like?",
+    "as you scan through the indices reachable within your current jump budget, track the farthest index reachable with one more jump",
+    "the moment your scan reaches the end of the current jump's window, you're forced to take that extra jump before continuing",
+    "keep three values as you scan: current window end, farthest reach seen so far, and jump count - increment jumps and advance the window only when you hit the window end"
+  ],
+  "commonMistakes": [
+    "confusing this with Jump Game (which only asks true/false) and forgetting to actually count jumps",
+    "incrementing the jump count at every index instead of only when the current window is exhausted",
+    "not realizing the last index never needs to trigger one more jump beyond what's needed to reach it"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of integers where `nums[i]` is the farthest number\nof steps you're allowed to jump forward from index i. Starting at index\n0, it's always possible to reach the last index.\n\n**Return the minimum number of jumps needed to reach the last index.**\n",
+    "constraints": [
+      "1 <= nums.length <= 10^4",
+      "0 <= nums[i] <= 1000",
+      "it is guaranteed that you can reach nums.length - 1"
+    ],
+    "notes": [
+      "a single-element array (already at the last index, 0 jumps needed)",
+      "a jump length large enough to clear the rest of the array in one move",
+      "every index only allows a jump of exactly 1"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [2, 3, 1, 1, 4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "jump 1 step to index 1, then 3 steps to reach index 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 1, 1, 1]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "you can only move one index at a time, so it takes 3 jumps to cover 3 gaps"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[2,3,1,1,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2,3,0,1,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,1,1,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,1,1,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[2,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,1,1,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1,2,1,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[2,3,1,1,4,2,1,1,1,4]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[10,1,1,1,1,1,1,1,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,1,1,1,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[4,1,1,3,1,1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,3,2,1,1,1,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[5,5,5,5,5,5,5,5,5,5,5]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,0,0,0,4,0,0,0,0,0]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [2, 3, 1, 1, 4]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "jump 1 step to index 1, then 3 steps to reach index 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 1, 1, 1]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "you can only move one index at a time, so it takes 3 jumps to cover 3 gaps"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [2, 3, 1, 1, 4]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "jump 1 step to index 1, then 3 steps to reach index 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 1, 1, 1]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "you can only move one index at a time, so it takes 3 jumps to cover 3 gaps"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[2,3,1,1,4]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[2,3,0,1,4]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,1,1,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,1,1,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[2,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[5,1,1,1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,1,2,1,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[2,3,1,1,4,2,1,1,1,4]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[10,1,1,1,1,1,1,1,1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[2,1,1,1,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[4,1,1,3,1,1,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,3,2,1,1,1,1]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[5,5,5,5,5,5,5,5,5,5,5]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+      "output": "18",
+      "expectedOutput": "18",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[3,0,0,0,4,0,0,0,0,0]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [2, 3, 1, 1, 4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "jump 1 step to index 1, then 3 steps to reach index 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 1, 1, 1]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "you can only move one index at a time, so it takes 3 jumps to cover 3 gaps"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[2,3,1,1,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2,3,0,1,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,1,1,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,1,1,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[2,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,1,1,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1,2,1,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[2,3,1,1,4,2,1,1,1,4]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[10,1,1,1,1,1,1,1,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,1,1,1,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[4,1,1,3,1,1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,3,2,1,1,1,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[5,5,5,5,5,5,5,5,5,5,5]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,0,0,0,4,0,0,0,0,0]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def jump(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int jump(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int jump(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun jump(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    jump(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def jump(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int jump(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int jump(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun jump(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    jump(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def jump(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int jump(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int jump(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun jump(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    jump(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def jump(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int jump(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int jump(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun jump(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    jump(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "greedy / implicit BFS by levels - expand the current reachable window one jump at a time"
+    },
+    "bruteForce": {
+      "approach": "recursively try every reachable next index from the current one, taking the minimum jump count over all paths that reach the end",
+      "time": "O(n^k) in the branching factor - exponential, many overlapping subpaths get re-explored",
+      "space": "O(n) recursion stack"
+    }
+  },
+  "optimal": {
+    "pattern": "greedy / implicit BFS by levels - expand the current reachable window one jump at a time",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "think of this like a breadth-first search over 'how far can I get in k jumps' - what does the boundary of jump k look like?",
+      "as you scan through the indices reachable within your current jump budget, track the farthest index reachable with one more jump",
+      "the moment your scan reaches the end of the current jump's window, you're forced to take that extra jump before continuing",
+      "keep three values as you scan: current window end, farthest reach seen so far, and jump count - increment jumps and advance the window only when you hit the window end"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try every reachable next index from the current one, taking the minimum jump count over all paths that reach the end",
+    "time": "O(n^k) in the branching factor - exponential, many overlapping subpaths get re-explored",
+    "space": "O(n) recursion stack"
+  },
+  "isIndex0": true,
+  "level": null
+}

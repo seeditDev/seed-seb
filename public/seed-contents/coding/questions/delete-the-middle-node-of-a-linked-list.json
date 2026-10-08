@@ -1,0 +1,649 @@
+{
+  "id": "delete-the-middle-node-of-a-linked-list",
+  "questionId": "delete-the-middle-node-of-a-linked-list",
+  "slug": "delete-the-middle-node-of-a-linked-list",
+  "title": "Delete the Middle Node of a Linked List",
+  "difficulty": "Medium",
+  "category": "Fast slow pointers",
+  "patterns": [
+    "fast & slow pointers",
+    "linked list",
+    "two pointers"
+  ],
+  "lists": [],
+  "hints": [
+    "you could count the length up front, but can you both find and remove the middle node in a single pass?",
+    "use the classic fast/slow pointer walk to locate the middle, but you'll also need to know the node right before it in order to unlink it",
+    "keep a third pointer (or just remember the previous node) that trails one step behind slow as you advance",
+    "when fast reaches the end, the trailing pointer's next node is the middle - skip over it by linking the trailing pointer directly to the node after the middle"
+  ],
+  "commonMistakes": [
+    "getting the even-length middle index wrong and deleting the first of the two center nodes instead of the second",
+    "not handling the single-node case, which should produce an empty list",
+    "losing track of the node before the middle, making it impossible to unlink the middle node directly"
+  ],
+  "content": {
+    "problemStatement": "A singly linked list is given to you as an array `nums`, where `nums[i]`\nis the value of the i-th node in order.\n\n**Delete the middle node and return the resulting list's values in order.**\n\nIf the list has an even number of nodes, treat the middle as the second of the two center nodes (index n/2 using integer division) and delete that one.\n",
+    "constraints": [
+      "1 <= nums.length <= 10^5"
+    ],
+    "notes": [
+      "a single-node list (deleting it leaves an empty list)",
+      "a two-node list",
+      "even-length vs odd-length lists"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 3, 4, 7, 1, 2, 6]",
+        "output": "[1, 3, 4, 1, 2, 6]",
+        "expectedOutput": "[1, 3, 4, 1, 2, 6]",
+        "explanation": "7 nodes, middle index 3 (value 7) is removed"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4]",
+        "output": "[1, 2, 4]",
+        "expectedOutput": "[1, 2, 4]",
+        "explanation": "4 nodes, n/2 = 2, so index 2 (value 3) is removed"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "a single node is its own middle, deleting it leaves an empty list"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,3,4,7,1,2,6]]",
+        "output": "[1,3,4,1,2,6]",
+        "expectedOutput": "[1,3,4,1,2,6]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4]]",
+        "output": "[1,2,4]",
+        "expectedOutput": "[1,2,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[2,1]]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5,10]]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3]]",
+        "output": "[1,3]",
+        "expectedOutput": "[1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5]]",
+        "output": "[1,2,4,5]",
+        "expectedOutput": "[1,2,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-5,-3,-1,0,1,3,5]]",
+        "output": "[-5,-3,-1,1,3,5]",
+        "expectedOutput": "[-5,-3,-1,1,3,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[7,7,7,7,7,7,7]]",
+        "output": "[7,7,7,7,7,7]",
+        "expectedOutput": "[7,7,7,7,7,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[20,19,18,17,16,15,14,13,12,11,9,8,7,6,5,4,3,2,1]",
+        "expectedOutput": "[20,19,18,17,16,15,14,13,12,11,9,8,7,6,5,4,3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9,10]",
+        "expectedOutput": "[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[3,1]]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,1,1]]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[100,200,300,400,500,600,700]]",
+        "output": "[100,200,300,500,600,700]",
+        "expectedOutput": "[100,200,300,500,600,700]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-1,-2]]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[42]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "[1,2,3,5,6,7]",
+        "expectedOutput": "[1,2,3,5,6,7]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 3, 4, 7, 1, 2, 6]",
+      "output": "[1, 3, 4, 1, 2, 6]",
+      "expectedOutput": "[1, 3, 4, 1, 2, 6]",
+      "explanation": "7 nodes, middle index 3 (value 7) is removed"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4]",
+      "output": "[1, 2, 4]",
+      "expectedOutput": "[1, 2, 4]",
+      "explanation": "4 nodes, n/2 = 2, so index 2 (value 3) is removed"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "a single node is its own middle, deleting it leaves an empty list"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 3, 4, 7, 1, 2, 6]",
+      "output": "[1, 3, 4, 1, 2, 6]",
+      "expectedOutput": "[1, 3, 4, 1, 2, 6]",
+      "explanation": "7 nodes, middle index 3 (value 7) is removed"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4]",
+      "output": "[1, 2, 4]",
+      "expectedOutput": "[1, 2, 4]",
+      "explanation": "4 nodes, n/2 = 2, so index 2 (value 3) is removed"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "a single node is its own middle, deleting it leaves an empty list"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,3,4,7,1,2,6]]",
+      "output": "[1,3,4,1,2,6]",
+      "expectedOutput": "[1,3,4,1,2,6]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3,4]]",
+      "output": "[1,2,4]",
+      "expectedOutput": "[1,2,4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[2,1]]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[5,10]]",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3]]",
+      "output": "[1,3]",
+      "expectedOutput": "[1,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3,4,5]]",
+      "output": "[1,2,4,5]",
+      "expectedOutput": "[1,2,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[0]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[-5,-3,-1,0,1,3,5]]",
+      "output": "[-5,-3,-1,1,3,5]",
+      "expectedOutput": "[-5,-3,-1,1,3,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[7,7,7,7,7,7,7]]",
+      "output": "[7,7,7,7,7,7]",
+      "expectedOutput": "[7,7,7,7,7,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+      "output": "[1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18,19,20]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18,19,20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+      "output": "[20,19,18,17,16,15,14,13,12,11,9,8,7,6,5,4,3,2,1]",
+      "expectedOutput": "[20,19,18,17,16,15,14,13,12,11,9,8,7,6,5,4,3,2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10]]",
+      "output": "[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9,10]",
+      "expectedOutput": "[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[3,1]]",
+      "output": "[3]",
+      "expectedOutput": "[3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,1,1,1]]",
+      "output": "[1,1,1]",
+      "expectedOutput": "[1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[100,200,300,400,500,600,700]]",
+      "output": "[100,200,300,500,600,700]",
+      "expectedOutput": "[100,200,300,500,600,700]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[-1,-2]]",
+      "output": "[-1]",
+      "expectedOutput": "[-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35]]",
+      "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[42]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[1,2,3,4,5,6,7]]",
+      "output": "[1,2,3,5,6,7]",
+      "expectedOutput": "[1,2,3,5,6,7]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 3, 4, 7, 1, 2, 6]",
+        "output": "[1, 3, 4, 1, 2, 6]",
+        "expectedOutput": "[1, 3, 4, 1, 2, 6]",
+        "explanation": "7 nodes, middle index 3 (value 7) is removed"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4]",
+        "output": "[1, 2, 4]",
+        "expectedOutput": "[1, 2, 4]",
+        "explanation": "4 nodes, n/2 = 2, so index 2 (value 3) is removed"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "a single node is its own middle, deleting it leaves an empty list"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,3,4,7,1,2,6]]",
+        "output": "[1,3,4,1,2,6]",
+        "expectedOutput": "[1,3,4,1,2,6]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4]]",
+        "output": "[1,2,4]",
+        "expectedOutput": "[1,2,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[2,1]]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5,10]]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3]]",
+        "output": "[1,3]",
+        "expectedOutput": "[1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5]]",
+        "output": "[1,2,4,5]",
+        "expectedOutput": "[1,2,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-5,-3,-1,0,1,3,5]]",
+        "output": "[-5,-3,-1,1,3,5]",
+        "expectedOutput": "[-5,-3,-1,1,3,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[7,7,7,7,7,7,7]]",
+        "output": "[7,7,7,7,7,7]",
+        "expectedOutput": "[7,7,7,7,7,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[20,19,18,17,16,15,14,13,12,11,9,8,7,6,5,4,3,2,1]",
+        "expectedOutput": "[20,19,18,17,16,15,14,13,12,11,9,8,7,6,5,4,3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9,10]",
+        "expectedOutput": "[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[3,1]]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,1,1]]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[100,200,300,400,500,600,700]]",
+        "output": "[100,200,300,500,600,700]",
+        "expectedOutput": "[100,200,300,500,600,700]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-1,-2]]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[42]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "[1,2,3,5,6,7]",
+        "expectedOutput": "[1,2,3,5,6,7]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def deleteMiddle(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> deleteMiddle(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] deleteMiddle(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun deleteMiddle(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    deleteMiddle(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def deleteMiddle(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> deleteMiddle(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] deleteMiddle(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun deleteMiddle(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    deleteMiddle(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def deleteMiddle(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> deleteMiddle(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] deleteMiddle(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun deleteMiddle(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    deleteMiddle(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def deleteMiddle(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> deleteMiddle(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] deleteMiddle(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun deleteMiddle(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    deleteMiddle(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n), single pass",
+      "space": "O(n) for the output (O(1) extra besides it)",
+      "pattern": "fast & slow pointers, keeping a trailing pointer just before slow so the middle node can be unlinked when found"
+    },
+    "bruteForce": {
+      "approach": "count the list length, compute the middle index n/2, then rebuild the list skipping that index",
+      "time": "O(n)",
+      "space": "O(n) for the output"
+    }
+  },
+  "optimal": {
+    "pattern": "fast & slow pointers, keeping a trailing pointer just before slow so the middle node can be unlinked when found",
+    "time": "O(n), single pass",
+    "space": "O(n) for the output (O(1) extra besides it)",
+    "hint_ladder": [
+      "you could count the length up front, but can you both find and remove the middle node in a single pass?",
+      "use the classic fast/slow pointer walk to locate the middle, but you'll also need to know the node right before it in order to unlink it",
+      "keep a third pointer (or just remember the previous node) that trails one step behind slow as you advance",
+      "when fast reaches the end, the trailing pointer's next node is the middle - skip over it by linking the trailing pointer directly to the node after the middle"
+    ]
+  },
+  "bruteForce": {
+    "approach": "count the list length, compute the middle index n/2, then rebuild the list skipping that index",
+    "time": "O(n)",
+    "space": "O(n) for the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

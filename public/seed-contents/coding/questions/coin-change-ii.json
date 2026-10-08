@@ -1,0 +1,654 @@
+{
+  "id": "coin-change-ii",
+  "questionId": "coin-change-ii",
+  "slug": "coin-change-ii",
+  "title": "Coin Change II",
+  "difficulty": "Medium",
+  "category": "Knapsack",
+  "patterns": [
+    "knapsack",
+    "unbounded knapsack",
+    "dynamic programming"
+  ],
+  "lists": [],
+  "hints": [
+    "this looks like coin change, but you're counting combinations, not minimizing count - if you loop amount in the outer loop and coins in the inner loop, you'll count [1,2] and [2,1] as different, which is wrong for combinations",
+    "define dp[a] as the number of combinations that sum to a, using only coin types considered so far, with dp[0] = 1 (the empty combination)",
+    "process one coin denomination at a time, completely, before moving to the next - for the current coin c, update dp[a] += dp[a - c] for every a from c up to amount",
+    "iterating amount from low to high for a fixed coin allows that coin to be reused (unbounded), while the outer loop over coins (not amounts) is what prevents order from mattering",
+    "after processing every coin denomination this way, dp[amount] holds the final combination count"
+  ],
+  "commonMistakes": [
+    "swapping the loop order (amount outer, coins inner), which counts ordered sequences (permutations) instead of unordered combinations",
+    "forgetting dp[0] = 1 as the base case, which undercounts every combination by effectively starting from nothing",
+    "resetting dp between coin denominations instead of accumulating across all of them"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of distinct coin denominations, each available in unlimited supply, and a target amount.\n\n**Return the number of different combinations of coins that add up to exactly that amount.**\n\nTwo combinations are considered the same if they use the same coins the same number of times, regardless of order.\n",
+    "constraints": [
+      "1 <= coins.length <= 300",
+      "1 <= coins[i] <= 5000",
+      "all values in coins are distinct",
+      "0 <= amount <= 5000"
+    ],
+    "notes": [
+      "amount is 0 (exactly one combination: use no coins)",
+      "no combination can reach the amount (return 0)",
+      "a single coin denomination that evenly divides the amount"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "coins = [1, 2, 5], amount = 5",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "the combinations are: 5; 2+2+1; 2+1+1+1; 1+1+1+1+1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "coins = [2], amount = 3",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "no combination of only 2s can sum to an odd amount"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "coins = [10], amount = 10",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "exactly one coin of value 10 is the only combination"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[5,[1,2,5]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,[2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[10,[10]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[4,[1,2,3]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[0,[1,2,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[0,[7]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[1,[2,3]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[5,[1,2,3]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[11,[1,2,5]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[100,[1,5,10,25]]",
+        "output": "242",
+        "expectedOutput": "242",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[7,[2,3,7]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[50,[1,2,5,10]]",
+        "output": "341",
+        "expectedOutput": "341",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[1,[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[500,[1,2,5,10,20,50,100,200,500]]",
+        "output": "6295435",
+        "expectedOutput": "6295435",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[3,[1,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[6,[1,3,4]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[15,[5,10]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[9,[3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[8,[2,4]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[1000,[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[20,[5,10,25]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "coins = [1, 2, 5], amount = 5",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "the combinations are: 5; 2+2+1; 2+1+1+1; 1+1+1+1+1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "coins = [2], amount = 3",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "no combination of only 2s can sum to an odd amount"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "coins = [10], amount = 10",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "exactly one coin of value 10 is the only combination"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "coins = [1, 2, 5], amount = 5",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "the combinations are: 5; 2+2+1; 2+1+1+1; 1+1+1+1+1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "coins = [2], amount = 3",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "no combination of only 2s can sum to an odd amount"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "coins = [10], amount = 10",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "exactly one coin of value 10 is the only combination"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[5,[1,2,5]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[3,[2]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[10,[10]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[4,[1,2,3]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[0,[1,2,5]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[0,[7]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[1,[2,3]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[5,[1,2,3]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[11,[1,2,5]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[100,[1,5,10,25]]",
+      "output": "242",
+      "expectedOutput": "242",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[7,[2,3,7]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[50,[1,2,5,10]]",
+      "output": "341",
+      "expectedOutput": "341",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[1,[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[500,[1,2,5,10,20,50,100,200,500]]",
+      "output": "6295435",
+      "expectedOutput": "6295435",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[3,[1,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[6,[1,3,4]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[15,[5,10]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[9,[3]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[8,[2,4]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[1000,[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[20,[5,10,25]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "coins = [1, 2, 5], amount = 5",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "the combinations are: 5; 2+2+1; 2+1+1+1; 1+1+1+1+1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "coins = [2], amount = 3",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "no combination of only 2s can sum to an odd amount"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "coins = [10], amount = 10",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "exactly one coin of value 10 is the only combination"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[5,[1,2,5]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,[2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[10,[10]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[4,[1,2,3]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[0,[1,2,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[0,[7]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[1,[2,3]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[5,[1,2,3]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[11,[1,2,5]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[100,[1,5,10,25]]",
+        "output": "242",
+        "expectedOutput": "242",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[7,[2,3,7]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[50,[1,2,5,10]]",
+        "output": "341",
+        "expectedOutput": "341",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[1,[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[500,[1,2,5,10,20,50,100,200,500]]",
+        "output": "6295435",
+        "expectedOutput": "6295435",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[3,[1,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[6,[1,3,4]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[15,[5,10]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[9,[3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[8,[2,4]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[1000,[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[20,[5,10,25]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def change(self, amount, coins):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int change(int amount, vector<int>& coins) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int change(int amount, int[] coins) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun change(amount: Int, coins: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    change(amount, coins) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def change(self, amount, coins):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int change(int amount, vector<int>& coins) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int change(int amount, int[] coins) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun change(amount: Int, coins: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    change(amount, coins) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def change(self, amount, coins):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int change(int amount, vector<int>& coins) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int change(int amount, int[] coins) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun change(amount: Int, coins: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    change(amount, coins) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def change(self, amount, coins):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int change(int amount, vector<int>& coins) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int change(int amount, int[] coins) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun change(amount: Int, coins: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    change(amount, coins) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(amount * number of coins)",
+      "space": "O(amount)",
+      "pattern": "knapsack (unbounded, counting combinations - process coins one type at a time to avoid counting permutations)"
+    },
+    "bruteForce": {
+      "approach": "recursively try including zero or more of each coin type in a fixed order, branching on how many copies of the current coin to use before moving to the next coin",
+      "time": "exponential in amount",
+      "space": "O(amount / min coin) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "knapsack (unbounded, counting combinations - process coins one type at a time to avoid counting permutations)",
+    "time": "O(amount * number of coins)",
+    "space": "O(amount)",
+    "hint_ladder": [
+      "this looks like coin change, but you're counting combinations, not minimizing count - if you loop amount in the outer loop and coins in the inner loop, you'll count [1,2] and [2,1] as different, which is wrong for combinations",
+      "define dp[a] as the number of combinations that sum to a, using only coin types considered so far, with dp[0] = 1 (the empty combination)",
+      "process one coin denomination at a time, completely, before moving to the next - for the current coin c, update dp[a] += dp[a - c] for every a from c up to amount",
+      "iterating amount from low to high for a fixed coin allows that coin to be reused (unbounded), while the outer loop over coins (not amounts) is what prevents order from mattering",
+      "after processing every coin denomination this way, dp[amount] holds the final combination count"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try including zero or more of each coin type in a fixed order, branching on how many copies of the current coin to use before moving to the next coin",
+    "time": "exponential in amount",
+    "space": "O(amount / min coin) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

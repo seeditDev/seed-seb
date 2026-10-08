@@ -1,0 +1,630 @@
+{
+  "id": "online-stock-span",
+  "questionId": "online-stock-span",
+  "slug": "online-stock-span",
+  "title": "Online Stock Span",
+  "difficulty": "Medium",
+  "category": "Monotonic stack",
+  "patterns": [
+    "monotonic stack",
+    "design",
+    "array"
+  ],
+  "lists": [],
+  "hints": [
+    "the 'online' framing just means you must process prices one at a time without peeking ahead - does that actually change the algorithm from the batch version, or just how you feed it input?",
+    "keep a stack of (price, span) pairs representing days whose span hasn't been absorbed by a later day yet",
+    "when a new price arrives, while the stack's top price is <= the new price, pop it and add its stored span to the new price's running span - that whole absorbed stretch is now part of today's span",
+    "once nothing left on the stack is <= today's price (or the stack is empty), push (today's price, today's final span) and return that span as today's answer"
+  ],
+  "commonMistakes": [
+    "recomputing the span from scratch for every new arrival instead of reusing the stack's accumulated state",
+    "storing only prices on the stack without their spans, forcing a fallback to a slow scan",
+    "using strict < instead of <= when popping, undercounting spans that include equal prices"
+  ],
+  "content": {
+    "problemStatement": "Prices for a stock arrive one at a time, in chronological order, given to you up front as an array `prices` to simulate the arrivals. For each new price, its span is the number of consecutive days ending today (counting today) where the price was less than or equal to today's price, using only the prices seen so far, never future ones.\n\n**Return the span computed for each price, in the order the prices arrived.**\n",
+    "constraints": [
+      "1 <= prices.length <= 10^4",
+      "1 <= prices[i] <= 10^5",
+      "the span for the first price is always 1"
+    ],
+    "notes": [
+      "strictly increasing prices, where each span extends all the way back to the first day",
+      "strictly decreasing prices, where every span is 1",
+      "repeated prices, since ties count toward the span"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "prices = [100, 80, 60, 70, 60, 75, 85]",
+        "output": "[1, 1, 1, 2, 1, 4, 6]",
+        "expectedOutput": "[1, 1, 1, 2, 1, 4, 6]",
+        "explanation": "each span is computed only from prices at or before that day, exactly as they would arrive one by one"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "prices = [31, 41, 48, 59, 79]",
+        "output": "[1, 2, 3, 4, 5]",
+        "expectedOutput": "[1, 2, 3, 4, 5]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "prices = [10, 20, 10, 20, 10]",
+        "output": "[1, 2, 1, 4, 1]",
+        "expectedOutput": "[1, 2, 1, 4, 1]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[100,80,60,70,60,75,85]]",
+        "output": "[1,1,1,2,1,4,6]",
+        "expectedOutput": "[1,1,1,2,1,4,6]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[31,41,48,59,79]]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[10,20,10,20,10]]",
+        "output": "[1,2,1,4,1]",
+        "expectedOutput": "[1,2,1,4,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[50]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[77]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1,1,1,1]]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[47,264,19,190,225,271,56,234,145,194,217,228,74,26,47,212,39,279,148,185,222,289,188,294,18,270,110,259]]",
+        "output": "[1,2,1,2,3,6,1,2,1,2,3,4,1,1,2,4,1,18,1,2,3,22,1,24,1,2,1,2]",
+        "expectedOutput": "[1,2,1,2,3,6,1,2,1,2,3,4,1,1,2,4,1,18,1,2,3,22,1,24,1,2,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[5,3,8,3,9,3,10,3]]",
+        "output": "[1,1,3,1,5,1,7,1]",
+        "expectedOutput": "[1,1,3,1,5,1,7,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[100,200,150,300,100,400,50]]",
+        "output": "[1,2,1,4,1,6,1]",
+        "expectedOutput": "[1,2,1,4,1,6,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[2,1]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[949,293,185,757,803,954,552,682,773,567,774,444,112,82,926,439,646,988,250,183,260,964,831,286,216,483,598,20,416,723,263,900]]",
+        "output": "[1,1,1,3,4,6,1,2,3,1,5,1,1,1,9,1,2,18,1,1,3,4,1,1,1,3,4,1,2,7,1,10]",
+        "expectedOutput": "[1,1,1,3,4,6,1,2,3,1,5,1,1,1,9,1,2,18,1,1,3,4,1,1,1,3,4,1,2,7,1,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,100,2,99,3,98]]",
+        "output": "[1,2,1,2,1,2]",
+        "expectedOutput": "[1,2,1,2,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[100,90,110,80,120,70,130]]",
+        "output": "[1,1,3,1,5,1,7]",
+        "expectedOutput": "[1,1,3,1,5,1,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "prices = [100, 80, 60, 70, 60, 75, 85]",
+      "output": "[1, 1, 1, 2, 1, 4, 6]",
+      "expectedOutput": "[1, 1, 1, 2, 1, 4, 6]",
+      "explanation": "each span is computed only from prices at or before that day, exactly as they would arrive one by one"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "prices = [31, 41, 48, 59, 79]",
+      "output": "[1, 2, 3, 4, 5]",
+      "expectedOutput": "[1, 2, 3, 4, 5]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "prices = [10, 20, 10, 20, 10]",
+      "output": "[1, 2, 1, 4, 1]",
+      "expectedOutput": "[1, 2, 1, 4, 1]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "prices = [100, 80, 60, 70, 60, 75, 85]",
+      "output": "[1, 1, 1, 2, 1, 4, 6]",
+      "expectedOutput": "[1, 1, 1, 2, 1, 4, 6]",
+      "explanation": "each span is computed only from prices at or before that day, exactly as they would arrive one by one"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "prices = [31, 41, 48, 59, 79]",
+      "output": "[1, 2, 3, 4, 5]",
+      "expectedOutput": "[1, 2, 3, 4, 5]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "prices = [10, 20, 10, 20, 10]",
+      "output": "[1, 2, 1, 4, 1]",
+      "expectedOutput": "[1, 2, 1, 4, 1]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[100,80,60,70,60,75,85]]",
+      "output": "[1,1,1,2,1,4,6]",
+      "expectedOutput": "[1,1,1,2,1,4,6]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[31,41,48,59,79]]",
+      "output": "[1,2,3,4,5]",
+      "expectedOutput": "[1,2,3,4,5]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[10,20,10,20,10]]",
+      "output": "[1,2,1,4,1]",
+      "expectedOutput": "[1,2,1,4,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[50]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[77]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,1,1,1,1]]",
+      "output": "[1,2,3,4,5]",
+      "expectedOutput": "[1,2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]]",
+      "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+      "output": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+      "expectedOutput": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[47,264,19,190,225,271,56,234,145,194,217,228,74,26,47,212,39,279,148,185,222,289,188,294,18,270,110,259]]",
+      "output": "[1,2,1,2,3,6,1,2,1,2,3,4,1,1,2,4,1,18,1,2,3,22,1,24,1,2,1,2]",
+      "expectedOutput": "[1,2,1,2,3,6,1,2,1,2,3,4,1,1,2,4,1,18,1,2,3,22,1,24,1,2,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[5,3,8,3,9,3,10,3]]",
+      "output": "[1,1,3,1,5,1,7,1]",
+      "expectedOutput": "[1,1,3,1,5,1,7,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[100,200,150,300,100,400,50]]",
+      "output": "[1,2,1,4,1,6,1]",
+      "expectedOutput": "[1,2,1,4,1,6,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2]]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[2,1]]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[949,293,185,757,803,954,552,682,773,567,774,444,112,82,926,439,646,988,250,183,260,964,831,286,216,483,598,20,416,723,263,900]]",
+      "output": "[1,1,1,3,4,6,1,2,3,1,5,1,1,1,9,1,2,18,1,1,3,4,1,1,1,3,4,1,2,7,1,10]",
+      "expectedOutput": "[1,1,1,3,4,6,1,2,3,1,5,1,1,1,9,1,2,18,1,1,3,4,1,1,1,3,4,1,2,7,1,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10]]",
+      "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,100,2,99,3,98]]",
+      "output": "[1,2,1,2,1,2]",
+      "expectedOutput": "[1,2,1,2,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[100,90,110,80,120,70,130]]",
+      "output": "[1,1,3,1,5,1,7]",
+      "expectedOutput": "[1,1,3,1,5,1,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+      "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+      "output": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+      "expectedOutput": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "prices = [100, 80, 60, 70, 60, 75, 85]",
+        "output": "[1, 1, 1, 2, 1, 4, 6]",
+        "expectedOutput": "[1, 1, 1, 2, 1, 4, 6]",
+        "explanation": "each span is computed only from prices at or before that day, exactly as they would arrive one by one"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "prices = [31, 41, 48, 59, 79]",
+        "output": "[1, 2, 3, 4, 5]",
+        "expectedOutput": "[1, 2, 3, 4, 5]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "prices = [10, 20, 10, 20, 10]",
+        "output": "[1, 2, 1, 4, 1]",
+        "expectedOutput": "[1, 2, 1, 4, 1]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[100,80,60,70,60,75,85]]",
+        "output": "[1,1,1,2,1,4,6]",
+        "expectedOutput": "[1,1,1,2,1,4,6]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[31,41,48,59,79]]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[10,20,10,20,10]]",
+        "output": "[1,2,1,4,1]",
+        "expectedOutput": "[1,2,1,4,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[50]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[77]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1,1,1,1]]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[47,264,19,190,225,271,56,234,145,194,217,228,74,26,47,212,39,279,148,185,222,289,188,294,18,270,110,259]]",
+        "output": "[1,2,1,2,3,6,1,2,1,2,3,4,1,1,2,4,1,18,1,2,3,22,1,24,1,2,1,2]",
+        "expectedOutput": "[1,2,1,2,3,6,1,2,1,2,3,4,1,1,2,4,1,18,1,2,3,22,1,24,1,2,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[5,3,8,3,9,3,10,3]]",
+        "output": "[1,1,3,1,5,1,7,1]",
+        "expectedOutput": "[1,1,3,1,5,1,7,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[100,200,150,300,100,400,50]]",
+        "output": "[1,2,1,4,1,6,1]",
+        "expectedOutput": "[1,2,1,4,1,6,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[2,1]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[949,293,185,757,803,954,552,682,773,567,774,444,112,82,926,439,646,988,250,183,260,964,831,286,216,483,598,20,416,723,263,900]]",
+        "output": "[1,1,1,3,4,6,1,2,3,1,5,1,1,1,9,1,2,18,1,1,3,4,1,1,1,3,4,1,2,7,1,10]",
+        "expectedOutput": "[1,1,1,3,4,6,1,2,3,1,5,1,1,1,9,1,2,18,1,1,3,4,1,1,1,3,4,1,2,7,1,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,100,2,99,3,98]]",
+        "output": "[1,2,1,2,1,2]",
+        "expectedOutput": "[1,2,1,2,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[100,90,110,80,120,70,130]]",
+        "output": "[1,1,3,1,5,1,7]",
+        "expectedOutput": "[1,1,3,1,5,1,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def onlineStockSpans(self, prices):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> onlineStockSpans(vector<int>& prices) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] onlineStockSpans(int[] prices) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun onlineStockSpans(prices: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    onlineStockSpans(prices) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def onlineStockSpans(self, prices):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> onlineStockSpans(vector<int>& prices) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] onlineStockSpans(int[] prices) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun onlineStockSpans(prices: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    onlineStockSpans(prices) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def onlineStockSpans(self, prices):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> onlineStockSpans(vector<int>& prices) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] onlineStockSpans(int[] prices) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun onlineStockSpans(prices: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    onlineStockSpans(prices) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def onlineStockSpans(self, prices):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> onlineStockSpans(vector<int>& prices) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] onlineStockSpans(int[] prices) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun onlineStockSpans(prices: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    onlineStockSpans(prices) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n) total across all calls, amortized",
+      "space": "O(n) for the stack",
+      "pattern": "monotonic decreasing stack of (price, span) pairs, maintained incrementally as each price arrives"
+    },
+    "bruteForce": {
+      "approach": "for each newly arrived price, walk backwards through all previously seen prices, counting consecutive ones that are <= today's price",
+      "time": "O(n^2)",
+      "space": "O(n) to store the prices seen so far"
+    }
+  },
+  "optimal": {
+    "pattern": "monotonic decreasing stack of (price, span) pairs, maintained incrementally as each price arrives",
+    "time": "O(n) total across all calls, amortized",
+    "space": "O(n) for the stack",
+    "hint_ladder": [
+      "the 'online' framing just means you must process prices one at a time without peeking ahead - does that actually change the algorithm from the batch version, or just how you feed it input?",
+      "keep a stack of (price, span) pairs representing days whose span hasn't been absorbed by a later day yet",
+      "when a new price arrives, while the stack's top price is <= the new price, pop it and add its stored span to the new price's running span - that whole absorbed stretch is now part of today's span",
+      "once nothing left on the stack is <= today's price (or the stack is empty), push (today's price, today's final span) and return that span as today's answer"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each newly arrived price, walk backwards through all previously seen prices, counting consecutive ones that are <= today's price",
+    "time": "O(n^2)",
+    "space": "O(n) to store the prices seen so far"
+  },
+  "isIndex0": true,
+  "level": null
+}

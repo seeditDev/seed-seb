@@ -1,0 +1,601 @@
+{
+  "id": "product-of-array-except-self",
+  "questionId": "product-of-array-except-self",
+  "slug": "product-of-array-except-self",
+  "title": "Product of Array Except Self",
+  "difficulty": "Medium",
+  "category": "Prefix sum",
+  "patterns": [
+    "prefix sum",
+    "prefix product"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "dividing the total product by nums[i] would work, but you're not allowed to divide - and it breaks on zeros anyway. what's the product 'except self' made of, structurally?",
+    "the product of everything except index i is exactly (product of everything before i) times (product of everything after i)",
+    "build a left-to-right pass computing, at each index, the running product of everything strictly before it",
+    "then do a right-to-left pass, multiplying each position's existing value by a running product of everything strictly after it"
+  ],
+  "commonMistakes": [
+    "including the element itself in the prefix or suffix product",
+    "trying to use division as a shortcut, which breaks when the array contains a zero",
+    "forgetting to initialize the running prefix/suffix product to 1, not 0"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of integers.\n\n**Return a new array where each position holds the product of every element in the original array except the one at that position.**\n\nDo it without using division.\n",
+    "constraints": [
+      "1 <= nums.length <= 10^5",
+      "-30 <= nums[i] <= 30",
+      "the product of any prefix or suffix of nums fits in a 32-bit signed integer"
+    ],
+    "notes": [
+      "the array contains a single zero",
+      "the array contains multiple zeros (every result becomes 0)",
+      "the array contains negative numbers"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4]",
+        "output": "[24, 12, 8, 6]",
+        "expectedOutput": "[24, 12, 8, 6]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-1, 1, 0, -3, 3]",
+        "output": "[0, 0, 9, 0, 0]",
+        "expectedOutput": "[0, 0, 9, 0, 0]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4]]",
+        "output": "[24,12,8,6]",
+        "expectedOutput": "[24,12,8,6]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-1,1,0,-3,3]]",
+        "output": "[0,0,9,0,0]",
+        "expectedOutput": "[0,0,9,0,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[2,3]]",
+        "output": "[3,2]",
+        "expectedOutput": "[3,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[0,0]]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2]]",
+        "output": "[2,1]",
+        "expectedOutput": "[2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,-2,-3,-4]]",
+        "output": "[-24,-12,-8,-6]",
+        "expectedOutput": "[-24,-12,-8,-6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,1,2,3]]",
+        "output": "[6,0,0,0]",
+        "expectedOutput": "[6,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,0,0]]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,6,7,8,9]]",
+        "output": "[3024,2520,2160,1890,1680]",
+        "expectedOutput": "[3024,2520,2160,1890,1680]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-5,3,-2,4,-1]]",
+        "output": "[24,-40,60,-30,120]",
+        "expectedOutput": "[24,-40,60,-30,120]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "[5040,2520,1680,1260,1008,840,720]",
+        "expectedOutput": "[5040,2520,1680,1260,1008,840,720]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[2,2,2,2,2,2,2,2,2,2]]",
+        "output": "[512,512,512,512,512,512,512,512,512,512]",
+        "expectedOutput": "[512,512,512,512,512,512,512,512,512,512]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1]]",
+        "output": "[1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1]",
+        "expectedOutput": "[1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[3,2,1,-5,-5,-1,2,-1,-2,4,1,2,1,1,-4]]",
+        "output": "[6400,9600,19200,-3840,-3840,-19200,9600,-19200,-9600,4800,19200,9600,19200,19200,-4800]",
+        "expectedOutput": "[6400,9600,19200,-3840,-3840,-19200,9600,-19200,-9600,4800,19200,9600,19200,19200,-4800]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[0,0,0,0,0]]",
+        "output": "[0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10,-10,10,-10]]",
+        "output": "[1000,-1000,1000,-1000]",
+        "expectedOutput": "[1000,-1000,1000,-1000]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[3628800,1814400,1209600,907200,725760,604800,518400,453600,403200,362880]",
+        "expectedOutput": "[3628800,1814400,1209600,907200,725760,604800,518400,453600,403200,362880]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]]",
+        "output": "[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]",
+        "expectedOutput": "[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4]",
+      "output": "[24, 12, 8, 6]",
+      "expectedOutput": "[24, 12, 8, 6]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-1, 1, 0, -3, 3]",
+      "output": "[0, 0, 9, 0, 0]",
+      "expectedOutput": "[0, 0, 9, 0, 0]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4]",
+      "output": "[24, 12, 8, 6]",
+      "expectedOutput": "[24, 12, 8, 6]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-1, 1, 0, -3, 3]",
+      "output": "[0, 0, 9, 0, 0]",
+      "expectedOutput": "[0, 0, 9, 0, 0]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,4]]",
+      "output": "[24,12,8,6]",
+      "expectedOutput": "[24,12,8,6]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[-1,1,0,-3,3]]",
+      "output": "[0,0,9,0,0]",
+      "expectedOutput": "[0,0,9,0,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[2,3]]",
+      "output": "[3,2]",
+      "expectedOutput": "[3,2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,1]]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[0,0]]",
+      "output": "[0,0]",
+      "expectedOutput": "[0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[5]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2]]",
+      "output": "[2,1]",
+      "expectedOutput": "[2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[-1,-2,-3,-4]]",
+      "output": "[-24,-12,-8,-6]",
+      "expectedOutput": "[-24,-12,-8,-6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[0,1,2,3]]",
+      "output": "[6,0,0,0]",
+      "expectedOutput": "[6,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,0,0]]",
+      "output": "[0,0,0]",
+      "expectedOutput": "[0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[5,6,7,8,9]]",
+      "output": "[3024,2520,2160,1890,1680]",
+      "expectedOutput": "[3024,2520,2160,1890,1680]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[-5,3,-2,4,-1]]",
+      "output": "[24,-40,60,-30,120]",
+      "expectedOutput": "[24,-40,60,-30,120]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,5,6,7]]",
+      "output": "[5040,2520,1680,1260,1008,840,720]",
+      "expectedOutput": "[5040,2520,1680,1260,1008,840,720]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[2,2,2,2,2,2,2,2,2,2]]",
+      "output": "[512,512,512,512,512,512,512,512,512,512]",
+      "expectedOutput": "[512,512,512,512,512,512,512,512,512,512]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1]]",
+      "output": "[1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1]",
+      "expectedOutput": "[1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[3,2,1,-5,-5,-1,2,-1,-2,4,1,2,1,1,-4]]",
+      "output": "[6400,9600,19200,-3840,-3840,-19200,9600,-19200,-9600,4800,19200,9600,19200,19200,-4800]",
+      "expectedOutput": "[6400,9600,19200,-3840,-3840,-19200,9600,-19200,-9600,4800,19200,9600,19200,19200,-4800]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[0,0,0,0,0]]",
+      "output": "[0,0,0,0,0]",
+      "expectedOutput": "[0,0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[10,-10,10,-10]]",
+      "output": "[1000,-1000,1000,-1000]",
+      "expectedOutput": "[1000,-1000,1000,-1000]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+      "output": "[3628800,1814400,1209600,907200,725760,604800,518400,453600,403200,362880]",
+      "expectedOutput": "[3628800,1814400,1209600,907200,725760,604800,518400,453600,403200,362880]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]]",
+      "output": "[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]",
+      "expectedOutput": "[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4]",
+        "output": "[24, 12, 8, 6]",
+        "expectedOutput": "[24, 12, 8, 6]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-1, 1, 0, -3, 3]",
+        "output": "[0, 0, 9, 0, 0]",
+        "expectedOutput": "[0, 0, 9, 0, 0]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4]]",
+        "output": "[24,12,8,6]",
+        "expectedOutput": "[24,12,8,6]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-1,1,0,-3,3]]",
+        "output": "[0,0,9,0,0]",
+        "expectedOutput": "[0,0,9,0,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[2,3]]",
+        "output": "[3,2]",
+        "expectedOutput": "[3,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[0,0]]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2]]",
+        "output": "[2,1]",
+        "expectedOutput": "[2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,-2,-3,-4]]",
+        "output": "[-24,-12,-8,-6]",
+        "expectedOutput": "[-24,-12,-8,-6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,1,2,3]]",
+        "output": "[6,0,0,0]",
+        "expectedOutput": "[6,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,0,0]]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,6,7,8,9]]",
+        "output": "[3024,2520,2160,1890,1680]",
+        "expectedOutput": "[3024,2520,2160,1890,1680]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-5,3,-2,4,-1]]",
+        "output": "[24,-40,60,-30,120]",
+        "expectedOutput": "[24,-40,60,-30,120]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "[5040,2520,1680,1260,1008,840,720]",
+        "expectedOutput": "[5040,2520,1680,1260,1008,840,720]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[2,2,2,2,2,2,2,2,2,2]]",
+        "output": "[512,512,512,512,512,512,512,512,512,512]",
+        "expectedOutput": "[512,512,512,512,512,512,512,512,512,512]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1]]",
+        "output": "[1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1]",
+        "expectedOutput": "[1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[3,2,1,-5,-5,-1,2,-1,-2,4,1,2,1,1,-4]]",
+        "output": "[6400,9600,19200,-3840,-3840,-19200,9600,-19200,-9600,4800,19200,9600,19200,19200,-4800]",
+        "expectedOutput": "[6400,9600,19200,-3840,-3840,-19200,9600,-19200,-9600,4800,19200,9600,19200,19200,-4800]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[0,0,0,0,0]]",
+        "output": "[0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10,-10,10,-10]]",
+        "output": "[1000,-1000,1000,-1000]",
+        "expectedOutput": "[1000,-1000,1000,-1000]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[3628800,1814400,1209600,907200,725760,604800,518400,453600,403200,362880]",
+        "expectedOutput": "[3628800,1814400,1209600,907200,725760,604800,518400,453600,403200,362880]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]]",
+        "output": "[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]",
+        "expectedOutput": "[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def productExceptSelf(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> productExceptSelf(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] productExceptSelf(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun productExceptSelf(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    productExceptSelf(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def productExceptSelf(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> productExceptSelf(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] productExceptSelf(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun productExceptSelf(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    productExceptSelf(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def productExceptSelf(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> productExceptSelf(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] productExceptSelf(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun productExceptSelf(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    productExceptSelf(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def productExceptSelf(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> productExceptSelf(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] productExceptSelf(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun productExceptSelf(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    productExceptSelf(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the output, O(1) extra",
+      "pattern": "prefix and suffix products - for each index, the answer is the product of everything before it times the product of everything after it"
+    },
+    "bruteForce": {
+      "approach": "for each index, multiply every other element together in a nested loop",
+      "time": "O(n^2)",
+      "space": "O(n) for the output"
+    }
+  },
+  "optimal": {
+    "pattern": "prefix and suffix products - for each index, the answer is the product of everything before it times the product of everything after it",
+    "time": "O(n)",
+    "space": "O(n) for the output, O(1) extra",
+    "hint_ladder": [
+      "dividing the total product by nums[i] would work, but you're not allowed to divide - and it breaks on zeros anyway. what's the product 'except self' made of, structurally?",
+      "the product of everything except index i is exactly (product of everything before i) times (product of everything after i)",
+      "build a left-to-right pass computing, at each index, the running product of everything strictly before it",
+      "then do a right-to-left pass, multiplying each position's existing value by a running product of everything strictly after it"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each index, multiply every other element together in a nested loop",
+    "time": "O(n^2)",
+    "space": "O(n) for the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

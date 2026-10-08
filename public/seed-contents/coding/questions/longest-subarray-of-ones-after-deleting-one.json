@@ -1,0 +1,628 @@
+{
+  "id": "longest-subarray-of-ones-after-deleting-one",
+  "questionId": "longest-subarray-of-ones-after-deleting-one",
+  "slug": "longest-subarray-of-ones-after-deleting-one",
+  "title": "Longest Subarray of 1's After Deleting One Element",
+  "difficulty": "Medium",
+  "category": "Sliding window",
+  "patterns": [
+    "sliding window",
+    "variable-size window"
+  ],
+  "lists": [],
+  "hints": [
+    "'delete exactly one element' and 'flip at most one 0 to a 1' sound different, but think about what the final window of 1s actually looks like in both cases.",
+    "if you allow at most one 0 inside a sliding window (same idea as Max Consecutive Ones III with k=1), what does the window represent once you subtract 1 for the deleted slot?",
+    "grow a window to the right, allowing at most one 0 inside it; if a second 0 appears, shrink from the left until only one 0 remains",
+    "the answer is the window length minus 1, since one element in that window (a 0, or if there's no 0, any single 1) represents the element you delete"
+  ],
+  "commonMistakes": [
+    "forgetting that a deletion is mandatory even when the array is already all 1s, which caps the answer at length - 1 in that case",
+    "computing the window length directly as the answer instead of subtracting 1 for the deleted element",
+    "allowing more than one 0 in the window, or not shrinking correctly when a second 0 appears"
+  ],
+  "content": {
+    "problemStatement": "You're given a binary array (only 0s and 1s). You must delete exactly\none element from it.\n\n**Return the length of the longest stretch of consecutive 1s you can\nget in what remains.**\n",
+    "constraints": [
+      "1 <= nums.length <= 10^5",
+      "nums[i] is either 0 or 1"
+    ],
+    "notes": [
+      "the array is already all 1s (you still must delete one)",
+      "the array is all 0s (answer is 0)",
+      "a single element array"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 1, 0, 1]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "delete the 0 to get [1, 1, 1]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 1, 1, 1, 0, 1, 1, 0, 1]",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 1, 1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "you must delete exactly one element even if the array is already all 1s, so the best you can do is 2"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,1,0,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,1,1,1,0,1,1,0,1]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,0,1,1,1,0,1,1,1,1,0]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,0,0,0,0,0,0,0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,1,1,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,1,0,1,0,1,0,1,0,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,1,0,1,1,0,1,1,1,0,1,1,1,1]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,0,0,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[0,0,1,1,1,1,1,1,1,1,0,0]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,1,1,1,1,0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1]]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 1, 0, 1]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "delete the 0 to get [1, 1, 1]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 1, 1, 1, 0, 1, 1, 0, 1]",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 1, 1]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "you must delete exactly one element even if the array is already all 1s, so the best you can do is 2"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 1, 0, 1]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "delete the 0 to get [1, 1, 1]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 1, 1, 1, 0, 1, 1, 0, 1]",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 1, 1]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "you must delete exactly one element even if the array is already all 1s, so the best you can do is 2"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,1,0,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0,1,1,1,0,1,1,0,1]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,1,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[0,0,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[0,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,0,1,1,1,0,1,1,1,1,0]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+      "output": "19",
+      "expectedOutput": "19",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[0,0,0,0,0,0,0,0,0,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,1,1,1,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[0,1,0,1,0,1,0,1,0,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,1,0,1,1,0,1,1,1,0,1,1,1,1]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,0,0,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[0,0,1,1,1,1,1,1,1,1,0,0]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+      "output": "19",
+      "expectedOutput": "19",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,1,1,1,1,0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1]]",
+      "output": "13",
+      "expectedOutput": "13",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 1, 0, 1]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "delete the 0 to get [1, 1, 1]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 1, 1, 1, 0, 1, 1, 0, 1]",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 1, 1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "you must delete exactly one element even if the array is already all 1s, so the best you can do is 2"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,1,0,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,1,1,1,0,1,1,0,1]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,0,1,1,1,0,1,1,1,1,0]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,0,0,0,0,0,0,0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,1,1,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,1,0,1,0,1,0,1,0,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,1,0,1,1,0,1,1,1,0,1,1,1,1]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,0,0,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[0,0,1,1,1,1,1,1,1,1,0,0]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,1,1,1,1,0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1]]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def longestSubarray(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestSubarray(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestSubarray(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestSubarray(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestSubarray(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def longestSubarray(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestSubarray(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestSubarray(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestSubarray(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestSubarray(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def longestSubarray(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestSubarray(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestSubarray(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestSubarray(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestSubarray(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def longestSubarray(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestSubarray(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestSubarray(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestSubarray(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestSubarray(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "this is Max Consecutive Ones III with k = 1, since deleting one element is the same as being allowed to flip at most one 0"
+    },
+    "bruteForce": {
+      "approach": "for every index, imagine deleting it and find the longest run of 1s adjacent to that gap by scanning outward, tracking the best",
+      "time": "O(n^2)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "this is Max Consecutive Ones III with k = 1, since deleting one element is the same as being allowed to flip at most one 0",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "'delete exactly one element' and 'flip at most one 0 to a 1' sound different, but think about what the final window of 1s actually looks like in both cases.",
+      "if you allow at most one 0 inside a sliding window (same idea as Max Consecutive Ones III with k=1), what does the window represent once you subtract 1 for the deleted slot?",
+      "grow a window to the right, allowing at most one 0 inside it; if a second 0 appears, shrink from the left until only one 0 remains",
+      "the answer is the window length minus 1, since one element in that window (a 0, or if there's no 0, any single 1) represents the element you delete"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every index, imagine deleting it and find the longest run of 1s adjacent to that gap by scanning outward, tracking the best",
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

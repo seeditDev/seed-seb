@@ -1,0 +1,629 @@
+{
+  "id": "check-if-array-is-good",
+  "questionId": "check-if-array-is-good",
+  "slug": "check-if-array-is-good",
+  "title": "Check if Array Is Good",
+  "difficulty": "Medium",
+  "category": "Cyclic sort",
+  "patterns": [
+    "cyclic sort",
+    "array"
+  ],
+  "lists": [],
+  "hints": [
+    "with n = array length - 1, a good array's sorted form is 1, 2, 3, ..., n-1, n, n. notice every value except n has a single unique home index, and n has to share the last index with itself",
+    "values 1 through n-1 belong at index value-1, exactly like in a standard cyclic sort. both copies of n want index n-1, the last slot in a zero-indexed array of length n+1",
+    "run cyclic placement: for each position, while the value there isn't already correct and its target slot doesn't already hold the right value, swap it toward home, treating any value equal to n as wanting the last index",
+    "after placement, check every index i from 0 to n-2 holds i+1, and the last index holds n. if anything mismatches, or if a value outside [1, n] ever appears, the array isn't good"
+  ],
+  "commonMistakes": [
+    "computing n as the array length instead of array length minus one",
+    "not handling the case where both copies of n want the same last index, which needs a special-cased placement rule instead of the usual value-1 index formula",
+    "not rejecting values greater than n or less than 1, which can never belong in a good array"
+  ],
+  "content": {
+    "problemStatement": "Let `n` be one less than the length of the input array. An array is considered \"good\" if, once sorted ascending, it looks exactly like 1, 2, 3, ..., n-1, n, n: a permutation of every integer from 1 to n, where n itself appears twice instead of once (the two copies of n can sit anywhere before sorting).\n\n**Given an array, determine whether it is good.**\n",
+    "constraints": [
+      "1 <= nums.length <= 100",
+      "1 <= nums[i] <= 100",
+      "n is defined as nums.length - 1"
+    ],
+    "notes": [
+      "n = 1, array is [1, 1]",
+      "the value n appears twice but one of 1..n-1 is missing or duplicated instead",
+      "the array contains a value greater than n, which can never be part of a good array"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [2, 1, 3, 3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "array length is 4, so n = 3. sorted, the array is [1, 2, 3, 3], which matches 1, 2, ..., n-1, n, n = 1, 2, 3, 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 3, 3, 2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "array length is 4, so n = 3. sorted, the array is [1, 2, 3, 3], the same target as above"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "array length is 3, so n = 2, and the target would be [1, 2, 2]. this array sorted is [1, 2, 3], which doesn't match"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[2,1,3,3]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,3,3,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[2,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[3,1,2,3]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,4,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,3,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,5,1,2,3,4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,6,6]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[7,7]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[8,10,6,7,15,11,13,9,2,3,14,15,5,12,1,4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,4,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[4,4,4,1,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,1,2,2,3,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[10,20,1,2,3,4,5,6,7,8,9,10]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,4,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [2, 1, 3, 3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "array length is 4, so n = 3. sorted, the array is [1, 2, 3, 3], which matches 1, 2, ..., n-1, n, n = 1, 2, 3, 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 3, 3, 2]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "array length is 4, so n = 3. sorted, the array is [1, 2, 3, 3], the same target as above"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "array length is 3, so n = 2, and the target would be [1, 2, 2]. this array sorted is [1, 2, 3], which doesn't match"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [2, 1, 3, 3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "array length is 4, so n = 3. sorted, the array is [1, 2, 3, 3], which matches 1, 2, ..., n-1, n, n = 1, 2, 3, 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 3, 3, 2]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "array length is 4, so n = 3. sorted, the array is [1, 2, 3, 3], the same target as above"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "array length is 3, so n = 2, and the target would be [1, 2, 2]. this array sorted is [1, 2, 3], which doesn't match"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[2,1,3,3]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,3,3,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[2,2]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[2,1,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[3,1,2,3]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,4,4]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,1,3,3]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[5,5,1,2,3,4]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,5]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,6,6]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[7,7]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[8,10,6,7,15,11,13,9,2,3,14,15,5,12,1,4]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,3,4,5]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[4,4,4,1,2]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,1,2,2,3,3]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[10,20,1,2,3,4,5,6,7,8,9,10]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,2,3,4,4,5]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [2, 1, 3, 3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "array length is 4, so n = 3. sorted, the array is [1, 2, 3, 3], which matches 1, 2, ..., n-1, n, n = 1, 2, 3, 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 3, 3, 2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "array length is 4, so n = 3. sorted, the array is [1, 2, 3, 3], the same target as above"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "array length is 3, so n = 2, and the target would be [1, 2, 2]. this array sorted is [1, 2, 3], which doesn't match"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[2,1,3,3]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,3,3,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[2,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[3,1,2,3]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,4,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,3,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,5,1,2,3,4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,6,6]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[7,7]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[8,10,6,7,15,11,13,9,2,3,14,15,5,12,1,4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,4,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[4,4,4,1,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,1,2,2,3,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[10,20,1,2,3,4,5,6,7,8,9,10]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,4,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def isGood(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isGood(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isGood(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isGood(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isGood(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def isGood(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isGood(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isGood(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isGood(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isGood(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def isGood(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isGood(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isGood(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isGood(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isGood(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def isGood(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isGood(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isGood(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isGood(nums: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isGood(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra",
+      "pattern": "cyclic sort placement: with n = array length - 1, values 1..n-1 each belong at index value-1, and both copies of n compete for the last index; place everything and check the final layout matches the target"
+    },
+    "bruteForce": {
+      "approach": "count the frequency of every value with a hash map, then check that values 1..n-1 each appear exactly once, n appears exactly twice, and no value outside that range is present",
+      "time": "O(n)",
+      "space": "O(n) for the frequency map"
+    }
+  },
+  "optimal": {
+    "pattern": "cyclic sort placement: with n = array length - 1, values 1..n-1 each belong at index value-1, and both copies of n compete for the last index; place everything and check the final layout matches the target",
+    "time": "O(n)",
+    "space": "O(1) extra",
+    "hint_ladder": [
+      "with n = array length - 1, a good array's sorted form is 1, 2, 3, ..., n-1, n, n. notice every value except n has a single unique home index, and n has to share the last index with itself",
+      "values 1 through n-1 belong at index value-1, exactly like in a standard cyclic sort. both copies of n want index n-1, the last slot in a zero-indexed array of length n+1",
+      "run cyclic placement: for each position, while the value there isn't already correct and its target slot doesn't already hold the right value, swap it toward home, treating any value equal to n as wanting the last index",
+      "after placement, check every index i from 0 to n-2 holds i+1, and the last index holds n. if anything mismatches, or if a value outside [1, n] ever appears, the array isn't good"
+    ]
+  },
+  "bruteForce": {
+    "approach": "count the frequency of every value with a hash map, then check that values 1..n-1 each appear exactly once, n appears exactly twice, and no value outside that range is present",
+    "time": "O(n)",
+    "space": "O(n) for the frequency map"
+  },
+  "isIndex0": true,
+  "level": null
+}

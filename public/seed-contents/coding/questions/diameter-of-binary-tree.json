@@ -1,0 +1,738 @@
+{
+  "id": "diameter-of-binary-tree",
+  "questionId": "diameter-of-binary-tree",
+  "slug": "diameter-of-binary-tree",
+  "title": "Diameter of Binary Tree",
+  "difficulty": "Medium",
+  "category": "Tree dfs",
+  "patterns": [
+    "tree",
+    "dfs",
+    "recursion"
+  ],
+  "lists": [
+    "grind-75"
+  ],
+  "hints": [
+    "the diameter through any particular node equals the height of its left subtree plus the height of its right subtree - do you need to recompute those heights separately for every node, or can one traversal give you both?",
+    "write a helper that returns the height of the subtree at index i, but also updates some shared 'best diameter found so far' value along the way",
+    "at each node, after recursively getting the heights of both children, the diameter 'through' this node is leftHeight + rightHeight - compare that against your running maximum",
+    "the value the helper returns upward (for the parent to use) should just be 1 + max(leftHeight, rightHeight) - the diameter update is a side effect, not the return value"
+  ],
+  "commonMistakes": [
+    "returning the diameter itself from the recursive helper instead of the height, which breaks the parent's height calculation",
+    "recomputing height from scratch at every node (nested traversals) instead of combining the diameter check into a single postorder pass",
+    "measuring diameter in number of nodes instead of number of edges (off by one)"
+  ],
+  "content": {
+    "problemStatement": "Binary trees are encoded as flat arrays using complete-binary-tree\n(heap) indexing:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array's bounds **and** its value isn't the sentinel `-101`\n- a position at or beyond the array's end, or one holding `-101`, means \"no node there\" - real node values are always between -100 and 100, so -101 never collides with a genuine value\n\nFor example, `[1, 2, 3, -101, 4]` encodes this tree:\n\n```\n      1\n     / \\\n    2   3\n     \\\n      4\n```\n\nNode 2's left child is missing (index 3 is -101) and its right child is 4 (index 4).\n\n**Return the diameter of the tree, the length, measured in number of edges, of the longest path between any two nodes.**\n\nThis path does not need to pass through the root, and it may or may not pass through any particular node at all, it's simply the longest path found anywhere in the tree.\n",
+    "constraints": [
+      "0 <= number of real nodes <= 10^4",
+      "-100 <= Node.val <= 100",
+      "1 <= tree.length <= 10^4",
+      "the sentinel value -101 marks a missing node and never appears as a real value"
+    ],
+    "notes": [
+      "empty tree ([-101]) or a single node, both with diameter 0",
+      "a path that passes through the root versus one entirely contained in a subtree that never reaches the root",
+      "a fully skewed (chain-like) tree"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, 4, 5]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "root 1 has children 2 and 3; 2 has children 4 and 5. the longest path is 4 -> 2 -> 1 -> 3 (or 5 -> 2 -> 1 -> 3), which has 3 edges"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [1, 2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the only path is 1 -> 2, a single edge"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [1, 2, -101, 3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "this is a left-only chain 1 -> 2 -> 3. the longest path is the whole chain, 2 edges"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,-101,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[-101]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-66,45]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-66,-101,45]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-86,-77,-101,-79,-101,-101,-101,-8,-101,-101,-101,-101,-101,-101,-101,-57]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-40,-101,51,-101,-101,-101,39,-101,-101,-101,-101,-101,-101,-101,-67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-6]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-40,-23,-101,-74,-101,-101,-101,84,-101,-101,-101,-101,-101,-101,-101,1,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,22,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-77]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[59,-101,-35,-101,-101,-101,89,-101,-101,-101,-101,-101,-101,-101,-9,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,76,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,89,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,35]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[46,-80,24,95,-34,-91,-100]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-18,-62,1,66,-88,-82,37,-76,-7,49,-86,29,-46,-91,-78]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-60,-101,-15,-101,-101,47,-90,-101,-101,-101,-101,57,-101,-101,-20,-101,-101,-101,-101,-101,-101,-101,-101,63,-64,-101,-101,-101,-101,-76]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[98,91,76,7,-101,-2,-26,-101,-101,-101,-101,-48,-74,-78,-101,-101,-101,-101,-101,-101,-101,-101,-101,-43,-101,85,72]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-3,65,63,-65,-23,-29,7,84,9,-6,-101,-72,-32,-101,-101,-101,-101,-101,-101,-101,-35,-101,-101,-43,-101,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,57,62,-101,-101,-101,-101,-101,-46,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,69]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-65,-92,43,-36,-94,69,-27,95,-56,-101,-84,-101,66,9,21,59,-101,-101,-101,-101,-101,-101,-101,-101,-101,12,-101,-67,-68,-63,-19,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-20,91,15,68,-32,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-56,-68,-43,-40,-53,-42,-101,-101,-31,-10,-101,-52,-41]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-30,33,44,-41,-19,-39,-43,9,-101,-46,-5,34,-101,-101,-18,-101,-101,-101,-101,-101,35,-41,-6,-101,-101,-101,-101,-101,-101,17,-31,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,3]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[100,-100,100,-101,-101,-100,100]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[0,0,0,0,-101,-101,0]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[[-93,-59,50,5,89,-101,-2,75,-71,16,-101,-101,-101,-101,21,8,34,75,-77,11,17,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,15,-101,22,-57,36,-101,-76,57,-101,-101,25,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-21,-101,0,24,-101,-101,-101,-101,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,52,-101,-101,-101,-101,6,-40]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_24",
+        "input": "[[0,1,-101,2,-101,-101,-101,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_25",
+        "input": "[[5,-3,-3,1,1,-101,-101,2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, 4, 5]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "root 1 has children 2 and 3; 2 has children 4 and 5. the longest path is 4 -> 2 -> 1 -> 3 (or 5 -> 2 -> 1 -> 3), which has 3 edges"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [1, 2]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the only path is 1 -> 2, a single edge"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [1, 2, -101, 3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "this is a left-only chain 1 -> 2 -> 3. the longest path is the whole chain, 2 edges"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, 4, 5]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "root 1 has children 2 and 3; 2 has children 4 and 5. the longest path is 4 -> 2 -> 1 -> 3 (or 5 -> 2 -> 1 -> 3), which has 3 edges"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [1, 2]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the only path is 1 -> 2, a single edge"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [1, 2, -101, 3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "this is a left-only chain 1 -> 2 -> 3. the longest path is the whole chain, 2 edges"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,4,5]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2,-101,3]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[-101]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[-5]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[-66,45]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[-66,-101,45]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-86,-77,-101,-79,-101,-101,-101,-8,-101,-101,-101,-101,-101,-101,-101,-57]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[-40,-101,51,-101,-101,-101,39,-101,-101,-101,-101,-101,-101,-101,-67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-6]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[-40,-23,-101,-74,-101,-101,-101,84,-101,-101,-101,-101,-101,-101,-101,1,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,22,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-77]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[59,-101,-35,-101,-101,-101,89,-101,-101,-101,-101,-101,-101,-101,-9,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,76,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,89,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,35]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[46,-80,24,95,-34,-91,-100]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-18,-62,1,66,-88,-82,37,-76,-7,49,-86,29,-46,-91,-78]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-60,-101,-15,-101,-101,47,-90,-101,-101,-101,-101,57,-101,-101,-20,-101,-101,-101,-101,-101,-101,-101,-101,63,-64,-101,-101,-101,-101,-76]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[98,91,76,7,-101,-2,-26,-101,-101,-101,-101,-48,-74,-78,-101,-101,-101,-101,-101,-101,-101,-101,-101,-43,-101,85,72]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[-3,65,63,-65,-23,-29,7,84,9,-6,-101,-72,-32,-101,-101,-101,-101,-101,-101,-101,-35,-101,-101,-43,-101,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,57,62,-101,-101,-101,-101,-101,-46,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,69]]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[-65,-92,43,-36,-94,69,-27,95,-56,-101,-84,-101,66,9,21,59,-101,-101,-101,-101,-101,-101,-101,-101,-101,12,-101,-67,-68,-63,-19,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-20,91,15,68,-32,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[-56,-68,-43,-40,-53,-42,-101,-101,-31,-10,-101,-52,-41]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[-30,33,44,-41,-19,-39,-43,9,-101,-46,-5,34,-101,-101,-18,-101,-101,-101,-101,-101,35,-41,-6,-101,-101,-101,-101,-101,-101,17,-31,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,3]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[100,-100,100,-101,-101,-100,100]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[[0,0,0,0,-101,-101,0]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_23",
+      "input": "[[-93,-59,50,5,89,-101,-2,75,-71,16,-101,-101,-101,-101,21,8,34,75,-77,11,17,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,15,-101,22,-57,36,-101,-76,57,-101,-101,25,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-21,-101,0,24,-101,-101,-101,-101,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,52,-101,-101,-101,-101,6,-40]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_24",
+      "input": "[[0,1,-101,2,-101,-101,-101,3]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_25",
+      "input": "[[5,-3,-3,1,1,-101,-101,2]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, 4, 5]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "root 1 has children 2 and 3; 2 has children 4 and 5. the longest path is 4 -> 2 -> 1 -> 3 (or 5 -> 2 -> 1 -> 3), which has 3 edges"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [1, 2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the only path is 1 -> 2, a single edge"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [1, 2, -101, 3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "this is a left-only chain 1 -> 2 -> 3. the longest path is the whole chain, 2 edges"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,-101,3]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[-101]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-66,45]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-66,-101,45]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-86,-77,-101,-79,-101,-101,-101,-8,-101,-101,-101,-101,-101,-101,-101,-57]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-40,-101,51,-101,-101,-101,39,-101,-101,-101,-101,-101,-101,-101,-67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-6]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-40,-23,-101,-74,-101,-101,-101,84,-101,-101,-101,-101,-101,-101,-101,1,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,22,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-77]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[59,-101,-35,-101,-101,-101,89,-101,-101,-101,-101,-101,-101,-101,-9,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,76,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,89,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,35]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[46,-80,24,95,-34,-91,-100]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-18,-62,1,66,-88,-82,37,-76,-7,49,-86,29,-46,-91,-78]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-60,-101,-15,-101,-101,47,-90,-101,-101,-101,-101,57,-101,-101,-20,-101,-101,-101,-101,-101,-101,-101,-101,63,-64,-101,-101,-101,-101,-76]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[98,91,76,7,-101,-2,-26,-101,-101,-101,-101,-48,-74,-78,-101,-101,-101,-101,-101,-101,-101,-101,-101,-43,-101,85,72]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-3,65,63,-65,-23,-29,7,84,9,-6,-101,-72,-32,-101,-101,-101,-101,-101,-101,-101,-35,-101,-101,-43,-101,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,57,62,-101,-101,-101,-101,-101,-46,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,69]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-65,-92,43,-36,-94,69,-27,95,-56,-101,-84,-101,66,9,21,59,-101,-101,-101,-101,-101,-101,-101,-101,-101,12,-101,-67,-68,-63,-19,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-20,91,15,68,-32,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-56,-68,-43,-40,-53,-42,-101,-101,-31,-10,-101,-52,-41]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-30,33,44,-41,-19,-39,-43,9,-101,-46,-5,34,-101,-101,-18,-101,-101,-101,-101,-101,35,-41,-6,-101,-101,-101,-101,-101,-101,17,-31,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,3]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[100,-100,100,-101,-101,-100,100]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[0,0,0,0,-101,-101,0]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[[-93,-59,50,5,89,-101,-2,75,-71,16,-101,-101,-101,-101,21,8,34,75,-77,11,17,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,15,-101,22,-57,36,-101,-76,57,-101,-101,25,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-21,-101,0,24,-101,-101,-101,-101,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,52,-101,-101,-101,-101,6,-40]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_24",
+        "input": "[[0,1,-101,2,-101,-101,-101,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_25",
+        "input": "[[5,-3,-3,1,1,-101,-101,2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def diameterOfBinaryTree(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int diameterOfBinaryTree(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int diameterOfBinaryTree(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun diameterOfBinaryTree(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    diameterOfBinaryTree(tree) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def diameterOfBinaryTree(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int diameterOfBinaryTree(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int diameterOfBinaryTree(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun diameterOfBinaryTree(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    diameterOfBinaryTree(tree) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def diameterOfBinaryTree(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int diameterOfBinaryTree(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int diameterOfBinaryTree(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun diameterOfBinaryTree(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    diameterOfBinaryTree(tree) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def diameterOfBinaryTree(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int diameterOfBinaryTree(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int diameterOfBinaryTree(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun diameterOfBinaryTree(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    diameterOfBinaryTree(tree) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n), each node's height computed exactly once",
+      "space": "O(h) recursion stack",
+      "pattern": "single postorder DFS that returns subtree height while updating a running best diameter as a side effect at each node"
+    },
+    "bruteForce": {
+      "approach": "for every node, compute the depth of its left and right subtrees separately (each a fresh O(n) traversal) and track the maximum of left-depth + right-depth across all nodes",
+      "time": "O(n^2), since depth is recomputed from scratch for every node",
+      "space": "O(h) recursion stack"
+    }
+  },
+  "optimal": {
+    "pattern": "single postorder DFS that returns subtree height while updating a running best diameter as a side effect at each node",
+    "time": "O(n), each node's height computed exactly once",
+    "space": "O(h) recursion stack",
+    "hint_ladder": [
+      "the diameter through any particular node equals the height of its left subtree plus the height of its right subtree - do you need to recompute those heights separately for every node, or can one traversal give you both?",
+      "write a helper that returns the height of the subtree at index i, but also updates some shared 'best diameter found so far' value along the way",
+      "at each node, after recursively getting the heights of both children, the diameter 'through' this node is leftHeight + rightHeight - compare that against your running maximum",
+      "the value the helper returns upward (for the parent to use) should just be 1 + max(leftHeight, rightHeight) - the diameter update is a side effect, not the return value"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every node, compute the depth of its left and right subtrees separately (each a fresh O(n) traversal) and track the maximum of left-depth + right-depth across all nodes",
+    "time": "O(n^2), since depth is recomputed from scratch for every node",
+    "space": "O(h) recursion stack"
+  },
+  "isIndex0": true,
+  "level": null
+}

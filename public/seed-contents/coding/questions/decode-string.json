@@ -1,0 +1,651 @@
+{
+  "id": "decode-string",
+  "questionId": "decode-string",
+  "slug": "decode-string",
+  "title": "Decode String",
+  "difficulty": "Medium",
+  "category": "Stack",
+  "patterns": [
+    "stack",
+    "recursion"
+  ],
+  "lists": [],
+  "hints": [
+    "nested brackets mean you need to 'pause' building the current level's string whenever you enter a deeper bracket, then resume once it closes - what structure naturally supports pause and resume in reverse order?",
+    "walk through s character by character; accumulate digits into a number, and accumulate letters into a current string buffer",
+    "when you hit '[', push the current buffer and the number you just built onto a stack, then reset both to start building the inner content fresh",
+    "when you hit ']', pop the (previous buffer, repeat count) pair, and set the current buffer to previous buffer + (current buffer repeated that many times)"
+  ],
+  "commonMistakes": [
+    "forgetting to reset the digit accumulator after pushing it on '[', causing digits from different levels to bleed together",
+    "only handling single-digit repeat counts instead of accumulating multi-digit numbers",
+    "concatenating in the wrong order when popping (appending the popped prefix after the repeated inner string instead of before)"
+  ],
+  "content": {
+    "problemStatement": "You're given an encoded string `s` containing lowercase letters, digits,\nand square brackets, following the pattern k[encoded_string], which means\nencoded_string should be repeated k times in the decoded output. The\nencoding can be nested, for example 3[a2[c]] means \"a2[c]\" repeated 3\ntimes, and 2[c] inside that means \"c\" repeated 2 times.\n\n**Return the fully decoded string.**\n\nYou can assume the input is always validly formatted and that k is always a positive integer with no leading zeroes.\n",
+    "constraints": [
+      "0 <= s.length <= 30",
+      "s is guaranteed to be a validly formatted encoding with matched brackets",
+      "k is always a positive integer with no leading zeroes",
+      "the decoded output length fits well within a 32-bit integer"
+    ],
+    "notes": [
+      "no brackets at all (plain letters, returned unchanged)",
+      "multi-digit repeat counts (e.g. 10[a])",
+      "deeply nested brackets several levels deep"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"3[a]2[bc]\"",
+        "output": "\"aaabcbc\"",
+        "expectedOutput": "\"aaabcbc\"",
+        "explanation": "3[a] becomes \"aaa\", 2[bc] becomes \"bcbc\", concatenated"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"3[a2[c]]\"",
+        "output": "\"accaccacc\"",
+        "expectedOutput": "\"accaccacc\"",
+        "explanation": "the inner 2[c] becomes \"cc\", giving \"acc\" inside the brackets, then that whole thing repeats 3 times"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"2[abc]3[cd]ef\"",
+        "output": "\"abcabccdcdcdef\"",
+        "expectedOutput": "\"abcabccdcdcdef\"",
+        "explanation": "2[abc] becomes \"abcabc\", 3[cd] becomes \"cdcdcd\", then \"ef\" is appended unchanged"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"3[a]2[bc]\"]",
+        "output": "aaabcbc",
+        "expectedOutput": "aaabcbc",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"3[a2[c]]\"]",
+        "output": "accaccacc",
+        "expectedOutput": "accaccacc",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"2[abc]3[cd]ef\"]",
+        "output": "abcabccdcdcdef",
+        "expectedOutput": "abcabccdcdcdef",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"10[a]\"]",
+        "output": "aaaaaaaaaa",
+        "expectedOutput": "aaaaaaaaaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"2[a]\"]",
+        "output": "aa",
+        "expectedOutput": "aa",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"1[a]\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"2[a2[b]]\"]",
+        "output": "abbabb",
+        "expectedOutput": "abbabb",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"2[a2[b3[c]]]\"]",
+        "output": "abcccbcccabcccbccc",
+        "expectedOutput": "abcccbcccabcccbccc",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abc3[cd]xyz\"]",
+        "output": "abccdcdcdxyz",
+        "expectedOutput": "abccdcdcdxyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"12[ab]\"]",
+        "output": "abababababababababababab",
+        "expectedOutput": "abababababababababababab",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"3[abc]4[ab]c\"]",
+        "output": "abcabcabcababababc",
+        "expectedOutput": "abcabcabcababababc",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"2[2[2[a]]]\"]",
+        "output": "aaaaaaaa",
+        "expectedOutput": "aaaaaaaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"x2[y3[z]]w\"]",
+        "output": "xyzzzyzzzw",
+        "expectedOutput": "xyzzzyzzzw",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"5[a]1[b]\"]",
+        "output": "aaaaab",
+        "expectedOutput": "aaaaab",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"3[a2[c]]2[b]\"]",
+        "output": "accaccaccbb",
+        "expectedOutput": "accaccaccbb",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"z1[y]2[xy]\"]",
+        "output": "zyxyxy",
+        "expectedOutput": "zyxyxy",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"3[a]3[a]3[a]\"]",
+        "output": "aaaaaaaaa",
+        "expectedOutput": "aaaaaaaaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"2[ab3[c]]\"]",
+        "output": "abcccabccc",
+        "expectedOutput": "abcccabccc",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"3[a]2[bc]\"",
+      "output": "\"aaabcbc\"",
+      "expectedOutput": "\"aaabcbc\"",
+      "explanation": "3[a] becomes \"aaa\", 2[bc] becomes \"bcbc\", concatenated"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"3[a2[c]]\"",
+      "output": "\"accaccacc\"",
+      "expectedOutput": "\"accaccacc\"",
+      "explanation": "the inner 2[c] becomes \"cc\", giving \"acc\" inside the brackets, then that whole thing repeats 3 times"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"2[abc]3[cd]ef\"",
+      "output": "\"abcabccdcdcdef\"",
+      "expectedOutput": "\"abcabccdcdcdef\"",
+      "explanation": "2[abc] becomes \"abcabc\", 3[cd] becomes \"cdcdcd\", then \"ef\" is appended unchanged"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"3[a]2[bc]\"",
+      "output": "\"aaabcbc\"",
+      "expectedOutput": "\"aaabcbc\"",
+      "explanation": "3[a] becomes \"aaa\", 2[bc] becomes \"bcbc\", concatenated"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"3[a2[c]]\"",
+      "output": "\"accaccacc\"",
+      "expectedOutput": "\"accaccacc\"",
+      "explanation": "the inner 2[c] becomes \"cc\", giving \"acc\" inside the brackets, then that whole thing repeats 3 times"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"2[abc]3[cd]ef\"",
+      "output": "\"abcabccdcdcdef\"",
+      "expectedOutput": "\"abcabccdcdcdef\"",
+      "explanation": "2[abc] becomes \"abcabc\", 3[cd] becomes \"cdcdcd\", then \"ef\" is appended unchanged"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"3[a]2[bc]\"]",
+      "output": "aaabcbc",
+      "expectedOutput": "aaabcbc",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"3[a2[c]]\"]",
+      "output": "accaccacc",
+      "expectedOutput": "accaccacc",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"2[abc]3[cd]ef\"]",
+      "output": "abcabccdcdcdef",
+      "expectedOutput": "abcabccdcdcdef",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"abc\"]",
+      "output": "abc",
+      "expectedOutput": "abc",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"10[a]\"]",
+      "output": "aaaaaaaaaa",
+      "expectedOutput": "aaaaaaaaaa",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"2[a]\"]",
+      "output": "aa",
+      "expectedOutput": "aa",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"1[a]\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"2[a2[b]]\"]",
+      "output": "abbabb",
+      "expectedOutput": "abbabb",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"2[a2[b3[c]]]\"]",
+      "output": "abcccbcccabcccbccc",
+      "expectedOutput": "abcccbcccabcccbccc",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"abc3[cd]xyz\"]",
+      "output": "abccdcdcdxyz",
+      "expectedOutput": "abccdcdcdxyz",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"12[ab]\"]",
+      "output": "abababababababababababab",
+      "expectedOutput": "abababababababababababab",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"3[abc]4[ab]c\"]",
+      "output": "abcabcabcababababc",
+      "expectedOutput": "abcabcabcababababc",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"2[2[2[a]]]\"]",
+      "output": "aaaaaaaa",
+      "expectedOutput": "aaaaaaaa",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"x2[y3[z]]w\"]",
+      "output": "xyzzzyzzzw",
+      "expectedOutput": "xyzzzyzzzw",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"5[a]1[b]\"]",
+      "output": "aaaaab",
+      "expectedOutput": "aaaaab",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"3[a2[c]]2[b]\"]",
+      "output": "accaccaccbb",
+      "expectedOutput": "accaccaccbb",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"z1[y]2[xy]\"]",
+      "output": "zyxyxy",
+      "expectedOutput": "zyxyxy",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"3[a]3[a]3[a]\"]",
+      "output": "aaaaaaaaa",
+      "expectedOutput": "aaaaaaaaa",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"2[ab3[c]]\"]",
+      "output": "abcccabccc",
+      "expectedOutput": "abcccabccc",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"3[a]2[bc]\"",
+        "output": "\"aaabcbc\"",
+        "expectedOutput": "\"aaabcbc\"",
+        "explanation": "3[a] becomes \"aaa\", 2[bc] becomes \"bcbc\", concatenated"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"3[a2[c]]\"",
+        "output": "\"accaccacc\"",
+        "expectedOutput": "\"accaccacc\"",
+        "explanation": "the inner 2[c] becomes \"cc\", giving \"acc\" inside the brackets, then that whole thing repeats 3 times"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"2[abc]3[cd]ef\"",
+        "output": "\"abcabccdcdcdef\"",
+        "expectedOutput": "\"abcabccdcdcdef\"",
+        "explanation": "2[abc] becomes \"abcabc\", 3[cd] becomes \"cdcdcd\", then \"ef\" is appended unchanged"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"3[a]2[bc]\"]",
+        "output": "aaabcbc",
+        "expectedOutput": "aaabcbc",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"3[a2[c]]\"]",
+        "output": "accaccacc",
+        "expectedOutput": "accaccacc",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"2[abc]3[cd]ef\"]",
+        "output": "abcabccdcdcdef",
+        "expectedOutput": "abcabccdcdcdef",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abc\"]",
+        "output": "abc",
+        "expectedOutput": "abc",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"10[a]\"]",
+        "output": "aaaaaaaaaa",
+        "expectedOutput": "aaaaaaaaaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"2[a]\"]",
+        "output": "aa",
+        "expectedOutput": "aa",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"1[a]\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"2[a2[b]]\"]",
+        "output": "abbabb",
+        "expectedOutput": "abbabb",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"2[a2[b3[c]]]\"]",
+        "output": "abcccbcccabcccbccc",
+        "expectedOutput": "abcccbcccabcccbccc",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abc3[cd]xyz\"]",
+        "output": "abccdcdcdxyz",
+        "expectedOutput": "abccdcdcdxyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"12[ab]\"]",
+        "output": "abababababababababababab",
+        "expectedOutput": "abababababababababababab",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"3[abc]4[ab]c\"]",
+        "output": "abcabcabcababababc",
+        "expectedOutput": "abcabcabcababababc",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"2[2[2[a]]]\"]",
+        "output": "aaaaaaaa",
+        "expectedOutput": "aaaaaaaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"x2[y3[z]]w\"]",
+        "output": "xyzzzyzzzw",
+        "expectedOutput": "xyzzzyzzzw",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"5[a]1[b]\"]",
+        "output": "aaaaab",
+        "expectedOutput": "aaaaab",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"3[a2[c]]2[b]\"]",
+        "output": "accaccaccbb",
+        "expectedOutput": "accaccaccbb",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"z1[y]2[xy]\"]",
+        "output": "zyxyxy",
+        "expectedOutput": "zyxyxy",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"3[a]3[a]3[a]\"]",
+        "output": "aaaaaaaaa",
+        "expectedOutput": "aaaaaaaaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"2[ab3[c]]\"]",
+        "output": "abcccabccc",
+        "expectedOutput": "abcccabccc",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def decodeString(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    string decodeString(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String decodeString(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun decodeString(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    decodeString(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def decodeString(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    string decodeString(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String decodeString(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun decodeString(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    decodeString(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def decodeString(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    string decodeString(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String decodeString(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun decodeString(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    decodeString(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def decodeString(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <stack>\nusing namespace std;\n\nclass Solution {\npublic:\n    string decodeString(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String decodeString(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun decodeString(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    decodeString(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(output length)",
+      "space": "O(output length) plus O(depth) for the stack",
+      "pattern": "stack of (previous string so far, repeat count) pairs, one per open bracket level"
+    },
+    "bruteForce": {
+      "approach": "same as the optimal approach - the nested structure practically requires a stack (or equivalent recursion) to track pending repeat counts and partially built strings at each bracket depth",
+      "time": "O(n * maxRepeatDepthProduct) in the worst case, where output length can be exponential in nesting",
+      "space": "O(output length)"
+    }
+  },
+  "optimal": {
+    "pattern": "stack of (previous string so far, repeat count) pairs, one per open bracket level",
+    "time": "O(output length)",
+    "space": "O(output length) plus O(depth) for the stack",
+    "hint_ladder": [
+      "nested brackets mean you need to 'pause' building the current level's string whenever you enter a deeper bracket, then resume once it closes - what structure naturally supports pause and resume in reverse order?",
+      "walk through s character by character; accumulate digits into a number, and accumulate letters into a current string buffer",
+      "when you hit '[', push the current buffer and the number you just built onto a stack, then reset both to start building the inner content fresh",
+      "when you hit ']', pop the (previous buffer, repeat count) pair, and set the current buffer to previous buffer + (current buffer repeated that many times)"
+    ]
+  },
+  "bruteForce": {
+    "approach": "same as the optimal approach - the nested structure practically requires a stack (or equivalent recursion) to track pending repeat counts and partially built strings at each bracket depth",
+    "time": "O(n * maxRepeatDepthProduct) in the worst case, where output length can be exponential in nesting",
+    "space": "O(output length)"
+  },
+  "isIndex0": true,
+  "level": null
+}

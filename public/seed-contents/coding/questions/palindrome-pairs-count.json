@@ -1,0 +1,631 @@
+{
+  "id": "palindrome-pairs-count",
+  "questionId": "palindrome-pairs-count",
+  "slug": "palindrome-pairs-count",
+  "title": "Count Palindrome Pairs",
+  "difficulty": "Hard",
+  "category": "Trie",
+  "patterns": [
+    "trie",
+    "string"
+  ],
+  "lists": [],
+  "hints": [
+    "words[i] + words[j] being a palindrome means: if you reverse words[j], you get something related to a prefix or suffix of words[i] - specifically, reverse(words[j]) needs to match words[i], possibly with a leftover palindromic chunk on one side",
+    "insert every word REVERSED into a trie, tagging each end-of-word node with the original index of that word",
+    "for each word i (used in its original, non-reversed form), walk it through the reversed trie one character at a time; at every position where you pass a node tagged with some other index j, check whether the REMAINING untraversed suffix of word i is itself a palindrome - if so, (i, j) or (j, i) forms a valid pair depending on which piece is which",
+    "you also need the symmetric case: continue the walk all the way to the end of word i, then explore every remaining child in the trie whose corresponding leftover suffix (from that child down to any tagged node) is a palindrome - this covers pairs where word i is entirely a prefix of reverse(words[j])",
+    "watch the i != j and no-double-counting rules carefully - this is the fiddliest part of the whole problem, more so than the trie mechanics themselves"
+  ],
+  "commonMistakes": [
+    "double-counting a pair by finding it from both the 'prefix' and 'suffix' walk directions without deduplicating",
+    "forgetting the palindrome-check on the leftover chunk, and just matching full reversed strings, which misses valid pairs where lengths differ",
+    "including i == j when word i itself happens to be a palindrome (the problem requires i != j)"
+  ],
+  "content": {
+    "problemStatement": "You're given a space-delimited string of distinct-position lowercase `words`. The same text may repeat at different positions.\n\n**Count the number of ordered index pairs (i, j) with i != j such that concatenating `words[i]` and `words[j]`, in that order, forms a palindrome.**\n",
+    "constraints": [
+      "1 <= number of words <= 5000",
+      "1 <= length of each word <= 300",
+      "words consist only of lowercase English letters"
+    ],
+    "notes": [
+      "two positions holding the exact same word text, e.g. 'a a'",
+      "an empty-string word is not possible here since every token is non-empty, but a word that is itself already a palindrome paired with another palindrome-producing word",
+      "no pair produces a palindrome at all"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"abcd dcba lls s sssll\"",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "(0,1): \"abcd\"+\"dcba\"=\"abcddcba\" is a palindrome; (1,0): \"dcba\"+\"abcd\"=\"dcbaabcd\" is a palindrome; (2,4): \"lls\"+\"sssll\"=\"llssssll\" is a palindrome; (3,2): \"s\"+\"lls\"=\"slls\" is a palindrome"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"a\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "a single word has no other index to pair with"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"ab ba\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "\"ab\"+\"ba\"=\"abba\" and \"ba\"+\"ab\"=\"baab\" are both palindromes, counted as two separate ordered pairs"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"abcd dcba lls s sssll\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"ab ba\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a a\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"ab c\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aa\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abc cba\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"race car ecar\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"a aa aaa\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"xy yx z\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"noon moon\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"ab abba ba\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"bat tab cat tac\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"aabb bbaa\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"level radar civic\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"pq qp rs\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"aaaa\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"xx yy xy yx\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"a b c d e\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"deed abcd edeed\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"abcd dcba lls s sssll\"",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "(0,1): \"abcd\"+\"dcba\"=\"abcddcba\" is a palindrome; (1,0): \"dcba\"+\"abcd\"=\"dcbaabcd\" is a palindrome; (2,4): \"lls\"+\"sssll\"=\"llssssll\" is a palindrome; (3,2): \"s\"+\"lls\"=\"slls\" is a palindrome"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"a\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "a single word has no other index to pair with"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"ab ba\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "\"ab\"+\"ba\"=\"abba\" and \"ba\"+\"ab\"=\"baab\" are both palindromes, counted as two separate ordered pairs"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"abcd dcba lls s sssll\"",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "(0,1): \"abcd\"+\"dcba\"=\"abcddcba\" is a palindrome; (1,0): \"dcba\"+\"abcd\"=\"dcbaabcd\" is a palindrome; (2,4): \"lls\"+\"sssll\"=\"llssssll\" is a palindrome; (3,2): \"s\"+\"lls\"=\"slls\" is a palindrome"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"a\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "a single word has no other index to pair with"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"ab ba\"",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "\"ab\"+\"ba\"=\"abba\" and \"ba\"+\"ab\"=\"baab\" are both palindromes, counted as two separate ordered pairs"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"abcd dcba lls s sssll\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"a\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"ab ba\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"a a\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"ab c\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"aa\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"abc cba\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"race car ecar\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"a aa aaa\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"xy yx z\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"noon moon\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"ab abba ba\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"bat tab cat tac\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"aabb bbaa\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"level radar civic\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"pq qp rs\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"aaaa\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"xx yy xy yx\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"a b c d e\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"deed abcd edeed\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"abcd dcba lls s sssll\"",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "(0,1): \"abcd\"+\"dcba\"=\"abcddcba\" is a palindrome; (1,0): \"dcba\"+\"abcd\"=\"dcbaabcd\" is a palindrome; (2,4): \"lls\"+\"sssll\"=\"llssssll\" is a palindrome; (3,2): \"s\"+\"lls\"=\"slls\" is a palindrome"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"a\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "a single word has no other index to pair with"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"ab ba\"",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "\"ab\"+\"ba\"=\"abba\" and \"ba\"+\"ab\"=\"baab\" are both palindromes, counted as two separate ordered pairs"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"abcd dcba lls s sssll\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"ab ba\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a a\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"ab c\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aa\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abc cba\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"race car ecar\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"a aa aaa\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"xy yx z\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"noon moon\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"ab abba ba\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"bat tab cat tac\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"aabb bbaa\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"level radar civic\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"pq qp rs\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"aaaa\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"xx yy xy yx\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"a b c d e\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"deed abcd edeed\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def countPalindromePairs(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countPalindromePairs(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countPalindromePairs(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countPalindromePairs(words: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countPalindromePairs(words) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def countPalindromePairs(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countPalindromePairs(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countPalindromePairs(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countPalindromePairs(words: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countPalindromePairs(words) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def countPalindromePairs(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countPalindromePairs(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countPalindromePairs(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countPalindromePairs(words: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countPalindromePairs(words) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def countPalindromePairs(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countPalindromePairs(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countPalindromePairs(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countPalindromePairs(words: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countPalindromePairs(words) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n * m^2) in the standard trie formulation (still much better than brute force for many words), since each split point requires a palindrome check on a substring",
+      "space": "O(n * m)",
+      "pattern": "insert every REVERSED word into a trie annotated with its original index; for each word, walk it forward through the trie splitting it at every position into a left part and right part, checking at each split whether the remaining part (with the appropriate half being itself a palindrome) matches a reversed word already in the trie"
+    },
+    "bruteForce": {
+      "approach": "for every ordered pair of distinct indices (i, j), concatenate words[i] and words[j] and check if the result reads the same forwards and backwards",
+      "time": "O(n^2 * m) where n is word count and m is average word length",
+      "space": "O(1) beyond the concatenated string per check"
+    }
+  },
+  "optimal": {
+    "pattern": "insert every REVERSED word into a trie annotated with its original index; for each word, walk it forward through the trie splitting it at every position into a left part and right part, checking at each split whether the remaining part (with the appropriate half being itself a palindrome) matches a reversed word already in the trie",
+    "time": "O(n * m^2) in the standard trie formulation (still much better than brute force for many words), since each split point requires a palindrome check on a substring",
+    "space": "O(n * m)",
+    "hint_ladder": [
+      "words[i] + words[j] being a palindrome means: if you reverse words[j], you get something related to a prefix or suffix of words[i] - specifically, reverse(words[j]) needs to match words[i], possibly with a leftover palindromic chunk on one side",
+      "insert every word REVERSED into a trie, tagging each end-of-word node with the original index of that word",
+      "for each word i (used in its original, non-reversed form), walk it through the reversed trie one character at a time; at every position where you pass a node tagged with some other index j, check whether the REMAINING untraversed suffix of word i is itself a palindrome - if so, (i, j) or (j, i) forms a valid pair depending on which piece is which",
+      "you also need the symmetric case: continue the walk all the way to the end of word i, then explore every remaining child in the trie whose corresponding leftover suffix (from that child down to any tagged node) is a palindrome - this covers pairs where word i is entirely a prefix of reverse(words[j])",
+      "watch the i != j and no-double-counting rules carefully - this is the fiddliest part of the whole problem, more so than the trie mechanics themselves"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every ordered pair of distinct indices (i, j), concatenate words[i] and words[j] and check if the result reads the same forwards and backwards",
+    "time": "O(n^2 * m) where n is word count and m is average word length",
+    "space": "O(1) beyond the concatenated string per check"
+  },
+  "isIndex0": true,
+  "level": null
+}

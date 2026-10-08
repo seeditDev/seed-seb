@@ -1,0 +1,651 @@
+{
+  "id": "isomorphic-strings",
+  "questionId": "isomorphic-strings",
+  "slug": "isomorphic-strings",
+  "title": "Isomorphic Strings",
+  "difficulty": "Easy",
+  "category": "Hash map",
+  "patterns": [
+    "hash map"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "checking every pair of positions is wasteful - can you decide validity by looking at each position only once?",
+    "what if you kept a map from each character in s to the character it's already been mapped to in t, and checked consistency as you go?",
+    "you need the mapping to be consistent in BOTH directions - s-to-t and t-to-s - otherwise two different source letters could collapse onto the same target letter",
+    "at each position, check (or set) both maps: s[i] -> t[i] and t[i] -> s[i]; if either map already has a different value recorded, it's not isomorphic"
+  ],
+  "commonMistakes": [
+    "only checking the mapping in one direction (s to t), missing cases where two source characters map to the same target",
+    "using a single map and overwriting previous mappings instead of detecting the conflict",
+    "forgetting to handle a character mapping to itself as a valid (trivial) case"
+  ],
+  "content": {
+    "problemStatement": "You're given two strings, `s` and `t`, of the same length.\n\n**Determine whether the characters in `s` can be consistently replaced\nto get `t`.**\n\nEvery occurrence of a given character in `s` must always map to the\nsame character in `t`, and no two different characters in `s` may map\nto the same character in `t`.\n",
+    "constraints": [
+      "0 <= s.length <= 5 * 10^4",
+      "t.length == s.length",
+      "s and t consist of any valid ASCII character"
+    ],
+    "notes": [
+      "a character maps to itself",
+      "two different source characters trying to map to the same target character",
+      "single character strings"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"egg\", t = \"add\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "e maps to a, g maps to d, consistently throughout"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"foo\", t = \"bar\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the two o's in foo would need to map to both a and r, which isn't consistent"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"paper\", t = \"title\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"egg\",\"add\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"foo\",\"bar\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"paper\",\"title\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"badc\",\"baba\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"a\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a\",\"b\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"ab\",\"aa\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"aa\",\"ab\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abc\",\"def\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"abcabc\",\"xyzxyz\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abab\",\"cdcd\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abba\",\"cddc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abba\",\"cdcd\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"123456789\",\"987654321\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"bbbbbbbbbbbbbbbbbbbb\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abcdefghijklmnopqrst\",\"abcdefghijklmnopqrsz\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"paperplane\",\"titleslant\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"turtle\",\"tletur\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"abababababababababab\",\"cdcdcdcdcdcdcdcdcdcd\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"xxyzxx\",\"aabcaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"egg\", t = \"add\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "e maps to a, g maps to d, consistently throughout"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"foo\", t = \"bar\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the two o's in foo would need to map to both a and r, which isn't consistent"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"paper\", t = \"title\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"egg\", t = \"add\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "e maps to a, g maps to d, consistently throughout"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"foo\", t = \"bar\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the two o's in foo would need to map to both a and r, which isn't consistent"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"paper\", t = \"title\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"egg\",\"add\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"foo\",\"bar\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"paper\",\"title\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"badc\",\"baba\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"\",\"\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\",\"a\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"a\",\"b\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"ab\",\"aa\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"aa\",\"ab\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"abc\",\"def\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"abcabc\",\"xyzxyz\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"abab\",\"cdcd\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"abba\",\"cddc\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"abba\",\"cdcd\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"123456789\",\"987654321\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"bbbbbbbbbbbbbbbbbbbb\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"abcdefghijklmnopqrst\",\"abcdefghijklmnopqrsz\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"paperplane\",\"titleslant\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"turtle\",\"tletur\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"abababababababababab\",\"cdcdcdcdcdcdcdcdcdcd\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"xxyzxx\",\"aabcaa\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"egg\", t = \"add\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "e maps to a, g maps to d, consistently throughout"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"foo\", t = \"bar\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the two o's in foo would need to map to both a and r, which isn't consistent"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"paper\", t = \"title\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"egg\",\"add\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"foo\",\"bar\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"paper\",\"title\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"badc\",\"baba\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"a\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a\",\"b\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"ab\",\"aa\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"aa\",\"ab\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"abc\",\"def\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"abcabc\",\"xyzxyz\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abab\",\"cdcd\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abba\",\"cddc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"abba\",\"cdcd\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"123456789\",\"987654321\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"bbbbbbbbbbbbbbbbbbbb\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abcdefghijklmnopqrst\",\"abcdefghijklmnopqrsz\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"paperplane\",\"titleslant\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"turtle\",\"tletur\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"abababababababababab\",\"cdcdcdcdcdcdcdcdcdcd\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"xxyzxx\",\"aabcaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def isIsomorphic(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isIsomorphic(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isIsomorphic(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isIsomorphic(s: String, t: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isIsomorphic(s, t) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def isIsomorphic(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isIsomorphic(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isIsomorphic(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isIsomorphic(s: String, t: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isIsomorphic(s, t) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def isIsomorphic(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isIsomorphic(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isIsomorphic(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isIsomorphic(s: String, t: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isIsomorphic(s, t) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def isIsomorphic(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isIsomorphic(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isIsomorphic(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isIsomorphic(s: String, t: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isIsomorphic(s, t) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) (bounded alphabet)",
+      "pattern": "two hash maps tracking the mapping in both directions as you scan once"
+    },
+    "bruteForce": {
+      "approach": "for every pair of positions with the same character in s, check that they also have the same character in t, and vice versa",
+      "time": "O(n^2)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "two hash maps tracking the mapping in both directions as you scan once",
+    "time": "O(n)",
+    "space": "O(1) (bounded alphabet)",
+    "hint_ladder": [
+      "checking every pair of positions is wasteful - can you decide validity by looking at each position only once?",
+      "what if you kept a map from each character in s to the character it's already been mapped to in t, and checked consistency as you go?",
+      "you need the mapping to be consistent in BOTH directions - s-to-t and t-to-s - otherwise two different source letters could collapse onto the same target letter",
+      "at each position, check (or set) both maps: s[i] -> t[i] and t[i] -> s[i]; if either map already has a different value recorded, it's not isomorphic"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every pair of positions with the same character in s, check that they also have the same character in t, and vice versa",
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

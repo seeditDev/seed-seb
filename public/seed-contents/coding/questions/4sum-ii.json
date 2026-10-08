@@ -1,0 +1,617 @@
+{
+  "id": "4sum-ii",
+  "questionId": "4sum-ii",
+  "slug": "4sum-ii",
+  "title": "4Sum II",
+  "difficulty": "Medium",
+  "category": "Hash map",
+  "patterns": [
+    "hash map"
+  ],
+  "lists": [],
+  "hints": [
+    "four nested loops treats this as one big 4-way combination problem. what if you treated it as two separate 2-way problems instead?",
+    "every pair (i from nums1, j from nums2) has a sum. what if you counted how many times each possible sum occurs, using a hash map?",
+    "build a hash map of sum -> count for every pair (a, b) with a from nums1 and b from nums2",
+    "then for every pair (c, d) with c from nums3 and d from nums4, look up how many times -(c + d) occurred in that map, and add that count to your answer"
+  ],
+  "commonMistakes": [
+    "trying to hash all four arrays together instead of splitting into two independent pairs",
+    "looking up (c + d) instead of the negation, -(c + d), in the precomputed sum map",
+    "not accounting for the count of each sum (treating the map as a set instead of counting duplicates)"
+  ],
+  "content": {
+    "problemStatement": "You're given four separate lists of integers, all the same length.\n\n**Count how many combinations of one index from each list (`i`, `j`, `k`, `l`) make `nums1[i] + nums2[j] + nums3[k] + nums4[l]` equal zero.**\n",
+    "constraints": [
+      "n == nums1.length == nums2.length == nums3.length == nums4.length",
+      "0 <= n <= 200",
+      "-2^28 <= nums1[i], nums2[i], nums3[i], nums4[i] <= 2^28"
+    ],
+    "notes": [
+      "all lists contain only zero",
+      "no combination sums to zero (answer 0)",
+      "many repeated values across the lists, producing many valid combinations"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums1 = [1, 2], nums2 = [-2, -1], nums3 = [-1, 2], nums4 = [0, 2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums1 = [0], nums2 = [0], nums3 = [0], nums4 = [0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2],[-2,-1],[-1,2],[0,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0],[0],[0],[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,1],[1,1],[1,1],[1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[],[],[],[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],[1],[1],[-3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0,0],[0,0],[0,0],[0,0]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,2],[-2,-2],[1,1],[-1,-1]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,-1],[-1,1],[-1,1],[1,1]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5],[5],[-5],[-5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3],[-1,-2,-3],[0,0,0],[0,0,0]]",
+        "output": "27",
+        "expectedOutput": "27",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[3,3,3,3],[-3,-3,-3,-3],[0],[0]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-6,8,-8,-2,-7,5,4,5,10,2,-4,-7,5,-10,2],[3,9,-10,4,-2,-3,8,-7,0,-10,-10,-10,10,7,-10],[2,-4,3,-10,6,-3,4,5,7,-3,1,-3,-3,4,-1],[-10,3,7,10,-7,-5,10,-1,-7,0,6,3,6,-4,-1]]",
+        "output": "1456",
+        "expectedOutput": "1456",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-1,4,2,3,1,4,-5,2,-2,1,1,5,-3,0,3,5,0,-4,2,5],[3,-4,-3,3,1,0,2,-5,2,-5,-1,4,4,4,1,5,-3,-3,3,-2],[-5,-2,3,3,-2,1,3,0,4,0,2,-1,5,3,4,-5,1,3,-3,3],[3,-2,1,-5,2,0,4,3,-2,3,1,2,0,1,0,-5,3,3,4,4]]",
+        "output": "8500",
+        "expectedOutput": "8500",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-2,-1,0,1,2],[-2,-1,0,1,2],[-2,-1,0,1,2],[-2,-1,0,1,2]]",
+        "output": "85",
+        "expectedOutput": "85",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[100,-100],[100,-100],[100,-100],[100,-100]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,-1,1,-1],[1,-1,1,-1],[1,-1,1,-1],[1,-1,1,-1]]",
+        "output": "96",
+        "expectedOutput": "96",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[7],[8],[9],[-24]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[7],[8],[9],[-23]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0],[1],[-1],[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[2,-2,2,-2,2],[2,-2,2,-2,2],[2,-2,2,-2,2],[2,-2,2,-2,2]]",
+        "output": "216",
+        "expectedOutput": "216",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[10,20,-10,-20],[10,20,-10,-20],[10,20,-10,-20],[10,20,-10,-20]]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums1 = [1, 2], nums2 = [-2, -1], nums3 = [-1, 2], nums4 = [0, 2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums1 = [0], nums2 = [0], nums3 = [0], nums4 = [0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums1 = [1, 2], nums2 = [-2, -1], nums3 = [-1, 2], nums4 = [0, 2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums1 = [0], nums2 = [0], nums3 = [0], nums4 = [0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2],[-2,-1],[-1,2],[0,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0],[0],[0],[0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,1],[1,1],[1,1],[1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[],[],[],[]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1],[1],[1],[-3]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[0,0],[0,0],[0,0],[0,0]]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[2,2],[-2,-2],[1,1],[-1,-1]]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[-1,-1],[-1,1],[-1,1],[1,1]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[5],[5],[-5],[-5]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3],[-1,-2,-3],[0,0,0],[0,0,0]]",
+      "output": "27",
+      "expectedOutput": "27",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[3,3,3,3],[-3,-3,-3,-3],[0],[0]]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[-6,8,-8,-2,-7,5,4,5,10,2,-4,-7,5,-10,2],[3,9,-10,4,-2,-3,8,-7,0,-10,-10,-10,10,7,-10],[2,-4,3,-10,6,-3,4,5,7,-3,1,-3,-3,4,-1],[-10,3,7,10,-7,-5,10,-1,-7,0,6,3,6,-4,-1]]",
+      "output": "1456",
+      "expectedOutput": "1456",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[-1,4,2,3,1,4,-5,2,-2,1,1,5,-3,0,3,5,0,-4,2,5],[3,-4,-3,3,1,0,2,-5,2,-5,-1,4,4,4,1,5,-3,-3,3,-2],[-5,-2,3,3,-2,1,3,0,4,0,2,-1,5,3,4,-5,1,3,-3,3],[3,-2,1,-5,2,0,4,3,-2,3,1,2,0,1,0,-5,3,3,4,4]]",
+      "output": "8500",
+      "expectedOutput": "8500",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-2,-1,0,1,2],[-2,-1,0,1,2],[-2,-1,0,1,2],[-2,-1,0,1,2]]",
+      "output": "85",
+      "expectedOutput": "85",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[100,-100],[100,-100],[100,-100],[100,-100]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,-1,1,-1],[1,-1,1,-1],[1,-1,1,-1],[1,-1,1,-1]]",
+      "output": "96",
+      "expectedOutput": "96",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[7],[8],[9],[-24]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[7],[8],[9],[-23]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[0],[1],[-1],[0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[2,-2,2,-2,2],[2,-2,2,-2,2],[2,-2,2,-2,2],[2,-2,2,-2,2]]",
+      "output": "216",
+      "expectedOutput": "216",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[10,20,-10,-20],[10,20,-10,-20],[10,20,-10,-20],[10,20,-10,-20]]",
+      "output": "36",
+      "expectedOutput": "36",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums1 = [1, 2], nums2 = [-2, -1], nums3 = [-1, 2], nums4 = [0, 2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums1 = [0], nums2 = [0], nums3 = [0], nums4 = [0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2],[-2,-1],[-1,2],[0,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0],[0],[0],[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,1],[1,1],[1,1],[1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[],[],[],[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],[1],[1],[-3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0,0],[0,0],[0,0],[0,0]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,2],[-2,-2],[1,1],[-1,-1]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,-1],[-1,1],[-1,1],[1,1]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5],[5],[-5],[-5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3],[-1,-2,-3],[0,0,0],[0,0,0]]",
+        "output": "27",
+        "expectedOutput": "27",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[3,3,3,3],[-3,-3,-3,-3],[0],[0]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-6,8,-8,-2,-7,5,4,5,10,2,-4,-7,5,-10,2],[3,9,-10,4,-2,-3,8,-7,0,-10,-10,-10,10,7,-10],[2,-4,3,-10,6,-3,4,5,7,-3,1,-3,-3,4,-1],[-10,3,7,10,-7,-5,10,-1,-7,0,6,3,6,-4,-1]]",
+        "output": "1456",
+        "expectedOutput": "1456",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-1,4,2,3,1,4,-5,2,-2,1,1,5,-3,0,3,5,0,-4,2,5],[3,-4,-3,3,1,0,2,-5,2,-5,-1,4,4,4,1,5,-3,-3,3,-2],[-5,-2,3,3,-2,1,3,0,4,0,2,-1,5,3,4,-5,1,3,-3,3],[3,-2,1,-5,2,0,4,3,-2,3,1,2,0,1,0,-5,3,3,4,4]]",
+        "output": "8500",
+        "expectedOutput": "8500",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-2,-1,0,1,2],[-2,-1,0,1,2],[-2,-1,0,1,2],[-2,-1,0,1,2]]",
+        "output": "85",
+        "expectedOutput": "85",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[100,-100],[100,-100],[100,-100],[100,-100]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,-1,1,-1],[1,-1,1,-1],[1,-1,1,-1],[1,-1,1,-1]]",
+        "output": "96",
+        "expectedOutput": "96",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[7],[8],[9],[-24]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[7],[8],[9],[-23]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0],[1],[-1],[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[2,-2,2,-2,2],[2,-2,2,-2,2],[2,-2,2,-2,2],[2,-2,2,-2,2]]",
+        "output": "216",
+        "expectedOutput": "216",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[10,20,-10,-20],[10,20,-10,-20],[10,20,-10,-20],[10,20,-10,-20]]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def fourSumCount(self, nums1, nums2, nums3, nums4):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int fourSumCount(vector<int>& nums1, vector<int>& nums2, vector<int>& nums3, vector<int>& nums4) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int fourSumCount(int[] nums1, int[] nums2, int[] nums3, int[] nums4) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun fourSumCount(nums1: IntArray, nums2: IntArray, nums3: IntArray, nums4: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    fourSumCount(nums1, nums2, nums3, nums4) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def fourSumCount(self, nums1, nums2, nums3, nums4):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int fourSumCount(vector<int>& nums1, vector<int>& nums2, vector<int>& nums3, vector<int>& nums4) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int fourSumCount(int[] nums1, int[] nums2, int[] nums3, int[] nums4) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun fourSumCount(nums1: IntArray, nums2: IntArray, nums3: IntArray, nums4: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    fourSumCount(nums1, nums2, nums3, nums4) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def fourSumCount(self, nums1, nums2, nums3, nums4):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int fourSumCount(vector<int>& nums1, vector<int>& nums2, vector<int>& nums3, vector<int>& nums4) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int fourSumCount(int[] nums1, int[] nums2, int[] nums3, int[] nums4) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun fourSumCount(nums1: IntArray, nums2: IntArray, nums3: IntArray, nums4: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    fourSumCount(nums1, nums2, nums3, nums4) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def fourSumCount(self, nums1, nums2, nums3, nums4):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int fourSumCount(vector<int>& nums1, vector<int>& nums2, vector<int>& nums3, vector<int>& nums4) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int fourSumCount(int[] nums1, int[] nums2, int[] nums3, int[] nums4) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun fourSumCount(nums1: IntArray, nums2: IntArray, nums3: IntArray, nums4: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    fourSumCount(nums1, nums2, nums3, nums4) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n^2)",
+      "space": "O(n^2) for the hash map of pair sums",
+      "pattern": "split into two halves, hash the sums of the first half, then look up matching complements in the second half"
+    },
+    "bruteForce": {
+      "approach": "four nested loops trying every combination of one index from each list, checking if the four values sum to zero",
+      "time": "O(n^4)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "split into two halves, hash the sums of the first half, then look up matching complements in the second half",
+    "time": "O(n^2)",
+    "space": "O(n^2) for the hash map of pair sums",
+    "hint_ladder": [
+      "four nested loops treats this as one big 4-way combination problem. what if you treated it as two separate 2-way problems instead?",
+      "every pair (i from nums1, j from nums2) has a sum. what if you counted how many times each possible sum occurs, using a hash map?",
+      "build a hash map of sum -> count for every pair (a, b) with a from nums1 and b from nums2",
+      "then for every pair (c, d) with c from nums3 and d from nums4, look up how many times -(c + d) occurred in that map, and add that count to your answer"
+    ]
+  },
+  "bruteForce": {
+    "approach": "four nested loops trying every combination of one index from each list, checking if the four values sum to zero",
+    "time": "O(n^4)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

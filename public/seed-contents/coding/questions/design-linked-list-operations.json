@@ -1,0 +1,631 @@
+{
+  "id": "design-linked-list-operations",
+  "questionId": "design-linked-list-operations",
+  "slug": "design-linked-list-operations",
+  "title": "Design Linked List Operations",
+  "difficulty": "Medium",
+  "category": "Linked list",
+  "patterns": [
+    "linked list",
+    "design",
+    "simulation"
+  ],
+  "lists": [],
+  "hints": [
+    "first, how would you parse each token into an operation name and its numeric arguments, given they're joined by underscores?",
+    "addAtHead and addAtTail are just addAtIndex with index 0 or index length - can you implement one general insert-at-index helper?",
+    "carefully define what 'invalid index' means for each operation (get and deleteAtIndex need a strictly-in-range index, addAtIndex additionally allows index == length)",
+    "walk the tokens in order, mutate your working list according to the operation, and whenever you see a get, append its result to your answer list"
+  ],
+  "commonMistakes": [
+    "allowing addAtIndex to succeed when index > length, when it should be ignored",
+    "off-by-one errors distinguishing 'index == length is valid for addAtIndex' from 'index == length is invalid for get and deleteAtIndex'",
+    "mis-parsing tokens when splitting on underscore, especially forgetting addAtIndex has two numeric parts"
+  ],
+  "content": {
+    "problemStatement": "Simulate a singly linked list that starts empty and supports these\noperations, given as a single space-delimited string ops where each\noperation is one token (values within a token are joined by\nunderscores, since the whole string is split on spaces):\n\n- \"addAtHead_v\": insert a new node with value v at the head of the list.\n- \"addAtTail_v\": insert a new node with value v at the tail of the list.\n- \"addAtIndex_i_v\": insert a new node with value v so that it becomes\n  the node at 0-indexed position i. If i equals the current length,\n  the node is appended at the tail. If i is negative or greater than\n  the current length, the operation is ignored (does nothing).\n- \"deleteAtIndex_i\": delete the node at 0-indexed position i, if i is\n  a valid index (0 <= i < length). Otherwise, ignore the operation.\n- \"get_i\": look up the value of the node at 0-indexed position i.\n  If i is not a valid index, the result is -1.\n\nFor example, the token \"addAtIndex_2_9\" means addAtIndex(index=2, val=9),\nand \"get_0\" means get(index=0).\n\n**Process every operation in `ops` in order, and return the list of results produced by every \"get\" operation, in the order they occurred.**\n\nOperations that don't produce a result, like addAtHead, contribute nothing to the output.\n",
+    "constraints": [
+      "1 <= number of operations in ops <= 1000",
+      "0 <= val <= 1000 for any inserted value",
+      "-1000 <= index <= 1000 for any operation's index argument"
+    ],
+    "notes": [
+      "get on an empty list",
+      "addAtIndex with index equal to the current length (append)",
+      "addAtIndex or deleteAtIndex with an out-of-range index (should be ignored)",
+      "deleteAtIndex on an empty list"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"get_0\"",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "explanation": "the list starts empty, so index 0 is out of range"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"addAtHead_7 addAtHead_3 addAtHead_5 get_0 get_1 get_2 get_3\"",
+        "output": "[5, 3, 7, -1]",
+        "expectedOutput": "[5, 3, 7, -1]",
+        "explanation": "after the three addAtHead calls the list is [5, 3, 7]; get_3 is out of range"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"addAtHead_1 addAtTail_3 addAtIndex_1_2 get_1 deleteAtIndex_0 get_0\"",
+        "output": "[2, 2]",
+        "expectedOutput": "[2, 2]",
+        "explanation": "list becomes [1, 3], then addAtIndex_1_2 inserts 2 at position 1 giving [1, 2, 3]; get_1 = 2; deleteAtIndex_0 removes the 1, giving [2, 3]; get_0 = 2"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"get_0\"]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"addAtHead_7 addAtHead_3 addAtHead_5 get_0 get_1 get_2 get_3\"]",
+        "output": "[5,3,7,-1]",
+        "expectedOutput": "[5,3,7,-1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"addAtHead_1 addAtTail_3 addAtIndex_1_2 get_1 deleteAtIndex_0 get_0\"]",
+        "output": "[2,2]",
+        "expectedOutput": "[2,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"addAtHead_1 addAtIndex_5_9 get_0 deleteAtIndex_5 get_0\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"addAtHead_1 addAtIndex_1_2 get_0 get_1\"]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"addAtTail_1 addAtTail_2 addAtTail_3 get_0 get_1 get_2 get_3\"]",
+        "output": "[1,2,3,-1]",
+        "expectedOutput": "[1,2,3,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"deleteAtIndex_0 get_0\"]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"addAtHead_10 deleteAtIndex_0 get_0\"]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"addAtHead_1 addAtHead_2 addAtHead_3 addAtIndex_3_4 get_0 get_1 get_2 get_3 get_4\"]",
+        "output": "[3,2,1,4,-1]",
+        "expectedOutput": "[3,2,1,4,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"addAtHead_5 addAtIndex_-1_9 get_0\"]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"addAtTail_1 addAtTail_2 deleteAtIndex_5 get_0 get_1\"]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"addAtHead_1 addAtTail_2 addAtHead_0 addAtTail_3 get_0 get_1 get_2 get_3\"]",
+        "output": "[0,1,2,3]",
+        "expectedOutput": "[0,1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"addAtIndex_0_5 get_0\"]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"addAtHead_1 addAtHead_2 addAtHead_3 addAtHead_4 addAtHead_5 deleteAtIndex_2 get_0 get_1 get_2 get_3\"]",
+        "output": "[5,4,2,1]",
+        "expectedOutput": "[5,4,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"addAtTail_1 addAtTail_2 addAtTail_3 addAtTail_4 addAtTail_5 deleteAtIndex_4 deleteAtIndex_0 get_0 get_1 get_2\"]",
+        "output": "[2,3,4]",
+        "expectedOutput": "[2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"get_0 get_-1 get_100\"]",
+        "output": "[-1,-1,-1]",
+        "expectedOutput": "[-1,-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"addAtHead_9 addAtHead_9 addAtHead_9 deleteAtIndex_1 deleteAtIndex_1 deleteAtIndex_1 get_0\"]",
+        "output": "[9]",
+        "expectedOutput": "[9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"addAtTail_1 addAtIndex_1_2 addAtIndex_2_3 addAtIndex_3_4 addAtIndex_4_5 get_0 get_1 get_2 get_3 get_4\"]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"addAtHead_1 addAtTail_2 addAtIndex_1_99 deleteAtIndex_1 get_0 get_1\"]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"addAtHead_100 addAtHead_200 addAtIndex_2_300 get_2 addAtIndex_10_400 get_2\"]",
+        "output": "[300,300]",
+        "expectedOutput": "[300,300]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"get_0\"",
+      "output": "[-1]",
+      "expectedOutput": "[-1]",
+      "explanation": "the list starts empty, so index 0 is out of range"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"addAtHead_7 addAtHead_3 addAtHead_5 get_0 get_1 get_2 get_3\"",
+      "output": "[5, 3, 7, -1]",
+      "expectedOutput": "[5, 3, 7, -1]",
+      "explanation": "after the three addAtHead calls the list is [5, 3, 7]; get_3 is out of range"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"addAtHead_1 addAtTail_3 addAtIndex_1_2 get_1 deleteAtIndex_0 get_0\"",
+      "output": "[2, 2]",
+      "expectedOutput": "[2, 2]",
+      "explanation": "list becomes [1, 3], then addAtIndex_1_2 inserts 2 at position 1 giving [1, 2, 3]; get_1 = 2; deleteAtIndex_0 removes the 1, giving [2, 3]; get_0 = 2"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"get_0\"",
+      "output": "[-1]",
+      "expectedOutput": "[-1]",
+      "explanation": "the list starts empty, so index 0 is out of range"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"addAtHead_7 addAtHead_3 addAtHead_5 get_0 get_1 get_2 get_3\"",
+      "output": "[5, 3, 7, -1]",
+      "expectedOutput": "[5, 3, 7, -1]",
+      "explanation": "after the three addAtHead calls the list is [5, 3, 7]; get_3 is out of range"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"addAtHead_1 addAtTail_3 addAtIndex_1_2 get_1 deleteAtIndex_0 get_0\"",
+      "output": "[2, 2]",
+      "expectedOutput": "[2, 2]",
+      "explanation": "list becomes [1, 3], then addAtIndex_1_2 inserts 2 at position 1 giving [1, 2, 3]; get_1 = 2; deleteAtIndex_0 removes the 1, giving [2, 3]; get_0 = 2"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"get_0\"]",
+      "output": "[-1]",
+      "expectedOutput": "[-1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"addAtHead_7 addAtHead_3 addAtHead_5 get_0 get_1 get_2 get_3\"]",
+      "output": "[5,3,7,-1]",
+      "expectedOutput": "[5,3,7,-1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"addAtHead_1 addAtTail_3 addAtIndex_1_2 get_1 deleteAtIndex_0 get_0\"]",
+      "output": "[2,2]",
+      "expectedOutput": "[2,2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"addAtHead_1 addAtIndex_5_9 get_0 deleteAtIndex_5 get_0\"]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"addAtHead_1 addAtIndex_1_2 get_0 get_1\"]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"addAtTail_1 addAtTail_2 addAtTail_3 get_0 get_1 get_2 get_3\"]",
+      "output": "[1,2,3,-1]",
+      "expectedOutput": "[1,2,3,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"deleteAtIndex_0 get_0\"]",
+      "output": "[-1]",
+      "expectedOutput": "[-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"addAtHead_10 deleteAtIndex_0 get_0\"]",
+      "output": "[-1]",
+      "expectedOutput": "[-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"addAtHead_1 addAtHead_2 addAtHead_3 addAtIndex_3_4 get_0 get_1 get_2 get_3 get_4\"]",
+      "output": "[3,2,1,4,-1]",
+      "expectedOutput": "[3,2,1,4,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"addAtHead_5 addAtIndex_-1_9 get_0\"]",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"addAtTail_1 addAtTail_2 deleteAtIndex_5 get_0 get_1\"]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"addAtHead_1 addAtTail_2 addAtHead_0 addAtTail_3 get_0 get_1 get_2 get_3\"]",
+      "output": "[0,1,2,3]",
+      "expectedOutput": "[0,1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"addAtIndex_0_5 get_0\"]",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"addAtHead_1 addAtHead_2 addAtHead_3 addAtHead_4 addAtHead_5 deleteAtIndex_2 get_0 get_1 get_2 get_3\"]",
+      "output": "[5,4,2,1]",
+      "expectedOutput": "[5,4,2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"addAtTail_1 addAtTail_2 addAtTail_3 addAtTail_4 addAtTail_5 deleteAtIndex_4 deleteAtIndex_0 get_0 get_1 get_2\"]",
+      "output": "[2,3,4]",
+      "expectedOutput": "[2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"get_0 get_-1 get_100\"]",
+      "output": "[-1,-1,-1]",
+      "expectedOutput": "[-1,-1,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"addAtHead_9 addAtHead_9 addAtHead_9 deleteAtIndex_1 deleteAtIndex_1 deleteAtIndex_1 get_0\"]",
+      "output": "[9]",
+      "expectedOutput": "[9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"addAtTail_1 addAtIndex_1_2 addAtIndex_2_3 addAtIndex_3_4 addAtIndex_4_5 get_0 get_1 get_2 get_3 get_4\"]",
+      "output": "[1,2,3,4,5]",
+      "expectedOutput": "[1,2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"addAtHead_1 addAtTail_2 addAtIndex_1_99 deleteAtIndex_1 get_0 get_1\"]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"addAtHead_100 addAtHead_200 addAtIndex_2_300 get_2 addAtIndex_10_400 get_2\"]",
+      "output": "[300,300]",
+      "expectedOutput": "[300,300]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"get_0\"",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "explanation": "the list starts empty, so index 0 is out of range"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"addAtHead_7 addAtHead_3 addAtHead_5 get_0 get_1 get_2 get_3\"",
+        "output": "[5, 3, 7, -1]",
+        "expectedOutput": "[5, 3, 7, -1]",
+        "explanation": "after the three addAtHead calls the list is [5, 3, 7]; get_3 is out of range"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"addAtHead_1 addAtTail_3 addAtIndex_1_2 get_1 deleteAtIndex_0 get_0\"",
+        "output": "[2, 2]",
+        "expectedOutput": "[2, 2]",
+        "explanation": "list becomes [1, 3], then addAtIndex_1_2 inserts 2 at position 1 giving [1, 2, 3]; get_1 = 2; deleteAtIndex_0 removes the 1, giving [2, 3]; get_0 = 2"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"get_0\"]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"addAtHead_7 addAtHead_3 addAtHead_5 get_0 get_1 get_2 get_3\"]",
+        "output": "[5,3,7,-1]",
+        "expectedOutput": "[5,3,7,-1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"addAtHead_1 addAtTail_3 addAtIndex_1_2 get_1 deleteAtIndex_0 get_0\"]",
+        "output": "[2,2]",
+        "expectedOutput": "[2,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"addAtHead_1 addAtIndex_5_9 get_0 deleteAtIndex_5 get_0\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"addAtHead_1 addAtIndex_1_2 get_0 get_1\"]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"addAtTail_1 addAtTail_2 addAtTail_3 get_0 get_1 get_2 get_3\"]",
+        "output": "[1,2,3,-1]",
+        "expectedOutput": "[1,2,3,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"deleteAtIndex_0 get_0\"]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"addAtHead_10 deleteAtIndex_0 get_0\"]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"addAtHead_1 addAtHead_2 addAtHead_3 addAtIndex_3_4 get_0 get_1 get_2 get_3 get_4\"]",
+        "output": "[3,2,1,4,-1]",
+        "expectedOutput": "[3,2,1,4,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"addAtHead_5 addAtIndex_-1_9 get_0\"]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"addAtTail_1 addAtTail_2 deleteAtIndex_5 get_0 get_1\"]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"addAtHead_1 addAtTail_2 addAtHead_0 addAtTail_3 get_0 get_1 get_2 get_3\"]",
+        "output": "[0,1,2,3]",
+        "expectedOutput": "[0,1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"addAtIndex_0_5 get_0\"]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"addAtHead_1 addAtHead_2 addAtHead_3 addAtHead_4 addAtHead_5 deleteAtIndex_2 get_0 get_1 get_2 get_3\"]",
+        "output": "[5,4,2,1]",
+        "expectedOutput": "[5,4,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"addAtTail_1 addAtTail_2 addAtTail_3 addAtTail_4 addAtTail_5 deleteAtIndex_4 deleteAtIndex_0 get_0 get_1 get_2\"]",
+        "output": "[2,3,4]",
+        "expectedOutput": "[2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"get_0 get_-1 get_100\"]",
+        "output": "[-1,-1,-1]",
+        "expectedOutput": "[-1,-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"addAtHead_9 addAtHead_9 addAtHead_9 deleteAtIndex_1 deleteAtIndex_1 deleteAtIndex_1 get_0\"]",
+        "output": "[9]",
+        "expectedOutput": "[9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"addAtTail_1 addAtIndex_1_2 addAtIndex_2_3 addAtIndex_3_4 addAtIndex_4_5 get_0 get_1 get_2 get_3 get_4\"]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"addAtHead_1 addAtTail_2 addAtIndex_1_99 deleteAtIndex_1 get_0 get_1\"]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"addAtHead_100 addAtHead_200 addAtIndex_2_300 get_2 addAtIndex_10_400 get_2\"]",
+        "output": "[300,300]",
+        "expectedOutput": "[300,300]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def linkedListOps(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> linkedListOps(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] linkedListOps(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun linkedListOps(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    linkedListOps(ops) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def linkedListOps(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> linkedListOps(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] linkedListOps(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun linkedListOps(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    linkedListOps(ops) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def linkedListOps(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> linkedListOps(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] linkedListOps(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun linkedListOps(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    linkedListOps(ops) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def linkedListOps(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> linkedListOps(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] linkedListOps(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun linkedListOps(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    linkedListOps(ops) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n) per insert/delete operation with a real linked list once positioned, O(n) total array space",
+      "space": "O(n) for the list itself",
+      "pattern": "simulate with an actual linked list structure (or, for our array-returning representation, an array with careful index math), processing each token in order"
+    },
+    "bruteForce": {
+      "approach": "represent the list as a resizable array and implement each operation with array insert/remove at the given index (an O(n) shift per operation)",
+      "time": "O(n) per operation, O(n^2) total in the worst case",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "simulate with an actual linked list structure (or, for our array-returning representation, an array with careful index math), processing each token in order",
+    "time": "O(n) per insert/delete operation with a real linked list once positioned, O(n) total array space",
+    "space": "O(n) for the list itself",
+    "hint_ladder": [
+      "first, how would you parse each token into an operation name and its numeric arguments, given they're joined by underscores?",
+      "addAtHead and addAtTail are just addAtIndex with index 0 or index length - can you implement one general insert-at-index helper?",
+      "carefully define what 'invalid index' means for each operation (get and deleteAtIndex need a strictly-in-range index, addAtIndex additionally allows index == length)",
+      "walk the tokens in order, mutate your working list according to the operation, and whenever you see a get, append its result to your answer list"
+    ]
+  },
+  "bruteForce": {
+    "approach": "represent the list as a resizable array and implement each operation with array insert/remove at the given index (an O(n) shift per operation)",
+    "time": "O(n) per operation, O(n^2) total in the worst case",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

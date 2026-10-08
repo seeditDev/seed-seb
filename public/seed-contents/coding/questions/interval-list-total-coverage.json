@@ -1,0 +1,653 @@
+{
+  "id": "interval-list-total-coverage",
+  "questionId": "interval-list-total-coverage",
+  "slug": "interval-list-total-coverage",
+  "title": "Interval List Total Coverage",
+  "difficulty": "Easy",
+  "category": "Merge intervals",
+  "patterns": [
+    "merge intervals",
+    "sorting"
+  ],
+  "lists": [],
+  "hints": [
+    "counting individual points one by one is wasteful when intervals can be large - can you count a whole merged range at once?",
+    "sort the intervals by start time so overlapping ones become adjacent",
+    "sweep through, merging any interval that overlaps or touches the current merged range by extending its end",
+    "whenever the next interval starts after the current merged range ends (a genuine gap), add (end - start + 1) points from the finished merged range to your total, then start a new merged range",
+    "don't forget to add the final merged range's points after the loop"
+  ],
+  "commonMistakes": [
+    "double-counting points that fall in the overlap between two intervals by summing (end - start + 1) for each interval independently instead of merging first",
+    "using end - start instead of end - start + 1 since endpoints are inclusive",
+    "treating touching intervals like [1,3] and [4,6] as overlapping when they actually only touch after merging logic if consecutive, or vice versa mishandling the boundary condition"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of intervals, each represented as `[start, end]`\nusing inclusive integer endpoints. Intervals may overlap each other.\n\n**Return the total number of unique integer points that are covered by\nat least one interval.**\n",
+    "constraints": [
+      "0 <= intervals.length <= 10^4",
+      "0 <= start <= end <= 10^6"
+    ],
+    "notes": [
+      "empty list of intervals (coverage is 0)",
+      "a single interval",
+      "all intervals overlap into one big merged range",
+      "no intervals overlap at all",
+      "one interval is fully contained inside another"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "intervals = [[1,3],[2,6],[8,10]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "explanation": "[1,3] and [2,6] merge into [1,6], covering 6 points (1,2,3,4,5,6); [8,10] covers 3 more points (8,9,10); total 9"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "intervals = [[1,4],[5,8]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "explanation": "[1,4] covers 4 points and [5,8] covers 4 points, no overlap, total 8"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "intervals = [[1,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,3],[2,6],[8,10]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,4],[5,8]]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,5]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,10],[2,5],[6,9]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,2],[2,3],[3,4]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,10],[1,10],[1,10]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,3],[7,9],[15,20]]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,5],[3,8],[7,10],[20,25]]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[88,96],[28,38],[41,41],[29,29],[40,46],[34,35],[27,36],[91,96],[27,37],[63,69],[82,89],[18,22],[17,20],[95,103],[68,72]]]",
+        "output": "57",
+        "expectedOutput": "57",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,0],[1,1],[2,2],[3,3]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,100]]]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,3],[4,6],[7,9],[10,12],[13,15]]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[5,10],[1,3],[8,20],[25,30]]]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,3],[4,7],[8,11],[12,15],[16,19],[20,23],[24,27],[28,31],[32,35],[36,39],[40,43],[44,47],[48,51],[52,55],[56,59],[60,63],[64,67],[68,71],[72,75],[76,79]]]",
+        "output": "80",
+        "expectedOutput": "80",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,5],[2,4],[3,6],[10,15],[12,20]]]",
+        "output": "17",
+        "expectedOutput": "17",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,1000000]]]",
+        "output": "1000000",
+        "expectedOutput": "1000000",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[2,2]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,3],[2,4],[2,4],[2,4]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[24,25],[46,58],[58,68],[78,88],[81,93],[112,114],[197,203],[204,209],[219,228],[260,267],[270,274],[305,306],[305,312],[348,354],[348,359],[382,391],[384,388],[440,440],[453,461],[497,505]]]",
+        "output": "129",
+        "expectedOutput": "129",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "intervals = [[1,3],[2,6],[8,10]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "explanation": "[1,3] and [2,6] merge into [1,6], covering 6 points (1,2,3,4,5,6); [8,10] covers 3 more points (8,9,10); total 9"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "intervals = [[1,4],[5,8]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "explanation": "[1,4] covers 4 points and [5,8] covers 4 points, no overlap, total 8"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "intervals = [[1,5]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "intervals = [[1,3],[2,6],[8,10]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "explanation": "[1,3] and [2,6] merge into [1,6], covering 6 points (1,2,3,4,5,6); [8,10] covers 3 more points (8,9,10); total 9"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "intervals = [[1,4],[5,8]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "explanation": "[1,4] covers 4 points and [5,8] covers 4 points, no overlap, total 8"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "intervals = [[1,5]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,3],[2,6],[8,10]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,4],[5,8]]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1,5]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,10],[2,5],[6,9]]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1,2],[2,3],[3,4]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,10],[1,10],[1,10]]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1,3],[7,9],[15,20]]]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1,5],[3,8],[7,10],[20,25]]]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[88,96],[28,38],[41,41],[29,29],[40,46],[34,35],[27,36],[91,96],[27,37],[63,69],[82,89],[18,22],[17,20],[95,103],[68,72]]]",
+      "output": "57",
+      "expectedOutput": "57",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[0,0],[1,1],[2,2],[3,3]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1,100]]]",
+      "output": "100",
+      "expectedOutput": "100",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,3],[4,6],[7,9],[10,12],[13,15]]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[5,10],[1,3],[8,20],[25,30]]]",
+      "output": "25",
+      "expectedOutput": "25",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[0,3],[4,7],[8,11],[12,15],[16,19],[20,23],[24,27],[28,31],[32,35],[36,39],[40,43],[44,47],[48,51],[52,55],[56,59],[60,63],[64,67],[68,71],[72,75],[76,79]]]",
+      "output": "80",
+      "expectedOutput": "80",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,5],[2,4],[3,6],[10,15],[12,20]]]",
+      "output": "17",
+      "expectedOutput": "17",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1,1000000]]]",
+      "output": "1000000",
+      "expectedOutput": "1000000",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[2,2]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,3],[2,4],[2,4],[2,4]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[[24,25],[46,58],[58,68],[78,88],[81,93],[112,114],[197,203],[204,209],[219,228],[260,267],[270,274],[305,306],[305,312],[348,354],[348,359],[382,391],[384,388],[440,440],[453,461],[497,505]]]",
+      "output": "129",
+      "expectedOutput": "129",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "intervals = [[1,3],[2,6],[8,10]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "explanation": "[1,3] and [2,6] merge into [1,6], covering 6 points (1,2,3,4,5,6); [8,10] covers 3 more points (8,9,10); total 9"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "intervals = [[1,4],[5,8]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "explanation": "[1,4] covers 4 points and [5,8] covers 4 points, no overlap, total 8"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "intervals = [[1,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,3],[2,6],[8,10]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,4],[5,8]]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,5]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,10],[2,5],[6,9]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,2],[2,3],[3,4]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,10],[1,10],[1,10]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,3],[7,9],[15,20]]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,5],[3,8],[7,10],[20,25]]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[88,96],[28,38],[41,41],[29,29],[40,46],[34,35],[27,36],[91,96],[27,37],[63,69],[82,89],[18,22],[17,20],[95,103],[68,72]]]",
+        "output": "57",
+        "expectedOutput": "57",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,0],[1,1],[2,2],[3,3]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,100]]]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,3],[4,6],[7,9],[10,12],[13,15]]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[5,10],[1,3],[8,20],[25,30]]]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,3],[4,7],[8,11],[12,15],[16,19],[20,23],[24,27],[28,31],[32,35],[36,39],[40,43],[44,47],[48,51],[52,55],[56,59],[60,63],[64,67],[68,71],[72,75],[76,79]]]",
+        "output": "80",
+        "expectedOutput": "80",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,5],[2,4],[3,6],[10,15],[12,20]]]",
+        "output": "17",
+        "expectedOutput": "17",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,1000000]]]",
+        "output": "1000000",
+        "expectedOutput": "1000000",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[2,2]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,3],[2,4],[2,4],[2,4]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[24,25],[46,58],[58,68],[78,88],[81,93],[112,114],[197,203],[204,209],[219,228],[260,267],[270,274],[305,306],[305,312],[348,354],[348,359],[382,391],[384,388],[440,440],[453,461],[497,505]]]",
+        "output": "129",
+        "expectedOutput": "129",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def totalCoverage(self, intervals):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int totalCoverage(vector<vector<int>>& intervals) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int totalCoverage(int[][] intervals) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun totalCoverage(intervals: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    totalCoverage(intervals) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def totalCoverage(self, intervals):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int totalCoverage(vector<vector<int>>& intervals) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int totalCoverage(int[][] intervals) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun totalCoverage(intervals: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    totalCoverage(intervals) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def totalCoverage(self, intervals):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int totalCoverage(vector<vector<int>>& intervals) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int totalCoverage(int[][] intervals) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun totalCoverage(intervals: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    totalCoverage(intervals) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def totalCoverage(self, intervals):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int totalCoverage(vector<vector<int>>& intervals) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int totalCoverage(int[][] intervals) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun totalCoverage(intervals: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    totalCoverage(intervals) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log n)",
+      "space": "O(1) beyond the sort",
+      "pattern": "sort by start, sweep and merge overlapping intervals, summing merged lengths"
+    },
+    "bruteForce": {
+      "approach": "mark every integer point covered by any interval in a set, then return the set's size",
+      "time": "O(n * r) where r is the average interval length, plus set overhead",
+      "space": "O(total covered points)"
+    }
+  },
+  "optimal": {
+    "pattern": "sort by start, sweep and merge overlapping intervals, summing merged lengths",
+    "time": "O(n log n)",
+    "space": "O(1) beyond the sort",
+    "hint_ladder": [
+      "counting individual points one by one is wasteful when intervals can be large - can you count a whole merged range at once?",
+      "sort the intervals by start time so overlapping ones become adjacent",
+      "sweep through, merging any interval that overlaps or touches the current merged range by extending its end",
+      "whenever the next interval starts after the current merged range ends (a genuine gap), add (end - start + 1) points from the finished merged range to your total, then start a new merged range",
+      "don't forget to add the final merged range's points after the loop"
+    ]
+  },
+  "bruteForce": {
+    "approach": "mark every integer point covered by any interval in a set, then return the set's size",
+    "time": "O(n * r) where r is the average interval length, plus set overhead",
+    "space": "O(total covered points)"
+  },
+  "isIndex0": true,
+  "level": null
+}

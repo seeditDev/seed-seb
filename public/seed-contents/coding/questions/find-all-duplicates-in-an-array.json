@@ -1,0 +1,629 @@
+{
+  "id": "find-all-duplicates-in-an-array",
+  "questionId": "find-all-duplicates-in-an-array",
+  "slug": "find-all-duplicates-in-an-array",
+  "title": "Find All Duplicates in an Array",
+  "difficulty": "Medium",
+  "category": "Cyclic sort",
+  "patterns": [
+    "cyclic sort",
+    "array"
+  ],
+  "lists": [],
+  "hints": [
+    "each value in [1, n] has a natural home index (value-1). if a value appears twice, only one copy can occupy that home - what happens to the other copy?",
+    "run cyclic placement: for each index, while the value there doesn't match its home value and the home slot doesn't already hold the correct value, swap it home",
+    "once placement is done, scan the array. any index i where nums[i] != i+1 holds a value that is a duplicate (its 'twin' already occupies its rightful home)",
+    "collect those mismatched values into a result, and since you scan left to right by index they naturally come out sorted"
+  ],
+  "commonMistakes": [
+    "returning values in the order they were found without sorting, when the array traversal order doesn't already guarantee ascending order",
+    "infinite loop when swapping a duplicate value that already sits next to its twin, if the swap condition doesn't check whether the target slot already has the correct value",
+    "using O(n) extra space with a hash map when O(1) extra space placement is expected"
+  ],
+  "content": {
+    "problemStatement": "You're given an array `nums` of length `n` where every value is in the\nrange `[1, n]`, and each value appears either once or exactly twice.\n\n**Return every value that appears twice, sorted in ascending order.**\n",
+    "constraints": [
+      "array length is n, every value is in range [1, n]",
+      "each value appears once or exactly twice",
+      "return the duplicated values sorted ascending"
+    ],
+    "notes": [
+      "no duplicates at all (empty result)",
+      "every value in the array is duplicated",
+      "array of length 2 that's a single duplicate pair"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [4, 3, 2, 7, 8, 2, 3, 1]",
+        "output": "[2, 3]",
+        "expectedOutput": "[2, 3]",
+        "explanation": "2 and 3 each appear twice, sorted ascending gives [2, 3]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 1, 2]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "no value repeats"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[4,3,2,7,8,2,3,1]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,1,2]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[2,2,1,1]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,2,3]]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[3,3,1,2]]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[5,4,3,2,1]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,3,3,4,5,5]]",
+        "output": "[3,5]",
+        "expectedOutput": "[3,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[6,8,5,7,15,14,14,3,9,4,11,13,7,13,9,2,8,10,12,4,12,1,11,5,1,2,15,3,6,10]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[19,17,5,16,3,1,14,4,2,12,9,8,6,15,11,13,10,20,18,7]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[4,4,2,2,1,3]]",
+        "output": "[2,4]",
+        "expectedOutput": "[2,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[2,2]]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,1,2,3]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[7,1,2,3,4,5,6,7]]",
+        "output": "[7]",
+        "expectedOutput": "[7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[10,9,8,7,6,5,4,3,2,1,1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,3,5,7,9,2,4,6,8,10,1,3,5,7,9]]",
+        "output": "[1,3,5,7,9]",
+        "expectedOutput": "[1,3,5,7,9]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [4, 3, 2, 7, 8, 2, 3, 1]",
+      "output": "[2, 3]",
+      "expectedOutput": "[2, 3]",
+      "explanation": "2 and 3 each appear twice, sorted ascending gives [2, 3]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 1, 2]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "no value repeats"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [4, 3, 2, 7, 8, 2, 3, 1]",
+      "output": "[2, 3]",
+      "expectedOutput": "[2, 3]",
+      "explanation": "2 and 3 each appear twice, sorted ascending gives [2, 3]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 1, 2]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "no value repeats"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[4,3,2,7,8,2,3,1]]",
+      "output": "[2,3]",
+      "expectedOutput": "[2,3]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,1,2]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[2,2,1,1]]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,1]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,2,3]]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[3,3,1,2]]",
+      "output": "[3]",
+      "expectedOutput": "[3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4,5]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[5,4,3,2,1]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[2,3,3,4,5,5]]",
+      "output": "[3,5]",
+      "expectedOutput": "[3,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[6,8,5,7,15,14,14,3,9,4,11,13,7,13,9,2,8,10,12,4,12,1,11,5,1,2,15,3,6,10]]",
+      "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[19,17,5,16,3,1,14,4,2,12,9,8,6,15,11,13,10,20,18,7]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[4,4,2,2,1,3]]",
+      "output": "[2,4]",
+      "expectedOutput": "[2,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,1,2,3,4,5,6,7,8,9,10]]",
+      "output": "[1,2,3,4,5,6,7,8,9,10]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[2,2]]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,1,2,3]]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[7,1,2,3,4,5,6,7]]",
+      "output": "[7]",
+      "expectedOutput": "[7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[10,9,8,7,6,5,4,3,2,1,1]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,3,5,7,9,2,4,6,8,10,1,3,5,7,9]]",
+      "output": "[1,3,5,7,9]",
+      "expectedOutput": "[1,3,5,7,9]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [4, 3, 2, 7, 8, 2, 3, 1]",
+        "output": "[2, 3]",
+        "expectedOutput": "[2, 3]",
+        "explanation": "2 and 3 each appear twice, sorted ascending gives [2, 3]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 1, 2]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "no value repeats"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[4,3,2,7,8,2,3,1]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,1,2]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[2,2,1,1]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,2,3]]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[3,3,1,2]]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[5,4,3,2,1]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,3,3,4,5,5]]",
+        "output": "[3,5]",
+        "expectedOutput": "[3,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[6,8,5,7,15,14,14,3,9,4,11,13,7,13,9,2,8,10,12,4,12,1,11,5,1,2,15,3,6,10]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[19,17,5,16,3,1,14,4,2,12,9,8,6,15,11,13,10,20,18,7]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[4,4,2,2,1,3]]",
+        "output": "[2,4]",
+        "expectedOutput": "[2,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[2,2]]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,1,2,3]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[7,1,2,3,4,5,6,7]]",
+        "output": "[7]",
+        "expectedOutput": "[7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[10,9,8,7,6,5,4,3,2,1,1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,3,5,7,9,2,4,6,8,10,1,3,5,7,9]]",
+        "output": "[1,3,5,7,9]",
+        "expectedOutput": "[1,3,5,7,9]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findDuplicates(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findDuplicates(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findDuplicates(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findDuplicates(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findDuplicates(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findDuplicates(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findDuplicates(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findDuplicates(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findDuplicates(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findDuplicates(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findDuplicates(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findDuplicates(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findDuplicates(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findDuplicates(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findDuplicates(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findDuplicates(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findDuplicates(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findDuplicates(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findDuplicates(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findDuplicates(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra, ignoring the output list",
+      "pattern": "cyclic sort: place each value v at index v-1, then every index i where nums[i] != i+1 after placement holds a value that couldn't find its home because it was duplicated"
+    },
+    "bruteForce": {
+      "approach": "use a frequency array of size n+1 to count occurrences, then collect every value whose count is 2, in ascending order",
+      "time": "O(n)",
+      "space": "O(n) for the frequency array"
+    }
+  },
+  "optimal": {
+    "pattern": "cyclic sort: place each value v at index v-1, then every index i where nums[i] != i+1 after placement holds a value that couldn't find its home because it was duplicated",
+    "time": "O(n)",
+    "space": "O(1) extra, ignoring the output list",
+    "hint_ladder": [
+      "each value in [1, n] has a natural home index (value-1). if a value appears twice, only one copy can occupy that home - what happens to the other copy?",
+      "run cyclic placement: for each index, while the value there doesn't match its home value and the home slot doesn't already hold the correct value, swap it home",
+      "once placement is done, scan the array. any index i where nums[i] != i+1 holds a value that is a duplicate (its 'twin' already occupies its rightful home)",
+      "collect those mismatched values into a result, and since you scan left to right by index they naturally come out sorted"
+    ]
+  },
+  "bruteForce": {
+    "approach": "use a frequency array of size n+1 to count occurrences, then collect every value whose count is 2, in ascending order",
+    "time": "O(n)",
+    "space": "O(n) for the frequency array"
+  },
+  "isIndex0": true,
+  "level": null
+}

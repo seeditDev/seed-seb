@@ -1,0 +1,635 @@
+{
+  "id": "non-overlapping-intervals",
+  "questionId": "non-overlapping-intervals",
+  "slug": "non-overlapping-intervals",
+  "title": "Non-overlapping Intervals",
+  "difficulty": "Medium",
+  "category": "Merge intervals",
+  "patterns": [
+    "merge intervals",
+    "greedy",
+    "sorting"
+  ],
+  "lists": [
+    "blind-75"
+  ],
+  "hints": [
+    "this is really asking: what's the largest set of intervals you can keep so none overlap? removing the rest gives your answer",
+    "to fit as many non-overlapping intervals as possible, which interval should you commit to first: the one that starts earliest, or the one that ends earliest?",
+    "sort intervals by their end time. greedily keep an interval if its start is >= the end of the last interval you kept, since ending earliest leaves the most room for future intervals",
+    "count how many intervals you kept this way; the answer is total intervals minus that count"
+  ],
+  "commonMistakes": [
+    "sorting by start time instead of end time, which does not produce the optimal greedy selection",
+    "using strict less-than instead of >= when checking if the next interval's start clears the last kept interval's end, mishandling touching intervals",
+    "trying to directly count overlaps pairwise instead of computing the maximum non-overlapping subset and subtracting"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of `intervals`, each represented as `[start, end]`.\n\n**Return the minimum number of intervals you must remove so that none of the remaining intervals overlap each other.**\n",
+    "constraints": [
+      "0 <= intervals.length <= 10^5",
+      "intervals[i].length == 2",
+      "-5 * 10^4 <= starti <= endi <= 5 * 10^4",
+      "intervals are not guaranteed to be sorted by start time"
+    ],
+    "notes": [
+      "no intervals overlap (answer 0)",
+      "all intervals are identical",
+      "a chain of intervals where each overlaps only the next one",
+      "one interval that contains several smaller intervals",
+      "empty or single-interval input"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "intervals = [[1,2],[2,3],[3,4],[1,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "removing [1,3] leaves [1,2],[2,3],[3,4], which don't overlap"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "intervals = [[1,2],[1,2],[1,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "you need to remove two of the three identical intervals to leave just one"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "intervals = [[1,2],[2,3]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "they only touch at an endpoint, which doesn't count as overlapping"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,2],[2,3],[3,4],[1,3]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,2],[1,2],[1,2]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,2],[2,3]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,100],[11,22],[1,11],[2,12]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,2]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,2],[1,2]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,5],[2,3],[3,4],[4,5]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,2],[3,4],[5,6],[7,8]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[27,29],[17,24],[15,16],[28,36],[6,6],[41,49],[0,1],[48,51],[10,16],[31,38],[13,19],[3,5],[24,24],[24,28],[50,57]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,100],[1,2],[2,3],[3,4],[4,5],[5,6]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,3],[2,4],[3,5],[4,6],[5,7]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29],[30,32],[33,35]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[0,1],[0,2],[0,3],[0,4]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,2],[2,3],[3,4],[1,3],[2,4]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,1]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,5],[1,2],[2,3],[3,4],[4,5]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[3,3],[4,13],[4,14],[10,10],[12,16],[13,13],[18,24],[31,33],[32,40],[32,33],[34,34],[37,48],[37,44],[42,53],[44,55],[47,52],[50,58],[54,56]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,2],[1,2],[1,2],[1,2],[1,2]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[19,20]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "intervals = [[1,2],[2,3],[3,4],[1,3]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "removing [1,3] leaves [1,2],[2,3],[3,4], which don't overlap"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "intervals = [[1,2],[1,2],[1,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "you need to remove two of the three identical intervals to leave just one"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "intervals = [[1,2],[2,3]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "they only touch at an endpoint, which doesn't count as overlapping"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "intervals = [[1,2],[2,3],[3,4],[1,3]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "removing [1,3] leaves [1,2],[2,3],[3,4], which don't overlap"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "intervals = [[1,2],[1,2],[1,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "you need to remove two of the three identical intervals to leave just one"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "intervals = [[1,2],[2,3]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "they only touch at an endpoint, which doesn't count as overlapping"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,2],[2,3],[3,4],[1,3]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,2],[1,2],[1,2]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1,2],[2,3]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,100],[11,22],[1,11],[2,12]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,2]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1,2],[1,2]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,5],[2,3],[3,4],[4,5]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1,2],[3,4],[5,6],[7,8]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[27,29],[17,24],[15,16],[28,36],[6,6],[41,49],[0,1],[48,51],[10,16],[31,38],[13,19],[3,5],[24,24],[24,28],[50,57]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[1,100],[1,2],[2,3],[3,4],[4,5],[5,6]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[1,3],[2,4],[3,5],[4,6],[5,7]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29],[30,32],[33,35]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[0,1],[0,2],[0,3],[0,4]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[1,2],[2,3],[3,4],[1,3],[2,4]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[1,1]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[0,5],[1,2],[2,3],[3,4],[4,5]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[3,3],[4,13],[4,14],[10,10],[12,16],[13,13],[18,24],[31,33],[32,40],[32,33],[34,34],[37,48],[37,44],[42,53],[44,55],[47,52],[50,58],[54,56]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,2],[1,2],[1,2],[1,2],[1,2]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[19,20]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "intervals = [[1,2],[2,3],[3,4],[1,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "removing [1,3] leaves [1,2],[2,3],[3,4], which don't overlap"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "intervals = [[1,2],[1,2],[1,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "you need to remove two of the three identical intervals to leave just one"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "intervals = [[1,2],[2,3]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "they only touch at an endpoint, which doesn't count as overlapping"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,2],[2,3],[3,4],[1,3]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,2],[1,2],[1,2]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,2],[2,3]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,100],[11,22],[1,11],[2,12]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,2]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,2],[1,2]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,5],[2,3],[3,4],[4,5]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,2],[3,4],[5,6],[7,8]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[27,29],[17,24],[15,16],[28,36],[6,6],[41,49],[0,1],[48,51],[10,16],[31,38],[13,19],[3,5],[24,24],[24,28],[50,57]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,100],[1,2],[2,3],[3,4],[4,5],[5,6]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,3],[2,4],[3,5],[4,6],[5,7]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,2],[3,5],[6,8],[9,11],[12,14],[15,17],[18,20],[21,23],[24,26],[27,29],[30,32],[33,35]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[0,1],[0,2],[0,3],[0,4]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,2],[2,3],[3,4],[1,3],[2,4]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,1]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,5],[1,2],[2,3],[3,4],[4,5]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[3,3],[4,13],[4,14],[10,10],[12,16],[13,13],[18,24],[31,33],[32,40],[32,33],[34,34],[37,48],[37,44],[42,53],[44,55],[47,52],[50,58],[54,56]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,2],[1,2],[1,2],[1,2],[1,2]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[19,20]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def eraseOverlapIntervals(self, intervals):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int eraseOverlapIntervals(vector<vector<int>>& intervals) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int eraseOverlapIntervals(int[][] intervals) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun eraseOverlapIntervals(intervals: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    eraseOverlapIntervals(intervals) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def eraseOverlapIntervals(self, intervals):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int eraseOverlapIntervals(vector<vector<int>>& intervals) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int eraseOverlapIntervals(int[][] intervals) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun eraseOverlapIntervals(intervals: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    eraseOverlapIntervals(intervals) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def eraseOverlapIntervals(self, intervals):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int eraseOverlapIntervals(vector<vector<int>>& intervals) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int eraseOverlapIntervals(int[][] intervals) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun eraseOverlapIntervals(intervals: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    eraseOverlapIntervals(intervals) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def eraseOverlapIntervals(self, intervals):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int eraseOverlapIntervals(vector<vector<int>>& intervals) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int eraseOverlapIntervals(int[][] intervals) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun eraseOverlapIntervals(intervals: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    eraseOverlapIntervals(intervals) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log n)",
+      "space": "O(1) beyond the sort",
+      "pattern": "greedy activity selection: sort by end time and always keep the interval that ends earliest"
+    },
+    "bruteForce": {
+      "approach": "try every subset of intervals to keep, check if it's overlap-free, and find the largest such subset (answer is n minus that size)",
+      "time": "O(2^n)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "greedy activity selection: sort by end time and always keep the interval that ends earliest",
+    "time": "O(n log n)",
+    "space": "O(1) beyond the sort",
+    "hint_ladder": [
+      "this is really asking: what's the largest set of intervals you can keep so none overlap? removing the rest gives your answer",
+      "to fit as many non-overlapping intervals as possible, which interval should you commit to first: the one that starts earliest, or the one that ends earliest?",
+      "sort intervals by their end time. greedily keep an interval if its start is >= the end of the last interval you kept, since ending earliest leaves the most room for future intervals",
+      "count how many intervals you kept this way; the answer is total intervals minus that count"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every subset of intervals to keep, check if it's overlap-free, and find the largest such subset (answer is n minus that size)",
+    "time": "O(2^n)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

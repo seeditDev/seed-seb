@@ -1,0 +1,596 @@
+{
+  "id": "delete-and-earn",
+  "questionId": "delete-and-earn",
+  "slug": "delete-and-earn",
+  "title": "Delete and Earn",
+  "difficulty": "Medium",
+  "category": "Dp 1d",
+  "patterns": [
+    "dynamic programming"
+  ],
+  "lists": [],
+  "hints": [
+    "picking value v earns you v times its count, but permanently blocks v-1 and v+1 - where have you seen 'pick this, but not its immediate neighbor' before?",
+    "first collapse the input: build an array points[v] = v * (count of v in nums) for every value from 0 up to the max value present",
+    "now the problem is exactly House Robber on the points array, where adjacency means consecutive integer values, not adjacent list positions",
+    "run best(v) = max(best(v-1), best(v-2) + points[v]) across all values, rolling just the last two results forward"
+  ],
+  "commonMistakes": [
+    "treating adjacency as 'adjacent positions in nums' instead of 'consecutive integer values', which is the actual constraint",
+    "forgetting to multiply each value by its count when building the points array, and just summing raw values instead",
+    "not handling gaps in the value range (values that never appear should contribute 0, not be skipped in a way that breaks the recurrence)"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of integers, `nums`. In one move you pick some value\npresent in the list, earn a number of points equal to that value\nmultiplied by how many times it appears, and then every element equal to\n(value - 1) or (value + 1) anywhere in the list is removed, along with\nall copies of the value you picked. You can repeat this any number of\ntimes.\n\n**Return the maximum total points you can earn.**\n",
+    "constraints": [
+      "nums.length >= 1",
+      "picking a value removes every occurrence of value-1 and value+1 from future picks",
+      "values are positive integers"
+    ],
+    "notes": [
+      "a single element (just earn it)",
+      "all elements are the same value (earn value * count in one pick)",
+      "consecutive integers where every pick blocks its neighbors, similar to House Robber"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 4, 2]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "pick 4: earn 4, and every 3 and 5 gets removed; then pick 2: earn 2. total = 6"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [2, 2, 3, 3, 3, 4]",
+        "output": "9",
+        "expectedOutput": "9",
+        "explanation": "pick 3: earn 3*3=9, and every 2 and 4 gets removed (nothing left to pick after)"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[3,4,2]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2,2,3,3,3,4]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1,1,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,2,3,3]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[3,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[8,8,8,8,8]]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,9,2,3,4,1,7,8,6,5,2,9,3,4,1,8,7,6,2,3]]",
+        "output": "53",
+        "expectedOutput": "53",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[10,10,10,9,9,8,8,1,1,2]]",
+        "output": "48",
+        "expectedOutput": "48",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[2,3,2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[4,4,4,4,4,4,4,4,4,4]]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[100,99,98,1,1,1]]",
+        "output": "201",
+        "expectedOutput": "201",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,3,5,7,9,11,13,15]]",
+        "output": "64",
+        "expectedOutput": "64",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,4,6,8,10,12,14]]",
+        "output": "56",
+        "expectedOutput": "56",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,3,3,4,4,4,5,5,5,6,6,6,7,7,7,8,8,8]]",
+        "output": "54",
+        "expectedOutput": "54",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 4, 2]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "pick 4: earn 4, and every 3 and 5 gets removed; then pick 2: earn 2. total = 6"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [2, 2, 3, 3, 3, 4]",
+      "output": "9",
+      "expectedOutput": "9",
+      "explanation": "pick 3: earn 3*3=9, and every 2 and 4 gets removed (nothing left to pick after)"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 4, 2]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "pick 4: earn 4, and every 3 and 5 gets removed; then pick 2: earn 2. total = 6"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [2, 2, 3, 3, 3, 4]",
+      "output": "9",
+      "expectedOutput": "9",
+      "explanation": "pick 3: earn 3*3=9, and every 2 and 4 gets removed (nothing left to pick after)"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[3,4,2]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[2,2,3,3,3,4]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,1,1,2]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,2,3]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[2,2,3,3]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,1,1,1]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[3,1]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[8,8,8,8,8]]",
+      "output": "40",
+      "expectedOutput": "40",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+      "output": "30",
+      "expectedOutput": "30",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[5,9,2,3,4,1,7,8,6,5,2,9,3,4,1,8,7,6,2,3]]",
+      "output": "53",
+      "expectedOutput": "53",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[10,10,10,9,9,8,8,1,1,2]]",
+      "output": "48",
+      "expectedOutput": "48",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[2,3,2]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[4,4,4,4,4,4,4,4,4,4]]",
+      "output": "40",
+      "expectedOutput": "40",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[100,99,98,1,1,1]]",
+      "output": "201",
+      "expectedOutput": "201",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,3,5,7,9,11,13,15]]",
+      "output": "64",
+      "expectedOutput": "64",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[2,4,6,8,10,12,14]]",
+      "output": "56",
+      "expectedOutput": "56",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[3,3,3,4,4,4,5,5,5,6,6,6,7,7,7,8,8,8]]",
+      "output": "54",
+      "expectedOutput": "54",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 4, 2]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "pick 4: earn 4, and every 3 and 5 gets removed; then pick 2: earn 2. total = 6"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [2, 2, 3, 3, 3, 4]",
+        "output": "9",
+        "expectedOutput": "9",
+        "explanation": "pick 3: earn 3*3=9, and every 2 and 4 gets removed (nothing left to pick after)"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[3,4,2]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2,2,3,3,3,4]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1,1,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,2,3,3]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[3,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[8,8,8,8,8]]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,9,2,3,4,1,7,8,6,5,2,9,3,4,1,8,7,6,2,3]]",
+        "output": "53",
+        "expectedOutput": "53",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[10,10,10,9,9,8,8,1,1,2]]",
+        "output": "48",
+        "expectedOutput": "48",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[2,3,2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[4,4,4,4,4,4,4,4,4,4]]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[100,99,98,1,1,1]]",
+        "output": "201",
+        "expectedOutput": "201",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,3,5,7,9,11,13,15]]",
+        "output": "64",
+        "expectedOutput": "64",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,4,6,8,10,12,14]]",
+        "output": "56",
+        "expectedOutput": "56",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,3,3,4,4,4,5,5,5,6,6,6,7,7,7,8,8,8]]",
+        "output": "54",
+        "expectedOutput": "54",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def deleteAndEarn(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int deleteAndEarn(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int deleteAndEarn(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun deleteAndEarn(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    deleteAndEarn(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def deleteAndEarn(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int deleteAndEarn(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int deleteAndEarn(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun deleteAndEarn(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    deleteAndEarn(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def deleteAndEarn(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int deleteAndEarn(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int deleteAndEarn(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun deleteAndEarn(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    deleteAndEarn(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def deleteAndEarn(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int deleteAndEarn(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int deleteAndEarn(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun deleteAndEarn(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    deleteAndEarn(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n + maxValue)",
+      "space": "O(maxValue) for the totals array, O(1) extra for the rolling House Robber pass",
+      "pattern": "dynamic programming - collapse to totals per value, then apply the House Robber recurrence over consecutive integers"
+    },
+    "bruteForce": {
+      "approach": "try every subset of distinct values such that no two chosen values are adjacent integers, summing value*count for each, and take the max",
+      "time": "O(2^k) where k is the number of distinct values",
+      "space": "O(k) recursion stack"
+    }
+  },
+  "optimal": {
+    "pattern": "dynamic programming - collapse to totals per value, then apply the House Robber recurrence over consecutive integers",
+    "time": "O(n + maxValue)",
+    "space": "O(maxValue) for the totals array, O(1) extra for the rolling House Robber pass",
+    "hint_ladder": [
+      "picking value v earns you v times its count, but permanently blocks v-1 and v+1 - where have you seen 'pick this, but not its immediate neighbor' before?",
+      "first collapse the input: build an array points[v] = v * (count of v in nums) for every value from 0 up to the max value present",
+      "now the problem is exactly House Robber on the points array, where adjacency means consecutive integer values, not adjacent list positions",
+      "run best(v) = max(best(v-1), best(v-2) + points[v]) across all values, rolling just the last two results forward"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every subset of distinct values such that no two chosen values are adjacent integers, summing value*count for each, and take the max",
+    "time": "O(2^k) where k is the number of distinct values",
+    "space": "O(k) recursion stack"
+  },
+  "isIndex0": true,
+  "level": null
+}

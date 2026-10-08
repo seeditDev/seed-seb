@@ -1,0 +1,761 @@
+{
+  "id": "lowest-common-ancestor-of-a-binary-tree",
+  "questionId": "lowest-common-ancestor-of-a-binary-tree",
+  "slug": "lowest-common-ancestor-of-a-binary-tree",
+  "title": "Lowest Common Ancestor of a Binary Tree",
+  "difficulty": "Medium",
+  "category": "Tree dfs",
+  "patterns": [
+    "tree",
+    "dfs",
+    "recursion"
+  ],
+  "lists": [
+    "grind-75"
+  ],
+  "hints": [
+    "if you already knew, for every subtree, whether it contains p, whether it contains q, or both, how would you decide the answer at the current node?",
+    "write a recursive helper on an index that returns the LCA value found within that subtree, or a sentinel meaning 'not found here'",
+    "at each node: if the node's own value is p or q, that node is itself a candidate answer (since one of the two live at or below it) - return it directly",
+    "otherwise recurse into both children; if both sides report finding something, the current node is the LCA; if only one side reports something, pass that result upward unchanged"
+  ],
+  "commonMistakes": [
+    "assuming this is a binary search tree and comparing values to decide direction, when the tree here is a general binary tree with no ordering guarantee",
+    "not handling the case where one of p or q is an ancestor of the other, returning some node further up instead of p or q itself",
+    "forgetting to check both 'index out of bounds' and 'value equals -101' as the missing-node base case",
+    "returning as soon as one child search succeeds without checking whether the other child also succeeds, which misses the case where the true LCA is the current node"
+  ],
+  "content": {
+    "problemStatement": "Binary trees in these problems are encoded as a flat array named `tree`\nusing complete-binary-tree (heap) indexing:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array bounds **and** its value isn't the sentinel `-101`\n- `-101` means \"no node there\"\n\nAll node values in a given tree are distinct, and you're given two\nintegers `p` and `q`, each guaranteed to equal the value of some node\nin the tree. For example, `[3, 5, 1, 6, 2, 0, 8, -101, -101, 7, 4]`\nencodes this tree:\n\n```\n            3\n          /   \\\n         5     1\n        / \\   / \\\n       6   2 0   8\n          / \\\n         7   4\n```\n\nHere, the lowest common ancestor of `p = 5` and `q = 1` is the root,\n`3` (one lives in its left subtree, the other in its right subtree),\nwhile the lowest common ancestor of `p = 5` and `q = 4` is `5` itself,\nsince 4 is 5's own descendant.\n\n**Return the value of the lowest common ancestor of `p` and `q`: the deepest node that has a descendant valued `p` and a descendant valued `q` somewhere in its subtree.**\n\nA node counts as a descendant of itself, so if `p` is itself an ancestor\nof `q`, `p` is the answer.\n",
+    "constraints": [
+      "1 <= number of nodes in tree <= 500",
+      "-100 <= tree[i] <= 100 for every real node",
+      "all real node values in a given tree are distinct",
+      "p != q",
+      "both p and q are guaranteed to be the value of some node present in tree"
+    ],
+    "notes": [
+      "p is an ancestor of q (or q is an ancestor of p), so the answer is p or q itself rather than some node above both",
+      "p and q are the two children of the root, so the root is the answer",
+      "the tree has only two nodes total"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [3, 5, 1, 6, 2, 0, 8, -101, -101, 7, 4], p = 5, q = 1",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "node 5 lives in the root's left subtree and node 1 lives in its right subtree, so the root (3) is their lowest common ancestor"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [3, 5, 1, 6, 2, 0, 8, -101, -101, 7, 4], p = 5, q = 4",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "node 4 is a descendant of node 5, so node 5 itself is the lowest common ancestor"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [1, 2], p = 1, q = 2",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the root is an ancestor of every other node, including its only child"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],5,1]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],5,4]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],6,4]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],0,8]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],7,4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],3,5]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],6,2]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],6,0]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],0,4]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],8,4]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],7,8]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],2,0]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],5,0]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],1,8]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],6,7]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],6,8]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],2,7]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],2,4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],5,6]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],5,2]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],1,0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],1,7]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[[1,2],1,2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_24",
+        "input": "[[1,2,3],2,3]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_25",
+        "input": "[[1,-101,2],1,2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_26",
+        "input": "[[1,2,-101,3],2,3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [3, 5, 1, 6, 2, 0, 8, -101, -101, 7, 4], p = 5, q = 1",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "node 5 lives in the root's left subtree and node 1 lives in its right subtree, so the root (3) is their lowest common ancestor"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [3, 5, 1, 6, 2, 0, 8, -101, -101, 7, 4], p = 5, q = 4",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "node 4 is a descendant of node 5, so node 5 itself is the lowest common ancestor"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [1, 2], p = 1, q = 2",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the root is an ancestor of every other node, including its only child"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [3, 5, 1, 6, 2, 0, 8, -101, -101, 7, 4], p = 5, q = 1",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "node 5 lives in the root's left subtree and node 1 lives in its right subtree, so the root (3) is their lowest common ancestor"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [3, 5, 1, 6, 2, 0, 8, -101, -101, 7, 4], p = 5, q = 4",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "node 4 is a descendant of node 5, so node 5 itself is the lowest common ancestor"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [1, 2], p = 1, q = 2",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the root is an ancestor of every other node, including its only child"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],5,1]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],5,4]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],6,4]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],0,8]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],7,4]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],3,5]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],6,2]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],6,0]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],0,4]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],8,4]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],7,8]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],2,0]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],5,0]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],1,8]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],6,7]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],6,8]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],2,7]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],2,4]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],5,6]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],5,2]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],1,0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],1,7]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_23",
+      "input": "[[1,2],1,2]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_24",
+      "input": "[[1,2,3],2,3]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_25",
+      "input": "[[1,-101,2],1,2]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_26",
+      "input": "[[1,2,-101,3],2,3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [3, 5, 1, 6, 2, 0, 8, -101, -101, 7, 4], p = 5, q = 1",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "node 5 lives in the root's left subtree and node 1 lives in its right subtree, so the root (3) is their lowest common ancestor"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [3, 5, 1, 6, 2, 0, 8, -101, -101, 7, 4], p = 5, q = 4",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "node 4 is a descendant of node 5, so node 5 itself is the lowest common ancestor"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [1, 2], p = 1, q = 2",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the root is an ancestor of every other node, including its only child"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],5,1]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],5,4]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],6,4]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],0,8]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],7,4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],3,5]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],6,2]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],6,0]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],0,4]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],8,4]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],7,8]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],2,0]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],5,0]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],1,8]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],6,7]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],6,8]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],2,7]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],2,4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],5,6]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],5,2]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],1,0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],1,7]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[[1,2],1,2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_24",
+        "input": "[[1,2,3],2,3]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_25",
+        "input": "[[1,-101,2],1,2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_26",
+        "input": "[[1,2,-101,3],2,3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def lowestCommonAncestor(self, tree, p, q):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lowestCommonAncestor(vector<int>& tree, int p, int q) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lowestCommonAncestor(int[] tree, int p, int q) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lowestCommonAncestor(tree: IntArray, p: Int, q: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lowestCommonAncestor(tree, p, q) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def lowestCommonAncestor(self, tree, p, q):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lowestCommonAncestor(vector<int>& tree, int p, int q) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lowestCommonAncestor(int[] tree, int p, int q) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lowestCommonAncestor(tree: IntArray, p: Int, q: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lowestCommonAncestor(tree, p, q) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def lowestCommonAncestor(self, tree, p, q):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lowestCommonAncestor(vector<int>& tree, int p, int q) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lowestCommonAncestor(int[] tree, int p, int q) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lowestCommonAncestor(tree: IntArray, p: Int, q: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lowestCommonAncestor(tree, p, q) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def lowestCommonAncestor(self, tree, p, q):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lowestCommonAncestor(vector<int>& tree, int p, int q) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int lowestCommonAncestor(int[] tree, int p, int q) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun lowestCommonAncestor(tree: IntArray, p: Int, q: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    lowestCommonAncestor(tree, p, q) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n), visiting every node once",
+      "space": "O(h) for the recursion stack",
+      "pattern": "postorder DFS: recurse into both children, and let each call report back whether it found p, q, or their ancestor"
+    },
+    "bruteForce": {
+      "approach": "do a DFS from the root that records the full path (list of values) taken to reach p, and a separate DFS that records the full path to reach q; then walk both paths together from the start and keep the last value where they still agree",
+      "time": "O(n) to find each path",
+      "space": "O(n) to store both paths"
+    }
+  },
+  "optimal": {
+    "pattern": "postorder DFS: recurse into both children, and let each call report back whether it found p, q, or their ancestor",
+    "time": "O(n), visiting every node once",
+    "space": "O(h) for the recursion stack",
+    "hint_ladder": [
+      "if you already knew, for every subtree, whether it contains p, whether it contains q, or both, how would you decide the answer at the current node?",
+      "write a recursive helper on an index that returns the LCA value found within that subtree, or a sentinel meaning 'not found here'",
+      "at each node: if the node's own value is p or q, that node is itself a candidate answer (since one of the two live at or below it) - return it directly",
+      "otherwise recurse into both children; if both sides report finding something, the current node is the LCA; if only one side reports something, pass that result upward unchanged"
+    ]
+  },
+  "bruteForce": {
+    "approach": "do a DFS from the root that records the full path (list of values) taken to reach p, and a separate DFS that records the full path to reach q; then walk both paths together from the start and keep the last value where they still agree",
+    "time": "O(n) to find each path",
+    "space": "O(n) to store both paths"
+  },
+  "isIndex0": true,
+  "level": null
+}

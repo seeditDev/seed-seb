@@ -1,0 +1,629 @@
+{
+  "id": "generate-parentheses-count",
+  "questionId": "generate-parentheses-count",
+  "slug": "generate-parentheses-count",
+  "title": "Count of Valid Parentheses Combinations",
+  "difficulty": "Easy",
+  "category": "Backtracking",
+  "patterns": [
+    "backtracking"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "you never need to build the full string first and check it - can you prune invalid strings while building them?",
+    "track how many '(' and how many ')' you've placed so far as you recurse",
+    "you can place '(' whenever you've used fewer than n of them, and you can place ')' whenever you've used fewer close than open so far",
+    "count a complete valid string (add 1 to your running total) once you've placed 2n characters total - you don't need to store the strings themselves, just count the leaves of the recursion tree"
+  ],
+  "commonMistakes": [
+    "allowing a ')' to be placed even when it would exceed the number of '(' placed so far, producing invalid prefixes",
+    "forgetting the base case, so recursion never terminates or over/under counts",
+    "trying to enumerate and store every string just to count them, which is unnecessary extra work"
+  ],
+  "content": {
+    "problemStatement": "You're given an integer `n`, the number of pairs of parentheses.\n\n**Count how many distinct strings of length 2n, made only of `(` and `)` characters, are well-formed.**\n\nA string is well-formed if every prefix has at least as many `(` as `)`, and the total counts of `(` and `)` are equal.\n",
+    "constraints": [
+      "0 <= n <= 12",
+      "the result fits within a 32-bit signed integer"
+    ],
+    "notes": [
+      "n = 0 (only the empty string, answer is 1)",
+      "n = 1 (smallest nontrivial case)",
+      "a moderately large n to check the count grows correctly (Catalan numbers)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 3",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "((())), (()()), (())(), ()(()), ()()() are the 5 well-formed strings"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "only '()' is well-formed"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 0",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the empty string is trivially well-formed"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[3]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[4]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[5]",
+        "output": "42",
+        "expectedOutput": "42",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[6]",
+        "output": "132",
+        "expectedOutput": "132",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[7]",
+        "output": "429",
+        "expectedOutput": "429",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[8]",
+        "output": "1430",
+        "expectedOutput": "1430",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[9]",
+        "output": "4862",
+        "expectedOutput": "4862",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[10]",
+        "output": "16796",
+        "expectedOutput": "16796",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[11]",
+        "output": "58786",
+        "expectedOutput": "58786",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[12]",
+        "output": "208012",
+        "expectedOutput": "208012",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[4]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[3]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[5]",
+        "output": "42",
+        "expectedOutput": "42",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[6]",
+        "output": "132",
+        "expectedOutput": "132",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 3",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "((())), (()()), (())(), ()(()), ()()() are the 5 well-formed strings"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "only '()' is well-formed"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 0",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the empty string is trivially well-formed"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 3",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "((())), (()()), (())(), ()(()), ()()() are the 5 well-formed strings"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "only '()' is well-formed"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 0",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the empty string is trivially well-formed"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[3]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[4]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[5]",
+      "output": "42",
+      "expectedOutput": "42",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[6]",
+      "output": "132",
+      "expectedOutput": "132",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[7]",
+      "output": "429",
+      "expectedOutput": "429",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[8]",
+      "output": "1430",
+      "expectedOutput": "1430",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[9]",
+      "output": "4862",
+      "expectedOutput": "4862",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[10]",
+      "output": "16796",
+      "expectedOutput": "16796",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[11]",
+      "output": "58786",
+      "expectedOutput": "58786",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[12]",
+      "output": "208012",
+      "expectedOutput": "208012",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[4]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[3]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[5]",
+      "output": "42",
+      "expectedOutput": "42",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[6]",
+      "output": "132",
+      "expectedOutput": "132",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 3",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "((())), (()()), (())(), ()(()), ()()() are the 5 well-formed strings"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "only '()' is well-formed"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 0",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the empty string is trivially well-formed"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[3]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[4]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[5]",
+        "output": "42",
+        "expectedOutput": "42",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[6]",
+        "output": "132",
+        "expectedOutput": "132",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[7]",
+        "output": "429",
+        "expectedOutput": "429",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[8]",
+        "output": "1430",
+        "expectedOutput": "1430",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[9]",
+        "output": "4862",
+        "expectedOutput": "4862",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[10]",
+        "output": "16796",
+        "expectedOutput": "16796",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[11]",
+        "output": "58786",
+        "expectedOutput": "58786",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[12]",
+        "output": "208012",
+        "expectedOutput": "208012",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[4]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[3]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[5]",
+        "output": "42",
+        "expectedOutput": "42",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[6]",
+        "output": "132",
+        "expectedOutput": "132",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def countValidParens(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countValidParens(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countValidParens(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countValidParens(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countValidParens(n) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def countValidParens(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countValidParens(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countValidParens(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countValidParens(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countValidParens(n) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def countValidParens(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countValidParens(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countValidParens(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countValidParens(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countValidParens(n) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def countValidParens(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countValidParens(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int countValidParens(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun countValidParens(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    countValidParens(n) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(4^n / sqrt(n)) (the n-th Catalan number, exponential but far better than the full brute force)",
+      "space": "O(n) recursion depth",
+      "pattern": "backtracking with two counters (open used, close used) and a pruning rule"
+    },
+    "bruteForce": {
+      "approach": "generate all C(2n, n) strings with n opening and n closing brackets and check each for well-formedness",
+      "time": "O(C(2n, n) * n)",
+      "space": "O(n) extra beyond enumeration"
+    }
+  },
+  "optimal": {
+    "pattern": "backtracking with two counters (open used, close used) and a pruning rule",
+    "time": "O(4^n / sqrt(n)) (the n-th Catalan number, exponential but far better than the full brute force)",
+    "space": "O(n) recursion depth",
+    "hint_ladder": [
+      "you never need to build the full string first and check it - can you prune invalid strings while building them?",
+      "track how many '(' and how many ')' you've placed so far as you recurse",
+      "you can place '(' whenever you've used fewer than n of them, and you can place ')' whenever you've used fewer close than open so far",
+      "count a complete valid string (add 1 to your running total) once you've placed 2n characters total - you don't need to store the strings themselves, just count the leaves of the recursion tree"
+    ]
+  },
+  "bruteForce": {
+    "approach": "generate all C(2n, n) strings with n opening and n closing brackets and check each for well-formedness",
+    "time": "O(C(2n, n) * n)",
+    "space": "O(n) extra beyond enumeration"
+  },
+  "isIndex0": true,
+  "level": null
+}

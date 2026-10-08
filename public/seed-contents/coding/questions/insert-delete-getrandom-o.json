@@ -1,0 +1,678 @@
+{
+  "id": "insert-delete-getrandom-o",
+  "questionId": "insert-delete-getrandom-o",
+  "slug": "insert-delete-getrandom-o",
+  "title": "Insert Delete GetRandom O(1)",
+  "difficulty": "Medium",
+  "category": "Hash map",
+  "patterns": [
+    "hash map",
+    "array",
+    "design"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "insert and remove need to be fast - a hash map from value to its index in a backing array, combined with swap-and-pop removal, gets you both in O(1) average",
+    "for remove, instead of shifting elements after deleting, swap the target with the last element in the array, then pop the last element - update the hash map for the swapped value's new index",
+    "getRandom here always wants the smallest present value, which a plain array or hash map can't give you in O(1) - what structure keeps fast access to the minimum while still supporting removal of an arbitrary value?",
+    "a min-heap gives fast access to the minimum, but lazily skipping stale entries (or tracking how many times a value has been removed) lets you handle heap entries that no longer belong to the set, or use a balanced ordered structure (like a sorted set / TreeMap) for guaranteed O(log n) insert, remove, and find-min"
+  ],
+  "commonMistakes": [
+    "forgetting insert must return 0 (and leave the set unchanged) when the value is already present",
+    "forgetting remove must return 0 when the value isn't present",
+    "using a linear scan for getRandom or for presence checks, which defeats the point of the O(1)/O(log n) target",
+    "when swap-and-pop removing from a backing array, forgetting to update the hash map's stored index for the element swapped into the removed slot",
+    "treating getRandom's redefinition as literal randomness and using a real RNG, which won't produce checkable, deterministic results here"
+  ],
+  "content": {
+    "problemStatement": "Design a data structure that supports three operations on a set of\nintegers, all efficiently: insert a value, remove a value, and fetch a\nvalue currently in the set. You're given a space-delimited sequence of\noperations to run starting from an empty set. Each token is one of:\n\n- `insert_<value>` - insert value if it isn't already present\n- `remove_<value>` - remove value if it is present\n- `getRandom` - report an element currently in the set\n\n**Simulate the operations in order and return a list containing the\nresult of every insert, remove, and getRandom call, in that order.**\n\nSince a real random pick can't be checked deterministically, this\nversion redefines getRandom to always report the smallest value\ncurrently present in the set, so results are checkable. Insert and\nremove are expected to run in O(1) average time via a hash map, while\nthis deterministic getRandom naturally costs O(log n) using an ordered\nstructure such as a min-heap or a balanced/sorted set.\n\n- `insert` returns 1 if the value was newly added, or 0 if it was already present\n- `remove` returns 1 if the value was present and removed, or 0 if it wasn't present\n- `getRandom` is never called on an empty set\n",
+    "constraints": [
+      "tokens are separated by single spaces, and insert/remove tokens join the operation and value with an underscore",
+      "values fit in a standard 32-bit integer and may be negative",
+      "getRandom is never called while the set is empty",
+      "1 <= number of operations <= 200"
+    ],
+    "notes": [
+      "inserting the same value twice in a row",
+      "removing a value that was never inserted",
+      "removing a value, then re-inserting it later",
+      "getRandom called when the set has exactly one element"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"insert_1 insert_2 insert_2 getRandom remove_1 getRandom\"",
+        "output": "[1, 1, 0, 1, 1, 2]",
+        "expectedOutput": "[1, 1, 0, 1, 1, 2]",
+        "explanation": "insert 1 (new, 1); insert 2 (new, 1); insert 2 again (already present, 0); getRandom reports smallest present = 1; remove 1 (present, 1); getRandom reports smallest present = 2"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"insert_5 remove_5 remove_5\"",
+        "output": "[1, 1, 0]",
+        "expectedOutput": "[1, 1, 0]",
+        "explanation": "insert 5 (new, 1); remove 5 (present, 1); remove 5 again (not present anymore, 0)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"insert_3 insert_1 insert_2 getRandom\"",
+        "output": "[1, 1, 1, 1]",
+        "expectedOutput": "[1, 1, 1, 1]",
+        "explanation": "all three inserts are new; the set is {1,2,3} and getRandom reports the smallest, 1"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"insert_1 insert_2 insert_2 getRandom remove_1 getRandom\"]",
+        "output": "[1,1,0,1,1,2]",
+        "expectedOutput": "[1,1,0,1,1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"insert_5 remove_5 remove_5\"]",
+        "output": "[1,1,0]",
+        "expectedOutput": "[1,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"insert_3 insert_1 insert_2 getRandom\"]",
+        "output": "[1,1,1,1]",
+        "expectedOutput": "[1,1,1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"insert_0 getRandom remove_0 insert_0 getRandom\"]",
+        "output": "[1,0,1,1,0]",
+        "expectedOutput": "[1,0,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"insert_-5 insert_-10 getRandom\"]",
+        "output": "[1,1,-10]",
+        "expectedOutput": "[1,1,-10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"insert_1 insert_1 insert_1 remove_1 insert_1 getRandom\"]",
+        "output": "[1,0,0,1,1,1]",
+        "expectedOutput": "[1,0,0,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"insert_100 insert_50 insert_75 getRandom remove_50 getRandom remove_100 getRandom\"]",
+        "output": "[1,1,1,50,1,75,1,75]",
+        "expectedOutput": "[1,1,1,50,1,75,1,75]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"remove_1 remove_2 insert_1\"]",
+        "output": "[0,0,1]",
+        "expectedOutput": "[0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"insert_7 insert_7 remove_7 remove_7 insert_7 getRandom\"]",
+        "output": "[1,0,1,0,1,7]",
+        "expectedOutput": "[1,0,1,0,1,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"insert_2 insert_4 insert_6 insert_8 getRandom remove_2 getRandom remove_4 getRandom\"]",
+        "output": "[1,1,1,1,2,1,4,1,6]",
+        "expectedOutput": "[1,1,1,1,2,1,4,1,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"insert_9 getRandom insert_1 getRandom insert_5 getRandom\"]",
+        "output": "[1,9,1,1,1,1]",
+        "expectedOutput": "[1,9,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"insert_-1 insert_-2 insert_-3 getRandom remove_-3 getRandom\"]",
+        "output": "[1,1,1,-3,1,-2]",
+        "expectedOutput": "[1,1,1,-3,1,-2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"insert_1000000 insert_-1000000 getRandom\"]",
+        "output": "[1,1,-1000000]",
+        "expectedOutput": "[1,1,-1000000]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"insert_1 remove_1 insert_2 remove_2 insert_3 getRandom\"]",
+        "output": "[1,1,1,1,1,3]",
+        "expectedOutput": "[1,1,1,1,1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"insert_5 insert_3 insert_8 remove_3 remove_8 remove_5 insert_5 getRandom\"]",
+        "output": "[1,1,1,1,1,1,1,5]",
+        "expectedOutput": "[1,1,1,1,1,1,1,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"insert_2 insert_2 insert_2 insert_2 getRandom remove_2\"]",
+        "output": "[1,0,0,0,2,1]",
+        "expectedOutput": "[1,0,0,0,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"insert_1 insert_2 insert_3 insert_4 insert_5 getRandom remove_1 remove_2 getRandom\"]",
+        "output": "[1,1,1,1,1,1,1,1,3]",
+        "expectedOutput": "[1,1,1,1,1,1,1,1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"insert_10 insert_20 remove_15 getRandom\"]",
+        "output": "[1,1,0,10]",
+        "expectedOutput": "[1,1,0,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"insert_0 getRandom remove_0 insert_1 getRandom\"]",
+        "output": "[1,0,1,1,1]",
+        "expectedOutput": "[1,0,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"insert_3 insert_1 remove_1 insert_1 insert_0 getRandom\"]",
+        "output": "[1,1,1,1,1,0]",
+        "expectedOutput": "[1,1,1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"insert_2 insert_2 remove_2 remove_2 insert_2 remove_2 insert_2 getRandom\"]",
+        "output": "[1,0,1,0,1,1,1,2]",
+        "expectedOutput": "[1,0,1,0,1,1,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"insert_1 insert_2 insert_3 insert_4 insert_5 insert_6 insert_7 insert_8 insert_9 insert_10 getRandom\"]",
+        "output": "[1,1,1,1,1,1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1,1,1,1,1,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"insert_1 insert_2 insert_2 getRandom remove_1 getRandom\"",
+      "output": "[1, 1, 0, 1, 1, 2]",
+      "expectedOutput": "[1, 1, 0, 1, 1, 2]",
+      "explanation": "insert 1 (new, 1); insert 2 (new, 1); insert 2 again (already present, 0); getRandom reports smallest present = 1; remove 1 (present, 1); getRandom reports smallest present = 2"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"insert_5 remove_5 remove_5\"",
+      "output": "[1, 1, 0]",
+      "expectedOutput": "[1, 1, 0]",
+      "explanation": "insert 5 (new, 1); remove 5 (present, 1); remove 5 again (not present anymore, 0)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"insert_3 insert_1 insert_2 getRandom\"",
+      "output": "[1, 1, 1, 1]",
+      "expectedOutput": "[1, 1, 1, 1]",
+      "explanation": "all three inserts are new; the set is {1,2,3} and getRandom reports the smallest, 1"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"insert_1 insert_2 insert_2 getRandom remove_1 getRandom\"",
+      "output": "[1, 1, 0, 1, 1, 2]",
+      "expectedOutput": "[1, 1, 0, 1, 1, 2]",
+      "explanation": "insert 1 (new, 1); insert 2 (new, 1); insert 2 again (already present, 0); getRandom reports smallest present = 1; remove 1 (present, 1); getRandom reports smallest present = 2"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"insert_5 remove_5 remove_5\"",
+      "output": "[1, 1, 0]",
+      "expectedOutput": "[1, 1, 0]",
+      "explanation": "insert 5 (new, 1); remove 5 (present, 1); remove 5 again (not present anymore, 0)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"insert_3 insert_1 insert_2 getRandom\"",
+      "output": "[1, 1, 1, 1]",
+      "expectedOutput": "[1, 1, 1, 1]",
+      "explanation": "all three inserts are new; the set is {1,2,3} and getRandom reports the smallest, 1"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"insert_1 insert_2 insert_2 getRandom remove_1 getRandom\"]",
+      "output": "[1,1,0,1,1,2]",
+      "expectedOutput": "[1,1,0,1,1,2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"insert_5 remove_5 remove_5\"]",
+      "output": "[1,1,0]",
+      "expectedOutput": "[1,1,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"insert_3 insert_1 insert_2 getRandom\"]",
+      "output": "[1,1,1,1]",
+      "expectedOutput": "[1,1,1,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"insert_0 getRandom remove_0 insert_0 getRandom\"]",
+      "output": "[1,0,1,1,0]",
+      "expectedOutput": "[1,0,1,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"insert_-5 insert_-10 getRandom\"]",
+      "output": "[1,1,-10]",
+      "expectedOutput": "[1,1,-10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"insert_1 insert_1 insert_1 remove_1 insert_1 getRandom\"]",
+      "output": "[1,0,0,1,1,1]",
+      "expectedOutput": "[1,0,0,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"insert_100 insert_50 insert_75 getRandom remove_50 getRandom remove_100 getRandom\"]",
+      "output": "[1,1,1,50,1,75,1,75]",
+      "expectedOutput": "[1,1,1,50,1,75,1,75]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"remove_1 remove_2 insert_1\"]",
+      "output": "[0,0,1]",
+      "expectedOutput": "[0,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"insert_7 insert_7 remove_7 remove_7 insert_7 getRandom\"]",
+      "output": "[1,0,1,0,1,7]",
+      "expectedOutput": "[1,0,1,0,1,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"insert_2 insert_4 insert_6 insert_8 getRandom remove_2 getRandom remove_4 getRandom\"]",
+      "output": "[1,1,1,1,2,1,4,1,6]",
+      "expectedOutput": "[1,1,1,1,2,1,4,1,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"insert_9 getRandom insert_1 getRandom insert_5 getRandom\"]",
+      "output": "[1,9,1,1,1,1]",
+      "expectedOutput": "[1,9,1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"insert_-1 insert_-2 insert_-3 getRandom remove_-3 getRandom\"]",
+      "output": "[1,1,1,-3,1,-2]",
+      "expectedOutput": "[1,1,1,-3,1,-2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"insert_1000000 insert_-1000000 getRandom\"]",
+      "output": "[1,1,-1000000]",
+      "expectedOutput": "[1,1,-1000000]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"insert_1 remove_1 insert_2 remove_2 insert_3 getRandom\"]",
+      "output": "[1,1,1,1,1,3]",
+      "expectedOutput": "[1,1,1,1,1,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"insert_5 insert_3 insert_8 remove_3 remove_8 remove_5 insert_5 getRandom\"]",
+      "output": "[1,1,1,1,1,1,1,5]",
+      "expectedOutput": "[1,1,1,1,1,1,1,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"insert_2 insert_2 insert_2 insert_2 getRandom remove_2\"]",
+      "output": "[1,0,0,0,2,1]",
+      "expectedOutput": "[1,0,0,0,2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"insert_1 insert_2 insert_3 insert_4 insert_5 getRandom remove_1 remove_2 getRandom\"]",
+      "output": "[1,1,1,1,1,1,1,1,3]",
+      "expectedOutput": "[1,1,1,1,1,1,1,1,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"insert_10 insert_20 remove_15 getRandom\"]",
+      "output": "[1,1,0,10]",
+      "expectedOutput": "[1,1,0,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"insert_0 getRandom remove_0 insert_1 getRandom\"]",
+      "output": "[1,0,1,1,1]",
+      "expectedOutput": "[1,0,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"insert_3 insert_1 remove_1 insert_1 insert_0 getRandom\"]",
+      "output": "[1,1,1,1,1,0]",
+      "expectedOutput": "[1,1,1,1,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"insert_2 insert_2 remove_2 remove_2 insert_2 remove_2 insert_2 getRandom\"]",
+      "output": "[1,0,1,0,1,1,1,2]",
+      "expectedOutput": "[1,0,1,0,1,1,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[\"insert_1 insert_2 insert_3 insert_4 insert_5 insert_6 insert_7 insert_8 insert_9 insert_10 getRandom\"]",
+      "output": "[1,1,1,1,1,1,1,1,1,1,1]",
+      "expectedOutput": "[1,1,1,1,1,1,1,1,1,1,1]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"insert_1 insert_2 insert_2 getRandom remove_1 getRandom\"",
+        "output": "[1, 1, 0, 1, 1, 2]",
+        "expectedOutput": "[1, 1, 0, 1, 1, 2]",
+        "explanation": "insert 1 (new, 1); insert 2 (new, 1); insert 2 again (already present, 0); getRandom reports smallest present = 1; remove 1 (present, 1); getRandom reports smallest present = 2"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"insert_5 remove_5 remove_5\"",
+        "output": "[1, 1, 0]",
+        "expectedOutput": "[1, 1, 0]",
+        "explanation": "insert 5 (new, 1); remove 5 (present, 1); remove 5 again (not present anymore, 0)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"insert_3 insert_1 insert_2 getRandom\"",
+        "output": "[1, 1, 1, 1]",
+        "expectedOutput": "[1, 1, 1, 1]",
+        "explanation": "all three inserts are new; the set is {1,2,3} and getRandom reports the smallest, 1"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"insert_1 insert_2 insert_2 getRandom remove_1 getRandom\"]",
+        "output": "[1,1,0,1,1,2]",
+        "expectedOutput": "[1,1,0,1,1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"insert_5 remove_5 remove_5\"]",
+        "output": "[1,1,0]",
+        "expectedOutput": "[1,1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"insert_3 insert_1 insert_2 getRandom\"]",
+        "output": "[1,1,1,1]",
+        "expectedOutput": "[1,1,1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"insert_0 getRandom remove_0 insert_0 getRandom\"]",
+        "output": "[1,0,1,1,0]",
+        "expectedOutput": "[1,0,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"insert_-5 insert_-10 getRandom\"]",
+        "output": "[1,1,-10]",
+        "expectedOutput": "[1,1,-10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"insert_1 insert_1 insert_1 remove_1 insert_1 getRandom\"]",
+        "output": "[1,0,0,1,1,1]",
+        "expectedOutput": "[1,0,0,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"insert_100 insert_50 insert_75 getRandom remove_50 getRandom remove_100 getRandom\"]",
+        "output": "[1,1,1,50,1,75,1,75]",
+        "expectedOutput": "[1,1,1,50,1,75,1,75]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"remove_1 remove_2 insert_1\"]",
+        "output": "[0,0,1]",
+        "expectedOutput": "[0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"insert_7 insert_7 remove_7 remove_7 insert_7 getRandom\"]",
+        "output": "[1,0,1,0,1,7]",
+        "expectedOutput": "[1,0,1,0,1,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"insert_2 insert_4 insert_6 insert_8 getRandom remove_2 getRandom remove_4 getRandom\"]",
+        "output": "[1,1,1,1,2,1,4,1,6]",
+        "expectedOutput": "[1,1,1,1,2,1,4,1,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"insert_9 getRandom insert_1 getRandom insert_5 getRandom\"]",
+        "output": "[1,9,1,1,1,1]",
+        "expectedOutput": "[1,9,1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"insert_-1 insert_-2 insert_-3 getRandom remove_-3 getRandom\"]",
+        "output": "[1,1,1,-3,1,-2]",
+        "expectedOutput": "[1,1,1,-3,1,-2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"insert_1000000 insert_-1000000 getRandom\"]",
+        "output": "[1,1,-1000000]",
+        "expectedOutput": "[1,1,-1000000]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"insert_1 remove_1 insert_2 remove_2 insert_3 getRandom\"]",
+        "output": "[1,1,1,1,1,3]",
+        "expectedOutput": "[1,1,1,1,1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"insert_5 insert_3 insert_8 remove_3 remove_8 remove_5 insert_5 getRandom\"]",
+        "output": "[1,1,1,1,1,1,1,5]",
+        "expectedOutput": "[1,1,1,1,1,1,1,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"insert_2 insert_2 insert_2 insert_2 getRandom remove_2\"]",
+        "output": "[1,0,0,0,2,1]",
+        "expectedOutput": "[1,0,0,0,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"insert_1 insert_2 insert_3 insert_4 insert_5 getRandom remove_1 remove_2 getRandom\"]",
+        "output": "[1,1,1,1,1,1,1,1,3]",
+        "expectedOutput": "[1,1,1,1,1,1,1,1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"insert_10 insert_20 remove_15 getRandom\"]",
+        "output": "[1,1,0,10]",
+        "expectedOutput": "[1,1,0,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"insert_0 getRandom remove_0 insert_1 getRandom\"]",
+        "output": "[1,0,1,1,1]",
+        "expectedOutput": "[1,0,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"insert_3 insert_1 remove_1 insert_1 insert_0 getRandom\"]",
+        "output": "[1,1,1,1,1,0]",
+        "expectedOutput": "[1,1,1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"insert_2 insert_2 remove_2 remove_2 insert_2 remove_2 insert_2 getRandom\"]",
+        "output": "[1,0,1,0,1,1,1,2]",
+        "expectedOutput": "[1,0,1,0,1,1,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"insert_1 insert_2 insert_3 insert_4 insert_5 insert_6 insert_7 insert_8 insert_9 insert_10 getRandom\"]",
+        "output": "[1,1,1,1,1,1,1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1,1,1,1,1,1,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def insertDeleteGetRandomResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <set>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> insertDeleteGetRandomResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] insertDeleteGetRandomResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun insertDeleteGetRandomResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    insertDeleteGetRandomResults(ops) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def insertDeleteGetRandomResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <set>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> insertDeleteGetRandomResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] insertDeleteGetRandomResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun insertDeleteGetRandomResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    insertDeleteGetRandomResults(ops) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def insertDeleteGetRandomResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <set>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> insertDeleteGetRandomResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] insertDeleteGetRandomResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun insertDeleteGetRandomResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    insertDeleteGetRandomResults(ops) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def insertDeleteGetRandomResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <set>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> insertDeleteGetRandomResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] insertDeleteGetRandomResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun insertDeleteGetRandomResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    insertDeleteGetRandomResults(ops) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(1) average for insert/remove, O(log n) for getRandom",
+      "space": "O(n)",
+      "pattern": "hash map (value -> index) with swap-and-pop array removal for O(1) insert/remove, plus a min-heap or ordered set to answer getRandom in O(log n)"
+    },
+    "bruteForce": {
+      "approach": "keep the elements in a plain list; insert appends only if not already present (checked via a linear scan), remove does a linear scan to find and delete the value, and getRandom scans the whole list for the minimum every time",
+      "time": "O(n) per operation",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "hash map (value -> index) with swap-and-pop array removal for O(1) insert/remove, plus a min-heap or ordered set to answer getRandom in O(log n)",
+    "time": "O(1) average for insert/remove, O(log n) for getRandom",
+    "space": "O(n)",
+    "hint_ladder": [
+      "insert and remove need to be fast - a hash map from value to its index in a backing array, combined with swap-and-pop removal, gets you both in O(1) average",
+      "for remove, instead of shifting elements after deleting, swap the target with the last element in the array, then pop the last element - update the hash map for the swapped value's new index",
+      "getRandom here always wants the smallest present value, which a plain array or hash map can't give you in O(1) - what structure keeps fast access to the minimum while still supporting removal of an arbitrary value?",
+      "a min-heap gives fast access to the minimum, but lazily skipping stale entries (or tracking how many times a value has been removed) lets you handle heap entries that no longer belong to the set, or use a balanced ordered structure (like a sorted set / TreeMap) for guaranteed O(log n) insert, remove, and find-min"
+    ]
+  },
+  "bruteForce": {
+    "approach": "keep the elements in a plain list; insert appends only if not already present (checked via a linear scan), remove does a linear scan to find and delete the value, and getRandom scans the whole list for the minimum every time",
+    "time": "O(n) per operation",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

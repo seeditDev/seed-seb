@@ -1,0 +1,651 @@
+{
+  "id": "binary-tree-cameras",
+  "questionId": "binary-tree-cameras",
+  "slug": "binary-tree-cameras",
+  "title": "Binary Tree Cameras",
+  "difficulty": "Hard",
+  "category": "Tree bfs",
+  "patterns": [
+    "tree bfs",
+    "greedy"
+  ],
+  "lists": [],
+  "hints": [
+    "cameras are best placed as low in the tree as possible, since a camera low down can still reach its parent - so it makes sense to make decisions starting from the leaves and working upward, not from the root down",
+    "collect the tree's levels first (a BFS pass), then process nodes from the deepest level back up to the root, deciding each node's state only after both of its children's states are already known",
+    "give every node one of three states: 0 = not yet covered by anything, 1 = covered by a neighbor's camera but has none itself, 2 = has its own camera; a leaf with no children starts as state 0 (not yet covered)",
+    "for an internal node: if either child is uncovered (state 0), you must place a camera here (state 2, and increment your camera count); else if either child has a camera (state 2), this node is covered for free (state 1); otherwise both children are merely 'covered' (state 1) and this node stays uncovered (state 0) for now, to be resolved by its own parent - and if the root itself ends up in state 0 at the very end, it needs one final camera"
+  ],
+  "commonMistakes": [
+    "processing the tree root-down (greedily placing a camera at the root first) instead of leaves-up, which wastes cameras compared to placing them as low as possible",
+    "forgetting the special case where the root ends up 'covered but with no camera of its own and no uncovered child' state after processing everything - actually the bug that bites people is the opposite: forgetting that if the ROOT finishes in the 'not yet covered' state, one more camera must be added for it specifically",
+    "treating a missing child as 'uncovered' (state 0) instead of as already 'covered' (state 1, since a nonexistent node doesn't need monitoring), which forces unnecessary cameras onto every leaf's parent"
+  ],
+  "content": {
+    "problemStatement": "A binary tree is given as a plain integer array named `tree`, using a complete-binary-tree (heap) index layout:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array bounds **and** its value isn't the sentinel `-101`, which means \"no node here\"\n\nFor example, `[1, 2, 3, -101, 4]` encodes this tree:\n\n```\n      1\n     / \\\n    2   3\n     \\\n      4\n```\n\nNode 2 has no left child (sentinel) but does have a right child, 4.\n\n**You want to install security cameras on some of the tree's nodes, where a camera placed at a node monitors that node itself, its parent (if any), and its direct children (if any). Find the minimum number of cameras needed so that every node in the tree is monitored by at least one camera.**\n",
+    "constraints": [
+      "1 <= length of tree <= 2000",
+      "every real node value is in the range -100 to 100",
+      "the sentinel value -101 marks a missing node and never appears as a real value",
+      "node values themselves don't affect the answer - only the tree's shape does"
+    ],
+    "notes": [
+      "a single-node tree, which always needs exactly one camera",
+      "a tree that is a straight chain, where cameras should be spaced out every third node starting from a leaf",
+      "a root whose only child is a leaf with no grandchildren, versus a root whose child has its own children"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [0, 0, -101, 0, 0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "node at index 1 (a child of the root, with two children of its own) can single-handedly cover itself, the root, and both of its children with one camera"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [0, 0, 0, -101, 0, 0, -101]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the root has two children, each of which has exactly one grandchild; placing a camera at each of the root's two children covers the root (twice, that's fine), both children, and both grandchildren"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "a single node needs its own camera, since nothing else can cover it"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[0,0,-101,0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,0,0,-101,0,0,-101]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0,0,-101,-101,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0,0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,-101,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,-101,3,-101,-101,-101,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,-101,3,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,6]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,-101,3,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,6,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,-101,2,-101,-101,-101,3,-101,-101,-101,-101,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,5]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,1,2,3,4,5,6]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-22,27,20,-24,-101,-101,19,-6,2,-101,-101,-101,-101,-101,29,16,28,26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,17,5,-101,-101,-5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-11,-20]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-66,-37,-101,12,75,-101,-101,-79,62,13,33,-101,-101,-101,-101,-101,-101,-101,-24,-20,-57,-101,28,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-18,-32,-72,10,-101,-101,-101,-101,77,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-69,-101,47,36]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-40,20,21,-32,40,33,5,-101,9,-84,-62,66,64,-101,-101,-101,-101,-14,-91,-101,-66,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,47,52,-101,-101,-101,-101,74,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-44,-101,-101,-101,-101,-101,-101,-101,-101,-101,46,46,66,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,72]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-40,22,-94,60,95,46,29,-101,91,40,-56,97,-101,68,10,-101,-101,-101,12,-34,-91,-101,-9,-101,-101,-101,-101,-101,-85,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-75,65,-101,-101,-101,-101,-98,-100,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,40,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-29,-101,-7,12,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-94,-101,-101,-101,-101,67,39]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[9,-7,10,10,-5,-1,2,3,-101,-5,-101,2,0,-8,1,-1,-101,-101,-101,-101,-9,-101,-101,-101,6,-101,-101,3,-101,-101,-101,-8]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[0,0,-101,0,-101,-101,-101,0]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [0, 0, -101, 0, 0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "node at index 1 (a child of the root, with two children of its own) can single-handedly cover itself, the root, and both of its children with one camera"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [0, 0, 0, -101, 0, 0, -101]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the root has two children, each of which has exactly one grandchild; placing a camera at each of the root's two children covers the root (twice, that's fine), both children, and both grandchildren"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "a single node needs its own camera, since nothing else can cover it"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [0, 0, -101, 0, 0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "node at index 1 (a child of the root, with two children of its own) can single-handedly cover itself, the root, and both of its children with one camera"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [0, 0, 0, -101, 0, 0, -101]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the root has two children, each of which has exactly one grandchild; placing a camera at each of the root's two children covers the root (twice, that's fine), both children, and both grandchildren"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "a single node needs its own camera, since nothing else can cover it"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[0,0,-101,0,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0,0,0,-101,0,0,-101]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[0,0,-101,-101,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[0,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[0,0,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,-101,3]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,-101,3,-101,-101,-101,4]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,-101,3,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,6]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,-101,3,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,6,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,-101,2,-101,-101,-101,3,-101,-101,-101,-101,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,5]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[0,1,2,3,4,5,6]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[-22,27,20,-24,-101,-101,19,-6,2,-101,-101,-101,-101,-101,29,16,28,26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,17,5,-101,-101,-5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-11,-20]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[-66,-37,-101,12,75,-101,-101,-79,62,13,33,-101,-101,-101,-101,-101,-101,-101,-24,-20,-57,-101,28,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-18,-32,-72,10,-101,-101,-101,-101,77,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-69,-101,47,36]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[-40,20,21,-32,40,33,5,-101,9,-84,-62,66,64,-101,-101,-101,-101,-14,-91,-101,-66,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,47,52,-101,-101,-101,-101,74,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-44,-101,-101,-101,-101,-101,-101,-101,-101,-101,46,46,66,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,72]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[-40,22,-94,60,95,46,29,-101,91,40,-56,97,-101,68,10,-101,-101,-101,12,-34,-91,-101,-9,-101,-101,-101,-101,-101,-85,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-75,65,-101,-101,-101,-101,-98,-100,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,40,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-29,-101,-7,12,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-94,-101,-101,-101,-101,67,39]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[9,-7,10,10,-5,-1,2,3,-101,-5,-101,2,0,-8,1,-1,-101,-101,-101,-101,-9,-101,-101,-101,6,-101,-101,3,-101,-101,-101,-8]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[0,0,-101,0,-101,-101,-101,0]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [0, 0, -101, 0, 0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "node at index 1 (a child of the root, with two children of its own) can single-handedly cover itself, the root, and both of its children with one camera"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [0, 0, 0, -101, 0, 0, -101]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the root has two children, each of which has exactly one grandchild; placing a camera at each of the root's two children covers the root (twice, that's fine), both children, and both grandchildren"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "a single node needs its own camera, since nothing else can cover it"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[0,0,-101,0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,0,0,-101,0,0,-101]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0,0,-101,-101,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0,0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,-101,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,-101,3,-101,-101,-101,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,-101,3,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,6]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,-101,3,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,6,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,-101,2,-101,-101,-101,3,-101,-101,-101,-101,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,5]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,1,2,3,4,5,6]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-22,27,20,-24,-101,-101,19,-6,2,-101,-101,-101,-101,-101,29,16,28,26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,17,5,-101,-101,-5,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-11,-20]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-66,-37,-101,12,75,-101,-101,-79,62,13,33,-101,-101,-101,-101,-101,-101,-101,-24,-20,-57,-101,28,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-18,-32,-72,10,-101,-101,-101,-101,77,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-69,-101,47,36]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-40,20,21,-32,40,33,5,-101,9,-84,-62,66,64,-101,-101,-101,-101,-14,-91,-101,-66,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,47,52,-101,-101,-101,-101,74,4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-44,-101,-101,-101,-101,-101,-101,-101,-101,-101,46,46,66,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,72]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-40,22,-94,60,95,46,29,-101,91,40,-56,97,-101,68,10,-101,-101,-101,12,-34,-91,-101,-9,-101,-101,-101,-101,-101,-85,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-75,65,-101,-101,-101,-101,-98,-100,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,40,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-29,-101,-7,12,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-94,-101,-101,-101,-101,67,39]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[9,-7,10,10,-5,-1,2,3,-101,-5,-101,2,0,-8,1,-1,-101,-101,-101,-101,-9,-101,-101,-101,6,-101,-101,3,-101,-101,-101,-8]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[0,0,-101,0,-101,-101,-101,0]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minCameraCover(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minCameraCover(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minCameraCover(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minCameraCover(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minCameraCover(tree) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minCameraCover(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minCameraCover(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minCameraCover(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minCameraCover(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minCameraCover(tree) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minCameraCover(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minCameraCover(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minCameraCover(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minCameraCover(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minCameraCover(tree) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minCameraCover(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minCameraCover(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minCameraCover(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minCameraCover(tree: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minCameraCover(tree) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) to hold node states, plus O(h) recursion stack if done recursively",
+      "pattern": "greedy post-order (leaves-up) DFS, classifying every node into one of three states - uncovered, covered without a camera, or has a camera - and deciding camera placement bottom-up (BFS-processed level by level from the deepest level upward gives the same leaves-first ordering as post-order recursion)"
+    },
+    "bruteForce": {
+      "approach": "try every subset of nodes as camera placements, checking whether it covers the whole tree, and keep the smallest valid subset (exponential, only feasible for tiny trees)",
+      "time": "O(2^n * n)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "greedy post-order (leaves-up) DFS, classifying every node into one of three states - uncovered, covered without a camera, or has a camera - and deciding camera placement bottom-up (BFS-processed level by level from the deepest level upward gives the same leaves-first ordering as post-order recursion)",
+    "time": "O(n)",
+    "space": "O(n) to hold node states, plus O(h) recursion stack if done recursively",
+    "hint_ladder": [
+      "cameras are best placed as low in the tree as possible, since a camera low down can still reach its parent - so it makes sense to make decisions starting from the leaves and working upward, not from the root down",
+      "collect the tree's levels first (a BFS pass), then process nodes from the deepest level back up to the root, deciding each node's state only after both of its children's states are already known",
+      "give every node one of three states: 0 = not yet covered by anything, 1 = covered by a neighbor's camera but has none itself, 2 = has its own camera; a leaf with no children starts as state 0 (not yet covered)",
+      "for an internal node: if either child is uncovered (state 0), you must place a camera here (state 2, and increment your camera count); else if either child has a camera (state 2), this node is covered for free (state 1); otherwise both children are merely 'covered' (state 1) and this node stays uncovered (state 0) for now, to be resolved by its own parent - and if the root itself ends up in state 0 at the very end, it needs one final camera"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every subset of nodes as camera placements, checking whether it covers the whole tree, and keep the smallest valid subset (exponential, only feasible for tiny trees)",
+    "time": "O(2^n * n)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,654 @@
+{
+  "id": "k-closest-points-to-origin",
+  "questionId": "k-closest-points-to-origin",
+  "slug": "k-closest-points-to-origin",
+  "title": "K Closest Points to Origin",
+  "difficulty": "Medium",
+  "category": "Heap",
+  "patterns": [
+    "heap",
+    "top k",
+    "max-heap",
+    "geometry"
+  ],
+  "lists": [
+    "grind-75"
+  ],
+  "hints": [
+    "sorting every point by distance does more work than necessary when k is much smaller than n",
+    "you only need to track the k closest points seen so far - can a bounded heap help you discard the rest early?",
+    "use a max-heap of size k keyed on squared distance; the heap's top is always the farthest of your current k candidates",
+    "push each point's (distance, point) onto the heap; whenever the heap exceeds size k, pop the max (farthest). what's left at the end is your k closest, which you then sort for the deterministic tie-break order"
+  ],
+  "commonMistakes": [
+    "computing actual Euclidean distance with a square root instead of comparing squared distances directly",
+    "using a min-heap over all n points and popping k times, which is correct but strictly less efficient than a bounded max-heap of size k",
+    "not applying a deterministic secondary sort when distances tie, making output order inconsistent"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of points on a 2D plane, each written as `[x, y]`,\nand a number `k`. Distance is measured using squared Euclidean distance\n(x*x + y*y) so that everything stays an integer, no square roots\nneeded.\n\n**Return the `k` points closest to the origin (0, 0), ordered by\ndistance ascending.**\n\nIf two points tie on distance, break the tie by x ascending, and if\nthat also ties, by y ascending, so the output is fully deterministic.\n",
+    "constraints": [
+      "1 <= k <= points.length <= 10^4",
+      "-10^4 <= xi, yi <= 10^4"
+    ],
+    "notes": [
+      "k equal to the total number of points, meaning every point is returned",
+      "multiple points tied at the exact same distance",
+      "a point located exactly at the origin",
+      "single point in the list"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "points = [[1, 3], [-2, 2]], k = 1",
+        "output": "[[-2, 2]]",
+        "expectedOutput": "[[-2, 2]]",
+        "explanation": "distance of (1,3) is 1+9=10; distance of (-2,2) is 4+4=8, which is smaller"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "points = [[3, 3], [5, -1], [-2, 4]], k = 2",
+        "output": "[[3, 3], [-2, 4]]",
+        "expectedOutput": "[[3, 3], [-2, 4]]",
+        "explanation": "distances are 18, 26, and 20 respectively; the two smallest are (3,3) at 18 and (-2,4) at 20"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "points = [[0, 1], [1, 0]], k = 2",
+        "output": "[[0, 1], [1, 0]]",
+        "expectedOutput": "[[0, 1], [1, 0]]",
+        "explanation": "both points have distance 1, a tie; (0,1) comes first because its x value (0) is smaller than (1,0)'s x value (1)"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,3],[-2,2]],1]",
+        "output": "[[-2,2]]",
+        "expectedOutput": "[[-2,2]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[3,3],[5,-1],[-2,4]],2]",
+        "output": "[[3,3],[-2,4]]",
+        "expectedOutput": "[[3,3],[-2,4]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,1],[1,0]],2]",
+        "output": "[[0,1],[1,0]]",
+        "expectedOutput": "[[0,1],[1,0]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1],[2,2],[3,3]],2]",
+        "output": "[[1,1],[2,2]]",
+        "expectedOutput": "[[1,1],[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[0,0]],1]",
+        "output": "[[0,0]]",
+        "expectedOutput": "[[0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1],[1,1],[2,2]],2]",
+        "output": "[[1,1],[1,1]]",
+        "expectedOutput": "[[1,1],[1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[-1,-1],[1,1],[0,0],[2,-2]],3]",
+        "output": "[[-1,-1],[1,1],[0,0]]",
+        "expectedOutput": "[[-1,-1],[1,1],[0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[3,0],[0,4],[0,-4],[-3,0]],4]",
+        "output": "[[0,-4],[-3,0],[0,4],[3,0]]",
+        "expectedOutput": "[[0,-4],[-3,0],[0,4],[3,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[5,5],[5,5],[5,5],[1,1]],2]",
+        "output": "[[5,5],[1,1]]",
+        "expectedOutput": "[[5,5],[1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,2],[3,4],[5,6],[7,8],[9,10]],3]",
+        "output": "[[5,6],[1,2],[3,4]]",
+        "expectedOutput": "[[5,6],[1,2],[3,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[-5,-5],[5,5],[-3,4],[3,-4]],2]",
+        "output": "[[-3,4],[3,-4]]",
+        "expectedOutput": "[[-3,4],[3,-4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,1],[0,2],[0,3],[0,4],[0,5]],4]",
+        "output": "[[0,4],[0,3],[0,2],[0,1]]",
+        "expectedOutput": "[[0,4],[0,3],[0,2],[0,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,-1],[2,-2],[3,-3],[4,-4],[5,-5],[6,-6],[7,-7],[8,-8],[9,-9],[10,-10],[11,-11],[12,-12],[13,-13],[14,-14],[15,-15]],5]",
+        "output": "[[5,-5],[4,-4],[2,-2],[1,-1],[3,-3]]",
+        "expectedOutput": "[[5,-5],[4,-4],[2,-2],[1,-1],[3,-3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[10,10],[-10,-10],[0,0],[1,0],[0,1],[-1,0]],3]",
+        "output": "[[0,0],[-1,0],[0,1]]",
+        "expectedOutput": "[[0,0],[-1,0],[0,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[2,2],[2,-2],[-2,2],[-2,-2]],1]",
+        "output": "[[-2,-2]]",
+        "expectedOutput": "[[-2,-2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[100,0],[0,100],[1,1],[2,2],[3,3]],5]",
+        "output": "[[0,100],[100,0],[1,1],[2,2],[3,3]]",
+        "expectedOutput": "[[0,100],[100,0],[1,1],[2,2],[3,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,0],[0,0],[0,0]],2]",
+        "output": "[[0,0],[0,0]]",
+        "expectedOutput": "[[0,0],[0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[-1,0],[1,0],[0,-1],[0,1]],4]",
+        "output": "[[-1,0],[0,1],[0,-1],[1,0]]",
+        "expectedOutput": "[[-1,0],[0,1],[0,-1],[1,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7],[8,8],[9,9],[10,10],[11,11],[12,12],[13,13],[14,14],[15,15],[16,16],[17,17],[18,18],[19,19],[20,20]],6]",
+        "output": "[[6,6],[4,4],[5,5],[1,1],[3,3],[2,2]]",
+        "expectedOutput": "[[6,6],[4,4],[5,5],[1,1],[3,3],[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[8,8],[-8,-8],[4,4],[-4,-4],[2,2]],3]",
+        "output": "[[-4,-4],[2,2],[4,4]]",
+        "expectedOutput": "[[-4,-4],[2,2],[4,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[6,8],[3,4],[0,0],[5,12]],1]",
+        "output": "[[0,0]]",
+        "expectedOutput": "[[0,0]]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "points = [[1, 3], [-2, 2]], k = 1",
+      "output": "[[-2, 2]]",
+      "expectedOutput": "[[-2, 2]]",
+      "explanation": "distance of (1,3) is 1+9=10; distance of (-2,2) is 4+4=8, which is smaller"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "points = [[3, 3], [5, -1], [-2, 4]], k = 2",
+      "output": "[[3, 3], [-2, 4]]",
+      "expectedOutput": "[[3, 3], [-2, 4]]",
+      "explanation": "distances are 18, 26, and 20 respectively; the two smallest are (3,3) at 18 and (-2,4) at 20"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "points = [[0, 1], [1, 0]], k = 2",
+      "output": "[[0, 1], [1, 0]]",
+      "expectedOutput": "[[0, 1], [1, 0]]",
+      "explanation": "both points have distance 1, a tie; (0,1) comes first because its x value (0) is smaller than (1,0)'s x value (1)"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "points = [[1, 3], [-2, 2]], k = 1",
+      "output": "[[-2, 2]]",
+      "expectedOutput": "[[-2, 2]]",
+      "explanation": "distance of (1,3) is 1+9=10; distance of (-2,2) is 4+4=8, which is smaller"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "points = [[3, 3], [5, -1], [-2, 4]], k = 2",
+      "output": "[[3, 3], [-2, 4]]",
+      "expectedOutput": "[[3, 3], [-2, 4]]",
+      "explanation": "distances are 18, 26, and 20 respectively; the two smallest are (3,3) at 18 and (-2,4) at 20"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "points = [[0, 1], [1, 0]], k = 2",
+      "output": "[[0, 1], [1, 0]]",
+      "expectedOutput": "[[0, 1], [1, 0]]",
+      "explanation": "both points have distance 1, a tie; (0,1) comes first because its x value (0) is smaller than (1,0)'s x value (1)"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,3],[-2,2]],1]",
+      "output": "[[-2,2]]",
+      "expectedOutput": "[[-2,2]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[3,3],[5,-1],[-2,4]],2]",
+      "output": "[[3,3],[-2,4]]",
+      "expectedOutput": "[[3,3],[-2,4]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[0,1],[1,0]],2]",
+      "output": "[[0,1],[1,0]]",
+      "expectedOutput": "[[0,1],[1,0]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1,1],[2,2],[3,3]],2]",
+      "output": "[[1,1],[2,2]]",
+      "expectedOutput": "[[1,1],[2,2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[0,0]],1]",
+      "output": "[[0,0]]",
+      "expectedOutput": "[[0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,1],[1,1],[2,2]],2]",
+      "output": "[[1,1],[1,1]]",
+      "expectedOutput": "[[1,1],[1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[-1,-1],[1,1],[0,0],[2,-2]],3]",
+      "output": "[[-1,-1],[1,1],[0,0]]",
+      "expectedOutput": "[[-1,-1],[1,1],[0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[3,0],[0,4],[0,-4],[-3,0]],4]",
+      "output": "[[0,-4],[-3,0],[0,4],[3,0]]",
+      "expectedOutput": "[[0,-4],[-3,0],[0,4],[3,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[5,5],[5,5],[5,5],[1,1]],2]",
+      "output": "[[5,5],[1,1]]",
+      "expectedOutput": "[[5,5],[1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1,2],[3,4],[5,6],[7,8],[9,10]],3]",
+      "output": "[[5,6],[1,2],[3,4]]",
+      "expectedOutput": "[[5,6],[1,2],[3,4]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[-5,-5],[5,5],[-3,4],[3,-4]],2]",
+      "output": "[[-3,4],[3,-4]]",
+      "expectedOutput": "[[-3,4],[3,-4]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[0,1],[0,2],[0,3],[0,4],[0,5]],4]",
+      "output": "[[0,4],[0,3],[0,2],[0,1]]",
+      "expectedOutput": "[[0,4],[0,3],[0,2],[0,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1,-1],[2,-2],[3,-3],[4,-4],[5,-5],[6,-6],[7,-7],[8,-8],[9,-9],[10,-10],[11,-11],[12,-12],[13,-13],[14,-14],[15,-15]],5]",
+      "output": "[[5,-5],[4,-4],[2,-2],[1,-1],[3,-3]]",
+      "expectedOutput": "[[5,-5],[4,-4],[2,-2],[1,-1],[3,-3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[10,10],[-10,-10],[0,0],[1,0],[0,1],[-1,0]],3]",
+      "output": "[[0,0],[-1,0],[0,1]]",
+      "expectedOutput": "[[0,0],[-1,0],[0,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[2,2],[2,-2],[-2,2],[-2,-2]],1]",
+      "output": "[[-2,-2]]",
+      "expectedOutput": "[[-2,-2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[100,0],[0,100],[1,1],[2,2],[3,3]],5]",
+      "output": "[[0,100],[100,0],[1,1],[2,2],[3,3]]",
+      "expectedOutput": "[[0,100],[100,0],[1,1],[2,2],[3,3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[0,0],[0,0],[0,0]],2]",
+      "output": "[[0,0],[0,0]]",
+      "expectedOutput": "[[0,0],[0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[-1,0],[1,0],[0,-1],[0,1]],4]",
+      "output": "[[-1,0],[0,1],[0,-1],[1,0]]",
+      "expectedOutput": "[[-1,0],[0,1],[0,-1],[1,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7],[8,8],[9,9],[10,10],[11,11],[12,12],[13,13],[14,14],[15,15],[16,16],[17,17],[18,18],[19,19],[20,20]],6]",
+      "output": "[[6,6],[4,4],[5,5],[1,1],[3,3],[2,2]]",
+      "expectedOutput": "[[6,6],[4,4],[5,5],[1,1],[3,3],[2,2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[8,8],[-8,-8],[4,4],[-4,-4],[2,2]],3]",
+      "output": "[[-4,-4],[2,2],[4,4]]",
+      "expectedOutput": "[[-4,-4],[2,2],[4,4]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[[6,8],[3,4],[0,0],[5,12]],1]",
+      "output": "[[0,0]]",
+      "expectedOutput": "[[0,0]]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "points = [[1, 3], [-2, 2]], k = 1",
+        "output": "[[-2, 2]]",
+        "expectedOutput": "[[-2, 2]]",
+        "explanation": "distance of (1,3) is 1+9=10; distance of (-2,2) is 4+4=8, which is smaller"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "points = [[3, 3], [5, -1], [-2, 4]], k = 2",
+        "output": "[[3, 3], [-2, 4]]",
+        "expectedOutput": "[[3, 3], [-2, 4]]",
+        "explanation": "distances are 18, 26, and 20 respectively; the two smallest are (3,3) at 18 and (-2,4) at 20"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "points = [[0, 1], [1, 0]], k = 2",
+        "output": "[[0, 1], [1, 0]]",
+        "expectedOutput": "[[0, 1], [1, 0]]",
+        "explanation": "both points have distance 1, a tie; (0,1) comes first because its x value (0) is smaller than (1,0)'s x value (1)"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,3],[-2,2]],1]",
+        "output": "[[-2,2]]",
+        "expectedOutput": "[[-2,2]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[3,3],[5,-1],[-2,4]],2]",
+        "output": "[[3,3],[-2,4]]",
+        "expectedOutput": "[[3,3],[-2,4]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,1],[1,0]],2]",
+        "output": "[[0,1],[1,0]]",
+        "expectedOutput": "[[0,1],[1,0]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1],[2,2],[3,3]],2]",
+        "output": "[[1,1],[2,2]]",
+        "expectedOutput": "[[1,1],[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[0,0]],1]",
+        "output": "[[0,0]]",
+        "expectedOutput": "[[0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1],[1,1],[2,2]],2]",
+        "output": "[[1,1],[1,1]]",
+        "expectedOutput": "[[1,1],[1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[-1,-1],[1,1],[0,0],[2,-2]],3]",
+        "output": "[[-1,-1],[1,1],[0,0]]",
+        "expectedOutput": "[[-1,-1],[1,1],[0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[3,0],[0,4],[0,-4],[-3,0]],4]",
+        "output": "[[0,-4],[-3,0],[0,4],[3,0]]",
+        "expectedOutput": "[[0,-4],[-3,0],[0,4],[3,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[5,5],[5,5],[5,5],[1,1]],2]",
+        "output": "[[5,5],[1,1]]",
+        "expectedOutput": "[[5,5],[1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,2],[3,4],[5,6],[7,8],[9,10]],3]",
+        "output": "[[5,6],[1,2],[3,4]]",
+        "expectedOutput": "[[5,6],[1,2],[3,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[-5,-5],[5,5],[-3,4],[3,-4]],2]",
+        "output": "[[-3,4],[3,-4]]",
+        "expectedOutput": "[[-3,4],[3,-4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,1],[0,2],[0,3],[0,4],[0,5]],4]",
+        "output": "[[0,4],[0,3],[0,2],[0,1]]",
+        "expectedOutput": "[[0,4],[0,3],[0,2],[0,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,-1],[2,-2],[3,-3],[4,-4],[5,-5],[6,-6],[7,-7],[8,-8],[9,-9],[10,-10],[11,-11],[12,-12],[13,-13],[14,-14],[15,-15]],5]",
+        "output": "[[5,-5],[4,-4],[2,-2],[1,-1],[3,-3]]",
+        "expectedOutput": "[[5,-5],[4,-4],[2,-2],[1,-1],[3,-3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[10,10],[-10,-10],[0,0],[1,0],[0,1],[-1,0]],3]",
+        "output": "[[0,0],[-1,0],[0,1]]",
+        "expectedOutput": "[[0,0],[-1,0],[0,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[2,2],[2,-2],[-2,2],[-2,-2]],1]",
+        "output": "[[-2,-2]]",
+        "expectedOutput": "[[-2,-2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[100,0],[0,100],[1,1],[2,2],[3,3]],5]",
+        "output": "[[0,100],[100,0],[1,1],[2,2],[3,3]]",
+        "expectedOutput": "[[0,100],[100,0],[1,1],[2,2],[3,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,0],[0,0],[0,0]],2]",
+        "output": "[[0,0],[0,0]]",
+        "expectedOutput": "[[0,0],[0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[-1,0],[1,0],[0,-1],[0,1]],4]",
+        "output": "[[-1,0],[0,1],[0,-1],[1,0]]",
+        "expectedOutput": "[[-1,0],[0,1],[0,-1],[1,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7],[8,8],[9,9],[10,10],[11,11],[12,12],[13,13],[14,14],[15,15],[16,16],[17,17],[18,18],[19,19],[20,20]],6]",
+        "output": "[[6,6],[4,4],[5,5],[1,1],[3,3],[2,2]]",
+        "expectedOutput": "[[6,6],[4,4],[5,5],[1,1],[3,3],[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[8,8],[-8,-8],[4,4],[-4,-4],[2,2]],3]",
+        "output": "[[-4,-4],[2,2],[4,4]]",
+        "expectedOutput": "[[-4,-4],[2,2],[4,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[6,8],[3,4],[0,0],[5,12]],1]",
+        "output": "[[0,0]]",
+        "expectedOutput": "[[0,0]]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def kClosest(self, points, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> kClosest(vector<vector<int>>& points, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] kClosest(int[][] points, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun kClosest(points: Array<IntArray>, k: Int): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    kClosest(points, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def kClosest(self, points, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> kClosest(vector<vector<int>>& points, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] kClosest(int[][] points, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun kClosest(points: Array<IntArray>, k: Int): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    kClosest(points, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def kClosest(self, points, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> kClosest(vector<vector<int>>& points, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] kClosest(int[][] points, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun kClosest(points: Array<IntArray>, k: Int): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    kClosest(points, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def kClosest(self, points, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> kClosest(vector<vector<int>>& points, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] kClosest(int[][] points, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun kClosest(points: Array<IntArray>, k: Int): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    kClosest(points, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log k)",
+      "space": "O(k)",
+      "pattern": "max-heap of size k over squared distances"
+    },
+    "bruteForce": {
+      "approach": "compute the squared distance for every point, sort all points by that distance, take the first k",
+      "time": "O(n log n)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "max-heap of size k over squared distances",
+    "time": "O(n log k)",
+    "space": "O(k)",
+    "hint_ladder": [
+      "sorting every point by distance does more work than necessary when k is much smaller than n",
+      "you only need to track the k closest points seen so far - can a bounded heap help you discard the rest early?",
+      "use a max-heap of size k keyed on squared distance; the heap's top is always the farthest of your current k candidates",
+      "push each point's (distance, point) onto the heap; whenever the heap exceeds size k, pop the max (farthest). what's left at the end is your k closest, which you then sort for the deterministic tie-break order"
+    ]
+  },
+  "bruteForce": {
+    "approach": "compute the squared distance for every point, sort all points by that distance, take the first k",
+    "time": "O(n log n)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

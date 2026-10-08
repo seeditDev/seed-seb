@@ -1,0 +1,630 @@
+{
+  "id": "number-of-islands-union-find",
+  "questionId": "number-of-islands-union-find",
+  "slug": "number-of-islands-union-find",
+  "title": "Number of Islands",
+  "difficulty": "Medium",
+  "category": "Union find",
+  "patterns": [
+    "union find",
+    "grid",
+    "connected components"
+  ],
+  "lists": [],
+  "hints": [
+    "flatten each cell (r, c) into a single index like r * n + c so you can use a plain array-based union-find",
+    "start by treating every land cell as its own island",
+    "for each land cell, union it with its land neighbors to the right and below (checking both directions once is enough to cover the whole grid)",
+    "count the distinct roots among land cells only at the end - water cells should never be counted"
+  ],
+  "commonMistakes": [
+    "unioning diagonal neighbors, which should not count as connected",
+    "counting water cells as their own components",
+    "checking all four neighbors of every cell and double-unioning the same pair from both directions instead of just right and below"
+  ],
+  "content": {
+    "problemStatement": "You're given an m x n `grid` where each cell is 1 (land) or 0 (water). An island is a maximal group of land cells connected horizontally or vertically, not diagonally.\n\n**Return the number of islands in the grid.**\n",
+    "constraints": [
+      "1 <= m, n <= 300",
+      "grid[i][j] is 0 or 1"
+    ],
+    "notes": [
+      "a grid with no land at all",
+      "a grid that is entirely land, forming one island",
+      "a single-cell grid",
+      "land cells that touch only diagonally, which should NOT count as connected"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "grid = [[1,1,0,0],[1,1,0,0],[0,0,1,0],[0,0,0,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "a 2x2 block of land, plus two separate single-cell islands"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[1,1,1],[0,1,0],[1,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "every land cell connects through the center column into one island"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "grid = [[0,0],[0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "no land at all"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,1,0,0],[1,1,0,0],[0,0,1,0],[0,0,0,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,1,1],[0,1,0],[1,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,0,1,0,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1],[0],[1],[0],[1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,0,1,0,0,0,1,1],[1,1,1,0,1,0,0,1],[1,1,1,0,1,1,0,1],[0,0,0,1,1,1,0,0],[1,1,1,1,1,1,1,1],[1,0,0,1,1,1,1,0],[1,1,1,0,0,0,0,0],[1,1,1,0,0,0,1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0,0,0,0,1,0,1,0,1,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,1,1,0,1,1,0,0],[0,0,0,0,0,1,1,0,0,0],[0,0,0,0,1,1,0,0,1,0],[1,0,0,0,1,1,0,0,0,0],[0,0,0,1,0,1,1,0,0,1],[0,1,0,1,1,0,0,1,0,0],[0,0,0,1,1,0,1,1,0,0],[0,0,0,0,1,1,0,1,0,0]]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[0,0,1,0,1,1,0,0,0,0,1,0],[1,0,1,1,1,1,0,1,1,0,1,0],[0,1,1,1,0,0,0,1,1,1,1,1],[0,0,0,1,0,1,1,0,1,0,1,1],[1,0,1,0,0,1,1,0,1,1,0,1],[0,1,1,1,0,0,1,1,1,0,1,0],[1,1,1,0,1,1,1,0,0,0,1,1],[1,1,1,0,1,1,1,1,0,0,0,1],[1,0,1,0,0,1,1,1,0,0,0,1],[1,1,1,0,1,0,0,1,1,1,0,1],[0,1,1,1,1,1,0,0,1,1,1,1],[1,0,1,0,0,1,1,1,1,0,0,0]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,0,0,1,0,0,0,0,1,0,1,0,1,1,1],[1,0,0,1,1,1,1,1,0,0,0,1,0,0,0],[1,1,0,1,0,1,0,1,1,0,0,0,0,1,1],[0,0,1,0,1,1,1,0,0,0,1,0,1,0,0],[0,1,0,0,0,0,0,0,1,0,0,0,1,0,1],[1,0,1,0,1,0,0,0,0,0,1,0,1,0,0],[0,0,0,0,0,0,1,1,0,0,0,0,1,0,0],[1,1,0,0,1,1,1,1,0,0,0,1,0,0,0],[0,0,0,1,0,1,1,1,0,0,1,0,0,1,1],[0,0,0,0,0,1,0,1,1,1,0,1,1,0,0],[1,0,0,1,0,0,0,0,0,1,0,0,0,0,0],[0,1,1,0,0,0,1,0,0,1,0,1,1,0,0],[0,1,1,0,1,1,0,0,1,1,1,1,1,1,0],[0,1,1,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,1,0,1,1,1,0,0,0,1,0,1,0]]]",
+        "output": "35",
+        "expectedOutput": "35",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,0,0,0,1,0,0,0,1,0,1,0,0,0],[0,0,0,0,0,0,1,0,0,1,1,0,1,0],[0,1,0,0,1,1,0,0,0,0,0,0,0,1],[0,0,0,0,1,0,0,0,0,0,0,0,0,1],[0,1,0,1,0,0,0,0,1,1,0,0,0,0],[0,1,0,1,0,0,0,0,0,1,0,0,1,0],[0,1,0,0,0,0,0,0,0,0,0,1,0,0],[0,0,1,0,0,0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,1,0]]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,0,1,0,1,0,1,0],[0,1,0,1,0,1,0,1],[1,0,1,0,1,0,1,0],[0,1,0,1,0,1,0,1],[1,0,1,0,1,0,1,0],[0,1,0,1,0,1,0,1],[1,0,1,0,1,0,1,0],[0,1,0,1,0,1,0,1]]]",
+        "output": "32",
+        "expectedOutput": "32",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,0,0,1,1,1,1,1,0,0,0],[0,1,0,1,1,1,1,0,0,1,1],[0,1,0,1,1,0,1,0,0,1,0],[0,0,0,1,1,1,0,1,1,1,1],[1,1,0,0,0,0,1,0,1,0,0],[1,1,0,1,1,0,0,1,1,1,1],[0,0,1,0,0,0,0,1,0,0,1],[0,1,1,0,0,0,1,0,0,1,1],[1,1,0,0,1,1,0,0,0,0,0],[0,0,0,0,1,1,0,1,0,0,1],[1,1,1,0,0,0,0,1,0,0,1]]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,0,0,1,0,1,0,0],[0,1,0,1,1,1,1,1],[0,0,1,0,0,0,1,1],[1,0,0,0,1,1,1,0],[1,1,1,0,0,0,0,0],[0,1,0,0,0,0,0,1],[0,0,0,1,0,0,1,0],[0,1,1,0,1,1,1,1],[1,0,1,0,1,1,0,1],[0,1,0,0,0,0,0,1],[1,0,0,1,0,1,1,1],[0,1,1,0,0,0,0,1],[1,0,0,0,0,1,0,1]]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1,0,0,1,1],[1,1,0,0,1,1],[0,0,0,0,0,0],[1,1,0,0,1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,1,1,0,0],[0,1,0,0,1],[0,0,0,1,1],[1,0,1,1,0],[1,1,0,0,0]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "grid = [[1,1,0,0],[1,1,0,0],[0,0,1,0],[0,0,0,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "a 2x2 block of land, plus two separate single-cell islands"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "grid = [[1,1,1],[0,1,0],[1,1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "every land cell connects through the center column into one island"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "grid = [[0,0],[0,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "no land at all"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "grid = [[1,1,0,0],[1,1,0,0],[0,0,1,0],[0,0,0,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "a 2x2 block of land, plus two separate single-cell islands"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "grid = [[1,1,1],[0,1,0],[1,1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "every land cell connects through the center column into one island"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "grid = [[0,0],[0,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "no land at all"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,1,0,0],[1,1,0,0],[0,0,1,0],[0,0,0,1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,1,1],[0,1,0],[1,1,1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[0,0],[0,0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,0,1,0,1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,1,1,1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1],[0],[1],[0],[1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,0,1,0,0,0,1,1],[1,1,1,0,1,0,0,1],[1,1,1,0,1,1,0,1],[0,0,0,1,1,1,0,0],[1,1,1,1,1,1,1,1],[1,0,0,1,1,1,1,0],[1,1,1,0,0,0,0,0],[1,1,1,0,0,0,1,1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[0,0,0,0,1,0,1,0,1,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,1,1,0,1,1,0,0],[0,0,0,0,0,1,1,0,0,0],[0,0,0,0,1,1,0,0,1,0],[1,0,0,0,1,1,0,0,0,0],[0,0,0,1,0,1,1,0,0,1],[0,1,0,1,1,0,0,1,0,0],[0,0,0,1,1,0,1,1,0,0],[0,0,0,0,1,1,0,1,0,0]]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[0,0,1,0,1,1,0,0,0,0,1,0],[1,0,1,1,1,1,0,1,1,0,1,0],[0,1,1,1,0,0,0,1,1,1,1,1],[0,0,0,1,0,1,1,0,1,0,1,1],[1,0,1,0,0,1,1,0,1,1,0,1],[0,1,1,1,0,0,1,1,1,0,1,0],[1,1,1,0,1,1,1,0,0,0,1,1],[1,1,1,0,1,1,1,1,0,0,0,1],[1,0,1,0,0,1,1,1,0,0,0,1],[1,1,1,0,1,0,0,1,1,1,0,1],[0,1,1,1,1,1,0,0,1,1,1,1],[1,0,1,0,0,1,1,1,1,0,0,0]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[1,0,0,1,0,0,0,0,1,0,1,0,1,1,1],[1,0,0,1,1,1,1,1,0,0,0,1,0,0,0],[1,1,0,1,0,1,0,1,1,0,0,0,0,1,1],[0,0,1,0,1,1,1,0,0,0,1,0,1,0,0],[0,1,0,0,0,0,0,0,1,0,0,0,1,0,1],[1,0,1,0,1,0,0,0,0,0,1,0,1,0,0],[0,0,0,0,0,0,1,1,0,0,0,0,1,0,0],[1,1,0,0,1,1,1,1,0,0,0,1,0,0,0],[0,0,0,1,0,1,1,1,0,0,1,0,0,1,1],[0,0,0,0,0,1,0,1,1,1,0,1,1,0,0],[1,0,0,1,0,0,0,0,0,1,0,0,0,0,0],[0,1,1,0,0,0,1,0,0,1,0,1,1,0,0],[0,1,1,0,1,1,0,0,1,1,1,1,1,1,0],[0,1,1,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,1,0,1,1,1,0,0,0,1,0,1,0]]]",
+      "output": "35",
+      "expectedOutput": "35",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[0,0,0,0,1,0,0,0,1,0,1,0,0,0],[0,0,0,0,0,0,1,0,0,1,1,0,1,0],[0,1,0,0,1,1,0,0,0,0,0,0,0,1],[0,0,0,0,1,0,0,0,0,0,0,0,0,1],[0,1,0,1,0,0,0,0,1,1,0,0,0,0],[0,1,0,1,0,0,0,0,0,1,0,0,1,0],[0,1,0,0,0,0,0,0,0,0,0,1,0,0],[0,0,1,0,0,0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,1,0]]]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[1,0,1,0,1,0,1,0],[0,1,0,1,0,1,0,1],[1,0,1,0,1,0,1,0],[0,1,0,1,0,1,0,1],[1,0,1,0,1,0,1,0],[0,1,0,1,0,1,0,1],[1,0,1,0,1,0,1,0],[0,1,0,1,0,1,0,1]]]",
+      "output": "32",
+      "expectedOutput": "32",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[0,0,0,1,1,1,1,1,0,0,0],[0,1,0,1,1,1,1,0,0,1,1],[0,1,0,1,1,0,1,0,0,1,0],[0,0,0,1,1,1,0,1,1,1,1],[1,1,0,0,0,0,1,0,1,0,0],[1,1,0,1,1,0,0,1,1,1,1],[0,0,1,0,0,0,0,1,0,0,1],[0,1,1,0,0,0,1,0,0,1,1],[1,1,0,0,1,1,0,0,0,0,0],[0,0,0,0,1,1,0,1,0,0,1],[1,1,1,0,0,0,0,1,0,0,1]]]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1,0,0,1,0,1,0,0],[0,1,0,1,1,1,1,1],[0,0,1,0,0,0,1,1],[1,0,0,0,1,1,1,0],[1,1,1,0,0,0,0,0],[0,1,0,0,0,0,0,1],[0,0,0,1,0,0,1,0],[0,1,1,0,1,1,1,1],[1,0,1,0,1,1,0,1],[0,1,0,0,0,0,0,1],[1,0,0,1,0,1,1,1],[0,1,1,0,0,0,0,1],[1,0,0,0,0,1,0,1]]]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,1,0,0,1,1],[1,1,0,0,1,1],[0,0,0,0,0,0],[1,1,0,0,1,1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,1,1,0,0],[0,1,0,0,1],[0,0,0,1,1],[1,0,1,1,0],[1,1,0,0,0]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "grid = [[1,1,0,0],[1,1,0,0],[0,0,1,0],[0,0,0,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "a 2x2 block of land, plus two separate single-cell islands"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[1,1,1],[0,1,0],[1,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "every land cell connects through the center column into one island"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "grid = [[0,0],[0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "no land at all"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,1,0,0],[1,1,0,0],[0,0,1,0],[0,0,0,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,1,1],[0,1,0],[1,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,0,1,0,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1],[0],[1],[0],[1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,0,1,0,0,0,1,1],[1,1,1,0,1,0,0,1],[1,1,1,0,1,1,0,1],[0,0,0,1,1,1,0,0],[1,1,1,1,1,1,1,1],[1,0,0,1,1,1,1,0],[1,1,1,0,0,0,0,0],[1,1,1,0,0,0,1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0,0,0,0,1,0,1,0,1,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,1,1,0,1,1,0,0],[0,0,0,0,0,1,1,0,0,0],[0,0,0,0,1,1,0,0,1,0],[1,0,0,0,1,1,0,0,0,0],[0,0,0,1,0,1,1,0,0,1],[0,1,0,1,1,0,0,1,0,0],[0,0,0,1,1,0,1,1,0,0],[0,0,0,0,1,1,0,1,0,0]]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[0,0,1,0,1,1,0,0,0,0,1,0],[1,0,1,1,1,1,0,1,1,0,1,0],[0,1,1,1,0,0,0,1,1,1,1,1],[0,0,0,1,0,1,1,0,1,0,1,1],[1,0,1,0,0,1,1,0,1,1,0,1],[0,1,1,1,0,0,1,1,1,0,1,0],[1,1,1,0,1,1,1,0,0,0,1,1],[1,1,1,0,1,1,1,1,0,0,0,1],[1,0,1,0,0,1,1,1,0,0,0,1],[1,1,1,0,1,0,0,1,1,1,0,1],[0,1,1,1,1,1,0,0,1,1,1,1],[1,0,1,0,0,1,1,1,1,0,0,0]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,0,0,1,0,0,0,0,1,0,1,0,1,1,1],[1,0,0,1,1,1,1,1,0,0,0,1,0,0,0],[1,1,0,1,0,1,0,1,1,0,0,0,0,1,1],[0,0,1,0,1,1,1,0,0,0,1,0,1,0,0],[0,1,0,0,0,0,0,0,1,0,0,0,1,0,1],[1,0,1,0,1,0,0,0,0,0,1,0,1,0,0],[0,0,0,0,0,0,1,1,0,0,0,0,1,0,0],[1,1,0,0,1,1,1,1,0,0,0,1,0,0,0],[0,0,0,1,0,1,1,1,0,0,1,0,0,1,1],[0,0,0,0,0,1,0,1,1,1,0,1,1,0,0],[1,0,0,1,0,0,0,0,0,1,0,0,0,0,0],[0,1,1,0,0,0,1,0,0,1,0,1,1,0,0],[0,1,1,0,1,1,0,0,1,1,1,1,1,1,0],[0,1,1,0,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,1,0,1,1,1,0,0,0,1,0,1,0]]]",
+        "output": "35",
+        "expectedOutput": "35",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,0,0,0,1,0,0,0,1,0,1,0,0,0],[0,0,0,0,0,0,1,0,0,1,1,0,1,0],[0,1,0,0,1,1,0,0,0,0,0,0,0,1],[0,0,0,0,1,0,0,0,0,0,0,0,0,1],[0,1,0,1,0,0,0,0,1,1,0,0,0,0],[0,1,0,1,0,0,0,0,0,1,0,0,1,0],[0,1,0,0,0,0,0,0,0,0,0,1,0,0],[0,0,1,0,0,0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,1,0]]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,0,1,0]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,0,1,0,1,0,1,0],[0,1,0,1,0,1,0,1],[1,0,1,0,1,0,1,0],[0,1,0,1,0,1,0,1],[1,0,1,0,1,0,1,0],[0,1,0,1,0,1,0,1],[1,0,1,0,1,0,1,0],[0,1,0,1,0,1,0,1]]]",
+        "output": "32",
+        "expectedOutput": "32",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,0,0,1,1,1,1,1,0,0,0],[0,1,0,1,1,1,1,0,0,1,1],[0,1,0,1,1,0,1,0,0,1,0],[0,0,0,1,1,1,0,1,1,1,1],[1,1,0,0,0,0,1,0,1,0,0],[1,1,0,1,1,0,0,1,1,1,1],[0,0,1,0,0,0,0,1,0,0,1],[0,1,1,0,0,0,1,0,0,1,1],[1,1,0,0,1,1,0,0,0,0,0],[0,0,0,0,1,1,0,1,0,0,1],[1,1,1,0,0,0,0,1,0,0,1]]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,0,0,1,0,1,0,0],[0,1,0,1,1,1,1,1],[0,0,1,0,0,0,1,1],[1,0,0,0,1,1,1,0],[1,1,1,0,0,0,0,0],[0,1,0,0,0,0,0,1],[0,0,0,1,0,0,1,0],[0,1,1,0,1,1,1,1],[1,0,1,0,1,1,0,1],[0,1,0,0,0,0,0,1],[1,0,0,1,0,1,1,1],[0,1,1,0,0,0,0,1],[1,0,0,0,0,1,0,1]]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1,0,0,1,1],[1,1,0,0,1,1],[0,0,0,0,0,0],[1,1,0,0,1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,1,1,0,0],[0,1,0,0,1],[0,0,0,1,1],[1,0,1,1,0],[1,1,0,0,0]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def numIslands(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numIslands(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numIslands(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numIslands(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numIslands(grid) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def numIslands(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numIslands(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numIslands(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numIslands(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numIslands(grid) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def numIslands(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numIslands(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numIslands(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numIslands(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numIslands(grid) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def numIslands(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numIslands(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numIslands(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numIslands(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numIslands(grid) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(m * n * alpha(m * n))",
+      "space": "O(m * n)",
+      "pattern": "union find over grid cells"
+    },
+    "bruteForce": {
+      "approach": "run DFS or BFS flood-fill from every unvisited land cell, marking the whole island visited each time, counting how many flood-fills you perform",
+      "time": "O(m * n)",
+      "space": "O(m * n)"
+    }
+  },
+  "optimal": {
+    "pattern": "union find over grid cells",
+    "time": "O(m * n * alpha(m * n))",
+    "space": "O(m * n)",
+    "hint_ladder": [
+      "flatten each cell (r, c) into a single index like r * n + c so you can use a plain array-based union-find",
+      "start by treating every land cell as its own island",
+      "for each land cell, union it with its land neighbors to the right and below (checking both directions once is enough to cover the whole grid)",
+      "count the distinct roots among land cells only at the end - water cells should never be counted"
+    ]
+  },
+  "bruteForce": {
+    "approach": "run DFS or BFS flood-fill from every unvisited land cell, marking the whole island visited each time, counting how many flood-fills you perform",
+    "time": "O(m * n)",
+    "space": "O(m * n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

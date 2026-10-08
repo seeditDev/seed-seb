@@ -1,0 +1,598 @@
+{
+  "id": "max-units-on-a-truck",
+  "questionId": "max-units-on-a-truck",
+  "slug": "max-units-on-a-truck",
+  "title": "Maximum Units on a Truck",
+  "difficulty": "Easy",
+  "category": "Greedy",
+  "patterns": [
+    "greedy",
+    "sorting"
+  ],
+  "lists": [],
+  "hints": [
+    "every box takes exactly one slot regardless of its type, so which boxes give you the most units per slot used?",
+    "sort the box types by unitsPerBox in descending order",
+    "walk the sorted list, taking as many boxes as you can from each type (min of boxes available and remaining truck capacity) before moving to the next",
+    "why can't saving room for a later, lower-value box type ever beat taking the highest-value boxes first? because slots are interchangeable and each slot's contribution is maximized independently by picking the highest unitsPerBox available"
+  ],
+  "commonMistakes": [
+    "sorting by numberOfBoxes instead of unitsPerBox, which loads many low-value boxes instead of few high-value ones",
+    "forgetting to cap the boxes taken from a type by both the remaining truck capacity and the boxes actually available",
+    "not stopping early once truck capacity is exhausted, wasting iteration but more importantly risking an off-by-one overfill"
+  ],
+  "content": {
+    "problemStatement": "You're loading a truck with total capacity `truckSize` boxes. You're\ngiven `boxTypes`, where `boxTypes[i] = [numberOfBoxesI, unitsPerBoxI]`\ndescribes a group of identical boxes, each holding `unitsPerBoxI` units,\nand you choose which boxes to load, up to `truckSize` boxes total.\n\n**Return the maximum total number of units you can load onto the truck.**\n",
+    "constraints": [
+      "1 <= truckSize",
+      "each boxTypes entry is [numberOfBoxes, unitsPerBox], both positive",
+      "you may load fewer than truckSize boxes if fewer boxes exist"
+    ],
+    "notes": [
+      "truckSize is 0 (answer is 0)",
+      "truckSize exceeds the total number of boxes available (load everything)",
+      "a single box type",
+      "all box types have the same units per box"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "boxTypes = [[1,3],[2,2],[3,1]], truckSize = 4",
+        "output": "8",
+        "expectedOutput": "8",
+        "explanation": "load the 1 box worth 3 units, then both boxes worth 2 units each: 3 + 2 + 2 = 7, then 1 more box worth 1 unit: 3+2+2+1=8, filling all 4 slots"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "boxTypes = [[5,10],[2,5],[4,7],[3,9]], truckSize = 10",
+        "output": "91",
+        "expectedOutput": "91",
+        "explanation": "load all 5 boxes worth 10 units (50), all 3 boxes worth 9 units (27), then 2 of the 4 boxes worth 7 units (14): 50+27+14=91"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,3],[2,2],[3,1]],4]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[5,10],[2,5],[4,7],[3,9]],10]",
+        "output": "91",
+        "expectedOutput": "91",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,3]],10]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[2,5],[2,5]],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,1]],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[3,4],[2,4],[1,4]],6]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,100]],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[10,1],[10,2],[10,3]],15]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[2,3],[3,5],[1,7],[4,2]],6]",
+        "output": "28",
+        "expectedOutput": "28",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[8,15],[4,10],[9,3],[2,15],[10,18],[9,9],[4,17],[2,13],[7,15],[2,2],[10,14],[7,17],[6,5],[8,5],[4,7]],50]",
+        "output": "788",
+        "expectedOutput": "788",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[2,1],[1,2],[2,3],[2,4],[1,5],[4,6],[1,7],[1,8],[4,9],[3,10],[5,11],[1,12],[1,13],[2,14],[4,15],[3,16],[2,17],[3,18],[1,19],[3,20]],25]",
+        "output": "383",
+        "expectedOutput": "383",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,1],[1,1]],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[5,5]],3]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,5],[1,4],[1,3],[1,2],[1,1]],5]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[2,1],[2,1],[2,1]],4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[3,10]],100]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2]],5]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[7,3],[2,9],[5,1]],8]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[4,4],[4,4],[4,4]],6]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,10],[2,9],[3,8],[4,7]],7]",
+        "output": "59",
+        "expectedOutput": "59",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "boxTypes = [[1,3],[2,2],[3,1]], truckSize = 4",
+      "output": "8",
+      "expectedOutput": "8",
+      "explanation": "load the 1 box worth 3 units, then both boxes worth 2 units each: 3 + 2 + 2 = 7, then 1 more box worth 1 unit: 3+2+2+1=8, filling all 4 slots"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "boxTypes = [[5,10],[2,5],[4,7],[3,9]], truckSize = 10",
+      "output": "91",
+      "expectedOutput": "91",
+      "explanation": "load all 5 boxes worth 10 units (50), all 3 boxes worth 9 units (27), then 2 of the 4 boxes worth 7 units (14): 50+27+14=91"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "boxTypes = [[1,3],[2,2],[3,1]], truckSize = 4",
+      "output": "8",
+      "expectedOutput": "8",
+      "explanation": "load the 1 box worth 3 units, then both boxes worth 2 units each: 3 + 2 + 2 = 7, then 1 more box worth 1 unit: 3+2+2+1=8, filling all 4 slots"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "boxTypes = [[5,10],[2,5],[4,7],[3,9]], truckSize = 10",
+      "output": "91",
+      "expectedOutput": "91",
+      "explanation": "load all 5 boxes worth 10 units (50), all 3 boxes worth 9 units (27), then 2 of the 4 boxes worth 7 units (14): 50+27+14=91"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,3],[2,2],[3,1]],4]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[5,10],[2,5],[4,7],[3,9]],10]",
+      "output": "91",
+      "expectedOutput": "91",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1,3]],10]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[2,5],[2,5]],0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,1]],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[3,4],[2,4],[1,4]],6]",
+      "output": "24",
+      "expectedOutput": "24",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1,100]],0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[10,1],[10,2],[10,3]],15]",
+      "output": "40",
+      "expectedOutput": "40",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[2,3],[3,5],[1,7],[4,2]],6]",
+      "output": "28",
+      "expectedOutput": "28",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[8,15],[4,10],[9,3],[2,15],[10,18],[9,9],[4,17],[2,13],[7,15],[2,2],[10,14],[7,17],[6,5],[8,5],[4,7]],50]",
+      "output": "788",
+      "expectedOutput": "788",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[2,1],[1,2],[2,3],[2,4],[1,5],[4,6],[1,7],[1,8],[4,9],[3,10],[5,11],[1,12],[1,13],[2,14],[4,15],[3,16],[2,17],[3,18],[1,19],[3,20]],25]",
+      "output": "383",
+      "expectedOutput": "383",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[1,1],[1,1]],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[5,5]],3]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,5],[1,4],[1,3],[1,2],[1,1]],5]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[2,1],[2,1],[2,1]],4]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[3,10]],100]",
+      "output": "30",
+      "expectedOutput": "30",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2]],5]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[7,3],[2,9],[5,1]],8]",
+      "output": "36",
+      "expectedOutput": "36",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[4,4],[4,4],[4,4]],6]",
+      "output": "24",
+      "expectedOutput": "24",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,10],[2,9],[3,8],[4,7]],7]",
+      "output": "59",
+      "expectedOutput": "59",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "boxTypes = [[1,3],[2,2],[3,1]], truckSize = 4",
+        "output": "8",
+        "expectedOutput": "8",
+        "explanation": "load the 1 box worth 3 units, then both boxes worth 2 units each: 3 + 2 + 2 = 7, then 1 more box worth 1 unit: 3+2+2+1=8, filling all 4 slots"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "boxTypes = [[5,10],[2,5],[4,7],[3,9]], truckSize = 10",
+        "output": "91",
+        "expectedOutput": "91",
+        "explanation": "load all 5 boxes worth 10 units (50), all 3 boxes worth 9 units (27), then 2 of the 4 boxes worth 7 units (14): 50+27+14=91"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,3],[2,2],[3,1]],4]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[5,10],[2,5],[4,7],[3,9]],10]",
+        "output": "91",
+        "expectedOutput": "91",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,3]],10]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[2,5],[2,5]],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,1]],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[3,4],[2,4],[1,4]],6]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,100]],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[10,1],[10,2],[10,3]],15]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[2,3],[3,5],[1,7],[4,2]],6]",
+        "output": "28",
+        "expectedOutput": "28",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[8,15],[4,10],[9,3],[2,15],[10,18],[9,9],[4,17],[2,13],[7,15],[2,2],[10,14],[7,17],[6,5],[8,5],[4,7]],50]",
+        "output": "788",
+        "expectedOutput": "788",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[2,1],[1,2],[2,3],[2,4],[1,5],[4,6],[1,7],[1,8],[4,9],[3,10],[5,11],[1,12],[1,13],[2,14],[4,15],[3,16],[2,17],[3,18],[1,19],[3,20]],25]",
+        "output": "383",
+        "expectedOutput": "383",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,1],[1,1]],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[5,5]],3]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,5],[1,4],[1,3],[1,2],[1,1]],5]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[2,1],[2,1],[2,1]],4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[3,10]],100]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2]],5]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[7,3],[2,9],[5,1]],8]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[4,4],[4,4],[4,4]],6]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,10],[2,9],[3,8],[4,7]],7]",
+        "output": "59",
+        "expectedOutput": "59",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def maximumUnits(self, boxTypes, truckSize):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maximumUnits(vector<vector<int>>& boxTypes, int truckSize) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maximumUnits(int[][] boxTypes, int truckSize) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maximumUnits(boxTypes: Array<IntArray>, truckSize: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maximumUnits(boxTypes, truckSize) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def maximumUnits(self, boxTypes, truckSize):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maximumUnits(vector<vector<int>>& boxTypes, int truckSize) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maximumUnits(int[][] boxTypes, int truckSize) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maximumUnits(boxTypes: Array<IntArray>, truckSize: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maximumUnits(boxTypes, truckSize) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def maximumUnits(self, boxTypes, truckSize):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maximumUnits(vector<vector<int>>& boxTypes, int truckSize) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maximumUnits(int[][] boxTypes, int truckSize) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maximumUnits(boxTypes: Array<IntArray>, truckSize: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maximumUnits(boxTypes, truckSize) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def maximumUnits(self, boxTypes, truckSize):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maximumUnits(vector<vector<int>>& boxTypes, int truckSize) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int maximumUnits(int[][] boxTypes, int truckSize) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maximumUnits(boxTypes: Array<IntArray>, truckSize: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maximumUnits(boxTypes, truckSize) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(k log k) for k box types",
+      "space": "O(1) beyond sorting",
+      "pattern": "sort box types by units per box descending, fill the truck greedily from the highest-value boxes first"
+    },
+    "bruteForce": {
+      "approach": "try every combination of how many boxes to take from each type (bounded by truckSize), keep the best total units",
+      "time": "exponential in number of box types",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "sort box types by units per box descending, fill the truck greedily from the highest-value boxes first",
+    "time": "O(k log k) for k box types",
+    "space": "O(1) beyond sorting",
+    "hint_ladder": [
+      "every box takes exactly one slot regardless of its type, so which boxes give you the most units per slot used?",
+      "sort the box types by unitsPerBox in descending order",
+      "walk the sorted list, taking as many boxes as you can from each type (min of boxes available and remaining truck capacity) before moving to the next",
+      "why can't saving room for a later, lower-value box type ever beat taking the highest-value boxes first? because slots are interchangeable and each slot's contribution is maximized independently by picking the highest unitsPerBox available"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every combination of how many boxes to take from each type (bounded by truckSize), keep the best total units",
+    "time": "exponential in number of box types",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

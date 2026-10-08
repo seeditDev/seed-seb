@@ -1,0 +1,652 @@
+{
+  "id": "contains-duplicate-ii",
+  "questionId": "contains-duplicate-ii",
+  "slug": "contains-duplicate-ii",
+  "title": "Contains Duplicate II",
+  "difficulty": "Easy",
+  "category": "Sliding window",
+  "patterns": [
+    "sliding window",
+    "hash set"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "you only ever need to compare each element to the k elements before it, not to every other element in the array. what does that suggest about the window you need to maintain?",
+    "what if you kept a set of exactly the last k values seen, and checked each new value against it?",
+    "for each element, first check if it's already in the set (a match within range), then add it, then remove the element that just fell outside the window (more than k positions back)",
+    "the set never needs to hold more than k elements at once"
+  ],
+  "commonMistakes": [
+    "checking against every previous element instead of only the last k, which degrades to O(n^2)",
+    "removing the wrong element from the window, or removing before checking instead of after",
+    "off-by-one on what 'at most k apart' means (k itself is a valid gap, not just gaps smaller than k)"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of integers, `nums`, and a number `k`.\n\n**Determine whether there are two equal values in `nums` whose indices are at most `k` apart.**\n",
+    "constraints": [
+      "1 <= nums.length <= 10^5",
+      "-10^9 <= nums[i] <= 10^9",
+      "0 <= k <= 10^6"
+    ],
+    "notes": [
+      "k = 0 (indices must be the same, so this is always false unless there are truly duplicate positions, which can't happen)",
+      "no duplicates at all",
+      "k larger than the array length"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 1], k = 3",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the two 1s are at indices 0 and 3, which is 3 apart"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 0, 1, 1], k = 1",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 1, 2, 3], k = 2",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the repeated values are all more than 2 indices apart"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,1],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,0,1,1],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,1,2,3],2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4,5],2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,1],0]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,1],1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,1],2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[99,99],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-1,-2,-3,-1],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-1,-2,-3,-1],2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,0,0,0,0],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,1,2,3,4],3]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,1,2,3,4],4]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[5],0]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1],1000000]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],5]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,1,4,1,5,9,2,6,1,3,4,1,5,9,2,6,3,1,4,1,5],10]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-5,-4,-3,-2,-1,0,1,2,3,4,5,-5],11]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7],2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[2,4,6,8,10,12,14,2],6]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 1], k = 3",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the two 1s are at indices 0 and 3, which is 3 apart"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 0, 1, 1], k = 1",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 1, 2, 3], k = 2",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the repeated values are all more than 2 indices apart"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 1], k = 3",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the two 1s are at indices 0 and 3, which is 3 apart"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 0, 1, 1], k = 1",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 1, 2, 3], k = 2",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the repeated values are all more than 2 indices apart"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,1],3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,0,1,1],1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3,1,2,3],2]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1],1]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,2,3,4,5],2]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,1],0]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,1],1]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,1],2]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[99,99],1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[-1,-2,-3,-1],3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[-1,-2,-3,-1],2]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[0,0,0,0,0],1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,1,2,3,4],3]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3,4,1,2,3,4],4]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[5],0]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,1],1000000]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],5]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[3,1,4,1,5,9,2,6,1,3,4,1,5,9,2,6,3,1,4,1,5],10]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[-5,-4,-3,-2,-1,0,1,2,3,4,5,-5],11]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7],2]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[2,4,6,8,10,12,14,2],6]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 1], k = 3",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the two 1s are at indices 0 and 3, which is 3 apart"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 0, 1, 1], k = 1",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 1, 2, 3], k = 2",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the repeated values are all more than 2 indices apart"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,1],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,0,1,1],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,1,2,3],2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4,5],2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,1],0]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,1],1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,1],2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[99,99],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-1,-2,-3,-1],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-1,-2,-3,-1],2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,0,0,0,0],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,1,2,3,4],3]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,1,2,3,4],4]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[5],0]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1],1000000]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],5]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,1,4,1,5,9,2,6,1,3,4,1,5,9,2,6,3,1,4,1,5],10]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-5,-4,-3,-2,-1,0,1,2,3,4,5,-5],11]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7],2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[2,4,6,8,10,12,14,2],6]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def containsNearbyDuplicate(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool containsNearbyDuplicate(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean containsNearbyDuplicate(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun containsNearbyDuplicate(nums: IntArray, k: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    containsNearbyDuplicate(nums, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def containsNearbyDuplicate(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool containsNearbyDuplicate(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean containsNearbyDuplicate(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun containsNearbyDuplicate(nums: IntArray, k: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    containsNearbyDuplicate(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def containsNearbyDuplicate(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool containsNearbyDuplicate(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean containsNearbyDuplicate(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun containsNearbyDuplicate(nums: IntArray, k: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    containsNearbyDuplicate(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def containsNearbyDuplicate(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool containsNearbyDuplicate(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean containsNearbyDuplicate(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun containsNearbyDuplicate(nums: IntArray, k: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    containsNearbyDuplicate(nums, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(min(n, k)) for the set",
+      "pattern": "sliding window of size k, tracked with a hash set of the values currently in the window"
+    },
+    "bruteForce": {
+      "approach": "for each pair of indices (i, j) with j - i <= k, check if nums[i] equals nums[j]",
+      "time": "O(n * k)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "sliding window of size k, tracked with a hash set of the values currently in the window",
+    "time": "O(n)",
+    "space": "O(min(n, k)) for the set",
+    "hint_ladder": [
+      "you only ever need to compare each element to the k elements before it, not to every other element in the array. what does that suggest about the window you need to maintain?",
+      "what if you kept a set of exactly the last k values seen, and checked each new value against it?",
+      "for each element, first check if it's already in the set (a match within range), then add it, then remove the element that just fell outside the window (more than k positions back)",
+      "the set never needs to hold more than k elements at once"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each pair of indices (i, j) with j - i <= k, check if nums[i] equals nums[j]",
+    "time": "O(n * k)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

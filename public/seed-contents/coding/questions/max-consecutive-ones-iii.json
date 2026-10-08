@@ -1,0 +1,597 @@
+{
+  "id": "max-consecutive-ones-iii",
+  "questionId": "max-consecutive-ones-iii",
+  "slug": "max-consecutive-ones-iii",
+  "title": "Max Consecutive Ones III",
+  "difficulty": "Medium",
+  "category": "Sliding window",
+  "patterns": [
+    "sliding window",
+    "variable-size window"
+  ],
+  "lists": [],
+  "hints": [
+    "this is Longest Repeating Character Replacement in disguise - what if '1' were the letter you're trying to extend, and '0' were the letter you're allowed to replace up to k times?",
+    "grow the window to the right, keeping a running count of zeroes inside it",
+    "if the zero count ever exceeds k, shrink from the left until it's back to at most k, updating the count as you go",
+    "the window never needs to shrink below its previous best length, so you're really just tracking the widest window that was ever valid"
+  ],
+  "commonMistakes": [
+    "recounting zeroes in the window from scratch instead of maintaining a running count",
+    "shrinking the window more than necessary once it's valid again",
+    "off-by-one when computing the window length from its left and right boundaries"
+  ],
+  "content": {
+    "problemStatement": "You're given a binary array `nums` (only 0s and 1s) and a number `k`. You\nmay flip up to `k` of the 0s to 1s.\n\n**Return the length of the longest stretch of consecutive 1s you can create.**\n",
+    "constraints": [
+      "1 <= nums.length <= 10^5",
+      "nums[i] is either 0 or 1",
+      "0 <= k <= nums.length"
+    ],
+    "notes": [
+      "k = 0 (no flips allowed, answer is the longest existing run of 1s)",
+      "k is large enough to flip every 0 in the array",
+      "the array is already all 1s"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0], k = 2",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "flip the two 0s at indices 5 and 10 is not optimal - flipping the pair inside the 0,0,0 run and extending gives a run of 6"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1], k = 3",
+        "output": "10",
+        "expectedOutput": "10",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,1,1,0,0,0,1,1,1,1,0],2]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,0,1,1,0,0,1,1,1,0,1,1,0,0,0,1,1,1,1],3]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,1,1],0]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0,0,0],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,1,1],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,0,0,0],4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,0,0,0],3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,0,1,0,1,0,1,0,1,0],2]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,0,1,1,0,0,1,1,1,0,1,1,0,0,0,1,1,1,1],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],5]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],20]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],19]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0],2]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],4]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0,1,1,1,0,0,1,1,1,1,0,1,1,0,0,1,1,1,0,1],2]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,0,0,0,0,1,1,1,1,1,0,0,1,1,1,1,1,1],5]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,1,0,1,1,1,0,0,1,1,1,0,1,1,1,1,0,0,1,1],3]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0], k = 2",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "flip the two 0s at indices 5 and 10 is not optimal - flipping the pair inside the 0,0,0 run and extending gives a run of 6"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1], k = 3",
+      "output": "10",
+      "expectedOutput": "10",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0], k = 2",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "flip the two 0s at indices 5 and 10 is not optimal - flipping the pair inside the 0,0,0 run and extending gives a run of 6"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1], k = 3",
+      "output": "10",
+      "expectedOutput": "10",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,1,1,0,0,0,1,1,1,1,0],2]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0,0,1,1,0,0,1,1,1,0,1,1,0,0,0,1,1,1,1],3]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,1,1],0]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[0,0,0],0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1],0]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[0],0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[0],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,1,1,1],0]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[0,0,0,0],4]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[0,0,0,0],3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,0,1,0,1,0,1,0,1,0],2]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[0,0,1,1,0,0,1,1,1,0,1,1,0,0,0,1,1,1,1],0]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],5]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],20]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],19]",
+      "output": "19",
+      "expectedOutput": "19",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0],2]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],4]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[0,1,1,1,0,0,1,1,1,1,0,1,1,0,0,1,1,1,0,1],2]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,1,1,0,0,0,0,1,1,1,1,1,0,0,1,1,1,1,1,1],5]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,1,0,1,1,1,0,0,1,1,1,0,1,1,1,1,0,0,1,1],3]",
+      "output": "13",
+      "expectedOutput": "13",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0], k = 2",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "flip the two 0s at indices 5 and 10 is not optimal - flipping the pair inside the 0,0,0 run and extending gives a run of 6"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1], k = 3",
+        "output": "10",
+        "expectedOutput": "10",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,1,1,0,0,0,1,1,1,1,0],2]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,0,1,1,0,0,1,1,1,0,1,1,0,0,0,1,1,1,1],3]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,1,1],0]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0,0,0],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],0]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,1,1],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,0,0,0],4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,0,0,0],3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,0,1,0,1,0,1,0,1,0],2]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,0,1,1,0,0,1,1,1,0,1,1,0,0,0,1,1,1,1],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],5]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],20]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],19]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0],2]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],4]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0,1,1,1,0,0,1,1,1,1,0,1,1,0,0,1,1,1,0,1],2]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,0,0,0,0,1,1,1,1,1,0,0,1,1,1,1,1,1],5]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,1,0,1,1,1,0,0,1,1,1,0,1,1,1,1,0,0,1,1],3]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def longestOnes(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestOnes(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestOnes(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestOnes(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestOnes(nums, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def longestOnes(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestOnes(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestOnes(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestOnes(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestOnes(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def longestOnes(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestOnes(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestOnes(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestOnes(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestOnes(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def longestOnes(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestOnes(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int longestOnes(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun longestOnes(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    longestOnes(nums, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "variable-size sliding window that allows at most k zeroes inside it"
+    },
+    "bruteForce": {
+      "approach": "for every starting index, extend forward counting zeroes flipped, stopping once more than k zeroes would be needed, tracking the longest stretch",
+      "time": "O(n^2)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "variable-size sliding window that allows at most k zeroes inside it",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "this is Longest Repeating Character Replacement in disguise - what if '1' were the letter you're trying to extend, and '0' were the letter you're allowed to replace up to k times?",
+      "grow the window to the right, keeping a running count of zeroes inside it",
+      "if the zero count ever exceeds k, shrink from the left until it's back to at most k, updating the count as you go",
+      "the window never needs to shrink below its previous best length, so you're really just tracking the widest window that was ever valid"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every starting index, extend forward counting zeroes flipped, stopping once more than k zeroes would be needed, tracking the longest stretch",
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

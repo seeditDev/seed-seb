@@ -1,0 +1,633 @@
+{
+  "id": "median-of-two-sorted-arrays",
+  "questionId": "median-of-two-sorted-arrays",
+  "slug": "median-of-two-sorted-arrays",
+  "title": "Median of Two Sorted Arrays (Doubled)",
+  "difficulty": "Hard",
+  "category": "Binary search",
+  "patterns": [
+    "binary search",
+    "binary search on partition"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "you don't actually need the whole merged array - you only need to know what value(s) end up in the middle. what defines the 'middle' of a merge?",
+    "picture cutting both arrays into a left part and a right part such that every element in either left part is <= every element in either right part, and the two left parts together hold exactly half the total elements",
+    "if you decide how many elements from the smaller array go on the left, that fixes how many from the larger array must go on the left too (since the total on the left is fixed) - so you only need to binary search one cut point",
+    "binary search the cut point in the smaller array; a cut is valid when the largest left-side value in nums1 is <= the smallest right-side value in nums2, and vice versa - once valid, the max of the two left-side edges and the min of the two right-side edges give you the doubled median directly"
+  ],
+  "commonMistakes": [
+    "not handling one array being empty, which breaks partition logic that assumes both arrays are non-empty",
+    "getting the odd/even total-length cases backwards when deciding whether to use one middle value or two",
+    "binary searching the partition of the larger array instead of the smaller one, which is asymptotically worse and easier to get the bounds wrong on"
+  ],
+  "content": {
+    "problemStatement": "You're given two arrays of integers, `nums1` and `nums2`, each already\nsorted in ascending order. The two arrays are never both empty.\n\n**Imagine merging them into one combined sorted array, and return the median of that combined array, multiplied by 2.**\n\nDoubling the median keeps the answer a whole number in every case: for an\nodd total length it's 2 times the single middle value, and for an even\ntotal length it's the sum of the two middle values. Aim for better than\nlinear time in the combined size of the arrays.\n",
+    "constraints": [
+      "0 <= nums1.length <= 1000",
+      "0 <= nums2.length <= 1000",
+      "1 <= nums1.length + nums2.length <= 2000",
+      "-10^6 <= nums1[i], nums2[i] <= 10^6",
+      "nums1 and nums2 are each sorted in ascending order"
+    ],
+    "notes": [
+      "one of the two arrays is empty",
+      "the arrays are very different sizes",
+      "the combined length is odd versus even (changes which doubling formula applies)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums1 = [1, 3], nums2 = [2]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "merged is [1,2,3], median is 2, doubled is 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums1 = [1, 2], nums2 = [3, 4]",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "merged is [1,2,3,4], median is (2+3)/2 = 2.5, doubled is 5"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums1 = [], nums2 = [1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "merged is [1], median is 1, doubled is 2"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,3],[2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2],[3,4]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[],[1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[2],[]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4,5],[6,7,8,9,10]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[],[2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1],[]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3],[4,5,6]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2],[1,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,3,5,7,9],[2,4,6,8,10]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1],[2,3,4,5,6,7,8,9,10]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9],[10]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-5,-3,-1],[0,2,4]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,1,1],[1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[100,200,300],[150,250]]",
+        "output": "400",
+        "expectedOutput": "400",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],[11,12,13,14,15,16,17,18,19,20]]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,3,5,7,9,11,13,15],[2,4,6,8,10,12,14,16]]",
+        "output": "17",
+        "expectedOutput": "17",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0],[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-10,-5,0,5,10,15,20],[-8,-3,2,7,12]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[5],[1,2,3,4,6,7,8,9]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums1 = [1, 3], nums2 = [2]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "merged is [1,2,3], median is 2, doubled is 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums1 = [1, 2], nums2 = [3, 4]",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "merged is [1,2,3,4], median is (2+3)/2 = 2.5, doubled is 5"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums1 = [], nums2 = [1]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "merged is [1], median is 1, doubled is 2"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums1 = [1, 3], nums2 = [2]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "merged is [1,2,3], median is 2, doubled is 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums1 = [1, 2], nums2 = [3, 4]",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "merged is [1,2,3,4], median is (2+3)/2 = 2.5, doubled is 5"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums1 = [], nums2 = [1]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "merged is [1], median is 1, doubled is 2"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,3],[2]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2],[3,4]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[],[1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[2],[]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,2,3,4,5],[6,7,8,9,10]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[],[2]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1],[]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3],[4,5,6]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2],[1,2]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,3,5,7,9],[2,4,6,8,10]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1],[2,3,4,5,6,7,8,9,10]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9],[10]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[-5,-3,-1],[0,2,4]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,1,1],[1,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[100,200,300],[150,250]]",
+      "output": "400",
+      "expectedOutput": "400",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],[11,12,13,14,15,16,17,18,19,20]]",
+      "output": "21",
+      "expectedOutput": "21",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,3,5,7,9,11,13,15],[2,4,6,8,10,12,14,16]]",
+      "output": "17",
+      "expectedOutput": "17",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[0],[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[-10,-5,0,5,10,15,20],[-8,-3,2,7,12]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[5],[1,2,3,4,6,7,8,9]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums1 = [1, 3], nums2 = [2]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "merged is [1,2,3], median is 2, doubled is 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums1 = [1, 2], nums2 = [3, 4]",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "merged is [1,2,3,4], median is (2+3)/2 = 2.5, doubled is 5"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums1 = [], nums2 = [1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "merged is [1], median is 1, doubled is 2"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,3],[2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2],[3,4]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[],[1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[2],[]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4,5],[6,7,8,9,10]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[],[2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1],[]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3],[4,5,6]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2],[1,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,3,5,7,9],[2,4,6,8,10]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1],[2,3,4,5,6,7,8,9,10]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9],[10]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-5,-3,-1],[0,2,4]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,1,1],[1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[100,200,300],[150,250]]",
+        "output": "400",
+        "expectedOutput": "400",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],[11,12,13,14,15,16,17,18,19,20]]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,3,5,7,9,11,13,15],[2,4,6,8,10,12,14,16]]",
+        "output": "17",
+        "expectedOutput": "17",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0],[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-10,-5,0,5,10,15,20],[-8,-3,2,7,12]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[5],[1,2,3,4,6,7,8,9]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def medianTimesTwo(self, nums1, nums2):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int medianTimesTwo(vector<int>& nums1, vector<int>& nums2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int medianTimesTwo(int[] nums1, int[] nums2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun medianTimesTwo(nums1: IntArray, nums2: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    medianTimesTwo(nums1, nums2) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def medianTimesTwo(self, nums1, nums2):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int medianTimesTwo(vector<int>& nums1, vector<int>& nums2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int medianTimesTwo(int[] nums1, int[] nums2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun medianTimesTwo(nums1: IntArray, nums2: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    medianTimesTwo(nums1, nums2) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def medianTimesTwo(self, nums1, nums2):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int medianTimesTwo(vector<int>& nums1, vector<int>& nums2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int medianTimesTwo(int[] nums1, int[] nums2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun medianTimesTwo(nums1: IntArray, nums2: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    medianTimesTwo(nums1, nums2) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def medianTimesTwo(self, nums1, nums2):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int medianTimesTwo(vector<int>& nums1, vector<int>& nums2) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int medianTimesTwo(int[] nums1, int[] nums2) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun medianTimesTwo(nums1: IntArray, nums2: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    medianTimesTwo(nums1, nums2) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(log(min(m, n)))",
+      "space": "O(1)",
+      "pattern": "binary search over how to partition the smaller array so that, combined with a matching partition of the larger array, the left side and right side each hold exactly half the total elements"
+    },
+    "bruteForce": {
+      "approach": "merge both sorted arrays into one sorted array (like the merge step of merge sort), then read off the middle value(s) and double them",
+      "time": "O(m + n)",
+      "space": "O(m + n)"
+    }
+  },
+  "optimal": {
+    "pattern": "binary search over how to partition the smaller array so that, combined with a matching partition of the larger array, the left side and right side each hold exactly half the total elements",
+    "time": "O(log(min(m, n)))",
+    "space": "O(1)",
+    "hint_ladder": [
+      "you don't actually need the whole merged array - you only need to know what value(s) end up in the middle. what defines the 'middle' of a merge?",
+      "picture cutting both arrays into a left part and a right part such that every element in either left part is <= every element in either right part, and the two left parts together hold exactly half the total elements",
+      "if you decide how many elements from the smaller array go on the left, that fixes how many from the larger array must go on the left too (since the total on the left is fixed) - so you only need to binary search one cut point",
+      "binary search the cut point in the smaller array; a cut is valid when the largest left-side value in nums1 is <= the smallest right-side value in nums2, and vice versa - once valid, the max of the two left-side edges and the min of the two right-side edges give you the doubled median directly"
+    ]
+  },
+  "bruteForce": {
+    "approach": "merge both sorted arrays into one sorted array (like the merge step of merge sort), then read off the middle value(s) and double them",
+    "time": "O(m + n)",
+    "space": "O(m + n)"
+  },
+  "isIndex0": true,
+  "level": null
+}
