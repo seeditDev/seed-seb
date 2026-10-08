@@ -1,0 +1,41 @@
+{
+  "id": "data-senior-scenario-schema-evolution-large-warehouse",
+  "fileName": "data-senior-scenario-schema-evolution-large-warehouse",
+  "title": "Data senior scenario schema evolution large warehouse",
+  "role": "data",
+  "level": "senior",
+  "track": "scenario",
+  "topic": "Data senior scenario schema evolution large warehouse",
+  "question": "How would you roll out this schema change safely, given how many things depend on the old structure?",
+  "idealAnswer": "Use lineage or dependency analysis first to find every known downstream consumer of the address column, since breaking dashboards or pipelines you didn't know existed is the main risk\n\nPrefer an additive, backward-compatible rollout, add the new columns alongside the old one rather than dropping it immediately, so existing consumers keep working while new ones migrate\n\nCommunicate the change and a deprecation timeline to consumers, including a way for unknown or undiscovered consumers to surface themselves, e.g. an announcement plus monitoring for continued reads of the old column\n\nOnly drop or stop populating the old column after confirming, e.g. via query logs or access monitoring, that nothing is still reading it, not just after the announced deadline passes\n\nConsider versioning the table or using a view layer, so the underlying physical schema can change while consumers query a stable logical interface during the transition\n\nA strong answer acknowledges the reality that some consumers won't respond to communication, and plans for that, e.g. a longer overlap period, automated usage monitoring, rather than assuming everyone will migrate on time",
+  "rubric": [
+    "Use lineage or dependency analysis first to find every known downstream consumer of the address column, since breaking dashboards or pipelines you didn't know existed is the main risk",
+    "Prefer an additive, backward-compatible rollout, add the new columns alongside the old one rather than dropping it immediately, so existing consumers keep working while new ones migrate",
+    "Communicate the change and a deprecation timeline to consumers, including a way for unknown or undiscovered consumers to surface themselves, e.g. an announcement plus monitoring for continued reads of the old column",
+    "Only drop or stop populating the old column after confirming, e.g. via query logs or access monitoring, that nothing is still reading it, not just after the announced deadline passes",
+    "Consider versioning the table or using a view layer, so the underlying physical schema can change while consumers query a stable logical interface during the transition",
+    "A strong answer acknowledges the reality that some consumers won't respond to communication, and plans for that, e.g. a longer overlap period, automated usage monitoring, rather than assuming everyone will migrate on time"
+  ],
+  "followUps": [
+    "Three weeks after you drop the old address column, a dashboard breaks that nobody had flagged as a dependency. What would you have needed in place to catch this before it happened?"
+  ],
+  "raw": {
+    "id": "data-senior-scenario-schema-evolution-large-warehouse",
+    "track": "ml-ai",
+    "specialization": "data",
+    "level": "senior",
+    "stage": "scenario",
+    "question": "How would you roll out this schema change safely, given how many things depend on the old structure?",
+    "context": "You need to change a core 'orders' table used across the warehouse: splitting a single 'address' text column into separate street, city, state, and zip columns. This table is read by over 40 downstream dbt models, several BI dashboards, and a couple of data science feature pipelines, some of which you don't have full visibility into.",
+    "key_points": [
+      "Use lineage or dependency analysis first to find every known downstream consumer of the address column, since breaking dashboards or pipelines you didn't know existed is the main risk",
+      "Prefer an additive, backward-compatible rollout, add the new columns alongside the old one rather than dropping it immediately, so existing consumers keep working while new ones migrate",
+      "Communicate the change and a deprecation timeline to consumers, including a way for unknown or undiscovered consumers to surface themselves, e.g. an announcement plus monitoring for continued reads of the old column",
+      "Only drop or stop populating the old column after confirming, e.g. via query logs or access monitoring, that nothing is still reading it, not just after the announced deadline passes",
+      "Consider versioning the table or using a view layer, so the underlying physical schema can change while consumers query a stable logical interface during the transition",
+      "A strong answer acknowledges the reality that some consumers won't respond to communication, and plans for that, e.g. a longer overlap period, automated usage monitoring, rather than assuming everyone will migrate on time"
+    ],
+    "follow_up": "Three weeks after you drop the old address column, a dashboard breaks that nobody had flagged as a dependency. What would you have needed in place to catch this before it happened?",
+    "battle_eligible": true
+  }
+}

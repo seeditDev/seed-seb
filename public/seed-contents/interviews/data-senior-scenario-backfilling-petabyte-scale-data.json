@@ -1,0 +1,41 @@
+{
+  "id": "data-senior-scenario-backfilling-petabyte-scale-data",
+  "fileName": "data-senior-scenario-backfilling-petabyte-scale-data",
+  "title": "Data senior scenario backfilling petabyte scale data",
+  "role": "data",
+  "level": "senior",
+  "track": "scenario",
+  "topic": "Data senior scenario backfilling petabyte scale data",
+  "question": "How would you plan and execute this backfill safely, given the scale involved and the fact that the system needs to stay operational the whole time?",
+  "idealAnswer": "Recompute into a new location, e.g. a shadow table or new partition set, rather than modifying the live table in place, so readers are never exposed to a partially backfilled or inconsistent state\n\nBreak the backfill into manageable chunks, e.g. by date range, both to parallelize the work and to allow validation and rollback at a granular level rather than an all-or-nothing operation\n\nValidate the recomputed data against the old data and against independent sources before cutting over, e.g. spot-checking aggregate totals, row counts, and known edge cases, to build confidence the fix is actually correct and didn't introduce new bugs\n\nPlan the cutover itself carefully, e.g. an atomic swap of table/view pointers once validation passes, so consumers see a clean transition at a known point in time rather than data changing under them mid-query\n\nConsider cost and resource impact of reprocessing petabytes of data, e.g. scheduling it to avoid contending with production workloads, and estimate cost/time upfront since this is a large, expensive operation\n\nA strong answer addresses stakeholder communication, e.g. informing downstream teams and external data-sharing partners about the correction and the cutover timing, since historical numbers changing can be surprising or even contractually significant",
+  "rubric": [
+    "Recompute into a new location, e.g. a shadow table or new partition set, rather than modifying the live table in place, so readers are never exposed to a partially backfilled or inconsistent state",
+    "Break the backfill into manageable chunks, e.g. by date range, both to parallelize the work and to allow validation and rollback at a granular level rather than an all-or-nothing operation",
+    "Validate the recomputed data against the old data and against independent sources before cutting over, e.g. spot-checking aggregate totals, row counts, and known edge cases, to build confidence the fix is actually correct and didn't introduce new bugs",
+    "Plan the cutover itself carefully, e.g. an atomic swap of table/view pointers once validation passes, so consumers see a clean transition at a known point in time rather than data changing under them mid-query",
+    "Consider cost and resource impact of reprocessing petabytes of data, e.g. scheduling it to avoid contending with production workloads, and estimate cost/time upfront since this is a large, expensive operation",
+    "A strong answer addresses stakeholder communication, e.g. informing downstream teams and external data-sharing partners about the correction and the cutover timing, since historical numbers changing can be surprising or even contractually significant"
+  ],
+  "followUps": [
+    "The external data-sharing partners already received the old, buggy data and built reports on it. How would you handle communicating and reconciling that?"
+  ],
+  "raw": {
+    "id": "data-senior-scenario-backfilling-petabyte-scale-data",
+    "track": "ml-ai",
+    "specialization": "data",
+    "level": "senior",
+    "stage": "scenario",
+    "question": "How would you plan and execute this backfill safely, given the scale involved and the fact that the system needs to stay operational the whole time?",
+    "context": "A bug was found in a core transformation rule that has been running in production for the past two years, affecting a table with several years of history at petabyte scale. Fixing the bug requires recomputing all historical data with the corrected logic, but the table is actively read by dashboards, other pipelines, and external data-sharing agreements every single day, and cannot simply go offline.",
+    "key_points": [
+      "Recompute into a new location, e.g. a shadow table or new partition set, rather than modifying the live table in place, so readers are never exposed to a partially backfilled or inconsistent state",
+      "Break the backfill into manageable chunks, e.g. by date range, both to parallelize the work and to allow validation and rollback at a granular level rather than an all-or-nothing operation",
+      "Validate the recomputed data against the old data and against independent sources before cutting over, e.g. spot-checking aggregate totals, row counts, and known edge cases, to build confidence the fix is actually correct and didn't introduce new bugs",
+      "Plan the cutover itself carefully, e.g. an atomic swap of table/view pointers once validation passes, so consumers see a clean transition at a known point in time rather than data changing under them mid-query",
+      "Consider cost and resource impact of reprocessing petabytes of data, e.g. scheduling it to avoid contending with production workloads, and estimate cost/time upfront since this is a large, expensive operation",
+      "A strong answer addresses stakeholder communication, e.g. informing downstream teams and external data-sharing partners about the correction and the cutover timing, since historical numbers changing can be surprising or even contractually significant"
+    ],
+    "follow_up": "The external data-sharing partners already received the old, buggy data and built reports on it. How would you handle communicating and reconciling that?",
+    "battle_eligible": true
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "id": "backend-mid-systemdesign-job-scheduler",
+  "fileName": "backend-mid-systemdesign-job-scheduler",
+  "title": "Backend mid systemdesign job scheduler",
+  "role": "backend",
+  "level": "mid",
+  "track": "systemdesign",
+  "topic": "Backend mid systemdesign job scheduler",
+  "question": "Design a job scheduling system that lets other services schedule a task to run once at a specific future time, or on a recurring interval (like a cron job).",
+  "idealAnswer": "Uses persistent storage for job definitions (schedule, next run time, payload) rather than an in-memory timer list, so scheduled jobs survive a restart\n\nDescribes a polling or dispatch loop that periodically queries for jobs due to run (next_run_time <= now) rather than trying to keep a live timer per job in memory\n\nAddresses the exactly-once-ish execution problem: when a worker picks up a due job, it needs to atomically claim it (e.g. a conditional update setting status to 'running' and a lock/lease) so a second worker or a retry of the poll doesn't also pick it up and double-execute it\n\nHandles recurring jobs by computing and writing the next_run_time after a successful run, and handles a crashed or stuck job with a lease timeout that lets another worker reclaim it\n\nConsiders scaling the dispatch across multiple scheduler instances without duplicate execution, e.g. via the same claim mechanism, and mentions monitoring for jobs that are late or failing repeatedly",
+  "rubric": [
+    "Uses persistent storage for job definitions (schedule, next run time, payload) rather than an in-memory timer list, so scheduled jobs survive a restart",
+    "Describes a polling or dispatch loop that periodically queries for jobs due to run (next_run_time <= now) rather than trying to keep a live timer per job in memory",
+    "Addresses the exactly-once-ish execution problem: when a worker picks up a due job, it needs to atomically claim it (e.g. a conditional update setting status to 'running' and a lock/lease) so a second worker or a retry of the poll doesn't also pick it up and double-execute it",
+    "Handles recurring jobs by computing and writing the next_run_time after a successful run, and handles a crashed or stuck job with a lease timeout that lets another worker reclaim it",
+    "Considers scaling the dispatch across multiple scheduler instances without duplicate execution, e.g. via the same claim mechanism, and mentions monitoring for jobs that are late or failing repeatedly"
+  ],
+  "followUps": [
+    "How would you handle a job that's supposed to run every minute but sometimes takes longer than a minute to execute?"
+  ],
+  "raw": {
+    "id": "backend-mid-systemdesign-job-scheduler",
+    "track": "swe",
+    "specialization": "backend",
+    "level": "mid",
+    "stage": "system-design",
+    "question": "Design a job scheduling system that lets other services schedule a task to run once at a specific future time, or on a recurring interval (like a cron job).",
+    "context": "Jobs need to run reliably even if the scheduler process restarts, and the same job should not run twice.",
+    "key_points": [
+      "Uses persistent storage for job definitions (schedule, next run time, payload) rather than an in-memory timer list, so scheduled jobs survive a restart",
+      "Describes a polling or dispatch loop that periodically queries for jobs due to run (next_run_time <= now) rather than trying to keep a live timer per job in memory",
+      "Addresses the exactly-once-ish execution problem: when a worker picks up a due job, it needs to atomically claim it (e.g. a conditional update setting status to 'running' and a lock/lease) so a second worker or a retry of the poll doesn't also pick it up and double-execute it",
+      "Handles recurring jobs by computing and writing the next_run_time after a successful run, and handles a crashed or stuck job with a lease timeout that lets another worker reclaim it",
+      "Considers scaling the dispatch across multiple scheduler instances without duplicate execution, e.g. via the same claim mechanism, and mentions monitoring for jobs that are late or failing repeatedly"
+    ],
+    "follow_up": "How would you handle a job that's supposed to run every minute but sometimes takes longer than a minute to execute?",
+    "battle_eligible": false,
+    "related_lesson": {
+      "type": "system-design",
+      "id": "cs-distributed-job-scheduler"
+    }
+  }
+}

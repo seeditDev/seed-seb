@@ -1,0 +1,39 @@
+{
+  "id": "swe-mid-scenario-cascading-failure",
+  "fileName": "swe-mid-scenario-cascading-failure",
+  "title": "Swe mid scenario cascading failure",
+  "role": "swe",
+  "level": "mid",
+  "track": "scenario",
+  "topic": "Swe mid scenario cascading failure",
+  "question": "One downstream service your API depends on starts responding slowly, and now your whole API is timing out for unrelated requests too. What's happening, and how would you prevent it?",
+  "idealAnswer": "Identifies the mechanism: slow calls to the downstream service are tying up request threads/connections, so the pool gets exhausted and even requests that don't need that service get stuck waiting\n\nProposes a timeout on the downstream call itself, currently it's likely calling with no timeout or an overly generous one, letting slow calls hang indefinitely\n\nProposes a circuit breaker pattern, after enough failures/timeouts, stop calling the downstream service for a cooldown period and fail fast instead of piling up more stuck requests\n\nRecognizes the deeper design issue: calling the dependency synchronously and unconditionally on every request when only some requests need it, and suggests making it optional, async, or cached where possible\n\nBonus: mentions bulkheading, isolating resources (e.g. separate thread/connection pools) per downstream dependency so one slow dependency can't exhaust resources needed for unrelated requests",
+  "rubric": [
+    "Identifies the mechanism: slow calls to the downstream service are tying up request threads/connections, so the pool gets exhausted and even requests that don't need that service get stuck waiting",
+    "Proposes a timeout on the downstream call itself, currently it's likely calling with no timeout or an overly generous one, letting slow calls hang indefinitely",
+    "Proposes a circuit breaker pattern, after enough failures/timeouts, stop calling the downstream service for a cooldown period and fail fast instead of piling up more stuck requests",
+    "Recognizes the deeper design issue: calling the dependency synchronously and unconditionally on every request when only some requests need it, and suggests making it optional, async, or cached where possible",
+    "Bonus: mentions bulkheading, isolating resources (e.g. separate thread/connection pools) per downstream dependency so one slow dependency can't exhaust resources needed for unrelated requests"
+  ],
+  "followUps": [
+    "How would you decide what to return to the user if the circuit breaker is open and that data genuinely isn't available?"
+  ],
+  "raw": {
+    "id": "swe-mid-scenario-cascading-failure",
+    "track": "swe",
+    "specialization": "general",
+    "level": "mid",
+    "stage": "scenario",
+    "question": "One downstream service your API depends on starts responding slowly, and now your whole API is timing out for unrelated requests too. What's happening, and how would you prevent it?",
+    "context": "Your API calls that downstream service synchronously on nearly every request, even though only a fraction of requests actually need its data.",
+    "key_points": [
+      "Identifies the mechanism: slow calls to the downstream service are tying up request threads/connections, so the pool gets exhausted and even requests that don't need that service get stuck waiting",
+      "Proposes a timeout on the downstream call itself, currently it's likely calling with no timeout or an overly generous one, letting slow calls hang indefinitely",
+      "Proposes a circuit breaker pattern, after enough failures/timeouts, stop calling the downstream service for a cooldown period and fail fast instead of piling up more stuck requests",
+      "Recognizes the deeper design issue: calling the dependency synchronously and unconditionally on every request when only some requests need it, and suggests making it optional, async, or cached where possible",
+      "Bonus: mentions bulkheading, isolating resources (e.g. separate thread/connection pools) per downstream dependency so one slow dependency can't exhaust resources needed for unrelated requests"
+    ],
+    "follow_up": "How would you decide what to return to the user if the circuit breaker is open and that data genuinely isn't available?",
+    "battle_eligible": true
+  }
+}

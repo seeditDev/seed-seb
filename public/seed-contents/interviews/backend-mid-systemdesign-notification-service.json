@@ -1,0 +1,43 @@
+{
+  "id": "backend-mid-systemdesign-notification-service",
+  "fileName": "backend-mid-systemdesign-notification-service",
+  "title": "Backend mid systemdesign notification service",
+  "role": "backend",
+  "level": "mid",
+  "track": "systemdesign",
+  "topic": "Backend mid systemdesign notification service",
+  "question": "Design a notification service that other internal services can call to send a user an email, SMS, or push notification.",
+  "idealAnswer": "Proposes a queue-based architecture: internal services enqueue a notification request and return immediately, a set of workers consume the queue and actually call the relevant provider (email/SMS/push), decoupling callers from provider latency and failures\n\nDesigns a reasonably provider-agnostic internal API/schema (recipient, channel, template, payload) so callers don't need to know provider-specific details, and providers can be swapped without changing callers\n\nHandles provider failures with retries and backoff, and a dead-letter queue or failure table for notifications that repeatedly fail, rather than silently dropping them\n\nAddresses idempotency/deduplication, e.g. a retry of the same enqueue request (or a caller's own retry) shouldn't result in the user getting the same notification twice\n\nConsiders user preferences and rate limits, e.g. not spamming a user with the same type of notification repeatedly, and respecting opt-outs, as a first-class part of the design rather than an afterthought",
+  "rubric": [
+    "Proposes a queue-based architecture: internal services enqueue a notification request and return immediately, a set of workers consume the queue and actually call the relevant provider (email/SMS/push), decoupling callers from provider latency and failures",
+    "Designs a reasonably provider-agnostic internal API/schema (recipient, channel, template, payload) so callers don't need to know provider-specific details, and providers can be swapped without changing callers",
+    "Handles provider failures with retries and backoff, and a dead-letter queue or failure table for notifications that repeatedly fail, rather than silently dropping them",
+    "Addresses idempotency/deduplication, e.g. a retry of the same enqueue request (or a caller's own retry) shouldn't result in the user getting the same notification twice",
+    "Considers user preferences and rate limits, e.g. not spamming a user with the same type of notification repeatedly, and respecting opt-outs, as a first-class part of the design rather than an afterthought"
+  ],
+  "followUps": [
+    "How would you let a caller know whether a notification was actually delivered, given the whole point of the queue is that sending is asynchronous?"
+  ],
+  "raw": {
+    "id": "backend-mid-systemdesign-notification-service",
+    "track": "swe",
+    "specialization": "backend",
+    "level": "mid",
+    "stage": "system-design",
+    "question": "Design a notification service that other internal services can call to send a user an email, SMS, or push notification.",
+    "context": "Multiple internal services (orders, billing, marketing) need to send notifications, and delivery to a channel like email or SMS can be slow or fail transiently.",
+    "key_points": [
+      "Proposes a queue-based architecture: internal services enqueue a notification request and return immediately, a set of workers consume the queue and actually call the relevant provider (email/SMS/push), decoupling callers from provider latency and failures",
+      "Designs a reasonably provider-agnostic internal API/schema (recipient, channel, template, payload) so callers don't need to know provider-specific details, and providers can be swapped without changing callers",
+      "Handles provider failures with retries and backoff, and a dead-letter queue or failure table for notifications that repeatedly fail, rather than silently dropping them",
+      "Addresses idempotency/deduplication, e.g. a retry of the same enqueue request (or a caller's own retry) shouldn't result in the user getting the same notification twice",
+      "Considers user preferences and rate limits, e.g. not spamming a user with the same type of notification repeatedly, and respecting opt-outs, as a first-class part of the design rather than an afterthought"
+    ],
+    "follow_up": "How would you let a caller know whether a notification was actually delivered, given the whole point of the queue is that sending is asynchronous?",
+    "battle_eligible": false,
+    "related_lesson": {
+      "type": "system-design",
+      "id": "cs-notification-system"
+    }
+  }
+}

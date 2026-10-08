@@ -1,0 +1,41 @@
+{
+  "id": "frontend-mid-domain-event-loop-async",
+  "fileName": "frontend-mid-domain-event-loop-async",
+  "title": "Frontend mid domain event loop async",
+  "role": "frontend",
+  "level": "mid",
+  "track": "domain",
+  "topic": "Frontend mid domain event loop async",
+  "question": "Explain how the JavaScript event loop handles asynchronous work, and specifically the difference between microtasks and macrotasks.",
+  "idealAnswer": "JavaScript runs on a single thread with a call stack, the event loop coordinates running code, handling events, and executing queued asynchronous callbacks without blocking that thread\n\nMacrotasks (also called tasks) include things like setTimeout callbacks, DOM events, and I/O, each macrotask runs to completion before the loop moves on\n\nMicrotasks include promise callbacks (.then/.catch/.finally) and queueMicrotask, the microtask queue is fully drained after each macrotask finishes and before the next macrotask or render, even before the next setTimeout(fn, 0)\n\nThis is why Promise.resolve().then(...) logs before a setTimeout(fn, 0), even though both are 'async', microtasks always get priority over the next macrotask\n\nBecause the loop is single-threaded, a long-running synchronous task blocks everything, including rendering and other callbacks, which is why expensive synchronous work causes a frozen/unresponsive UI\n\nasync/await is syntactic sugar over promises, an async function still runs synchronously up to the first await, and code after await is scheduled as a microtask continuation",
+  "rubric": [
+    "JavaScript runs on a single thread with a call stack, the event loop coordinates running code, handling events, and executing queued asynchronous callbacks without blocking that thread",
+    "Macrotasks (also called tasks) include things like setTimeout callbacks, DOM events, and I/O, each macrotask runs to completion before the loop moves on",
+    "Microtasks include promise callbacks (.then/.catch/.finally) and queueMicrotask, the microtask queue is fully drained after each macrotask finishes and before the next macrotask or render, even before the next setTimeout(fn, 0)",
+    "This is why Promise.resolve().then(...) logs before a setTimeout(fn, 0), even though both are 'async', microtasks always get priority over the next macrotask",
+    "Because the loop is single-threaded, a long-running synchronous task blocks everything, including rendering and other callbacks, which is why expensive synchronous work causes a frozen/unresponsive UI",
+    "async/await is syntactic sugar over promises, an async function still runs synchronously up to the first await, and code after await is scheduled as a microtask continuation"
+  ],
+  "followUps": [
+    "Given setTimeout(() => console.log('a'), 0); Promise.resolve().then(() => console.log('b')); console.log('c'); what's the output order, and why?"
+  ],
+  "raw": {
+    "id": "frontend-mid-domain-event-loop-async",
+    "track": "swe",
+    "specialization": "frontend",
+    "level": "mid",
+    "stage": "domain",
+    "question": "Explain how the JavaScript event loop handles asynchronous work, and specifically the difference between microtasks and macrotasks.",
+    "context": null,
+    "key_points": [
+      "JavaScript runs on a single thread with a call stack, the event loop coordinates running code, handling events, and executing queued asynchronous callbacks without blocking that thread",
+      "Macrotasks (also called tasks) include things like setTimeout callbacks, DOM events, and I/O, each macrotask runs to completion before the loop moves on",
+      "Microtasks include promise callbacks (.then/.catch/.finally) and queueMicrotask, the microtask queue is fully drained after each macrotask finishes and before the next macrotask or render, even before the next setTimeout(fn, 0)",
+      "This is why Promise.resolve().then(...) logs before a setTimeout(fn, 0), even though both are 'async', microtasks always get priority over the next macrotask",
+      "Because the loop is single-threaded, a long-running synchronous task blocks everything, including rendering and other callbacks, which is why expensive synchronous work causes a frozen/unresponsive UI",
+      "async/await is syntactic sugar over promises, an async function still runs synchronously up to the first await, and code after await is scheduled as a microtask continuation"
+    ],
+    "follow_up": "Given setTimeout(() => console.log('a'), 0); Promise.resolve().then(() => console.log('b')); console.log('c'); what's the output order, and why?",
+    "battle_eligible": true
+  }
+}

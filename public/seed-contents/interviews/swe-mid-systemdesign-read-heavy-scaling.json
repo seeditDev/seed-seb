@@ -1,0 +1,43 @@
+{
+  "id": "swe-mid-systemdesign-read-heavy-scaling",
+  "fileName": "swe-mid-systemdesign-read-heavy-scaling",
+  "title": "Swe mid systemdesign read heavy scaling",
+  "role": "swe",
+  "level": "mid",
+  "track": "systemdesign",
+  "topic": "Swe mid systemdesign read heavy scaling",
+  "question": "A social feed feature gets read thousands of times for every one time a post is written. How would you design the system to handle that read-heavy load without the database falling over?",
+  "idealAnswer": "Identifies read replicas as a core lever, routing feed reads to one or more read replicas while writes go to the primary, since the workload is overwhelmingly read-dominated\n\nProposes caching computed or frequently-read data (e.g. a user's feed, popular posts) rather than recomputing/querying it from scratch on every request\n\nAddresses the write side too, even though it's lighter: writes still need to eventually be visible in reads, and a strong answer acknowledges replica lag as a real consequence of this design (a just-written post might not appear immediately)\n\nConsiders precomputing/denormalizing for read speed, e.g. a fan-out-on-write approach that pre-builds each follower's feed at post time, versus fan-out-on-read that assembles the feed at request time, and can explain the tradeoff between the two\n\nMentions indexing and query shape as a baseline, poorly indexed queries will hurt regardless of caching or replicas layered on top",
+  "rubric": [
+    "Identifies read replicas as a core lever, routing feed reads to one or more read replicas while writes go to the primary, since the workload is overwhelmingly read-dominated",
+    "Proposes caching computed or frequently-read data (e.g. a user's feed, popular posts) rather than recomputing/querying it from scratch on every request",
+    "Addresses the write side too, even though it's lighter: writes still need to eventually be visible in reads, and a strong answer acknowledges replica lag as a real consequence of this design (a just-written post might not appear immediately)",
+    "Considers precomputing/denormalizing for read speed, e.g. a fan-out-on-write approach that pre-builds each follower's feed at post time, versus fan-out-on-read that assembles the feed at request time, and can explain the tradeoff between the two",
+    "Mentions indexing and query shape as a baseline, poorly indexed queries will hurt regardless of caching or replicas layered on top"
+  ],
+  "followUps": [
+    "For a user who follows a huge number of accounts, fan-out-on-write could mean writing to a huge number of feeds on every post. How would you handle that specific case?"
+  ],
+  "raw": {
+    "id": "swe-mid-systemdesign-read-heavy-scaling",
+    "track": "swe",
+    "specialization": "general",
+    "level": "mid",
+    "stage": "system-design",
+    "question": "A social feed feature gets read thousands of times for every one time a post is written. How would you design the system to handle that read-heavy load without the database falling over?",
+    "context": null,
+    "key_points": [
+      "Identifies read replicas as a core lever, routing feed reads to one or more read replicas while writes go to the primary, since the workload is overwhelmingly read-dominated",
+      "Proposes caching computed or frequently-read data (e.g. a user's feed, popular posts) rather than recomputing/querying it from scratch on every request",
+      "Addresses the write side too, even though it's lighter: writes still need to eventually be visible in reads, and a strong answer acknowledges replica lag as a real consequence of this design (a just-written post might not appear immediately)",
+      "Considers precomputing/denormalizing for read speed, e.g. a fan-out-on-write approach that pre-builds each follower's feed at post time, versus fan-out-on-read that assembles the feed at request time, and can explain the tradeoff between the two",
+      "Mentions indexing and query shape as a baseline, poorly indexed queries will hurt regardless of caching or replicas layered on top"
+    ],
+    "follow_up": "For a user who follows a huge number of accounts, fan-out-on-write could mean writing to a huge number of feeds on every post. How would you handle that specific case?",
+    "battle_eligible": false,
+    "related_lesson": {
+      "type": "system-design",
+      "id": "sd-caching-strategies"
+    }
+  }
+}

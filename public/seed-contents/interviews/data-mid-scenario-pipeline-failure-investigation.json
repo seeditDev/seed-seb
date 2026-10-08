@@ -1,0 +1,41 @@
+{
+  "id": "data-mid-scenario-pipeline-failure-investigation",
+  "fileName": "data-mid-scenario-pipeline-failure-investigation",
+  "title": "Data mid scenario pipeline failure investigation",
+  "role": "data",
+  "level": "mid",
+  "track": "scenario",
+  "topic": "Data mid scenario pipeline failure investigation",
+  "question": "How would you go about diagnosing and fixing this failure, and what would you put in place to reduce the blast radius next time?",
+  "idealAnswer": "First check the job logs and error output to identify where and why it failed, e.g. an upstream schema change, a timeout, a resource limit, rather than guessing\n\nAssess the half-written table specifically, since partial writes can be worse than a clean failure, someone querying it now might see incomplete or duplicated data without knowing\n\nA strong answer notes this is exactly why writes should be atomic, e.g. write to a staging table or new partition and swap it in only on success, rather than writing directly into the table readers use\n\nDecide whether to roll back the partial write, mark the table as stale/unavailable, or otherwise prevent it from being read as if it were complete, before fixing the root cause\n\nAfter identifying the root cause, fix it and consider whether a backfill is needed for the missed run, plus check whether other downstream dependents were affected\n\nFor prevention, mentions things like alerting earlier, adding retries for transient failures, making writes atomic/idempotent, and possibly circuit-breaking downstream jobs so they don't run on known-bad upstream data",
+  "rubric": [
+    "First check the job logs and error output to identify where and why it failed, e.g. an upstream schema change, a timeout, a resource limit, rather than guessing",
+    "Assess the half-written table specifically, since partial writes can be worse than a clean failure, someone querying it now might see incomplete or duplicated data without knowing",
+    "A strong answer notes this is exactly why writes should be atomic, e.g. write to a staging table or new partition and swap it in only on success, rather than writing directly into the table readers use",
+    "Decide whether to roll back the partial write, mark the table as stale/unavailable, or otherwise prevent it from being read as if it were complete, before fixing the root cause",
+    "After identifying the root cause, fix it and consider whether a backfill is needed for the missed run, plus check whether other downstream dependents were affected",
+    "For prevention, mentions things like alerting earlier, adding retries for transient failures, making writes atomic/idempotent, and possibly circuit-breaking downstream jobs so they don't run on known-bad upstream data"
+  ],
+  "followUps": [
+    "How would you design the reporting tables so that a failed nightly job leaves yesterday's good data visible to readers instead of a half-written mess?"
+  ],
+  "raw": {
+    "id": "data-mid-scenario-pipeline-failure-investigation",
+    "track": "ml-ai",
+    "specialization": "data",
+    "level": "mid",
+    "stage": "scenario",
+    "question": "How would you go about diagnosing and fixing this failure, and what would you put in place to reduce the blast radius next time?",
+    "context": "You're on call and get paged at 3am: the nightly ETL pipeline that populates the company's main reporting tables failed partway through. Three downstream tables are now stale, and one table was left half-written because the job crashed midway through inserting rows.",
+    "key_points": [
+      "First check the job logs and error output to identify where and why it failed, e.g. an upstream schema change, a timeout, a resource limit, rather than guessing",
+      "Assess the half-written table specifically, since partial writes can be worse than a clean failure, someone querying it now might see incomplete or duplicated data without knowing",
+      "A strong answer notes this is exactly why writes should be atomic, e.g. write to a staging table or new partition and swap it in only on success, rather than writing directly into the table readers use",
+      "Decide whether to roll back the partial write, mark the table as stale/unavailable, or otherwise prevent it from being read as if it were complete, before fixing the root cause",
+      "After identifying the root cause, fix it and consider whether a backfill is needed for the missed run, plus check whether other downstream dependents were affected",
+      "For prevention, mentions things like alerting earlier, adding retries for transient failures, making writes atomic/idempotent, and possibly circuit-breaking downstream jobs so they don't run on known-bad upstream data"
+    ],
+    "follow_up": "How would you design the reporting tables so that a failed nightly job leaves yesterday's good data visible to readers instead of a half-written mess?",
+    "battle_eligible": true
+  }
+}

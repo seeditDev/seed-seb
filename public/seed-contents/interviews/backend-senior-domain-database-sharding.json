@@ -1,0 +1,43 @@
+{
+  "id": "backend-senior-domain-database-sharding",
+  "fileName": "backend-senior-domain-database-sharding",
+  "title": "Backend senior domain database sharding",
+  "role": "backend",
+  "level": "senior",
+  "track": "domain",
+  "topic": "Backend senior domain database sharding",
+  "question": "When a single database can no longer handle the write load, what are the main sharding strategies, and what do you give up with each?",
+  "idealAnswer": "Explains sharding as splitting data across multiple database instances by some key, so no single instance holds or serves all the data or write traffic\n\nHash-based sharding: a hash of the shard key determines the shard, giving an even distribution and avoiding hot spots, but makes range queries (e.g. 'all orders from last week') expensive since matching rows are scattered across every shard\n\nRange-based sharding: contiguous key ranges live on the same shard, making range queries efficient, but risks hot spots if writes cluster in one range (e.g. sharding by signup date puts all of today's traffic on one shard)\n\nDiscusses the operational cost that cuts across both: cross-shard joins and transactions become hard or impossible, so schema and query design have to actively avoid needing them, and resharding (changing shard count) later is a genuinely difficult migration\n\nMentions picking a shard key deliberately based on access patterns (e.g. shard by tenant/customer id if most queries are scoped to one customer), not just an arbitrary column, since the wrong key forces cross-shard queries constantly",
+  "rubric": [
+    "Explains sharding as splitting data across multiple database instances by some key, so no single instance holds or serves all the data or write traffic",
+    "Hash-based sharding: a hash of the shard key determines the shard, giving an even distribution and avoiding hot spots, but makes range queries (e.g. 'all orders from last week') expensive since matching rows are scattered across every shard",
+    "Range-based sharding: contiguous key ranges live on the same shard, making range queries efficient, but risks hot spots if writes cluster in one range (e.g. sharding by signup date puts all of today's traffic on one shard)",
+    "Discusses the operational cost that cuts across both: cross-shard joins and transactions become hard or impossible, so schema and query design have to actively avoid needing them, and resharding (changing shard count) later is a genuinely difficult migration",
+    "Mentions picking a shard key deliberately based on access patterns (e.g. shard by tenant/customer id if most queries are scoped to one customer), not just an arbitrary column, since the wrong key forces cross-shard queries constantly"
+  ],
+  "followUps": [
+    "You picked a shard key and now one shard is getting way more traffic than the others. How would you address that without a full resharding migration?"
+  ],
+  "raw": {
+    "id": "backend-senior-domain-database-sharding",
+    "track": "swe",
+    "specialization": "backend",
+    "level": "senior",
+    "stage": "domain",
+    "question": "When a single database can no longer handle the write load, what are the main sharding strategies, and what do you give up with each?",
+    "context": null,
+    "key_points": [
+      "Explains sharding as splitting data across multiple database instances by some key, so no single instance holds or serves all the data or write traffic",
+      "Hash-based sharding: a hash of the shard key determines the shard, giving an even distribution and avoiding hot spots, but makes range queries (e.g. 'all orders from last week') expensive since matching rows are scattered across every shard",
+      "Range-based sharding: contiguous key ranges live on the same shard, making range queries efficient, but risks hot spots if writes cluster in one range (e.g. sharding by signup date puts all of today's traffic on one shard)",
+      "Discusses the operational cost that cuts across both: cross-shard joins and transactions become hard or impossible, so schema and query design have to actively avoid needing them, and resharding (changing shard count) later is a genuinely difficult migration",
+      "Mentions picking a shard key deliberately based on access patterns (e.g. shard by tenant/customer id if most queries are scoped to one customer), not just an arbitrary column, since the wrong key forces cross-shard queries constantly"
+    ],
+    "follow_up": "You picked a shard key and now one shard is getting way more traffic than the others. How would you address that without a full resharding migration?",
+    "battle_eligible": true,
+    "related_lesson": {
+      "type": "system-design",
+      "id": "sd-replication-and-sharding"
+    }
+  }
+}

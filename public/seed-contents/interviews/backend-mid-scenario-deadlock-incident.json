@@ -1,0 +1,39 @@
+{
+  "id": "backend-mid-scenario-deadlock-incident",
+  "fileName": "backend-mid-scenario-deadlock-incident",
+  "title": "Backend mid scenario deadlock incident",
+  "role": "backend",
+  "level": "mid",
+  "track": "scenario",
+  "topic": "Backend mid scenario deadlock incident",
+  "question": "Your database logs show periodic deadlock errors between two transactions, and some requests are failing as a result. How do you investigate and fix it?",
+  "idealAnswer": "Identifies the root cause pattern: two transactions acquiring the same two locks in opposite orders is the classic recipe for a deadlock, the database detects the cycle and kills one transaction to break it\n\nWould pull the actual deadlock log/trace to confirm which tables and rows were involved rather than guessing\n\nProposes the standard fix: enforce a consistent lock acquisition order across all code paths (e.g. always touch accounts before transfers, everywhere), which eliminates the possibility of a cycle\n\nMentions handling the immediate symptom too, the losing transaction should be retried by the application (deadlocks are expected to happen occasionally even with good ordering, under real concurrency), not just left to fail\n\nConsiders keeping transactions short and touching as few rows as possible to reduce the window where a deadlock can occur, in addition to fixing the ordering",
+  "rubric": [
+    "Identifies the root cause pattern: two transactions acquiring the same two locks in opposite orders is the classic recipe for a deadlock, the database detects the cycle and kills one transaction to break it",
+    "Would pull the actual deadlock log/trace to confirm which tables and rows were involved rather than guessing",
+    "Proposes the standard fix: enforce a consistent lock acquisition order across all code paths (e.g. always touch accounts before transfers, everywhere), which eliminates the possibility of a cycle",
+    "Mentions handling the immediate symptom too, the losing transaction should be retried by the application (deadlocks are expected to happen occasionally even with good ordering, under real concurrency), not just left to fail",
+    "Considers keeping transactions short and touching as few rows as possible to reduce the window where a deadlock can occur, in addition to fixing the ordering"
+  ],
+  "followUps": [
+    "How would you catch a lock-ordering bug like this in code review, before it ever hits production?"
+  ],
+  "raw": {
+    "id": "backend-mid-scenario-deadlock-incident",
+    "track": "swe",
+    "specialization": "backend",
+    "level": "mid",
+    "stage": "scenario",
+    "question": "Your database logs show periodic deadlock errors between two transactions, and some requests are failing as a result. How do you investigate and fix it?",
+    "context": "Two endpoints both update the accounts and transfers tables, but in different orders: one updates accounts then transfers, the other updates transfers then accounts.",
+    "key_points": [
+      "Identifies the root cause pattern: two transactions acquiring the same two locks in opposite orders is the classic recipe for a deadlock, the database detects the cycle and kills one transaction to break it",
+      "Would pull the actual deadlock log/trace to confirm which tables and rows were involved rather than guessing",
+      "Proposes the standard fix: enforce a consistent lock acquisition order across all code paths (e.g. always touch accounts before transfers, everywhere), which eliminates the possibility of a cycle",
+      "Mentions handling the immediate symptom too, the losing transaction should be retried by the application (deadlocks are expected to happen occasionally even with good ordering, under real concurrency), not just left to fail",
+      "Considers keeping transactions short and touching as few rows as possible to reduce the window where a deadlock can occur, in addition to fixing the ordering"
+    ],
+    "follow_up": "How would you catch a lock-ordering bug like this in code review, before it ever hits production?",
+    "battle_eligible": true
+  }
+}

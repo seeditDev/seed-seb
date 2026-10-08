@@ -1,3 +1,4 @@
+import AIInterviewSimulator from './AIInterviewSimulator';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import {
@@ -400,6 +401,13 @@ const Placements = ({ user }) => {
         >
           <span>💼 Verified Job Board ({jobs.length})</span>
         </button>
+        <button
+          className={`tab-btn ${activeTab === 'mock-interview' ? 'active' : ''}`}
+          onClick={() => setActiveTab('mock-interview')}
+          style={{ background: activeTab === 'mock-interview' ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.25))' : undefined }}
+        >
+          <span>🤖 AI Mock Interview Studio</span>
+        </button>
       </div>
 
       {/* ─────────────────────────────────────────────────────────
@@ -631,6 +639,46 @@ const Placements = ({ user }) => {
       {/* ─────────────────────────────────────────────────────────
          TAB 4: VERIFIED JOB BOARD (Legacy)
          ───────────────────────────────────────────────────────── */}
+      {activeTab === 'mock-interview' && (
+        <div className="tab-pane-content" style={{ marginTop: '20px' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '16px',
+            background: 'rgba(30, 41, 59, 0.6)',
+            padding: '16px 20px',
+            borderRadius: '12px',
+            border: '1px solid rgba(255, 255, 255, 0.08)'
+          }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff', fontWeight: 700 }}>
+                Campus Placement AI Mock Interview Prep
+              </h3>
+              <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#94a3b8' }}>
+                Prepare before your campus drives: practice technical coding, system design, and HR screening rounds.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/student/ai-interview')}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                color: '#fff',
+                border: 'none',
+                fontWeight: 600,
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              Open Fullscreen Studio →
+            </button>
+          </div>
+          <AIInterviewSimulator user={user} />
+        </div>
+      )}
+
       {activeTab === 'jobs' && (
         <div className="tab-pane-content">
           <div className="job-board-grid">

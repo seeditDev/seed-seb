@@ -1,0 +1,43 @@
+{
+  "id": "swe-senior-systemdesign-global-rate-limiter",
+  "fileName": "swe-senior-systemdesign-global-rate-limiter",
+  "title": "Swe senior systemdesign global rate limiter",
+  "role": "swe",
+  "level": "senior",
+  "track": "systemdesign",
+  "topic": "Swe senior systemdesign global rate limiter",
+  "question": "Design a rate limiter that needs to enforce a global limit per customer across multiple geographic regions, where each region runs its own independent stack for latency reasons.",
+  "idealAnswer": "Names the central tension explicitly: enforcing a truly global count requires some cross-region coordination, but coordinating on every single request would add exactly the latency the multi-region architecture was built to avoid\n\nProposes a workable approach to that tension, e.g. giving each region a fraction of the customer's quota (rebalanced periodically based on regional traffic share) so most requests are checked against a local, fast count without cross-region calls on the hot path\n\nAddresses reconciliation, since local partial quotas can drift from the true global total, describes periodically syncing actual usage across regions and adjusting allocations, and accepts that this means the enforced limit is approximate/eventually consistent rather than perfectly exact in real time\n\nDiscusses what to do at the edges of the allocation, e.g. a region running out of its local allocation while another region has spare capacity, and how much of that spare capacity should be borrowable versus just rejecting requests locally\n\nExplicitly states the tradeoff being made: choosing availability and low latency per region over perfectly exact real-time global enforcement, and justifies why that's the right choice for a rate limit (occasionally allowing a small overage is far cheaper than adding cross-region latency to every request)",
+  "rubric": [
+    "Names the central tension explicitly: enforcing a truly global count requires some cross-region coordination, but coordinating on every single request would add exactly the latency the multi-region architecture was built to avoid",
+    "Proposes a workable approach to that tension, e.g. giving each region a fraction of the customer's quota (rebalanced periodically based on regional traffic share) so most requests are checked against a local, fast count without cross-region calls on the hot path",
+    "Addresses reconciliation, since local partial quotas can drift from the true global total, describes periodically syncing actual usage across regions and adjusting allocations, and accepts that this means the enforced limit is approximate/eventually consistent rather than perfectly exact in real time",
+    "Discusses what to do at the edges of the allocation, e.g. a region running out of its local allocation while another region has spare capacity, and how much of that spare capacity should be borrowable versus just rejecting requests locally",
+    "Explicitly states the tradeoff being made: choosing availability and low latency per region over perfectly exact real-time global enforcement, and justifies why that's the right choice for a rate limit (occasionally allowing a small overage is far cheaper than adding cross-region latency to every request)"
+  ],
+  "followUps": [
+    "How would this design change for a hard compliance-driven limit, like a per-customer data export cap, where even a small overage isn't acceptable?"
+  ],
+  "raw": {
+    "id": "swe-senior-systemdesign-global-rate-limiter",
+    "track": "swe",
+    "specialization": "general",
+    "level": "senior",
+    "stage": "system-design",
+    "question": "Design a rate limiter that needs to enforce a global limit per customer across multiple geographic regions, where each region runs its own independent stack for latency reasons.",
+    "context": "Cross-region calls add real latency, and the business requirement is that a customer can't exceed their quota in total, even by spreading requests across regions.",
+    "key_points": [
+      "Names the central tension explicitly: enforcing a truly global count requires some cross-region coordination, but coordinating on every single request would add exactly the latency the multi-region architecture was built to avoid",
+      "Proposes a workable approach to that tension, e.g. giving each region a fraction of the customer's quota (rebalanced periodically based on regional traffic share) so most requests are checked against a local, fast count without cross-region calls on the hot path",
+      "Addresses reconciliation, since local partial quotas can drift from the true global total, describes periodically syncing actual usage across regions and adjusting allocations, and accepts that this means the enforced limit is approximate/eventually consistent rather than perfectly exact in real time",
+      "Discusses what to do at the edges of the allocation, e.g. a region running out of its local allocation while another region has spare capacity, and how much of that spare capacity should be borrowable versus just rejecting requests locally",
+      "Explicitly states the tradeoff being made: choosing availability and low latency per region over perfectly exact real-time global enforcement, and justifies why that's the right choice for a rate limit (occasionally allowing a small overage is far cheaper than adding cross-region latency to every request)"
+    ],
+    "follow_up": "How would this design change for a hard compliance-driven limit, like a per-customer data export cap, where even a small overage isn't acceptable?",
+    "battle_eligible": false,
+    "related_lesson": {
+      "type": "system-design",
+      "id": "sd-rate-limiting"
+    }
+  }
+}

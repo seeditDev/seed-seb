@@ -18,7 +18,7 @@
 
 import { db, auth } from '../lib/firebase-config.js';
 import { collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { GithubAuthProvider, linkWithPopup, signInWithPopup } from 'firebase/auth';
+import { GithubAuthProvider, linkWithPopup, signInWithPopup, reauthenticateWithPopup } from 'firebase/auth';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuration Keys & Storage Helpers
@@ -175,7 +175,22 @@ export async function connectWithGitHubOAuth(uid, repoName = DEFAULT_REPO_NAME, 
   let credential = null;
 
   try {
-    if (auth.currentUser && !auth.currentUser.isAnonymous) {
+    const isAlreadyLinked = auth.currentUser?.providerData?.some((p) => p.providerId === 'github.com');
+    if (isAlreadyLinked && auth.currentUser) {
+      try {
+        const result = await reauthenticateWithPopup(auth.currentUser, provider);
+        credential = GithubAuthProvider.credentialFromResult(result);
+        token = credential?.accessToken;
+      } catch (reauthErr) {
+        if (reauthErr.code === 'auth/popup-blocked') {
+          throw new Error('Browser popup blocked. Please allow popups for this site in your browser URL bar.');
+        }
+        // Fallback to linkWithPopup
+        const result = await linkWithPopup(auth.currentUser, provider);
+        credential = GithubAuthProvider.credentialFromResult(result);
+        token = credential?.accessToken;
+      }
+    } else if (auth.currentUser && !auth.currentUser.isAnonymous) {
       const result = await linkWithPopup(auth.currentUser, provider);
       credential = GithubAuthProvider.credentialFromResult(result);
       token = credential?.accessToken;
@@ -185,14 +200,30 @@ export async function connectWithGitHubOAuth(uid, repoName = DEFAULT_REPO_NAME, 
       token = credential?.accessToken;
     }
   } catch (authErr) {
+    if (authErr.code === 'auth/popup-blocked') {
+      throw new Error('Browser popup blocked. Please allow popups for this site in your browser URL bar.');
+    }
     if (
       authErr.code === 'auth/credential-already-in-use' ||
       authErr.code === 'auth/provider-already-linked' ||
       authErr.code === 'auth/account-exists-with-different-credential'
     ) {
-      const result = await signInWithPopup(auth, provider);
-      credential = GithubAuthProvider.credentialFromResult(result);
-      token = credential?.accessToken;
+      if (auth.currentUser) {
+        try {
+          const result = await reauthenticateWithPopup(auth.currentUser, provider);
+          credential = GithubAuthProvider.credentialFromResult(result);
+          token = credential?.accessToken;
+        } catch (reauthErr) {
+          if (reauthErr.code === 'auth/popup-blocked') {
+            throw new Error('Browser popup blocked. Please allow popups for this site in your browser URL bar.');
+          }
+          throw reauthErr;
+        }
+      } else {
+        const result = await signInWithPopup(auth, provider);
+        credential = GithubAuthProvider.credentialFromResult(result);
+        token = credential?.accessToken;
+      }
     } else {
       throw authErr;
     }
@@ -218,7 +249,9 @@ export async function connectWithGitHubOAuth(uid, repoName = DEFAULT_REPO_NAME, 
     authMethod: 'oauth',
   };
 
-  await saveGitHubConfigToFirestore(uid, config);
+  if (uid) {
+    await saveGitHubConfigToFirestore(uid, config);
+  }
   return config;
 }
 
@@ -444,10 +477,17 @@ export async function fetchUserRepositories(token) {
 
 /**
  * Fetch a file from the repository to get its current content and SHA.
+ * Includes query timestamp and cache-control to ensure the latest remote SHA.
  */
 export async function getRepoFile(token, owner, repo, path) {
-  const res = await fetch(`${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${path}`, {
-    headers: getHeaders(token),
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${path}?_t=${Date.now()}`;
+  const res = await fetch(url, {
+    headers: {
+      ...getHeaders(token),
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+    },
+    cache: 'no-store',
   });
 
   if (res.status === 404) {
@@ -469,8 +509,9 @@ export async function getRepoFile(token, owner, repo, path) {
 
 /**
  * Create or update a file in the repository.
+ * Handles HTTP 409 Conflict / SHA mismatch gracefully by auto-resolving to latest remote SHA.
  */
-export async function putRepoFile(token, owner, repo, path, contentStr, commitMessage, sha = null, author = null) {
+export async function putRepoFile(token, owner, repo, path, contentStr, commitMessage, sha = null, author = null, retryCount = 0) {
   const bodyPayload = {
     message: commitMessage,
     content: toBase64Utf8(contentStr),
@@ -493,13 +534,33 @@ export async function putRepoFile(token, owner, repo, path, contentStr, commitMe
 
   const res = await fetch(`${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${path}`, {
     method: 'PUT',
-    headers: getHeaders(token),
+    headers: {
+      ...getHeaders(token),
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+    },
     body: JSON.stringify(bodyPayload),
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(`Failed committing ${path}: ${err.message || res.statusText}`);
+    const rawMsg = err.message || res.statusText || '';
+
+    // Handle GitHub 409 Conflict / SHA mismatch:
+    // e.g. "Problems/... is at 5288367... but expected f5edc40..."
+    const shaMatch = rawMsg.match(/is at ([0-9a-f]{40})/i);
+    if ((res.status === 409 || shaMatch) && retryCount < 2) {
+      console.warn(`[githubSyncService] SHA mismatch detected on ${path}. Auto-recovering with latest remote SHA...`);
+      let latestSha = shaMatch ? shaMatch[1] : null;
+      if (!latestSha) {
+        const fresh = await getRepoFile(token, owner, repo, path);
+        latestSha = fresh.sha;
+      }
+      if (latestSha && latestSha !== sha) {
+        return await putRepoFile(token, owner, repo, path, contentStr, commitMessage, latestSha, author, retryCount + 1);
+      }
+    }
+
+    throw new Error(`Failed committing ${path}: ${rawMsg}`);
   }
 
   const data = await res.json();
@@ -758,6 +819,9 @@ export function generateRootReadme(manifest) {
 // Main Push Orchestrator
 // ─────────────────────────────────────────────────────────────────────────────
 
+// In-flight concurrency lock to prevent overlapping commits for the same problem
+const inFlightProblemSyncs = new Map();
+
 /**
  * Pushes a single solved problem solution and updates repository documentation.
  *
@@ -777,10 +841,7 @@ export async function pushProblemSolution(question, code, language, stats = {}, 
   const { token, username, name, email, repo, isPrivate } = config;
   const authorInfo = { name: name || username, email: email || `${username}@users.noreply.github.com` };
 
-  // 1. Ensure target repo exists
-  const repoInfo = await getOrCreateRepo(token, username, repo, isPrivate);
-
-  // 2. Compute canonical folder & file paths
+  // Compute canonical folder & file paths
   const qId = question?.questionId || question?.id || 'Q';
   const qTitle = question?.title || question?.name || 'Problem';
   const qCat = question?.category || 'General';
@@ -794,106 +855,123 @@ export async function pushProblemSolution(question, code, language, stats = {}, 
   const solutionFilePath = `${folderPath}/${fileName}`;
   const readmeFilePath = `${folderPath}/README.md`;
 
-  // 3. Format solution code with top metadata header
-  const formattedCode = formatSolutionCode(code, language, question, stats);
-
-  // 4. Commit Solution Code File
-  const existingCode = await getRepoFile(token, username, repo, solutionFilePath);
-  const commitMsg = `Solve: [${qId}] ${qTitle} (${qDiff}) - ${language.toUpperCase()} | SEED-IT`;
-
-  const codeCommit = await putRepoFile(
-    token,
-    username,
-    repo,
-    solutionFilePath,
-    formattedCode,
-    commitMsg,
-    existingCode.sha,
-    authorInfo
-  );
-
-  // 5. Commit Problem README.md if not already present or updated
-  const existingReadme = await getRepoFile(token, username, repo, readmeFilePath);
-  const problemReadmeContent = formatProblemReadme(question);
-  await putRepoFile(
-    token,
-    username,
-    repo,
-    readmeFilePath,
-    problemReadmeContent,
-    `Docs: [${qId}] ${qTitle} Problem Statement | SEED-IT`,
-    existingReadme.sha,
-    authorInfo
-  );
-
-  // 6. Update Manifest (.seed-tracker.json) and Root Portfolio README.md
-  try {
-    const manifestFile = await getRepoFile(token, username, repo, '.seed-tracker.json');
-    let manifest = { version: '1.0.0', lastSynced: new Date().toISOString(), problems: {} };
-    if (manifestFile.exists && manifestFile.content) {
-      try {
-        manifest = JSON.parse(manifestFile.content);
-      } catch {
-        // Fallback to fresh manifest
-      }
-    }
-
-    const cleanQKey = String(qId).trim();
-    const existingEntry = manifest.problems[cleanQKey] || {};
-    const existingLangs = new Set(existingEntry.languages || []);
-    existingLangs.add(language);
-
-    manifest.problems[cleanQKey] = {
-      questionId: cleanQKey,
-      title: qTitle,
-      category: qCat,
-      difficulty: qDiff,
-      folderPath,
-      languages: Array.from(existingLangs),
-      lastSolvedAt: new Date().toISOString(),
-    };
-    manifest.lastSynced = new Date().toISOString();
-
-    // Commit updated manifest
-    await putRepoFile(
-      token,
-      username,
-      repo,
-      '.seed-tracker.json',
-      JSON.stringify(manifest, null, 2),
-      `Update sync manifest: [${qId}] | SEED-IT`,
-      manifestFile.sha,
-      authorInfo
-    );
-
-    // Commit updated root README.md
-    const rootReadmeFile = await getRepoFile(token, username, repo, 'README.md');
-    const newRootReadme = generateRootReadme(manifest);
-    await putRepoFile(
-      token,
-      username,
-      repo,
-      'README.md',
-      newRootReadme,
-      `Update portfolio index: [${qId}] ${qTitle} | SEED-IT`,
-      rootReadmeFile.sha,
-      authorInfo
-    );
-  } catch (manifestErr) {
-    console.warn('[githubSyncService] Manifest/Root Readme update notice:', manifestErr);
-    // Non-fatal: solution file commit was already successful
+  const syncKey = `${username}/${repo}/${solutionFilePath}`;
+  if (inFlightProblemSyncs.has(syncKey)) {
+    return await inFlightProblemSyncs.get(syncKey);
   }
 
-  localStorage.setItem(STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
+  const syncPromise = (async () => {
+    // 1. Ensure target repo exists
+    const repoInfo = await getOrCreateRepo(token, username, repo, isPrivate);
 
-  return {
-    success: true,
-    commitSha: codeCommit.commitSha,
-    commitUrl: codeCommit.commitUrl,
-    fileUrl: codeCommit.contentUrl,
-    repoUrl: repoInfo.htmlUrl,
-    problemPath: folderPath,
-  };
+    // 2. Format solution code with top metadata header
+    const formattedCode = formatSolutionCode(code, language, question, stats);
+
+    // 3. Commit Solution Code File
+    const existingCode = await getRepoFile(token, username, repo, solutionFilePath);
+    const commitMsg = `Solve: [${qId}] ${qTitle} (${qDiff}) - ${language.toUpperCase()} | SEED-IT`;
+
+    const codeCommit = await putRepoFile(
+      token,
+      username,
+      repo,
+      solutionFilePath,
+      formattedCode,
+      commitMsg,
+      existingCode.sha,
+      authorInfo
+    );
+
+    // 4. Commit Problem README.md if not already present or updated
+    const existingReadme = await getRepoFile(token, username, repo, readmeFilePath);
+    const problemReadmeContent = formatProblemReadme(question);
+    await putRepoFile(
+      token,
+      username,
+      repo,
+      readmeFilePath,
+      problemReadmeContent,
+      `Docs: [${qId}] ${qTitle} Problem Statement | SEED-IT`,
+      existingReadme.sha,
+      authorInfo
+    );
+
+    // 5. Update Manifest (.seed-tracker.json) and Root Portfolio README.md
+    try {
+      const manifestFile = await getRepoFile(token, username, repo, '.seed-tracker.json');
+      let manifest = { version: '1.0.0', lastSynced: new Date().toISOString(), problems: {} };
+      if (manifestFile.exists && manifestFile.content) {
+        try {
+          manifest = JSON.parse(manifestFile.content);
+        } catch {
+          // Fallback to fresh manifest
+        }
+      }
+
+      const cleanQKey = String(qId).trim();
+      const existingEntry = manifest.problems[cleanQKey] || {};
+      const existingLangs = new Set(existingEntry.languages || []);
+      existingLangs.add(language);
+
+      manifest.problems[cleanQKey] = {
+        questionId: cleanQKey,
+        title: qTitle,
+        category: qCat,
+        difficulty: qDiff,
+        folderPath,
+        languages: Array.from(existingLangs),
+        lastSolvedAt: new Date().toISOString(),
+      };
+      manifest.lastSynced = new Date().toISOString();
+
+      // Commit updated manifest
+      await putRepoFile(
+        token,
+        username,
+        repo,
+        '.seed-tracker.json',
+        JSON.stringify(manifest, null, 2),
+        `Update sync manifest: [${qId}] | SEED-IT`,
+        manifestFile.sha,
+        authorInfo
+      );
+
+      // Commit updated root README.md
+      const rootReadmeFile = await getRepoFile(token, username, repo, 'README.md');
+      const newRootReadme = generateRootReadme(manifest);
+      await putRepoFile(
+        token,
+        username,
+        repo,
+        'README.md',
+        newRootReadme,
+        `Update portfolio index: [${qId}] ${qTitle} | SEED-IT`,
+        rootReadmeFile.sha,
+        authorInfo
+      );
+    } catch (manifestErr) {
+      console.warn('[githubSyncService] Manifest/Root Readme update notice:', manifestErr);
+      // Non-fatal: solution file commit was already successful
+    }
+
+    localStorage.setItem(STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
+
+    return {
+      success: true,
+      commitSha: codeCommit.commitSha,
+      commitUrl: codeCommit.commitUrl,
+      fileUrl: codeCommit.contentUrl,
+      repoUrl: repoInfo.htmlUrl,
+      problemPath: folderPath,
+    };
+  })();
+
+  inFlightProblemSyncs.set(syncKey, syncPromise);
+  try {
+    return await syncPromise;
+  } finally {
+    inFlightProblemSyncs.delete(syncKey);
+  }
 }
 
 /**

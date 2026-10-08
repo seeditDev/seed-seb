@@ -1,0 +1,41 @@
+{
+  "id": "data-mid-systemdesign-cdc-data-sync",
+  "fileName": "data-mid-systemdesign-cdc-data-sync",
+  "title": "Data mid systemdesign cdc data sync",
+  "role": "data",
+  "level": "mid",
+  "track": "systemdesign",
+  "topic": "Data mid systemdesign cdc data sync",
+  "question": "How would you design a system to keep the warehouse in near-real-time sync with the production database, without hammering it with repeated full queries?",
+  "idealAnswer": "Recognize that full extraction doesn't scale as data grows, and doesn't meet the near-real-time freshness requirement, a fundamentally different approach is needed, not just running the dump more often\n\nChange data capture, CDC, e.g. reading the database's write-ahead log or replication stream, lets you capture only inserts/updates/deletes as they happen, rather than re-reading the whole table\n\nCDC events get streamed, e.g. through a message queue or streaming platform, and applied incrementally to the warehouse tables, so the warehouse stays close to real-time without repeated full scans\n\nConsider the impact on the source database, e.g. reading from a replica or the replication log rather than issuing large queries against production, to avoid degrading application performance\n\nHandle schema changes on the source gracefully, e.g. a new column added to the production table, since CDC pipelines need to adapt without breaking\n\nA strong answer mentions reconciliation, periodically verifying the warehouse copy matches the source, e.g. row counts or checksums, since streaming pipelines can silently drift out of sync over time",
+  "rubric": [
+    "Recognize that full extraction doesn't scale as data grows, and doesn't meet the near-real-time freshness requirement, a fundamentally different approach is needed, not just running the dump more often",
+    "Change data capture, CDC, e.g. reading the database's write-ahead log or replication stream, lets you capture only inserts/updates/deletes as they happen, rather than re-reading the whole table",
+    "CDC events get streamed, e.g. through a message queue or streaming platform, and applied incrementally to the warehouse tables, so the warehouse stays close to real-time without repeated full scans",
+    "Consider the impact on the source database, e.g. reading from a replica or the replication log rather than issuing large queries against production, to avoid degrading application performance",
+    "Handle schema changes on the source gracefully, e.g. a new column added to the production table, since CDC pipelines need to adapt without breaking",
+    "A strong answer mentions reconciliation, periodically verifying the warehouse copy matches the source, e.g. row counts or checksums, since streaming pipelines can silently drift out of sync over time"
+  ],
+  "followUps": [
+    "How would you detect and recover if the CDC pipeline silently dropped a batch of updates for an hour without anyone noticing?"
+  ],
+  "raw": {
+    "id": "data-mid-systemdesign-cdc-data-sync",
+    "track": "ml-ai",
+    "specialization": "data",
+    "level": "mid",
+    "stage": "system-design",
+    "question": "How would you design a system to keep the warehouse in near-real-time sync with the production database, without hammering it with repeated full queries?",
+    "context": "A production application database is updated constantly by user activity. Analysts want warehouse tables that reflect this data within a few minutes, but the current approach, a nightly full dump and reload, means data is up to 24 hours stale and the nightly dump takes hours as the table has grown to hundreds of millions of rows.",
+    "key_points": [
+      "Recognize that full extraction doesn't scale as data grows, and doesn't meet the near-real-time freshness requirement, a fundamentally different approach is needed, not just running the dump more often",
+      "Change data capture, CDC, e.g. reading the database's write-ahead log or replication stream, lets you capture only inserts/updates/deletes as they happen, rather than re-reading the whole table",
+      "CDC events get streamed, e.g. through a message queue or streaming platform, and applied incrementally to the warehouse tables, so the warehouse stays close to real-time without repeated full scans",
+      "Consider the impact on the source database, e.g. reading from a replica or the replication log rather than issuing large queries against production, to avoid degrading application performance",
+      "Handle schema changes on the source gracefully, e.g. a new column added to the production table, since CDC pipelines need to adapt without breaking",
+      "A strong answer mentions reconciliation, periodically verifying the warehouse copy matches the source, e.g. row counts or checksums, since streaming pipelines can silently drift out of sync over time"
+    ],
+    "follow_up": "How would you detect and recover if the CDC pipeline silently dropped a batch of updates for an hour without anyone noticing?",
+    "battle_eligible": false
+  }
+}

@@ -1,3 +1,4 @@
+import { complexityAnalysisService } from '../services/complexityAnalysisService';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from './router-compat';
 import Editor from '@monaco-editor/react';
@@ -208,6 +209,14 @@ const PracticeSandbox = () => {
   const [submitScore, setSubmitScore] = useState(null);
   const [sampleResults, setSampleResults] = useState([]);
   const [scoringType, setScoringType] = useState('PARTIAL_SCORE');
+  const [complexityAnalysisResult, setComplexityAnalysisResult] = useState(null);
+
+  const handleRunComplexity = () => {
+    const currentCode = editorRef.current ? editorRef.current.getValue() : code;
+    const res = complexityAnalysisService.analyze(currentCode, language, question);
+    setComplexityAnalysisResult(res);
+    return res;
+  };
 
   // Collapsible list sidebar states
   const [showSidebar, setShowSidebar] = useState(false);
@@ -247,6 +256,8 @@ const PracticeSandbox = () => {
       setShowGitHubModal(true);
       return;
     }
+
+    if (isSyncingToGitHub) return;
 
     const currentCode = editorRef.current ? editorRef.current.getValue() : code;
     if (!currentCode || !currentCode.trim()) {
@@ -833,6 +844,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
         score = totalWeight > 0 ? Math.round((earnedWeight / totalWeight) * 100) : 0;
       }
       setSubmitScore(score);
+      handleRunComplexity();
 
       // Save progress (currentCode already captured at start of try block)
       if (uid) {
@@ -868,6 +880,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
             // Auto-sync to GitHub if configured
             const ghCfg = getGitHubConfig();
             if (ghCfg.isConnected && ghCfg.autoSync) {
+              setIsSyncingToGitHub(true);
               pushProblemSolution(question, currentCode, language, {
                 score: 100,
                 testsPassed: passedCount,
@@ -889,6 +902,8 @@ const isCodeBlankOrEmpty = (codeStr) => {
                 );
               }).catch((err) => {
                 console.warn('[PracticeSandbox] Background GitHub auto-sync note:', err);
+              }).finally(() => {
+                setIsSyncingToGitHub(false);
               });
             }
           } else {
@@ -1112,6 +1127,17 @@ const isCodeBlankOrEmpty = (codeStr) => {
                       {question.metadata?.difficulty}
                     </span>
                     <span className="psb-badge cat">{question.metadata?.category}</span>
+                    <span className="psb-badge level" style={{
+                      background: (question.level || (String(question.id || '').toLowerCase().startsWith('q0.') ? 1 : null)) ? 'rgba(99, 102, 241, 0.2)' : 'rgba(148, 163, 184, 0.15)',
+                      color: (question.level || (String(question.id || '').toLowerCase().startsWith('q0.') ? 1 : null)) ? '#818cf8' : '#94a3b8',
+                      border: (question.level || (String(question.id || '').toLowerCase().startsWith('q0.') ? 1 : null)) ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid rgba(148, 163, 184, 0.25)',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: 600
+                    }}>
+                      {(question.level || (String(question.id || '').toLowerCase().startsWith('q0.') ? 1 : null)) ? `Level ${question.level || 1}` : 'Level Pending'}
+                    </span>
                     {question.metadata?.isPremium && <span className="psb-badge premium" style={{ display: 'inline-flex', alignItems: 'center' }}><FaStar style={{ marginRight: '4px' }} /> Premium</span>}
                   </div>
 
@@ -1349,6 +1375,9 @@ const isCodeBlankOrEmpty = (codeStr) => {
                 <span className={`psb-problem-tab ${activeConsoleTab === 'results' ? 'active' : ''}`} onClick={() => setActiveConsoleTab('results')}>
                   Submit Results ({submitResults.length})
                 </span>
+                <span className={`psb-problem-tab ${activeConsoleTab === 'complexity' ? 'active' : ''}`} onClick={() => { setActiveConsoleTab('complexity'); handleRunComplexity(); }} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ color: '#10b981' }}>⚡</span> Complexity
+                </span>
                 <span className={`psb-problem-tab ${activeConsoleTab === 'tutor' ? 'active' : ''}`} onClick={() => setActiveConsoleTab('tutor')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <FaLightbulb style={{ color: 'var(--ps-accent, #fbbf24)' }} /> AI Tutor
                   {!isTutorUnlocked && <FaStar style={{ color: '#fbbf24', fontSize: '10px' }} title="Premium Feature" />}
@@ -1506,6 +1535,106 @@ const isCodeBlankOrEmpty = (codeStr) => {
               )}
 
               {activeConsoleTab === 'tutor' && renderTutorBody()}
+
+              {activeConsoleTab === 'complexity' && (
+                <div style={{ padding: '16px', background: 'var(--ps-bg)', borderRadius: '10px' }}>
+                  {(() => {
+                    const comp = complexityAnalysisResult || handleRunComplexity();
+                    if (!comp) {
+                      return <div style={{ color: 'var(--ps-text-dim)' }}>Type code into the editor to evaluate algorithmic complexity.</div>;
+                    }
+                    const verdictColor = comp.verdict === 'OPTIMAL' ? '#10b981' : comp.verdict === 'SUB_OPTIMAL' ? '#f59e0b' : '#38bdf8';
+
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '14px 18px',
+                          borderRadius: '10px',
+                          background: comp.verdict === 'OPTIMAL' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+                          border: '1px solid ' + verdictColor + '40'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <span style={{ fontSize: '24px' }}>{comp.verdict === 'OPTIMAL' ? '⚡' : '⚠️'}</span>
+                            <div>
+                              <div style={{ fontWeight: 'bold', fontSize: '15px', color: verdictColor }}>
+                                {comp.verdict === 'OPTIMAL' ? 'Optimal Complexity Achieved' : comp.verdict === 'SUB_OPTIMAL' ? 'Sub-Optimal Complexity (Brute Force)' : 'Complexity Analyzed'}
+                              </div>
+                              <div style={{ fontSize: '13px', color: 'var(--ps-text-dim)', marginTop: '2px' }}>
+                                {comp.guidance}
+                              </div>
+                            </div>
+                          </div>
+                          <span style={{
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            background: verdictColor + '20',
+                            color: verdictColor,
+                            letterSpacing: '0.05em'
+                          }}>
+                            {comp.verdict}
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                          <div style={{ padding: '14px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--ps-border)' }}>
+                            <div style={{ fontSize: '12px', color: 'var(--ps-text-dim)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              Time Complexity
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                              <span style={{ fontSize: '22px', fontWeight: 'bold', color: verdictColor, fontFamily: 'var(--ps-mono)' }}>
+                                {comp.time}
+                              </span>
+                              <span style={{ fontSize: '12px', color: 'var(--ps-text-dim)' }}>
+                                Target: <strong style={{ color: '#10b981' }}>{comp.optimalTime}</strong>
+                              </span>
+                            </div>
+                            {comp.bruteForceTime && (
+                              <div style={{ fontSize: '11px', color: 'var(--ps-text-dim)', marginTop: '6px' }}>
+                                Brute Force: {comp.bruteForceTime} {comp.bruteForceApproach ? '(' + comp.bruteForceApproach + ')' : ''}
+                              </div>
+                            )}
+                          </div>
+
+                          <div style={{ padding: '14px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--ps-border)' }}>
+                            <div style={{ fontSize: '12px', color: 'var(--ps-text-dim)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              Auxiliary Space
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                              <span style={{ fontSize: '22px', fontWeight: 'bold', color: '#38bdf8', fontFamily: 'var(--ps-mono)' }}>
+                                {comp.space}
+                              </span>
+                              <span style={{ fontSize: '12px', color: 'var(--ps-text-dim)' }}>
+                                Target: <strong style={{ color: '#38bdf8' }}>{comp.optimalSpace}</strong>
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'var(--ps-text-dim)', marginTop: '6px' }}>
+                              Pattern: {comp.optimalPattern || 'In-place / minimal memory'}
+                            </div>
+                          </div>
+                        </div>
+
+                        {comp.hints && comp.hints.length > 0 && (
+                          <div style={{ marginTop: '4px', padding: '12px 16px', borderRadius: '8px', background: 'rgba(251, 191, 36, 0.05)', border: '1px solid rgba(251, 191, 36, 0.2)' }}>
+                            <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#fbbf24', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span>💡</span> Step-by-Step Optimization Hints:
+                            </div>
+                            <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12.5px', color: 'var(--ps-text-dim)', lineHeight: 1.6 }}>
+                              {comp.hints.map((h, i) => (
+                                <li key={i} style={{ marginBottom: '4px' }}>{h}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
 
               {activeConsoleTab === 'results' && (
                 <div>

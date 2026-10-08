@@ -1,5 +1,85 @@
 import React, { useState } from 'react';
 import { FaCopy, FaCheck } from 'react-icons/fa';
+import DiagramViewer, { MermaidDiagram } from './DiagramEngine';
+
+/**
+ * YouTubeBlock:
+ * Responsive embedded video player for lecture breakdowns.
+ */
+const YouTubeBlock = ({ videoId }) => {
+  const cleanId = (videoId || '')
+    .replace(/^https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)/, '')
+    .split('&')[0]
+    .split('?')[0]
+    .trim();
+
+  if (!cleanId) return null;
+
+  return (
+    <div className="lesson-youtube-container my-6 rounded-2xl overflow-hidden border border-gray-800 bg-[#0f172a] shadow-xl">
+      <div className="flex items-center justify-between px-4 py-3 bg-[#1e293b]/80 border-b border-gray-800 text-xs text-gray-300 font-mono">
+        <span className="flex items-center gap-2 font-semibold text-emerald-400">
+          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+          VISUAL ALGORITHM VIDEO LECTURE
+        </span>
+        <a 
+          href={`https://www.youtube.com/watch?v=${cleanId}`} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+        >
+          Watch on YouTube ↗
+        </a>
+      </div>
+      <div className="relative w-full" style={{ paddingBottom: '56.25%', height: 0 }}>
+        <iframe
+          className="absolute top-0 left-0 w-full h-full border-0"
+          src={`https://www.youtube-nocookie.com/embed/${cleanId}?rel=0&modestbranding=1`}
+          title="Algorithm Lecture Walkthrough"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+    </div>
+  );
+};
+
+/**
+ * CodeBlockItem:
+ * Self-contained fenced code block with syntax container, language pill, and copy button.
+ */
+const CodeBlockItem = ({ language, code }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard?.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const displayLang = (language || 'code').toUpperCase();
+
+  return (
+    <div className="fenced-code-container my-4 rounded-xl overflow-hidden border border-gray-800 bg-[#0b0f19] shadow-lg">
+      <div className="fenced-code-header flex items-center justify-between px-4 py-2 bg-[#1e293b]/60 border-b border-gray-800/80 text-xs text-gray-400 font-mono">
+        <span className="fenced-lang-tag text-emerald-400 font-semibold">{displayLang}</span>
+        <button
+          className={`fenced-copy-btn flex items-center gap-1.5 px-2.5 py-1 rounded text-xs transition-colors ${
+            copied ? 'text-emerald-400 bg-emerald-500/10' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+          }`}
+          onClick={handleCopy}
+          title="Copy code"
+        >
+          {copied ? <FaCheck /> : <FaCopy />}
+          <span>{copied ? 'Copied!' : 'Copy'}</span>
+        </button>
+      </div>
+      <pre className="fenced-code-pre p-4 text-xs font-mono text-gray-200 overflow-x-auto leading-relaxed">
+        <code>{code}</code>
+      </pre>
+    </div>
+  );
+};
 
 /**
  * LessonMarkdownRenderer:
@@ -9,6 +89,9 @@ import { FaCopy, FaCheck } from 'react-icons/fa';
  * - **text**: Bold text
  * - *text*: Italic text
  * - `text`: Inline code
+ * - ```mermaid ... ```: SVG interactive state machine and architecture diagrams
+ * - ```youtube ... ```: Responsive embedded YouTube video lectures
+ * - ```diagram ... ```: INDEX 0 Visual Architecture, Pipeline, and Stack Diagrams
  * - ```lang ... ```: Fenced code block with language badge & copy button
  * - --- / ***: Horizontal divider
  * - # / ## / ###: Section headings
@@ -85,7 +168,6 @@ const LessonMarkdownRenderer = ({ content }) => {
         elements.push(remaining);
         break;
       } else if (nextSpecial === 0) {
-        // Single backslash at line end
         if (remaining.startsWith('\\')) {
           elements.push(<br key={`br-${keyIdx++}`} />);
           remaining = remaining.substring(1);
@@ -115,8 +197,40 @@ const LessonMarkdownRenderer = ({ content }) => {
         if (part.startsWith('```') && part.endsWith('```')) {
           const inner = part.slice(3, -3);
           const firstNewline = inner.indexOf('\n');
-          const lang = firstNewline !== -1 ? inner.slice(0, firstNewline).trim() : '';
+          const lang = firstNewline !== -1 ? inner.slice(0, firstNewline).trim().toLowerCase() : '';
           const codeText = firstNewline !== -1 ? inner.slice(firstNewline + 1) : inner;
+
+          if (lang === 'mermaid') {
+            return (
+              <MermaidDiagram
+                key={`mermaid-block-${partIdx}`}
+                code={codeText.trim()}
+              />
+            );
+          }
+
+          if (lang === 'youtube' || lang === 'video') {
+            return (
+              <YouTubeBlock
+                key={`youtube-block-${partIdx}`}
+                videoId={codeText.trim()}
+              />
+            );
+          }
+
+          if (lang === 'diagram' || lang === 'architecture' || lang === 'pipeline' || lang === 'stack') {
+            try {
+              const parsed = JSON.parse(codeText.trim());
+              return (
+                <DiagramViewer
+                  key={`diagram-block-${partIdx}`}
+                  diagram={parsed}
+                />
+              );
+            } catch (_) {
+              // If not valid JSON, treat as code block
+            }
+          }
 
           return (
             <CodeBlockItem
@@ -255,41 +369,6 @@ const LessonMarkdownRenderer = ({ content }) => {
           </div>
         );
       })}
-    </div>
-  );
-};
-
-/**
- * CodeBlockItem:
- * Self-contained fenced code block with syntax container, language pill, and copy button.
- */
-const CodeBlockItem = ({ language, code }) => {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard?.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const displayLang = (language || 'code').toUpperCase();
-
-  return (
-    <div className="lesson-fenced-code-card">
-      <div className="fenced-code-header">
-        <span className="fenced-lang-tag">{displayLang}</span>
-        <button
-          className={`fenced-copy-btn ${copied ? 'copied' : ''}`}
-          onClick={handleCopy}
-          title="Copy code"
-        >
-          {copied ? <FaCheck /> : <FaCopy />}
-          <span>{copied ? 'Copied!' : 'Copy'}</span>
-        </button>
-      </div>
-      <pre className="fenced-code-pre">
-        <code>{code}</code>
-      </pre>
     </div>
   );
 };

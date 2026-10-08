@@ -13,7 +13,7 @@ import {
   getDomainCatalog, 
   loadCourseModule, 
   hydrateFullCourse 
-} from '../services/courseModularLoaderService';
+} from '../services/courseModularLoaderService.js';
 
 export const COURSE_CATALOG = MODULAR_COURSE_CATALOG;
 

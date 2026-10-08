@@ -1,0 +1,39 @@
+{
+  "id": "data-mid-scenario-late-arriving-data",
+  "fileName": "data-mid-scenario-late-arriving-data",
+  "title": "Data mid scenario late arriving data",
+  "role": "data",
+  "level": "mid",
+  "track": "scenario",
+  "topic": "Data mid scenario late arriving data",
+  "question": "How would you redesign this pipeline to handle late-arriving events correctly?",
+  "idealAnswer": "Recognize this as a late-arriving data problem: event time, when it happened, differs from processing time, when the pipeline saw it, and the pipeline is currently keying off processing time implicitly\n\nOne approach is to allow a grace period, e.g. wait an extra day or two before treating a day's numbers as final, accepting some latency in exchange for more complete numbers\n\nAnother approach is to support reprocessing or recomputation, e.g. re-run the aggregation for a given day whenever new late data arrives for it, so numbers are corrected rather than staying wrong\n\nCommunicate clearly to stakeholders which numbers are provisional versus finalized, e.g. labeling recent days as 'still updating', so people don't misinterpret a partial number as complete\n\nA strong answer weighs the tradeoff explicitly: waiting longer improves accuracy but delays availability, and mentions that the right grace period should be based on the actual observed distribution of how late data arrives",
+  "rubric": [
+    "Recognize this as a late-arriving data problem: event time, when it happened, differs from processing time, when the pipeline saw it, and the pipeline is currently keying off processing time implicitly",
+    "One approach is to allow a grace period, e.g. wait an extra day or two before treating a day's numbers as final, accepting some latency in exchange for more complete numbers",
+    "Another approach is to support reprocessing or recomputation, e.g. re-run the aggregation for a given day whenever new late data arrives for it, so numbers are corrected rather than staying wrong",
+    "Communicate clearly to stakeholders which numbers are provisional versus finalized, e.g. labeling recent days as 'still updating', so people don't misinterpret a partial number as complete",
+    "A strong answer weighs the tradeoff explicitly: waiting longer improves accuracy but delays availability, and mentions that the right grace period should be based on the actual observed distribution of how late data arrives"
+  ],
+  "followUps": [
+    "How would you decide how long to wait before finalizing a day's numbers, given that 99% of devices report within 6 hours but a small tail reports up to 3 days late?"
+  ],
+  "raw": {
+    "id": "data-mid-scenario-late-arriving-data",
+    "track": "ml-ai",
+    "specialization": "data",
+    "level": "mid",
+    "stage": "scenario",
+    "question": "How would you redesign this pipeline to handle late-arriving events correctly?",
+    "context": "You run a daily batch job at midnight that aggregates the previous day's mobile app events into a metrics table. Most devices upload events immediately, but some devices are offline and upload a batch of events hours or even a day late. Your current pipeline only counts events it has received by the time the job runs, so early metrics are consistently undercounted and slowly creep up over the following days as late data trickles in, which confuses stakeholders who compare numbers across days.",
+    "key_points": [
+      "Recognize this as a late-arriving data problem: event time, when it happened, differs from processing time, when the pipeline saw it, and the pipeline is currently keying off processing time implicitly",
+      "One approach is to allow a grace period, e.g. wait an extra day or two before treating a day's numbers as final, accepting some latency in exchange for more complete numbers",
+      "Another approach is to support reprocessing or recomputation, e.g. re-run the aggregation for a given day whenever new late data arrives for it, so numbers are corrected rather than staying wrong",
+      "Communicate clearly to stakeholders which numbers are provisional versus finalized, e.g. labeling recent days as 'still updating', so people don't misinterpret a partial number as complete",
+      "A strong answer weighs the tradeoff explicitly: waiting longer improves accuracy but delays availability, and mentions that the right grace period should be based on the actual observed distribution of how late data arrives"
+    ],
+    "follow_up": "How would you decide how long to wait before finalizing a day's numbers, given that 99% of devices report within 6 hours but a small tail reports up to 3 days late?",
+    "battle_eligible": true
+  }
+}

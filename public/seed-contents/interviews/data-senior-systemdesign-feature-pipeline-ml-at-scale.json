@@ -1,0 +1,41 @@
+{
+  "id": "data-senior-systemdesign-feature-pipeline-ml-at-scale",
+  "fileName": "data-senior-systemdesign-feature-pipeline-ml-at-scale",
+  "title": "Data senior systemdesign feature pipeline ml at scale",
+  "role": "data",
+  "level": "senior",
+  "track": "systemdesign",
+  "topic": "Data senior systemdesign feature pipeline ml at scale",
+  "question": "How would you design the data pipeline that computes and serves features for this at the scale and latency required?",
+  "idealAnswer": "Split the pipeline into an offline/batch path for computing historical features used in training, and an online/streaming path for computing and serving up-to-the-minute features at low latency, since batch computation over history is far too slow for a tens-of-milliseconds serving requirement\n\nUse a streaming layer, e.g. consuming a transaction event stream, to maintain rolling aggregates like 'transaction count in the last hour' incrementally, updating a fast key-value store rather than recomputing from scratch on every request\n\nEnsure the same feature computation logic is shared or kept consistent between the offline training path and the online serving path, otherwise training/serving skew, subtle mismatches between how a feature was computed during training versus at prediction time, silently degrades model quality\n\nAddress point-in-time correctness for training data, when generating historical training examples, the features must reflect only what was known at that historical moment, not the current, fully up-to-date value, otherwise the model trains on leaked future information\n\nDesign the online store for very low read latency and high throughput, e.g. a low-latency key-value store like Redis, since the model's prediction path is on the critical path of a live transaction\n\nA strong answer addresses failure modes, e.g. what the serving path does if a feature computation is delayed or unavailable, since a fraud model still needs to make some decision even with a stale or missing feature, rather than the transaction path failing entirely",
+  "rubric": [
+    "Split the pipeline into an offline/batch path for computing historical features used in training, and an online/streaming path for computing and serving up-to-the-minute features at low latency, since batch computation over history is far too slow for a tens-of-milliseconds serving requirement",
+    "Use a streaming layer, e.g. consuming a transaction event stream, to maintain rolling aggregates like 'transaction count in the last hour' incrementally, updating a fast key-value store rather than recomputing from scratch on every request",
+    "Ensure the same feature computation logic is shared or kept consistent between the offline training path and the online serving path, otherwise training/serving skew, subtle mismatches between how a feature was computed during training versus at prediction time, silently degrades model quality",
+    "Address point-in-time correctness for training data, when generating historical training examples, the features must reflect only what was known at that historical moment, not the current, fully up-to-date value, otherwise the model trains on leaked future information",
+    "Design the online store for very low read latency and high throughput, e.g. a low-latency key-value store like Redis, since the model's prediction path is on the critical path of a live transaction",
+    "A strong answer addresses failure modes, e.g. what the serving path does if a feature computation is delayed or unavailable, since a fraud model still needs to make some decision even with a stale or missing feature, rather than the transaction path failing entirely"
+  ],
+  "followUps": [
+    "How would you detect if the online and offline feature computations had quietly drifted apart, e.g. due to a code change in only one of the two paths?"
+  ],
+  "raw": {
+    "id": "data-senior-systemdesign-feature-pipeline-ml-at-scale",
+    "track": "ml-ai",
+    "specialization": "data",
+    "level": "senior",
+    "stage": "system-design",
+    "question": "How would you design the data pipeline that computes and serves features for this at the scale and latency required?",
+    "context": "You're building the feature pipeline that feeds a real-time fraud detection model. Features include things like a user's transaction count in the last hour, average transaction amount over the last 30 days, and whether their device has been seen before. The model needs these features at prediction time within tens of milliseconds, for millions of transactions per day, and the same feature logic must also be available for offline training on historical data.",
+    "key_points": [
+      "Split the pipeline into an offline/batch path for computing historical features used in training, and an online/streaming path for computing and serving up-to-the-minute features at low latency, since batch computation over history is far too slow for a tens-of-milliseconds serving requirement",
+      "Use a streaming layer, e.g. consuming a transaction event stream, to maintain rolling aggregates like 'transaction count in the last hour' incrementally, updating a fast key-value store rather than recomputing from scratch on every request",
+      "Ensure the same feature computation logic is shared or kept consistent between the offline training path and the online serving path, otherwise training/serving skew, subtle mismatches between how a feature was computed during training versus at prediction time, silently degrades model quality",
+      "Address point-in-time correctness for training data, when generating historical training examples, the features must reflect only what was known at that historical moment, not the current, fully up-to-date value, otherwise the model trains on leaked future information",
+      "Design the online store for very low read latency and high throughput, e.g. a low-latency key-value store like Redis, since the model's prediction path is on the critical path of a live transaction",
+      "A strong answer addresses failure modes, e.g. what the serving path does if a feature computation is delayed or unavailable, since a fraud model still needs to make some decision even with a stale or missing feature, rather than the transaction path failing entirely"
+    ],
+    "follow_up": "How would you detect if the online and offline feature computations had quietly drifted apart, e.g. due to a code change in only one of the two paths?",
+    "battle_eligible": false
+  }
+}

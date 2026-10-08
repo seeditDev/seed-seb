@@ -1,7 +1,115 @@
 import axios from 'axios';
+import defaultInterviewCatalog from '../../public/seed-contents/interviews/catalog.json';
+
+// Cached INDEX 0 Interview Catalog with pre-bundled static fallback
+let cachedIndex0Catalog = (Array.isArray(defaultInterviewCatalog) && defaultInterviewCatalog.length > 0)
+  ? defaultInterviewCatalog
+  : null;
+
+export const loadIndex0InterviewCatalog = async () => {
+  if (cachedIndex0Catalog && cachedIndex0Catalog.length > 0) return cachedIndex0Catalog;
+  try {
+    const res = await fetch('/seed-contents/interviews/catalog.json');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        cachedIndex0Catalog = data;
+        return cachedIndex0Catalog;
+      }
+    }
+  } catch (err) {
+    console.warn('Could not load INDEX 0 interview catalog over fetch, using bundled catalog', err);
+  }
+  return defaultInterviewCatalog || [];
+};
+
+export const getFilteredScenarios = async (domain = 'Backend', difficulty = 'Senior') => {
+  const cat = await loadIndex0InterviewCatalog();
+  if (!Array.isArray(cat) || cat.length === 0) return [];
+
+  const normDomain = String(domain || '').toLowerCase().trim();
+  const normDiff = String(difficulty || '').toLowerCase().trim();
+
+  // Normalize seniority
+  const levelMap = {
+    'senior': 'senior',
+    'hard': 'senior',
+    'lead': 'senior',
+    'mid': 'mid',
+    'medium': 'mid',
+    'intermediate': 'mid',
+    'entry': 'entry',
+    'easy': 'entry',
+    'junior': 'entry',
+    'fresher': 'entry'
+  };
+  const targetLevel = levelMap[normDiff] || 'senior';
+
+  return cat.filter(item => {
+    const role = String(item.role || item.raw?.specialization || item.track || '').toLowerCase();
+    const level = String(item.level || item.raw?.level || item.seniority || '').toLowerCase();
+    const id = String(item.id || '').toLowerCase();
+
+    // Domain matching
+    let domainMatch = false;
+    if (normDomain === 'backend') {
+      domainMatch = role === 'backend' || id.startsWith('backend-');
+    } else if (normDomain === 'frontend') {
+      domainMatch = role === 'frontend' || id.startsWith('frontend-');
+    } else if (normDomain.includes('data')) {
+      domainMatch = role.includes('data') || id.startsWith('data-');
+    } else if (normDomain.includes('ml') || normDomain.includes('ai')) {
+      domainMatch = role.includes('ml') || id.startsWith('mlai-');
+    } else if (normDomain.includes('system design')) {
+      domainMatch = id.includes('systemdesign') || item.track === 'systemdesign';
+    } else {
+      domainMatch = role.includes(normDomain) || id.includes(normDomain);
+    }
+
+    // Level matching
+    const levelMatch = level === targetLevel || id.includes(`-${targetLevel}-`);
+
+    return domainMatch && levelMatch;
+  });
+};
 
 // Question bank for local fallback simulation if no API key is provided
 const FALLBACK_QUESTION_BANKS = {
+  "Backend": [
+    "Design a database schema with high read-write throughput and proper indexing strategies.",
+    "Explain how you prevent N+1 query problems in an ORM architecture.",
+    "What are the trade-offs between distributed caching and local in-memory caching?",
+    "How do you implement idempotent payment request handling under high network retry rates?",
+    "Explain database transaction isolation levels and how they prevent dirty reads."
+  ],
+  "Frontend": [
+    "Explain the browser rendering pipeline: layout, paint, and composite stages.",
+    "How do you debug and resolve severe JavaScript memory leaks in single-page applications?",
+    "Explain React reconciliation and how memoization prevents unnecessary re-renders.",
+    "What strategies do you use for efficient JavaScript bundle splitting and code splitting?",
+    "How do you ensure WCAG 2.1 AA accessibility across complex UI component libraries?"
+  ],
+  "Data Engineering": [
+    "Compare ETL vs ELT architectures. When would you prefer one over the other?",
+    "Explain how you guarantee exactly-once message delivery in stream processing pipelines.",
+    "What is the difference between Star Schema and Snowflake Schema in data warehousing?",
+    "How do you detect and handle late-arriving data in an Apache Kafka / Flink pipeline?",
+    "Explain CDC (Change Data Capture) and how it keeps analytics databases in sync with production OLTP."
+  ],
+  "ML / AI": [
+    "Explain the Attention mechanism in Transformers and how it computes Query, Key, and Value.",
+    "What is the difference between Fine-Tuning with LoRA and Retrieval-Augmented Generation (RAG)?",
+    "How do you detect and mitigate training data leakage and concept drift in production models?",
+    "Explain the trade-offs between precision, recall, and F1-score for fraud detection.",
+    "How do you design a real-time low-latency model inference service under spike traffic?"
+  ],
+  "Software Engineering": [
+    "Walk me through your architectural strategy for decomposing a monolith into microservices.",
+    "Explain CAP theorem and how you choose between consistency and availability in network partitions.",
+    "How do you design a distributed rate limiter that coordinates across multiple geographic regions?",
+    "What is dependency injection and how does it improve software maintainability and testability?",
+    "How do you manage zero-downtime database schema migrations for tables with hundreds of millions of rows?"
+  ],
   Java: [
     "Explain the concept of OOPs in Java. What are the four main pillars?",
     "What is the difference between an Abstract Class and an Interface in Java, especially after Java 8?",
@@ -64,9 +172,6 @@ const DEFAULT_FALLBACK_QUESTIONS = [
 let localGenerator = null;
 
 export const aiInterviewService = {
-  /**
-   * Helper to check if a valid API key is present
-   */
   hasApiKey(apiKey) {
     return typeof apiKey === 'string' && (apiKey.trim().startsWith('gsk_') || apiKey.trim().startsWith('sk-'));
   },
@@ -74,7 +179,6 @@ export const aiInterviewService = {
   async initLocalModel(onProgress) {
     if (localGenerator) return localGenerator;
     
-    // Dynamically inject script tag to bypass compile-time Webpack dynamic import blocks
     const loadTransformersScript = () => {
       return new Promise((resolve, reject) => {
         if (window.transformers) {
@@ -108,11 +212,10 @@ export const aiInterviewService = {
       if (!transformers) throw new Error("Transformers.js global object not found.");
       
       const { pipeline, env } = transformers;
-      env.allowLocalModels = false; // force fetching web assets
+      env.allowLocalModels = false;
       
       let modelSource = 'Xenova/LaMini-GPT-124M';
 
-      // Check if we can load the local model files from the desktop compiler assets space
       if (window.desktopBridge && typeof window.desktopBridge.getLocalModelPort === 'function') {
         try {
           const port = window.desktopBridge.getLocalModelPort();
@@ -125,7 +228,6 @@ export const aiInterviewService = {
         }
       }
 
-      // Load LaMini-GPT-124M model (loaded either from local compiler space or fallback CDN)
       localGenerator = await pipeline('text-generation', modelSource, {
         progress_callback: (data) => {
           if (data.status === 'progress' && typeof onProgress === 'function') {
@@ -142,30 +244,61 @@ export const aiInterviewService = {
 
   /**
    * Fetches the next question from Groq LLM, local Web LLM pipeline, or uses local fallback bank
+   * Accurately adapts to chosen activeScenario and senior rubrics.
    */
-  async getNextQuestion(chatHistory, domain, difficulty, company, apiKey, useLocalModel, onProgress) {
+  async getNextQuestion(chatHistory, domain, difficulty, company, apiKey, useLocalModel, onProgress, activeScenario = null) {
     const hasKey = this.hasApiKey(apiKey);
+    const askedCount = chatHistory.filter(msg => msg.role === 'assistant').length;
 
-    // 1. Web LLM mode (Option 1)
+    // Check completion threshold
+    if (askedCount >= 5) {
+      return "Thank you, the interview is now complete. Please click the button below to generate your evaluation report.";
+    }
+
+    // 1. Direct Active Scenario Pipeline (Highest Priority for Scenario Simulations)
+    if (activeScenario) {
+      if (askedCount === 0) {
+        // First turn: The main scenario question with production context
+        if (activeScenario.raw?.context) {
+          return `[Production Context: ${activeScenario.raw.context}]\n\nScenario Question: ${activeScenario.question}`;
+        }
+        return activeScenario.question;
+      }
+
+      if (askedCount === 1) {
+        // Second turn: Technical follow-up probe
+        const followUp = activeScenario.followUps?.[0] || activeScenario.raw?.follow_up;
+        if (followUp) {
+          return `Follow-up Probe: ${followUp}`;
+        }
+      }
+
+      if (askedCount >= 2 && askedCount < 4) {
+        // Turns 3 & 4: Deep dive into the 5-point rubric criteria
+        const rubricIndex = askedCount - 1;
+        if (Array.isArray(activeScenario.rubric) && activeScenario.rubric[rubricIndex]) {
+          return `To go deeper on the trade-offs: How would you specifically address: "${activeScenario.rubric[rubricIndex]}"?`;
+        }
+      }
+
+      if (askedCount === 4) {
+        return `Final Question: Looking back at your design and failure modes, what monitoring metrics, alerts, or recovery runbooks would you establish in production for this system?`;
+      }
+    }
+
+    // 2. Web LLM mode
     if (!hasKey && useLocalModel) {
       try {
         const generator = await this.initLocalModel(onProgress);
-        const askedCount = chatHistory.filter(msg => msg.role === 'assistant').length;
-        const qBank = FALLBACK_QUESTION_BANKS[domain] || DEFAULT_FALLBACK_QUESTIONS;
-        
-        if (askedCount >= 5) {
-          return "Thank you, the interview is now complete. Please click the button below to generate your evaluation report.";
-        }
-
         const userMessages = chatHistory.filter(m => m.role === 'user');
         const latestUserMessage = userMessages[userMessages.length - 1]?.content ?? '';
 
         if (!latestUserMessage) {
+          const qBank = FALLBACK_QUESTION_BANKS[domain] || DEFAULT_FALLBACK_QUESTIONS;
           return qBank[0];
         }
 
-        // Prompt template for LaMini text generation
-        const prompt = `Context: Technical interview for ${domain} developer. Candidate said: "${latestUserMessage}". Ask a short follow up question.
+        const prompt = `Context: Technical interview for ${domain} developer (${difficulty}). Candidate said: "${latestUserMessage}". Ask a short follow up question.
 Interviewer:`;
 
         const output = await generator(prompt, {
@@ -178,41 +311,60 @@ Interviewer:`;
         if (text.includes("Interviewer:")) {
           text = text.split("Interviewer:").pop().trim();
         }
-        
-        // Clean output: prevent empty strings
-        if (text.length < 5) {
-          return qBank[askedCount % qBank.length];
-        }
-        return text;
+        if (text.length >= 5) return text;
       } catch (err) {
         console.error("WASM model execution failed. Falling back to local static bank.", err);
-        // Fall back to rule-based bank
       }
     }
 
-    // 2. Local rule-based static bank mode (No Key & no WebLLM)
+    // 3. Local rule-based static bank mode (No Key & no WebLLM)
     if (!hasKey) {
-      const qBank = FALLBACK_QUESTION_BANKS[domain] || DEFAULT_FALLBACK_QUESTIONS;
-      const askedCount = chatHistory.filter(msg => msg.role === 'assistant').length;
-      
-      if (askedCount >= 5) {
-        return "Thank you, the interview is now complete. Please click the button below to generate your evaluation report.";
-      }
-      return qBank[askedCount];
+      let catalogQuestions = [];
+      try {
+        const cat = await loadIndex0InterviewCatalog();
+        if (Array.isArray(cat) && cat.length > 0) {
+          const domainLower = String(domain || '').toLowerCase();
+          catalogQuestions = cat.filter(item => {
+            const role = (item.role || '').toLowerCase();
+            const track = (item.track || '').toLowerCase();
+            const topic = (item.topic || '').toLowerCase();
+            return role.includes(domainLower) || track.includes(domainLower) || topic.includes(domainLower);
+          }).map(item => item.question);
+        }
+      } catch (_) {}
+
+      const qBank = catalogQuestions.length > 0 ? catalogQuestions : (FALLBACK_QUESTION_BANKS[domain] || DEFAULT_FALLBACK_QUESTIONS);
+      return qBank[askedCount % qBank.length];
     }
 
-    // 3. Cloud LLM Mode (Groq / OpenAI)
+    // 4. Cloud LLM Mode (Groq / OpenAI)
     try {
+      let scenarioContext = '';
+      if (activeScenario) {
+        scenarioContext = `
+TARGET SCENARIO SPECIFICATION:
+- Title: ${activeScenario.title}
+- Primary Scenario Question: "${activeScenario.question}"
+- Production Architecture Context: "${activeScenario.raw?.context || 'N/A'}"
+- 5-Point Senior Evaluation Rubric:
+${(activeScenario.rubric || []).map((r, i) => `  ${i + 1}. ${r}`).join('\n')}
+- Follow-up Probe: "${activeScenario.followUps?.[0] || activeScenario.raw?.follow_up || 'N/A'}"
+- Ideal Answer Guide: "${activeScenario.idealAnswer || 'N/A'}"
+
+Ensure you test the candidate strictly against these criteria.
+`;
+      }
+
       const systemPrompt = `You are an expert technical interviewer conducting a mock interview with a candidate for a ${domain} developer role (Difficulty: ${difficulty}, Company Context: ${company}).
-Conduct a realistic, professional, and interactive interview.
+Conduct a realistic, professional, and interactive senior interview.
+${scenarioContext}
 Guidelines:
 1. Ask exactly ONE question at a time.
 2. Wait for the candidate's response before asking the next question or providing follow-up feedback.
-3. You can ask clarifying or follow-up questions if their answer is incomplete, shallow, or has errors.
-4. Never reveal the correct answers immediately. Instead, guide them through reasoning.
-5. The interview should consist of 5 questions in total. Keep track of the progress.
-6. On the final (5th) question, let the candidate know the interview is complete, and say exactly: "Thank you, the interview is now complete. Please click the button below to generate your evaluation report."
-7. Start immediately by asking the first interview question. Do not add introductory chit-chat. Just ask Question 1.`;
+3. On Question 1, start directly with the scenario prompt.
+4. On Questions 2-4, probe their reasoning, trade-offs, and edge cases based on the 5-point rubric.
+5. On Question 5, conclude the interview.
+6. Start immediately by asking the first interview question. Do not add introductory chit-chat.`;
 
       const formattedMessages = [
         { role: 'system', content: systemPrompt },
@@ -246,7 +398,6 @@ Guidelines:
     } catch (err) {
       console.error("Cloud completion fetch failed, falling back to static questions.", err);
       const qBank = FALLBACK_QUESTION_BANKS[domain] || DEFAULT_FALLBACK_QUESTIONS;
-      const askedCount = chatHistory.filter(msg => msg.role === 'assistant').length;
       return qBank[askedCount % qBank.length];
     }
   },
@@ -254,26 +405,21 @@ Guidelines:
   /**
    * Generates evaluation report from Groq LLM, local generator, or uses local smart rule analyzer
    */
-  async getEvaluationReport(chatHistory, domain, difficulty, company, apiKey, useLocalModel) {
+  async getEvaluationReport(chatHistory, domain, difficulty, company, apiKey, useLocalModel, activeScenario = null) {
     const hasKey = this.hasApiKey(apiKey);
 
     if (!hasKey) {
-      // Local fallback evaluation metrics based on transcript analysis
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate loading delay
+      await new Promise(resolve => setTimeout(resolve, 1200));
       
       const studentAnswers = chatHistory.filter(msg => msg.role === 'user');
       const totalWords = studentAnswers.reduce((acc, msg) => acc + msg.content.split(/\s+/).length, 0);
       const averageWordLength = studentAnswers.length ? (totalWords / studentAnswers.length) : 0;
       
-      let technical = 7.0 + Math.min(2.0, averageWordLength / 100);
+      let technical = 7.2 + Math.min(2.0, averageWordLength / 100);
       let communication = 7.5 + Math.min(1.5, averageWordLength / 120);
-      let problemSolving = 7.0 + (difficulty === 'Easy' ? 1.0 : difficulty === 'Medium' ? 1.5 : 2.0);
+      let problemSolving = 7.0 + (difficulty === 'Senior' ? 2.0 : difficulty === 'Mid' ? 1.5 : 1.0);
       let confidence = 7.0 + Math.min(2.0, studentAnswers.length * 0.3);
       
-      if (difficulty === 'Hard') {
-        technical -= 0.5;
-      }
-
       technical = parseFloat(Math.min(10.0, Math.max(1.0, technical)).toFixed(1));
       communication = parseFloat(Math.min(10.0, Math.max(1.0, communication)).toFixed(1));
       problemSolving = parseFloat(Math.min(10.0, Math.max(1.0, problemSolving)).toFixed(1));
@@ -281,24 +427,29 @@ Guidelines:
       
       const overall = parseFloat(((technical + communication + problemSolving + confidence) / 4).toFixed(1));
 
-      const strengths = [
-        `Demonstrated a solid understanding of fundamental ${domain} concepts.`,
-        "Able to follow logic streams and structure answers chronologically.",
-        "Active communicator who addressed the prompts directly."
+      let strengths = [
+        `Demonstrated structured problem decomposition for ${domain} (${difficulty} level).`,
+        "Communicated trade-offs and rationale clearly throughout the scenario.",
+        "Proactively addressed latency, consistency, and failure modes."
       ];
 
-      const weaknesses = [
-        difficulty === 'Hard' 
-          ? "Struggled slightly when asked to explain corner cases or time complexity constraints."
-          : "Answers could benefit from more specific, concrete code examples.",
-        "Could explain OOP design patterns or execution architectures in more depth."
+      let weaknesses = [
+        "Could expand on automated canary deployments and zero-downtime database migrations.",
+        "Ensure exact mathematical estimation bounds are calculated early in the problem discussion."
       ];
 
-      const tips = [
-        "Include dynamic code snippets or database schema details to support theoretical assertions.",
-        `Practice building mock mini-projects focused on ${domain} advanced principles.`,
-        "Ensure you address time and space complexities proactively in placement rounds."
+      let tips = [
+        "Always structure system design answers: Clarify -> Estimate -> API Design -> Architecture -> Deep Dives.",
+        `Review the 5-point senior rubric for "${activeScenario?.title || domain}" before real enterprise placements.`,
+        "Practice drawing interactive state and architecture flowcharts during interviews."
       ];
+
+      if (activeScenario && Array.isArray(activeScenario.rubric) && activeScenario.rubric.length > 0) {
+        strengths.push(`Addressed core rubric requirement: "${activeScenario.rubric[0]}"`);
+        if (activeScenario.rubric[1]) {
+          tips.push(`Focus more on: "${activeScenario.rubric[1]}"`);
+        }
+      }
 
       return {
         score_technical: technical,
@@ -309,18 +460,28 @@ Guidelines:
         strengths,
         weaknesses,
         tips,
-        summary: `The candidate demonstrated Placement-ready foundational knowledge in ${domain} (${difficulty} level). Communication is structured, although technical answers can be expanded with real-world examples and runtime profiling metrics.`
+        summary: `The candidate demonstrated strong senior placement readiness in ${domain} (${difficulty} level). Solutions addressed core architectural invariants and trade-offs.`
       };
     }
 
     // Call Groq / OpenAI API
     try {
+      let scenarioRubricsPrompt = '';
+      if (activeScenario) {
+        scenarioRubricsPrompt = `
+EVALUATE STRICTLY AGAINST THIS SCENARIO & 5-POINT RUBRIC:
+- Scenario: ${activeScenario.title}
+- 5-Point Senior Rubric Criteria:
+${(activeScenario.rubric || []).map((r, i) => `${i + 1}. ${r}`).join('\n')}
+- Ideal Model Answer Reference:
+${activeScenario.idealAnswer || 'N/A'}
+`;
+      }
+
       const systemPrompt = `You are an expert technical evaluation engine. Analyze the following interview transcript between a candidate and an AI interviewer.
 Generate a detailed, objective evaluation report.
-The candidate's details are:
-- Domain: ${domain}
-- Difficulty: ${difficulty}
-- Company Style: ${company}
+Candidate Track: ${domain} | Level: ${difficulty} | Company Style: ${company}
+${scenarioRubricsPrompt}
 
 You MUST respond with a single, valid JSON object ONLY. Do not write any markdown formatting, code blocks (such as \`\`\`json), backticks, introduction, or explanation. The response must be parsable by JSON.parse.
 The JSON structure MUST match this exactly:
@@ -330,7 +491,7 @@ The JSON structure MUST match this exactly:
   "score_problem_solving": <number between 1.0 and 10.0>,
   "score_confidence": <number between 1.0 and 10.0>,
   "score_overall": <number between 1.0 and 10.0>,
-  "strengths": ["strength 1", "strength 2"],
+  "strengths": ["strength 1", "strength 2", "strength 3"],
   "weaknesses": ["weakness 1", "weakness 2"],
   "tips": ["tip 1", "tip 2"],
   "summary": "concise overall feedback summary text"
@@ -377,13 +538,10 @@ The JSON structure MUST match this exactly:
       return JSON.parse(cleanText);
     } catch (err) {
       console.error("Failed to parse LLM evaluation, returning rule-based metrics.", err);
-      return this.getEvaluationReport(chatHistory, domain, difficulty, company, "", false);
+      return this.getEvaluationReport(chatHistory, domain, difficulty, company, "", false, activeScenario);
     }
   },
 
-  /**
-   * Saves the result record to local storage
-   */
   async saveResults(user, domain, difficulty, company, scores, chatHistory, durationSeconds) {
     if (!user) throw new Error("User registration data is required to save results.");
 
@@ -435,9 +593,6 @@ The JSON structure MUST match this exactly:
     return [record];
   },
 
-  /**
-   * Fetches previous interview attempts for this student email
-   */
   async fetchAttempts(email) {
     if (!email) return [];
     try {
@@ -449,3 +604,5 @@ The JSON structure MUST match this exactly:
     }
   }
 };
+
+export default aiInterviewService;

@@ -1,0 +1,39 @@
+{
+  "id": "swe-mid-scenario-memory-leak",
+  "fileName": "swe-mid-scenario-memory-leak",
+  "title": "Swe mid scenario memory leak",
+  "role": "swe",
+  "level": "mid",
+  "track": "scenario",
+  "topic": "Swe mid scenario memory leak",
+  "question": "Memory usage on one of your backend services climbs steadily over hours and the process eventually gets OOM-killed and restarted. How do you find the leak?",
+  "idealAnswer": "Recognizes the gradual, monotonic growth pattern as a classic memory leak signature (something is being retained and never released), not a load spike or normal GC sawtooth pattern\n\nProposes using a memory profiler or heap snapshot tool appropriate to the language/runtime to see what object types are accumulating over time\n\nSuggests comparing heap snapshots taken at two points in time to see what's growing, rather than just staring at total memory usage\n\nNames plausible concrete causes: an ever-growing cache or in-memory collection with no eviction, event listeners/subscriptions that are added but never removed, or unclosed resources like connections accumulating\n\nMentions the restart as only masking the symptom, treating the automatic OOM-restart as a stopgap while root-causing, not as an acceptable long-term fix",
+  "rubric": [
+    "Recognizes the gradual, monotonic growth pattern as a classic memory leak signature (something is being retained and never released), not a load spike or normal GC sawtooth pattern",
+    "Proposes using a memory profiler or heap snapshot tool appropriate to the language/runtime to see what object types are accumulating over time",
+    "Suggests comparing heap snapshots taken at two points in time to see what's growing, rather than just staring at total memory usage",
+    "Names plausible concrete causes: an ever-growing cache or in-memory collection with no eviction, event listeners/subscriptions that are added but never removed, or unclosed resources like connections accumulating",
+    "Mentions the restart as only masking the symptom, treating the automatic OOM-restart as a stopgap while root-causing, not as an acceptable long-term fix"
+  ],
+  "followUps": [
+    "If the leaked objects turn out to be event listeners that never got unsubscribed, what specifically in the code would you look for?"
+  ],
+  "raw": {
+    "id": "swe-mid-scenario-memory-leak",
+    "track": "swe",
+    "specialization": "general",
+    "level": "mid",
+    "stage": "scenario",
+    "question": "Memory usage on one of your backend services climbs steadily over hours and the process eventually gets OOM-killed and restarted. How do you find the leak?",
+    "context": "The service handles a steady stream of requests, memory doesn't spike suddenly, it grows gradually and never comes back down even under low load.",
+    "key_points": [
+      "Recognizes the gradual, monotonic growth pattern as a classic memory leak signature (something is being retained and never released), not a load spike or normal GC sawtooth pattern",
+      "Proposes using a memory profiler or heap snapshot tool appropriate to the language/runtime to see what object types are accumulating over time",
+      "Suggests comparing heap snapshots taken at two points in time to see what's growing, rather than just staring at total memory usage",
+      "Names plausible concrete causes: an ever-growing cache or in-memory collection with no eviction, event listeners/subscriptions that are added but never removed, or unclosed resources like connections accumulating",
+      "Mentions the restart as only masking the symptom, treating the automatic OOM-restart as a stopgap while root-causing, not as an acceptable long-term fix"
+    ],
+    "follow_up": "If the leaked objects turn out to be event listeners that never got unsubscribed, what specifically in the code would you look for?",
+    "battle_eligible": true
+  }
+}

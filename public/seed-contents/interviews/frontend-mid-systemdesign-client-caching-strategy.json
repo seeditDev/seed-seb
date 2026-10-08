@@ -1,0 +1,41 @@
+{
+  "id": "frontend-mid-systemdesign-client-caching-strategy",
+  "fileName": "frontend-mid-systemdesign-client-caching-strategy",
+  "title": "Frontend mid systemdesign client caching strategy",
+  "role": "frontend",
+  "level": "mid",
+  "track": "systemdesign",
+  "topic": "Frontend mid systemdesign client caching strategy",
+  "question": "Design a client-side caching strategy for an app where several screens display overlapping data fetched from the same API, e.g. a user's profile shown in a header, a sidebar, and a settings page.",
+  "idealAnswer": "Introduce a shared client-side cache keyed by resource identity (e.g. by user id) so multiple components requesting the same data reuse one cached entry instead of firing duplicate requests\n\nDefine a staleness policy per resource type, some data (like a user's display name) can be cached longer than something like a live notification count, this shouldn't be one-size-fits-all\n\nHandle cache invalidation explicitly: when a mutation updates the user (e.g. editing settings), the cache entry must be updated or invalidated so all screens reflect the change, not just the screen that made the edit\n\nDeduplicate in-flight requests, if two components request the same uncached resource simultaneously, they should share one network request rather than firing two\n\nDecide a fallback/loading strategy: show stale-while-revalidate (old data immediately, refreshed in background) versus a loading spinner, this is a real UX tradeoff, not just an implementation detail\n\nMentions that this is largely a solved problem via libraries like React Query, SWR, or Apollo's cache, and a strong answer explains why to use one of these vs. hand-rolling it, or explicitly justifies hand-rolling for a specific reason",
+  "rubric": [
+    "Introduce a shared client-side cache keyed by resource identity (e.g. by user id) so multiple components requesting the same data reuse one cached entry instead of firing duplicate requests",
+    "Define a staleness policy per resource type, some data (like a user's display name) can be cached longer than something like a live notification count, this shouldn't be one-size-fits-all",
+    "Handle cache invalidation explicitly: when a mutation updates the user (e.g. editing settings), the cache entry must be updated or invalidated so all screens reflect the change, not just the screen that made the edit",
+    "Deduplicate in-flight requests, if two components request the same uncached resource simultaneously, they should share one network request rather than firing two",
+    "Decide a fallback/loading strategy: show stale-while-revalidate (old data immediately, refreshed in background) versus a loading spinner, this is a real UX tradeoff, not just an implementation detail",
+    "Mentions that this is largely a solved problem via libraries like React Query, SWR, or Apollo's cache, and a strong answer explains why to use one of these vs. hand-rolling it, or explicitly justifies hand-rolling for a specific reason"
+  ],
+  "followUps": [
+    "How would you handle a resource that's cached client-side but can also be changed by a different user in another browser tab or device?"
+  ],
+  "raw": {
+    "id": "frontend-mid-systemdesign-client-caching-strategy",
+    "track": "swe",
+    "specialization": "frontend",
+    "level": "mid",
+    "stage": "system-design",
+    "question": "Design a client-side caching strategy for an app where several screens display overlapping data fetched from the same API, e.g. a user's profile shown in a header, a sidebar, and a settings page.",
+    "context": "Right now, each screen independently fetches the same user data, causing redundant network requests and occasional inconsistency where one screen shows stale info after an update elsewhere.",
+    "key_points": [
+      "Introduce a shared client-side cache keyed by resource identity (e.g. by user id) so multiple components requesting the same data reuse one cached entry instead of firing duplicate requests",
+      "Define a staleness policy per resource type, some data (like a user's display name) can be cached longer than something like a live notification count, this shouldn't be one-size-fits-all",
+      "Handle cache invalidation explicitly: when a mutation updates the user (e.g. editing settings), the cache entry must be updated or invalidated so all screens reflect the change, not just the screen that made the edit",
+      "Deduplicate in-flight requests, if two components request the same uncached resource simultaneously, they should share one network request rather than firing two",
+      "Decide a fallback/loading strategy: show stale-while-revalidate (old data immediately, refreshed in background) versus a loading spinner, this is a real UX tradeoff, not just an implementation detail",
+      "Mentions that this is largely a solved problem via libraries like React Query, SWR, or Apollo's cache, and a strong answer explains why to use one of these vs. hand-rolling it, or explicitly justifies hand-rolling for a specific reason"
+    ],
+    "follow_up": "How would you handle a resource that's cached client-side but can also be changed by a different user in another browser tab or device?",
+    "battle_eligible": false
+  }
+}

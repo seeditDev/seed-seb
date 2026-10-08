@@ -1,0 +1,39 @@
+{
+  "id": "swe-senior-scenario-schema-migration-live",
+  "fileName": "swe-senior-scenario-schema-migration-live",
+  "title": "Swe senior scenario schema migration live",
+  "role": "swe",
+  "level": "senior",
+  "track": "scenario",
+  "topic": "Swe senior scenario schema migration live",
+  "question": "You need to rename a column that's actively read and written by a high-traffic production service, with zero downtime and no window for a maintenance freeze. How do you sequence the migration?",
+  "idealAnswer": "Recognizes the core constraint: because of the rolling deploy, old code (using the old column name) and new code (using the new name) will run simultaneously for a period, so a single-step rename would break one version or the other\n\nProposes a multi-step, backward-compatible migration: add the new column first, dual-write to both old and new columns, backfill existing rows, switch reads over to the new column, then stop writing to the old column, then drop it, each step deployed and verified separately\n\nExplicitly sequences deploys around the data migration, not just the schema change, e.g. dual-write code has to be live before the backfill runs, and reads shouldn't switch to the new column until the backfill is confirmed complete\n\nAddresses rollback safety at each step, a strong answer picks an order where any individual step can be reverted without data loss or breaking currently-running instances\n\nMentions verifying data consistency between old and new columns before cutting over reads (e.g. a comparison/audit query), rather than assuming the backfill and dual-write are correct",
+  "rubric": [
+    "Recognizes the core constraint: because of the rolling deploy, old code (using the old column name) and new code (using the new name) will run simultaneously for a period, so a single-step rename would break one version or the other",
+    "Proposes a multi-step, backward-compatible migration: add the new column first, dual-write to both old and new columns, backfill existing rows, switch reads over to the new column, then stop writing to the old column, then drop it, each step deployed and verified separately",
+    "Explicitly sequences deploys around the data migration, not just the schema change, e.g. dual-write code has to be live before the backfill runs, and reads shouldn't switch to the new column until the backfill is confirmed complete",
+    "Addresses rollback safety at each step, a strong answer picks an order where any individual step can be reverted without data loss or breaking currently-running instances",
+    "Mentions verifying data consistency between old and new columns before cutting over reads (e.g. a comparison/audit query), rather than assuming the backfill and dual-write are correct"
+  ],
+  "followUps": [
+    "What would you monitor during the dual-write phase to catch a bug before it corrupts data at scale?"
+  ],
+  "raw": {
+    "id": "swe-senior-scenario-schema-migration-live",
+    "track": "swe",
+    "specialization": "general",
+    "level": "senior",
+    "stage": "scenario",
+    "question": "You need to rename a column that's actively read and written by a high-traffic production service, with zero downtime and no window for a maintenance freeze. How do you sequence the migration?",
+    "context": "The service runs multiple instances and deploys happen gradually (rolling deploy), so old and new code will briefly run side by side.",
+    "key_points": [
+      "Recognizes the core constraint: because of the rolling deploy, old code (using the old column name) and new code (using the new name) will run simultaneously for a period, so a single-step rename would break one version or the other",
+      "Proposes a multi-step, backward-compatible migration: add the new column first, dual-write to both old and new columns, backfill existing rows, switch reads over to the new column, then stop writing to the old column, then drop it, each step deployed and verified separately",
+      "Explicitly sequences deploys around the data migration, not just the schema change, e.g. dual-write code has to be live before the backfill runs, and reads shouldn't switch to the new column until the backfill is confirmed complete",
+      "Addresses rollback safety at each step, a strong answer picks an order where any individual step can be reverted without data loss or breaking currently-running instances",
+      "Mentions verifying data consistency between old and new columns before cutting over reads (e.g. a comparison/audit query), rather than assuming the backfill and dual-write are correct"
+    ],
+    "follow_up": "What would you monitor during the dual-write phase to catch a bug before it corrupts data at scale?",
+    "battle_eligible": true
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "backend-senior-scenario-cascading-outage",
+  "fileName": "backend-senior-scenario-cascading-outage",
+  "title": "Backend senior scenario cascading outage",
+  "role": "backend",
+  "level": "senior",
+  "track": "scenario",
+  "topic": "Backend senior scenario cascading outage",
+  "question": "A downstream service starts responding slowly. Within a few minutes, every service that calls it is also degraded, and the whole platform is effectively down. As the engineer leading incident response, what do you do?",
+  "idealAnswer": "Leads with stabilizing the system before root-causing it, e.g. shedding load or failing fast on calls to the slow downstream service (even manually, like scaling it down from the load balancer or feature-flagging off the dependent functionality) to stop the cascade from spreading further\n\nCorrectly diagnoses the mechanism: callers are blocking and holding resources (threads, connections) waiting on a slow dependency, so the slowness of one service propagates as resource exhaustion in every caller, not just as slow responses\n\nTalks about clear incident command basics: someone owning the decision-making and communication, status updates going out, avoiding multiple people making uncoordinated changes to the same systems mid-incident\n\nIdentifies the durable fix for next time: timeouts and circuit breakers on inter-service calls, so one slow dependency degrades gracefully (fails fast, or serves cached/default data) instead of cascading\n\nMentions a blameless postmortem afterward focused on why the cascade wasn't contained (missing timeouts/circuit breakers, no load shedding), not just what triggered the initial slowness",
+  "rubric": [
+    "Leads with stabilizing the system before root-causing it, e.g. shedding load or failing fast on calls to the slow downstream service (even manually, like scaling it down from the load balancer or feature-flagging off the dependent functionality) to stop the cascade from spreading further",
+    "Correctly diagnoses the mechanism: callers are blocking and holding resources (threads, connections) waiting on a slow dependency, so the slowness of one service propagates as resource exhaustion in every caller, not just as slow responses",
+    "Talks about clear incident command basics: someone owning the decision-making and communication, status updates going out, avoiding multiple people making uncoordinated changes to the same systems mid-incident",
+    "Identifies the durable fix for next time: timeouts and circuit breakers on inter-service calls, so one slow dependency degrades gracefully (fails fast, or serves cached/default data) instead of cascading",
+    "Mentions a blameless postmortem afterward focused on why the cascade wasn't contained (missing timeouts/circuit breakers, no load shedding), not just what triggered the initial slowness"
+  ],
+  "followUps": [
+    "How would you decide what timeout value to set for a given downstream call, and what happens to correctness if you set it too aggressively?"
+  ],
+  "raw": {
+    "id": "backend-senior-scenario-cascading-outage",
+    "track": "swe",
+    "specialization": "backend",
+    "level": "senior",
+    "stage": "scenario",
+    "question": "A downstream service starts responding slowly. Within a few minutes, every service that calls it is also degraded, and the whole platform is effectively down. As the engineer leading incident response, what do you do?",
+    "context": "There are dozens of services calling the slow one directly, none of them have circuit breakers configured, and threads/connections are piling up waiting on the slow calls.",
+    "key_points": [
+      "Leads with stabilizing the system before root-causing it, e.g. shedding load or failing fast on calls to the slow downstream service (even manually, like scaling it down from the load balancer or feature-flagging off the dependent functionality) to stop the cascade from spreading further",
+      "Correctly diagnoses the mechanism: callers are blocking and holding resources (threads, connections) waiting on a slow dependency, so the slowness of one service propagates as resource exhaustion in every caller, not just as slow responses",
+      "Talks about clear incident command basics: someone owning the decision-making and communication, status updates going out, avoiding multiple people making uncoordinated changes to the same systems mid-incident",
+      "Identifies the durable fix for next time: timeouts and circuit breakers on inter-service calls, so one slow dependency degrades gracefully (fails fast, or serves cached/default data) instead of cascading",
+      "Mentions a blameless postmortem afterward focused on why the cascade wasn't contained (missing timeouts/circuit breakers, no load shedding), not just what triggered the initial slowness"
+    ],
+    "follow_up": "How would you decide what timeout value to set for a given downstream call, and what happens to correctness if you set it too aggressively?",
+    "battle_eligible": true
+  }
+}

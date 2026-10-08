@@ -1,0 +1,43 @@
+{
+  "id": "backend-mid-domain-rate-limiting-approaches",
+  "fileName": "backend-mid-domain-rate-limiting-approaches",
+  "title": "Backend mid domain rate limiting approaches",
+  "role": "backend",
+  "level": "mid",
+  "track": "domain",
+  "topic": "Backend mid domain rate limiting approaches",
+  "question": "Compare token bucket, fixed window, and sliding window as rate limiting algorithms, and explain the failure mode of the naive one.",
+  "idealAnswer": "Fixed window: counts requests in a fixed time bucket (e.g. per minute) and resets at the boundary, simple to implement but allows a burst of up to 2x the limit right around the boundary (e.g. a client can send the full limit at the end of one window and again immediately at the start of the next)\n\nSliding window (log or counter-based approximation): tracks requests over a continuously moving window rather than a hard reset, avoiding the boundary burst problem at the cost of more bookkeeping\n\nToken bucket: tokens refill at a steady rate up to a max capacity, each request consumes a token, naturally allows brief bursts up to the bucket size while enforcing a steady average rate over time\n\nExplains why token bucket is often preferred in practice, it allows legitimate bursty traffic (a user clicking rapidly) while still bounding sustained rate, which fixed window can't do gracefully\n\nMentions that in a distributed system, whichever algorithm is chosen needs a shared store (like Redis) with atomic increment/check operations, or the limit isn't actually enforced correctly across multiple server instances",
+  "rubric": [
+    "Fixed window: counts requests in a fixed time bucket (e.g. per minute) and resets at the boundary, simple to implement but allows a burst of up to 2x the limit right around the boundary (e.g. a client can send the full limit at the end of one window and again immediately at the start of the next)",
+    "Sliding window (log or counter-based approximation): tracks requests over a continuously moving window rather than a hard reset, avoiding the boundary burst problem at the cost of more bookkeeping",
+    "Token bucket: tokens refill at a steady rate up to a max capacity, each request consumes a token, naturally allows brief bursts up to the bucket size while enforcing a steady average rate over time",
+    "Explains why token bucket is often preferred in practice, it allows legitimate bursty traffic (a user clicking rapidly) while still bounding sustained rate, which fixed window can't do gracefully",
+    "Mentions that in a distributed system, whichever algorithm is chosen needs a shared store (like Redis) with atomic increment/check operations, or the limit isn't actually enforced correctly across multiple server instances"
+  ],
+  "followUps": [
+    "How would you rate limit by API key while also protecting the service from a flood of requests with no API key at all?"
+  ],
+  "raw": {
+    "id": "backend-mid-domain-rate-limiting-approaches",
+    "track": "swe",
+    "specialization": "backend",
+    "level": "mid",
+    "stage": "domain",
+    "question": "Compare token bucket, fixed window, and sliding window as rate limiting algorithms, and explain the failure mode of the naive one.",
+    "context": null,
+    "key_points": [
+      "Fixed window: counts requests in a fixed time bucket (e.g. per minute) and resets at the boundary, simple to implement but allows a burst of up to 2x the limit right around the boundary (e.g. a client can send the full limit at the end of one window and again immediately at the start of the next)",
+      "Sliding window (log or counter-based approximation): tracks requests over a continuously moving window rather than a hard reset, avoiding the boundary burst problem at the cost of more bookkeeping",
+      "Token bucket: tokens refill at a steady rate up to a max capacity, each request consumes a token, naturally allows brief bursts up to the bucket size while enforcing a steady average rate over time",
+      "Explains why token bucket is often preferred in practice, it allows legitimate bursty traffic (a user clicking rapidly) while still bounding sustained rate, which fixed window can't do gracefully",
+      "Mentions that in a distributed system, whichever algorithm is chosen needs a shared store (like Redis) with atomic increment/check operations, or the limit isn't actually enforced correctly across multiple server instances"
+    ],
+    "follow_up": "How would you rate limit by API key while also protecting the service from a flood of requests with no API key at all?",
+    "battle_eligible": true,
+    "related_lesson": {
+      "type": "system-design",
+      "id": "sd-rate-limiting"
+    }
+  }
+}

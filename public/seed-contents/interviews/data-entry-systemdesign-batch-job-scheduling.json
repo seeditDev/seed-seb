@@ -1,0 +1,39 @@
+{
+  "id": "data-entry-systemdesign-batch-job-scheduling",
+  "fileName": "data-entry-systemdesign-batch-job-scheduling",
+  "title": "Data entry systemdesign batch job scheduling",
+  "role": "data",
+  "level": "entry",
+  "track": "systemdesign",
+  "topic": "Data entry systemdesign batch job scheduling",
+  "question": "How would you design the scheduling for this set of batch jobs so they run reliably and in the right order?",
+  "idealAnswer": "Jobs need explicit dependency ordering, e.g. Job C should only start after Job B succeeds, not just run on a fixed time offset, since a delayed upstream job could otherwise cause Job C to read stale data\n\nA scheduler or orchestrator, e.g. a DAG-based tool, is preferable to independent cron jobs because it can express and enforce these dependencies directly\n\nEach job should have retry logic for transient failures, e.g. a temporary network issue, rather than the whole nightly run failing outright\n\nIf a job fails after retries, downstream jobs should not run on incomplete or missing data, the pipeline should stop or alert rather than silently produce a wrong report\n\nMentions monitoring or alerting so someone is notified when a job fails, rather than the team discovering a problem only when the report looks wrong the next day",
+  "rubric": [
+    "Jobs need explicit dependency ordering, e.g. Job C should only start after Job B succeeds, not just run on a fixed time offset, since a delayed upstream job could otherwise cause Job C to read stale data",
+    "A scheduler or orchestrator, e.g. a DAG-based tool, is preferable to independent cron jobs because it can express and enforce these dependencies directly",
+    "Each job should have retry logic for transient failures, e.g. a temporary network issue, rather than the whole nightly run failing outright",
+    "If a job fails after retries, downstream jobs should not run on incomplete or missing data, the pipeline should stop or alert rather than silently produce a wrong report",
+    "Mentions monitoring or alerting so someone is notified when a job fails, rather than the team discovering a problem only when the report looks wrong the next day"
+  ],
+  "followUps": [
+    "What would you do if Job A usually finishes in 10 minutes but occasionally takes 2 hours due to a slow upstream source?"
+  ],
+  "raw": {
+    "id": "data-entry-systemdesign-batch-job-scheduling",
+    "track": "ml-ai",
+    "specialization": "data",
+    "level": "entry",
+    "stage": "system-design",
+    "question": "How would you design the scheduling for this set of batch jobs so they run reliably and in the right order?",
+    "context": "You have three batch jobs that need to run every night: Job A extracts raw order data, Job B transforms it into a cleaned table, and Job C builds a summary report from the cleaned table. Job C must not run until Job B finishes successfully, and Job B must not run until Job A finishes successfully.",
+    "key_points": [
+      "Jobs need explicit dependency ordering, e.g. Job C should only start after Job B succeeds, not just run on a fixed time offset, since a delayed upstream job could otherwise cause Job C to read stale data",
+      "A scheduler or orchestrator, e.g. a DAG-based tool, is preferable to independent cron jobs because it can express and enforce these dependencies directly",
+      "Each job should have retry logic for transient failures, e.g. a temporary network issue, rather than the whole nightly run failing outright",
+      "If a job fails after retries, downstream jobs should not run on incomplete or missing data, the pipeline should stop or alert rather than silently produce a wrong report",
+      "Mentions monitoring or alerting so someone is notified when a job fails, rather than the team discovering a problem only when the report looks wrong the next day"
+    ],
+    "follow_up": "What would you do if Job A usually finishes in 10 minutes but occasionally takes 2 hours due to a slow upstream source?",
+    "battle_eligible": false
+  }
+}

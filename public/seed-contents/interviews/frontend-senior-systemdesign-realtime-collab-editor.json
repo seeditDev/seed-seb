@@ -1,0 +1,45 @@
+{
+  "id": "frontend-senior-systemdesign-realtime-collab-editor",
+  "fileName": "frontend-senior-systemdesign-realtime-collab-editor",
+  "title": "Frontend senior systemdesign realtime collab editor",
+  "role": "frontend",
+  "level": "senior",
+  "track": "systemdesign",
+  "topic": "Frontend senior systemdesign realtime collab editor",
+  "question": "Design the client-side architecture for a real-time collaborative text editor, similar to multiple people editing the same document simultaneously and seeing each other's changes live.",
+  "idealAnswer": "The client needs a local, optimistic editing model, a user's own keystrokes must render instantly without waiting for a server round-trip, conflicting edits are reconciled after the fact rather than blocking input\n\nConflict resolution generally relies on a CRDT (conflict-free replicated data type) or operational transformation, both let concurrent edits from multiple clients converge to the same final state without a central lock, a strong answer explains the core idea of one of these at a high level\n\nA persistent connection (WebSocket or similar) is needed for low-latency bidirectional sync, with a strategy for reconnection and resending unacknowledged local changes if the connection drops\n\nThe client needs to render other users' cursors/selections and merge their remote operations into the local document state without disrupting the local user's own in-progress typing or cursor position\n\nOffline or degraded-network handling matters, edits made while disconnected should queue locally and reconcile once reconnected, rather than being lost or blocking the user from typing\n\nPerformance at scale matters, for a large document, applying every remote operation individually to the DOM can be expensive, batching updates and using an efficient diffing/rendering strategy is necessary to stay responsive",
+  "rubric": [
+    "The client needs a local, optimistic editing model, a user's own keystrokes must render instantly without waiting for a server round-trip, conflicting edits are reconciled after the fact rather than blocking input",
+    "Conflict resolution generally relies on a CRDT (conflict-free replicated data type) or operational transformation, both let concurrent edits from multiple clients converge to the same final state without a central lock, a strong answer explains the core idea of one of these at a high level",
+    "A persistent connection (WebSocket or similar) is needed for low-latency bidirectional sync, with a strategy for reconnection and resending unacknowledged local changes if the connection drops",
+    "The client needs to render other users' cursors/selections and merge their remote operations into the local document state without disrupting the local user's own in-progress typing or cursor position",
+    "Offline or degraded-network handling matters, edits made while disconnected should queue locally and reconcile once reconnected, rather than being lost or blocking the user from typing",
+    "Performance at scale matters, for a large document, applying every remote operation individually to the DOM can be expensive, batching updates and using an efficient diffing/rendering strategy is necessary to stay responsive"
+  ],
+  "followUps": [
+    "How would you handle a user who's been offline for ten minutes and reconnects with a batch of local edits that conflict with a lot of remote changes?"
+  ],
+  "raw": {
+    "id": "frontend-senior-systemdesign-realtime-collab-editor",
+    "track": "swe",
+    "specialization": "frontend",
+    "level": "senior",
+    "stage": "system-design",
+    "question": "Design the client-side architecture for a real-time collaborative text editor, similar to multiple people editing the same document simultaneously and seeing each other's changes live.",
+    "context": "Multiple users can be typing in the same document at the same time, from different network conditions, and the editor needs to stay responsive and never lose or corrupt anyone's edits.",
+    "key_points": [
+      "The client needs a local, optimistic editing model, a user's own keystrokes must render instantly without waiting for a server round-trip, conflicting edits are reconciled after the fact rather than blocking input",
+      "Conflict resolution generally relies on a CRDT (conflict-free replicated data type) or operational transformation, both let concurrent edits from multiple clients converge to the same final state without a central lock, a strong answer explains the core idea of one of these at a high level",
+      "A persistent connection (WebSocket or similar) is needed for low-latency bidirectional sync, with a strategy for reconnection and resending unacknowledged local changes if the connection drops",
+      "The client needs to render other users' cursors/selections and merge their remote operations into the local document state without disrupting the local user's own in-progress typing or cursor position",
+      "Offline or degraded-network handling matters, edits made while disconnected should queue locally and reconcile once reconnected, rather than being lost or blocking the user from typing",
+      "Performance at scale matters, for a large document, applying every remote operation individually to the DOM can be expensive, batching updates and using an efficient diffing/rendering strategy is necessary to stay responsive"
+    ],
+    "follow_up": "How would you handle a user who's been offline for ten minutes and reconnects with a batch of local edits that conflict with a lot of remote changes?",
+    "battle_eligible": false,
+    "related_lesson": {
+      "type": "system-design",
+      "id": "cs-google-docs-collaborative-editing"
+    }
+  }
+}

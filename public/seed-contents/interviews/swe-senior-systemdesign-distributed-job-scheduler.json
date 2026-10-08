@@ -1,0 +1,43 @@
+{
+  "id": "swe-senior-systemdesign-distributed-job-scheduler",
+  "fileName": "swe-senior-systemdesign-distributed-job-scheduler",
+  "title": "Swe senior systemdesign distributed job scheduler",
+  "role": "swe",
+  "level": "senior",
+  "track": "systemdesign",
+  "topic": "Swe senior systemdesign distributed job scheduler",
+  "question": "Design a distributed job scheduler that runs recurring jobs (like 'send this report every day at 9am') across a fleet of worker machines, where any single machine can go down at any time.",
+  "idealAnswer": "Separates scheduling (deciding a job is due) from execution (a worker actually running it), and describes how due jobs get handed off to available workers rather than one component doing both\n\nAddresses the at-most-once requirement directly: uses a claim/lease mechanism (e.g. a worker atomically claims a job with a lease, backed by a database row lock or similar) so two workers can't both pick up and execute the same scheduled run\n\nHandles worker failure mid-execution: a lease with a timeout, so if a worker dies while holding a job, the lease expires and the job becomes claimable again, rather than being stuck forever, and explains why this can occasionally cause a missed or delayed run instead of a duplicate one, matching the stated requirement\n\nAddresses the scheduler itself being a single point of failure, e.g. running multiple scheduler instances with leader election, or making the 'find due jobs' step itself safe to run redundantly since claiming is what actually prevents duplicates\n\nMentions persisting job state and next-run-time durably (not in-memory only), so a full restart of the scheduling layer doesn't lose track of what's scheduled or when it last ran",
+  "rubric": [
+    "Separates scheduling (deciding a job is due) from execution (a worker actually running it), and describes how due jobs get handed off to available workers rather than one component doing both",
+    "Addresses the at-most-once requirement directly: uses a claim/lease mechanism (e.g. a worker atomically claims a job with a lease, backed by a database row lock or similar) so two workers can't both pick up and execute the same scheduled run",
+    "Handles worker failure mid-execution: a lease with a timeout, so if a worker dies while holding a job, the lease expires and the job becomes claimable again, rather than being stuck forever, and explains why this can occasionally cause a missed or delayed run instead of a duplicate one, matching the stated requirement",
+    "Addresses the scheduler itself being a single point of failure, e.g. running multiple scheduler instances with leader election, or making the 'find due jobs' step itself safe to run redundantly since claiming is what actually prevents duplicates",
+    "Mentions persisting job state and next-run-time durably (not in-memory only), so a full restart of the scheduling layer doesn't lose track of what's scheduled or when it last ran"
+  ],
+  "followUps": [
+    "How would you handle a job that consistently takes longer to run than its scheduled interval, so a new run becomes due before the last one finishes?"
+  ],
+  "raw": {
+    "id": "swe-senior-systemdesign-distributed-job-scheduler",
+    "track": "swe",
+    "specialization": "general",
+    "level": "senior",
+    "stage": "system-design",
+    "question": "Design a distributed job scheduler that runs recurring jobs (like 'send this report every day at 9am') across a fleet of worker machines, where any single machine can go down at any time.",
+    "context": "Assume thousands of scheduled jobs, and a job must run at most once per scheduled time, missing an occasional run is acceptable but duplicate runs are not.",
+    "key_points": [
+      "Separates scheduling (deciding a job is due) from execution (a worker actually running it), and describes how due jobs get handed off to available workers rather than one component doing both",
+      "Addresses the at-most-once requirement directly: uses a claim/lease mechanism (e.g. a worker atomically claims a job with a lease, backed by a database row lock or similar) so two workers can't both pick up and execute the same scheduled run",
+      "Handles worker failure mid-execution: a lease with a timeout, so if a worker dies while holding a job, the lease expires and the job becomes claimable again, rather than being stuck forever, and explains why this can occasionally cause a missed or delayed run instead of a duplicate one, matching the stated requirement",
+      "Addresses the scheduler itself being a single point of failure, e.g. running multiple scheduler instances with leader election, or making the 'find due jobs' step itself safe to run redundantly since claiming is what actually prevents duplicates",
+      "Mentions persisting job state and next-run-time durably (not in-memory only), so a full restart of the scheduling layer doesn't lose track of what's scheduled or when it last ran"
+    ],
+    "follow_up": "How would you handle a job that consistently takes longer to run than its scheduled interval, so a new run becomes due before the last one finishes?",
+    "battle_eligible": false,
+    "related_lesson": {
+      "type": "system-design",
+      "id": "cs-distributed-job-scheduler"
+    }
+  }
+}

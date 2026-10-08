@@ -1,0 +1,39 @@
+{
+  "id": "frontend-mid-scenario-fetch-race-condition",
+  "fileName": "frontend-mid-scenario-fetch-race-condition",
+  "title": "Frontend mid scenario fetch race condition",
+  "role": "frontend",
+  "level": "mid",
+  "track": "scenario",
+  "topic": "Frontend mid scenario fetch race condition",
+  "question": "What's going wrong here, and how would you fix it?",
+  "idealAnswer": "This is a classic race condition, requests fired in order can resolve out of order over the network, so the last response to arrive wins even if it's not for the latest query\n\nOne fix is to track a request identifier (or the query itself) at fetch time, and when a response comes back, only apply it if it still matches the current/latest request, discarding stale ones\n\nAnother fix is to use an AbortController to actually cancel the in-flight previous request when a new one starts, avoiding wasted work and any risk of the stale response being applied\n\nDebouncing the input so a request is only fired after the user pauses typing reduces how often this race can occur, but doesn't fully eliminate it since network timing is still not guaranteed\n\nMentions that many data-fetching libraries (like React Query or SWR) handle request deduplication and cancellation for exactly this class of problem, which is a good argument for not hand-rolling fetch logic for something like this in a larger app",
+  "rubric": [
+    "This is a classic race condition, requests fired in order can resolve out of order over the network, so the last response to arrive wins even if it's not for the latest query",
+    "One fix is to track a request identifier (or the query itself) at fetch time, and when a response comes back, only apply it if it still matches the current/latest request, discarding stale ones",
+    "Another fix is to use an AbortController to actually cancel the in-flight previous request when a new one starts, avoiding wasted work and any risk of the stale response being applied",
+    "Debouncing the input so a request is only fired after the user pauses typing reduces how often this race can occur, but doesn't fully eliminate it since network timing is still not guaranteed",
+    "Mentions that many data-fetching libraries (like React Query or SWR) handle request deduplication and cancellation for exactly this class of problem, which is a good argument for not hand-rolling fetch logic for something like this in a larger app"
+  ],
+  "followUps": [
+    "How would you decide between an AbortController-based fix and a request-id-based fix if the backend can't easily support cancellation?"
+  ],
+  "raw": {
+    "id": "frontend-mid-scenario-fetch-race-condition",
+    "track": "swe",
+    "specialization": "frontend",
+    "level": "mid",
+    "stage": "scenario",
+    "question": "What's going wrong here, and how would you fix it?",
+    "context": "A search box fetches results as the user types. Occasionally, an older, slower request finishes after a newer one, and the UI briefly shows stale results for a query the user already changed away from.",
+    "key_points": [
+      "This is a classic race condition, requests fired in order can resolve out of order over the network, so the last response to arrive wins even if it's not for the latest query",
+      "One fix is to track a request identifier (or the query itself) at fetch time, and when a response comes back, only apply it if it still matches the current/latest request, discarding stale ones",
+      "Another fix is to use an AbortController to actually cancel the in-flight previous request when a new one starts, avoiding wasted work and any risk of the stale response being applied",
+      "Debouncing the input so a request is only fired after the user pauses typing reduces how often this race can occur, but doesn't fully eliminate it since network timing is still not guaranteed",
+      "Mentions that many data-fetching libraries (like React Query or SWR) handle request deduplication and cancellation for exactly this class of problem, which is a good argument for not hand-rolling fetch logic for something like this in a larger app"
+    ],
+    "follow_up": "How would you decide between an AbortController-based fix and a request-id-based fix if the backend can't easily support cancellation?",
+    "battle_eligible": true
+  }
+}

@@ -23,6 +23,17 @@ const VideoCheckpointPlayer = ({
 
   const videoUrl = topic?.videoUrl || topic?.lessonContent?.videoUrl || SAMPLE_FALLBACK_VIDEO;
 
+  const youtubeId = useMemo(() => {
+    if (topic?.youtubeVideoId) return topic.youtubeVideoId;
+    if (topic?.youtube_id) return topic.youtube_id;
+    const url = topic?.videoUrl || topic?.lessonContent?.videoUrl || '';
+    if (!url) return null;
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+    if (match) return match[1];
+    if (/^[a-zA-Z0-9_-]{11}$/.test(url.trim())) return url.trim();
+    return null;
+  }, [topic]);
+
   // Collect checkpoints from topic definition
   const checkpoints = useMemo(() => {
     const list = topic?.checkpoints || topic?.lessonContent?.midVideoCheckpoints || [];

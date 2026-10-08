@@ -1,0 +1,39 @@
+{
+  "id": "backend-entry-scenario-counter-race-condition",
+  "fileName": "backend-entry-scenario-counter-race-condition",
+  "title": "Backend entry scenario counter race condition",
+  "role": "backend",
+  "level": "entry",
+  "track": "scenario",
+  "topic": "Backend entry scenario counter race condition",
+  "question": "You built a 'view count' feature: each page view runs 'read the current count, add 1, save it back'. Under heavy traffic, the count ends up lower than the actual number of views. Why, and how would you fix it?",
+  "idealAnswer": "Identifies the lost update problem: two requests can both read the same starting count before either writes back, so one increment gets silently overwritten by the other\n\nExplains this gets worse under concurrency/load precisely because more requests overlap in that read-modify-write window\n\nProposes an atomic update as the fix, e.g. UPDATE counts SET count = count + 1 WHERE id = ..., which lets the database do the increment in one step instead of round-tripping through the application\n\nRecognizes this is a general pattern (read-modify-write without atomicity), not a one-off bug, and that the fix is to push the operation into the database rather than trying to synchronize application code\n\nBonus: mentions alternatives like a database-level increment counter, or an atomic increment in something like Redis if the counter doesn't need to live in the primary database",
+  "rubric": [
+    "Identifies the lost update problem: two requests can both read the same starting count before either writes back, so one increment gets silently overwritten by the other",
+    "Explains this gets worse under concurrency/load precisely because more requests overlap in that read-modify-write window",
+    "Proposes an atomic update as the fix, e.g. UPDATE counts SET count = count + 1 WHERE id = ..., which lets the database do the increment in one step instead of round-tripping through the application",
+    "Recognizes this is a general pattern (read-modify-write without atomicity), not a one-off bug, and that the fix is to push the operation into the database rather than trying to synchronize application code",
+    "Bonus: mentions alternatives like a database-level increment counter, or an atomic increment in something like Redis if the counter doesn't need to live in the primary database"
+  ],
+  "followUps": [
+    "Would using a lock in the application code (like a mutex) fix this? What would still be missing?"
+  ],
+  "raw": {
+    "id": "backend-entry-scenario-counter-race-condition",
+    "track": "swe",
+    "specialization": "backend",
+    "level": "entry",
+    "stage": "scenario",
+    "question": "You built a 'view count' feature: each page view runs 'read the current count, add 1, save it back'. Under heavy traffic, the count ends up lower than the actual number of views. Why, and how would you fix it?",
+    "context": "The increment logic lives in the application code as three separate steps: SELECT count, add 1 in code, UPDATE count.",
+    "key_points": [
+      "Identifies the lost update problem: two requests can both read the same starting count before either writes back, so one increment gets silently overwritten by the other",
+      "Explains this gets worse under concurrency/load precisely because more requests overlap in that read-modify-write window",
+      "Proposes an atomic update as the fix, e.g. UPDATE counts SET count = count + 1 WHERE id = ..., which lets the database do the increment in one step instead of round-tripping through the application",
+      "Recognizes this is a general pattern (read-modify-write without atomicity), not a one-off bug, and that the fix is to push the operation into the database rather than trying to synchronize application code",
+      "Bonus: mentions alternatives like a database-level increment counter, or an atomic increment in something like Redis if the counter doesn't need to live in the primary database"
+    ],
+    "follow_up": "Would using a lock in the application code (like a mutex) fix this? What would still be missing?",
+    "battle_eligible": true
+  }
+}

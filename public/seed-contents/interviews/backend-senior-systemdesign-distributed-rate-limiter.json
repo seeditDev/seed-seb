@@ -1,0 +1,43 @@
+{
+  "id": "backend-senior-systemdesign-distributed-rate-limiter",
+  "fileName": "backend-senior-systemdesign-distributed-rate-limiter",
+  "title": "Backend senior systemdesign distributed rate limiter",
+  "role": "backend",
+  "level": "senior",
+  "track": "systemdesign",
+  "topic": "Backend senior systemdesign distributed rate limiter",
+  "question": "Design a rate limiter that enforces a global per-client limit (e.g. 1000 requests/minute) across multiple geographically distributed regions, each with its own API deployment.",
+  "idealAnswer": "Recognizes the core tension: exact global counting requires cross-region coordination on every request, which conflicts directly with the latency requirement, so the design has to trade off strict accuracy for speed\n\nProposes a workable approach, e.g. splitting the global budget into per-region sub-limits (with periodic rebalancing based on observed traffic share), or an asynchronous replication of counts between regions with a tolerance for some overshoot\n\nExplains why naive synchronous cross-region locking/counting on every request is a non-starter given the stated latency constraints, and articulates that explicitly as a rejected approach rather than skipping it\n\nAddresses staleness explicitly: whichever approach is chosen, defines the bound on how far off the enforced limit can be from the true global count, and argues why that's an acceptable tradeoff for this use case\n\nConsiders failure modes, e.g. what happens if cross-region replication of counts is delayed or a region goes down, does the system fail open (risk over-limit) or fail closed (risk wrongly blocking legitimate traffic), and picks one deliberately",
+  "rubric": [
+    "Recognizes the core tension: exact global counting requires cross-region coordination on every request, which conflicts directly with the latency requirement, so the design has to trade off strict accuracy for speed",
+    "Proposes a workable approach, e.g. splitting the global budget into per-region sub-limits (with periodic rebalancing based on observed traffic share), or an asynchronous replication of counts between regions with a tolerance for some overshoot",
+    "Explains why naive synchronous cross-region locking/counting on every request is a non-starter given the stated latency constraints, and articulates that explicitly as a rejected approach rather than skipping it",
+    "Addresses staleness explicitly: whichever approach is chosen, defines the bound on how far off the enforced limit can be from the true global count, and argues why that's an acceptable tradeoff for this use case",
+    "Considers failure modes, e.g. what happens if cross-region replication of counts is delayed or a region goes down, does the system fail open (risk over-limit) or fail closed (risk wrongly blocking legitimate traffic), and picks one deliberately"
+  ],
+  "followUps": [
+    "How would this design change if the limit had to be exact, e.g. enforcing a hard quota on a paid API tier where overage has real billing consequences?"
+  ],
+  "raw": {
+    "id": "backend-senior-systemdesign-distributed-rate-limiter",
+    "track": "swe",
+    "specialization": "backend",
+    "level": "senior",
+    "stage": "system-design",
+    "question": "Design a rate limiter that enforces a global per-client limit (e.g. 1000 requests/minute) across multiple geographically distributed regions, each with its own API deployment.",
+    "context": "Clients can hit any region, traffic is latency-sensitive so cross-region synchronous calls on the hot path are undesirable, and the limit needs to be reasonably accurate globally, not just per region.",
+    "key_points": [
+      "Recognizes the core tension: exact global counting requires cross-region coordination on every request, which conflicts directly with the latency requirement, so the design has to trade off strict accuracy for speed",
+      "Proposes a workable approach, e.g. splitting the global budget into per-region sub-limits (with periodic rebalancing based on observed traffic share), or an asynchronous replication of counts between regions with a tolerance for some overshoot",
+      "Explains why naive synchronous cross-region locking/counting on every request is a non-starter given the stated latency constraints, and articulates that explicitly as a rejected approach rather than skipping it",
+      "Addresses staleness explicitly: whichever approach is chosen, defines the bound on how far off the enforced limit can be from the true global count, and argues why that's an acceptable tradeoff for this use case",
+      "Considers failure modes, e.g. what happens if cross-region replication of counts is delayed or a region goes down, does the system fail open (risk over-limit) or fail closed (risk wrongly blocking legitimate traffic), and picks one deliberately"
+    ],
+    "follow_up": "How would this design change if the limit had to be exact, e.g. enforcing a hard quota on a paid API tier where overage has real billing consequences?",
+    "battle_eligible": false,
+    "related_lesson": {
+      "type": "system-design",
+      "id": "sd-rate-limiting"
+    }
+  }
+}

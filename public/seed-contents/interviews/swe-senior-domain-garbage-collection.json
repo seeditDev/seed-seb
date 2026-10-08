@@ -1,0 +1,39 @@
+{
+  "id": "swe-senior-domain-garbage-collection",
+  "fileName": "swe-senior-domain-garbage-collection",
+  "title": "Swe senior domain garbage collection",
+  "role": "swe",
+  "level": "senior",
+  "track": "domain",
+  "topic": "Swe senior domain garbage collection",
+  "question": "At a level useful for debugging production issues, how does garbage collection actually work, and how can it cause a service to have latency spikes?",
+  "idealAnswer": "Explains the basic mechanism at a useful level: the runtime periodically identifies objects no longer reachable from any live reference and reclaims their memory, rather than requiring manual free\n\nMentions generational collection as a common real-world optimization, most objects die young, so collectors scan a small young generation frequently and a larger old generation less often, and can explain why that's an efficiency win\n\nCorrectly connects GC to latency spikes: a 'stop-the-world' pause (especially a full/major collection) halts application threads while it runs, which shows up as a request latency spike or timeout right at that moment\n\nNames a concrete cause of GC pressure that a senior engineer would actually go looking for, e.g. excessive short-lived object allocation in a hot path, or accidentally retaining objects (a growing cache, a listener list) that prevents them from being collected at all\n\nBonus: mentions a real mitigation, like tuning heap size or GC algorithm/settings, reducing allocation in hot paths, or picking a low-pause-time collector for latency-sensitive services",
+  "rubric": [
+    "Explains the basic mechanism at a useful level: the runtime periodically identifies objects no longer reachable from any live reference and reclaims their memory, rather than requiring manual free",
+    "Mentions generational collection as a common real-world optimization, most objects die young, so collectors scan a small young generation frequently and a larger old generation less often, and can explain why that's an efficiency win",
+    "Correctly connects GC to latency spikes: a 'stop-the-world' pause (especially a full/major collection) halts application threads while it runs, which shows up as a request latency spike or timeout right at that moment",
+    "Names a concrete cause of GC pressure that a senior engineer would actually go looking for, e.g. excessive short-lived object allocation in a hot path, or accidentally retaining objects (a growing cache, a listener list) that prevents them from being collected at all",
+    "Bonus: mentions a real mitigation, like tuning heap size or GC algorithm/settings, reducing allocation in hot paths, or picking a low-pause-time collector for latency-sensitive services"
+  ],
+  "followUps": [
+    "If a service has a memory leak, how would the GC pause behavior change over time as the leak gets worse, and why?"
+  ],
+  "raw": {
+    "id": "swe-senior-domain-garbage-collection",
+    "track": "swe",
+    "specialization": "general",
+    "level": "senior",
+    "stage": "domain",
+    "question": "At a level useful for debugging production issues, how does garbage collection actually work, and how can it cause a service to have latency spikes?",
+    "context": null,
+    "key_points": [
+      "Explains the basic mechanism at a useful level: the runtime periodically identifies objects no longer reachable from any live reference and reclaims their memory, rather than requiring manual free",
+      "Mentions generational collection as a common real-world optimization, most objects die young, so collectors scan a small young generation frequently and a larger old generation less often, and can explain why that's an efficiency win",
+      "Correctly connects GC to latency spikes: a 'stop-the-world' pause (especially a full/major collection) halts application threads while it runs, which shows up as a request latency spike or timeout right at that moment",
+      "Names a concrete cause of GC pressure that a senior engineer would actually go looking for, e.g. excessive short-lived object allocation in a hot path, or accidentally retaining objects (a growing cache, a listener list) that prevents them from being collected at all",
+      "Bonus: mentions a real mitigation, like tuning heap size or GC algorithm/settings, reducing allocation in hot paths, or picking a low-pause-time collector for latency-sensitive services"
+    ],
+    "follow_up": "If a service has a memory leak, how would the GC pause behavior change over time as the leak gets worse, and why?",
+    "battle_eligible": true
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "id": "frontend-senior-scenario-production-perf-regression",
+  "fileName": "frontend-senior-scenario-production-perf-regression",
+  "title": "Frontend senior scenario production perf regression",
+  "role": "frontend",
+  "level": "senior",
+  "track": "scenario",
+  "topic": "Frontend senior scenario production perf regression",
+  "question": "Walk through how you'd diagnose and fix this, and how you'd prevent it from happening again.",
+  "idealAnswer": "Use real-user monitoring data (broken down by date, geography, device type, and connection speed) to narrow down when the regression started and whether it's uniform or concentrated in a specific segment, before looking at code at all\n\nBisect using deploy history against the regression's start date to narrow the range of candidate changes, rather than reading every PR from the last two weeks\n\nReproduce locally or in a controlled environment with profiling tools (Lighthouse, WebPageTest, Chrome performance panel) to pinpoint the actual bottleneck, whether it's a new render-blocking resource, a larger bundle, a slower API call the page waits on, or a layout shift pushing LCP later\n\nConsider that LCP regressions are often caused by indirect changes, e.g. a new dependency added transitively, an A/B test injecting a blocking script, a CDN/cache config change, or a backend API getting slower, not just direct frontend code changes\n\nOnce found and fixed, add a regression safeguard, like a performance budget check in CI that would have caught this specific class of change before it shipped, not just fixing the one instance\n\nCommunicate root cause and impact to stakeholders with concrete before/after numbers, treating a Core Web Vitals regression with the same rigor as a functional production bug",
+  "rubric": [
+    "Use real-user monitoring data (broken down by date, geography, device type, and connection speed) to narrow down when the regression started and whether it's uniform or concentrated in a specific segment, before looking at code at all",
+    "Bisect using deploy history against the regression's start date to narrow the range of candidate changes, rather than reading every PR from the last two weeks",
+    "Reproduce locally or in a controlled environment with profiling tools (Lighthouse, WebPageTest, Chrome performance panel) to pinpoint the actual bottleneck, whether it's a new render-blocking resource, a larger bundle, a slower API call the page waits on, or a layout shift pushing LCP later",
+    "Consider that LCP regressions are often caused by indirect changes, e.g. a new dependency added transitively, an A/B test injecting a blocking script, a CDN/cache config change, or a backend API getting slower, not just direct frontend code changes",
+    "Once found and fixed, add a regression safeguard, like a performance budget check in CI that would have caught this specific class of change before it shipped, not just fixing the one instance",
+    "Communicate root cause and impact to stakeholders with concrete before/after numbers, treating a Core Web Vitals regression with the same rigor as a functional production bug"
+  ],
+  "followUps": [
+    "The bisection points to a PR that only changed a backend API's response shape, not obviously performance-related. How could that cause an LCP regression?"
+  ],
+  "raw": {
+    "id": "frontend-senior-scenario-production-perf-regression",
+    "track": "swe",
+    "specialization": "frontend",
+    "level": "senior",
+    "stage": "scenario",
+    "question": "Walk through how you'd diagnose and fix this, and how you'd prevent it from happening again.",
+    "context": "Real-user monitoring shows Largest Contentful Paint jumped 40 percent for a key page sometime in the last two weeks, but there's no single obvious recent change and the team ships many small PRs daily to that page.",
+    "key_points": [
+      "Use real-user monitoring data (broken down by date, geography, device type, and connection speed) to narrow down when the regression started and whether it's uniform or concentrated in a specific segment, before looking at code at all",
+      "Bisect using deploy history against the regression's start date to narrow the range of candidate changes, rather than reading every PR from the last two weeks",
+      "Reproduce locally or in a controlled environment with profiling tools (Lighthouse, WebPageTest, Chrome performance panel) to pinpoint the actual bottleneck, whether it's a new render-blocking resource, a larger bundle, a slower API call the page waits on, or a layout shift pushing LCP later",
+      "Consider that LCP regressions are often caused by indirect changes, e.g. a new dependency added transitively, an A/B test injecting a blocking script, a CDN/cache config change, or a backend API getting slower, not just direct frontend code changes",
+      "Once found and fixed, add a regression safeguard, like a performance budget check in CI that would have caught this specific class of change before it shipped, not just fixing the one instance",
+      "Communicate root cause and impact to stakeholders with concrete before/after numbers, treating a Core Web Vitals regression with the same rigor as a functional production bug"
+    ],
+    "follow_up": "The bisection points to a PR that only changed a backend API's response shape, not obviously performance-related. How could that cause an LCP regression?",
+    "battle_eligible": true
+  }
+}

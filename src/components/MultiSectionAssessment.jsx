@@ -52,6 +52,7 @@ import { markAssessmentCompleted, invalidateCompletionCache } from '../services/
 import { stopAllMediaAndAI } from '../utils/hardwareTeardown';
 import { savePendingEnvelope } from '../utils/safeStorage';
 import { parseScheduleWindow } from '../utils/assessmentValidator.js';
+import { submitAssessmentResult } from '../services/placementTrackService';
 
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -1461,6 +1462,37 @@ const MultiSectionAssessment = () => {
       }).catch(() => { });
     }
 
+    // ── Placement track clearance sync on auto-submit ──
+    const isAutoPlacementClearance = Boolean(
+      effectiveAssessment?.trackType === 'placement' ||
+      effectiveAssessment?.placementLevel ||
+      (effectiveAssessment?.id && String(effectiveAssessment.id).toLowerCase().includes('placement-clearance')) ||
+      (effectiveAssessment?.slug && String(effectiveAssessment.slug).toLowerCase().includes('placement-clearance'))
+    );
+
+    if (isAutoPlacementClearance) {
+      try {
+        const levelNum = Number(effectiveAssessment.placementLevel || 1);
+        const attemptId = effectiveAssessment.attemptId || sessionStorage.getItem('placementAttemptId') || `ATTEMPT-${levelNum}-${Date.now()}`;
+        const passPct = Number(effectiveAssessment.passPercentage || 70);
+        const primaryScore = Number(totalScore || 0);
+        const totalPossible = Number(totalMarksSum || 1600);
+        const percentageAchieved = totalPossible > 0 ? Math.round((primaryScore / totalPossible) * 100) : 0;
+        const isPassed = percentageAchieved >= passPct;
+
+        await submitAssessmentResult(userId, levelNum, attemptId, {
+          passed: isPassed,
+          score: percentageAchieved,
+          feedback: isPassed
+            ? `Cleared Level ${levelNum} Placement Assessment with ${percentageAchieved}%!`
+            : `Scored ${percentageAchieved}% (Auto-submitted: ${reason || 'time_expired'}).`
+        });
+        console.log(`[MSA] Placement track auto-submitted: Level ${levelNum}, Passed: ${isPassed}, Score: ${percentageAchieved}%`);
+      } catch (placementErr) {
+        console.error('[MSA] Failed to sync placement track on auto-submit:', placementErr);
+      }
+    }
+
     try {
       await completeAssessmentSession(effectiveAssessment?.id, { autoSubmitted: true, reason: reason || 'proctoring_violations' });
     } catch (sErr) {
@@ -1700,36 +1732,73 @@ const MultiSectionAssessment = () => {
 
   // ── Initial load
   useEffect(() => {
-    let authData = {};
-    let assessmentData = null;
-    try {
-      authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-      assessmentData = JSON.parse(sessionStorage.getItem('multisectionAssessmentData') || 'null');
+    const initLoad = async () => {
+      let authData = {};
+      let assessmentData = null;
+      try {
+        authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+        assessmentData = JSON.parse(sessionStorage.getItem('multisectionAssessmentData') || 'null');
 
-      // Fallback to persistent localStorage backup if sessionStorage was cleared by browser exit/tab close
-      if (!assessmentData) {
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith('msaActiveAssessment_')) {
-            try {
-              const backup = JSON.parse(localStorage.getItem(key) || 'null');
-              if (backup) {
-                assessmentData = backup;
-                sessionStorage.setItem('multisectionAssessmentData', JSON.stringify(backup));
-                break;
-              }
-            } catch (_) { }
+        // Fallback to persistent localStorage backup if sessionStorage was cleared by browser exit/tab close
+        if (!assessmentData) {
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('msaActiveAssessment_')) {
+              try {
+                const backup = JSON.parse(localStorage.getItem(key) || 'null');
+                if (backup) {
+                  assessmentData = backup;
+                  sessionStorage.setItem('multisectionAssessmentData', JSON.stringify(backup));
+                  break;
+                }
+              } catch (_) { }
+            }
           }
         }
-      }
-    } catch (e) {
-      console.error('[MSA] Failed to parse localStorage:', e);
-    }
 
-    if (!authData?.email || !assessmentData) {
-      navigate('/student/dashboard', { replace: true });
-      return;
-    }
+        // Fallback to URL path slug resolving local public assessment JSON or Firestore
+        if (!assessmentData && typeof window !== 'undefined') {
+          const pathParts = window.location.pathname.split('/').filter(Boolean);
+          const pathSlug = pathParts[pathParts.length - 1];
+          if (pathSlug && pathSlug !== 'dashboard' && pathSlug !== 'assessment') {
+            try {
+              const res = await fetch(`/seed-contents/assessments/${pathSlug}.json`);
+              if (res.ok) {
+                assessmentData = await res.json();
+                sessionStorage.setItem('multisectionAssessmentData', JSON.stringify(assessmentData));
+                sessionStorage.setItem('msaSlug', pathSlug);
+              }
+            } catch (_) { }
+
+            if (!assessmentData) {
+              try {
+                const docSnap = await getDoc(doc(db, 'assessments', pathSlug));
+                if (docSnap.exists()) {
+                  assessmentData = { id: docSnap.id, ...docSnap.data() };
+                  sessionStorage.setItem('multisectionAssessmentData', JSON.stringify(assessmentData));
+                  sessionStorage.setItem('msaSlug', pathSlug);
+                }
+              } catch (_) { }
+            }
+          }
+        }
+
+        if (!authData?.email && auth?.currentUser?.email) {
+          authData = {
+            uid: auth.currentUser.uid,
+            email: auth.currentUser.email,
+            name: auth.currentUser.displayName || 'Student',
+            ...authData
+          };
+        }
+      } catch (e) {
+        console.error('[MSA] Failed to parse localStorage / fallback:', e);
+      }
+
+      if (!authData?.email || !assessmentData) {
+        navigate('/student/dashboard', { replace: true });
+        return;
+      }
 
     // Verify schedule window
     if (assessmentData.schedule) {
@@ -1824,8 +1893,15 @@ const MultiSectionAssessment = () => {
       }
     }
 
-    // Immediately block if already submitted locally
-    if (assessmentData.id && localStorage.getItem(`msaCompleted_${assessmentData.id}`) === 'true') {
+    const isPlacementTest = Boolean(
+      assessmentData?.trackType === 'placement' ||
+      assessmentData?.placementLevel ||
+      (assessmentData?.id && String(assessmentData.id).toLowerCase().includes('placement-clearance')) ||
+      (assessmentData?.slug && String(assessmentData.slug).toLowerCase().includes('placement-clearance'))
+    );
+
+    // Immediately block if already submitted locally (placement assessments manage attempts via cooldowns)
+    if (!isPlacementTest && assessmentData.id && localStorage.getItem(`msaCompleted_${assessmentData.id}`) === 'true') {
       toast.error('You have already completed and submitted this assessment. Re-attempts are not permitted.');
       sessionStorage.removeItem('multisectionAssessmentData');
       localStorage.removeItem(`msaActiveAssessment_${assessmentData.id}`);
@@ -1842,8 +1918,9 @@ const MultiSectionAssessment = () => {
     assessmentRef.current = assessmentData;
     localStorage.setItem(`msaActiveAssessment_${assessmentData.id}`, JSON.stringify(assessmentData));
 
-    // Verify if already completed/submitted on server (Strict 1-attempt policy)
+    // Verify if already completed/submitted on server (Strict 1-attempt policy, bypassed for placement track)
     const checkAttempt = async () => {
+      if (isPlacementTest) return;
       try {
         const uid = auth?.currentUser?.uid || authData.uid;
         if (!uid) return;
@@ -1930,14 +2007,17 @@ const MultiSectionAssessment = () => {
       });
     }
 
-    loadAllSections(assessmentData).then(() => {
-      // Only attach session on load if actively restoring an existing in-progress session.
-      // If candidate is on the welcome screen, session starts when handleStartSection is clicked.
-      const slug = sessionStorage.getItem('msaSlug') || (assessmentData.id ?? '');
-      if (saved && saved.currentSecIdx !== undefined && saved.currentSecIdx >= 0) {
-        startAssessmentSession(assessmentData, slug).catch(() => { });
-      }
-    });
+      loadAllSections(assessmentData).then(() => {
+        // Only attach session on load if actively restoring an existing in-progress session.
+        // If candidate is on the welcome screen, session starts when handleStartSection is clicked.
+        const slug = sessionStorage.getItem('msaSlug') || (assessmentData.id ?? '');
+        if (saved && saved.currentSecIdx !== undefined && saved.currentSecIdx >= 0) {
+          startAssessmentSession(assessmentData, slug).catch(() => { });
+        }
+      });
+    };
+
+    initLoad();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -2194,7 +2274,11 @@ const MultiSectionAssessment = () => {
             }
           }
 
-          // 2. If section already contains inline questions/challenges, use them directly
+          // 2. If section already contains inline questions/challenges/qids, use them directly
+          if (Array.isArray(sec.qids) && sec.qids.length > 0) {
+            await processData({ qids: sec.qids, ...sec }, sec.type);
+            return;
+          }
           if (Array.isArray(sec.questions) && sec.questions.length > 0) {
             await processData({ questions: sec.questions, ...sec }, sec.type);
             return;
@@ -2941,6 +3025,37 @@ const MultiSectionAssessment = () => {
               console.log('[MSA] Contest submission, registration status & leaderboard synced for contestId:', contestId, 'Round:', roundNum);
             } catch (contestSyncErr) {
               console.warn('[MSA] Contest sync warning (non-fatal):', contestSyncErr);
+            }
+          }
+
+          // ── If this assessment is a Placement Track Clearance Assessment, sync to placementTrackService ──
+          const isFinalPlacementClearance = Boolean(
+            assessment?.trackType === 'placement' ||
+            assessment?.placementLevel ||
+            (assessment?.id && String(assessment.id).toLowerCase().includes('placement-clearance')) ||
+            (assessment?.slug && String(assessment.slug).toLowerCase().includes('placement-clearance'))
+          );
+
+          if (isFinalPlacementClearance) {
+            try {
+              const levelNum = Number(assessment.placementLevel || 1);
+              const attemptId = assessment.attemptId || sessionStorage.getItem('placementAttemptId') || `ATTEMPT-${levelNum}-${Date.now()}`;
+              const passPct = Number(assessment.passPercentage || 70);
+              const primaryScore = Number(primaryTotalScore || allPassTotalScore || 0);
+              const totalPossible = Number(totalMarksSum || 1600);
+              const percentageAchieved = totalPossible > 0 ? Math.round((primaryScore / totalPossible) * 100) : 0;
+              const isPassed = percentageAchieved >= passPct;
+
+              await submitAssessmentResult(userId, levelNum, attemptId, {
+                passed: isPassed,
+                score: percentageAchieved,
+                feedback: isPassed
+                  ? `Cleared Level ${levelNum} Placement Assessment with ${percentageAchieved}%!`
+                  : `Scored ${percentageAchieved}% (Pass threshold: ${passPct}%). Please review and retry after cooldown.`
+              });
+              console.log(`[MSA] Placement track result submitted: Level ${levelNum}, Passed: ${isPassed}, Score: ${percentageAchieved}%`);
+            } catch (placementErr) {
+              console.error('[MSA] Failed to sync placement track clearance:', placementErr);
             }
           }
 

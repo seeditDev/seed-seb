@@ -1,0 +1,43 @@
+{
+  "id": "swe-senior-systemdesign-cache-invalidation",
+  "fileName": "swe-senior-systemdesign-cache-invalidation",
+  "title": "Swe senior systemdesign cache invalidation",
+  "role": "swe",
+  "level": "senior",
+  "track": "systemdesign",
+  "topic": "Swe senior systemdesign cache invalidation",
+  "question": "Design a caching strategy for a product page that's read constantly but occasionally updated (price changes, stock updates). How do you keep the cache correct without sacrificing the speed you're caching for?",
+  "idealAnswer": "Cache-aside (read from cache, populate on miss) is the default starting point, with a TTL as a safety net for staleness even if invalidation is imperfect\n\nOn a write (price/stock update), explicitly invalidate or update the specific cache key rather than relying on TTL expiry alone, so changes are visible quickly, not just eventually\n\nCalls out a real tradeoff: shorter TTL means fresher-but-more-database-load, longer TTL means less load but more staleness risk, and the right value depends on how often that specific data actually changes\n\nFor a hot key (a viral product), mentions the thundering herd risk when the cache entry expires and many requests hit the database simultaneously, and a mitigation like a short lock/single-flight pattern or serving stale-while-revalidate\n\nA strong answer treats 'price changed but cache says otherwise' as the central failure mode to design against, not just 'add a cache and move on'",
+  "rubric": [
+    "Cache-aside (read from cache, populate on miss) is the default starting point, with a TTL as a safety net for staleness even if invalidation is imperfect",
+    "On a write (price/stock update), explicitly invalidate or update the specific cache key rather than relying on TTL expiry alone, so changes are visible quickly, not just eventually",
+    "Calls out a real tradeoff: shorter TTL means fresher-but-more-database-load, longer TTL means less load but more staleness risk, and the right value depends on how often that specific data actually changes",
+    "For a hot key (a viral product), mentions the thundering herd risk when the cache entry expires and many requests hit the database simultaneously, and a mitigation like a short lock/single-flight pattern or serving stale-while-revalidate",
+    "A strong answer treats 'price changed but cache says otherwise' as the central failure mode to design against, not just 'add a cache and move on'"
+  ],
+  "followUps": [
+    "What would you do differently if this were a shopping cart total instead of a product page, where staleness is far less acceptable?"
+  ],
+  "raw": {
+    "id": "swe-senior-systemdesign-cache-invalidation",
+    "track": "swe",
+    "specialization": "general",
+    "level": "senior",
+    "stage": "system-design",
+    "question": "Design a caching strategy for a product page that's read constantly but occasionally updated (price changes, stock updates). How do you keep the cache correct without sacrificing the speed you're caching for?",
+    "context": null,
+    "key_points": [
+      "Cache-aside (read from cache, populate on miss) is the default starting point, with a TTL as a safety net for staleness even if invalidation is imperfect",
+      "On a write (price/stock update), explicitly invalidate or update the specific cache key rather than relying on TTL expiry alone, so changes are visible quickly, not just eventually",
+      "Calls out a real tradeoff: shorter TTL means fresher-but-more-database-load, longer TTL means less load but more staleness risk, and the right value depends on how often that specific data actually changes",
+      "For a hot key (a viral product), mentions the thundering herd risk when the cache entry expires and many requests hit the database simultaneously, and a mitigation like a short lock/single-flight pattern or serving stale-while-revalidate",
+      "A strong answer treats 'price changed but cache says otherwise' as the central failure mode to design against, not just 'add a cache and move on'"
+    ],
+    "follow_up": "What would you do differently if this were a shopping cart total instead of a product page, where staleness is far less acceptable?",
+    "battle_eligible": false,
+    "related_lesson": {
+      "type": "system-design",
+      "id": "sd-caching-strategies"
+    }
+  }
+}

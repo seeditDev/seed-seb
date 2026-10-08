@@ -57,12 +57,18 @@ const CourseLearningPage = () => {
           try {
             const cached = JSON.parse(cachedRaw);
             const isHydrated = Boolean(cached?.modules?.[0]?.topics && Array.isArray(cached.modules[0].topics) && cached.modules[0].topics.length > 0);
-            if (isHydrated && cached && (cached.courseId === courseId || cached.slug === courseId || cached.id === courseId)) {
+            const manifest = getCourseById(courseId);
+            const firstTopicContentLen = cached?.modules?.[0]?.topics?.[0]?.lesson?.content?.length || 0;
+            const isContentFresh = firstTopicContentLen > 150;
+            const isUpToDate = (!manifest || ((cached.modules?.length || 0) >= (manifest.modules?.length || 0))) && isContentFresh;
+            if (isHydrated && isUpToDate && cached && (cached.courseId === courseId || cached.slug === courseId || cached.id === courseId)) {
               if (isMounted) {
                 setCourse(cached);
                 setLoading(false);
                 return;
               }
+            } else {
+              try { sessionStorage.removeItem(`seed_learning_course_${courseId}`); } catch (_) {}
             }
           } catch (_) {}
         }

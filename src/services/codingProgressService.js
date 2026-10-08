@@ -579,6 +579,16 @@ export const markQuestionSolved = async (uid, questionId, language, score, attem
           }
         } catch (_) {}
       }
+
+      // Synchronize with Placement Track progression
+      try {
+        import('./placementTrackService').then(({ recordQuestionSolved }) => {
+          const resolvedLevel = detail?.level || (strQId.toLowerCase().startsWith('q0.') ? 1 : null);
+          recordQuestionSolved(uid, strQId, resolvedLevel).catch(err => {
+            console.warn('[CodingProgressService] placement track solve sync skipped:', err.message);
+          });
+        }).catch(() => {});
+      } catch (_) {}
     } catch (e) {
       console.warn('[CodingProgressService] Background sync failed (will sync later):', e.message);
     }

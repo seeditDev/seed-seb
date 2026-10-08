@@ -1,0 +1,39 @@
+{
+  "id": "frontend-mid-scenario-memory-leak-debug",
+  "fileName": "frontend-mid-scenario-memory-leak-debug",
+  "title": "Frontend mid scenario memory leak debug",
+  "role": "frontend",
+  "level": "mid",
+  "track": "scenario",
+  "topic": "Frontend mid scenario memory leak debug",
+  "question": "Users report the tab gets slower and slower the longer they leave your app open, and eventually the browser tab crashes. How would you track this down?",
+  "idealAnswer": "Use the browser's memory profiler to take heap snapshots at different points in time and compare them (e.g. after navigating between views repeatedly) to see which object types keep growing\n\nLook for classic leak sources: event listeners added on mount but never removed on unmount, timers/intervals not cleared, and subscriptions (WebSocket, observers) not torn down when a component unmounts\n\nCheck for detached DOM nodes, elements removed from the visible tree but still referenced by a closure or a global variable, which prevents garbage collection\n\nCheck for growing caches or arrays that accumulate data across navigations without ever being cleared, e.g. an in-memory log or cache with no eviction policy\n\nReproduce deliberately by navigating between the same two views many times and watching whether memory climbs monotonically, versus climbing and settling, which narrows down whether it's a true leak or just normal variance",
+  "rubric": [
+    "Use the browser's memory profiler to take heap snapshots at different points in time and compare them (e.g. after navigating between views repeatedly) to see which object types keep growing",
+    "Look for classic leak sources: event listeners added on mount but never removed on unmount, timers/intervals not cleared, and subscriptions (WebSocket, observers) not torn down when a component unmounts",
+    "Check for detached DOM nodes, elements removed from the visible tree but still referenced by a closure or a global variable, which prevents garbage collection",
+    "Check for growing caches or arrays that accumulate data across navigations without ever being cleared, e.g. an in-memory log or cache with no eviction policy",
+    "Reproduce deliberately by navigating between the same two views many times and watching whether memory climbs monotonically, versus climbing and settling, which narrows down whether it's a true leak or just normal variance"
+  ],
+  "followUps": [
+    "You find a component that adds a window resize listener in useEffect. What's the fix, and how would you verify it actually worked?"
+  ],
+  "raw": {
+    "id": "frontend-mid-scenario-memory-leak-debug",
+    "track": "swe",
+    "specialization": "frontend",
+    "level": "mid",
+    "stage": "scenario",
+    "question": "Users report the tab gets slower and slower the longer they leave your app open, and eventually the browser tab crashes. How would you track this down?",
+    "context": "It's a single-page dashboard app where users navigate between several views without ever doing a full page reload.",
+    "key_points": [
+      "Use the browser's memory profiler to take heap snapshots at different points in time and compare them (e.g. after navigating between views repeatedly) to see which object types keep growing",
+      "Look for classic leak sources: event listeners added on mount but never removed on unmount, timers/intervals not cleared, and subscriptions (WebSocket, observers) not torn down when a component unmounts",
+      "Check for detached DOM nodes, elements removed from the visible tree but still referenced by a closure or a global variable, which prevents garbage collection",
+      "Check for growing caches or arrays that accumulate data across navigations without ever being cleared, e.g. an in-memory log or cache with no eviction policy",
+      "Reproduce deliberately by navigating between the same two views many times and watching whether memory climbs monotonically, versus climbing and settling, which narrows down whether it's a true leak or just normal variance"
+    ],
+    "follow_up": "You find a component that adds a window resize listener in useEffect. What's the fix, and how would you verify it actually worked?",
+    "battle_eligible": true
+  }
+}

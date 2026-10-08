@@ -1,0 +1,43 @@
+{
+  "id": "swe-mid-systemdesign-message-queue",
+  "fileName": "swe-mid-systemdesign-message-queue",
+  "title": "Swe mid systemdesign message queue",
+  "role": "swe",
+  "level": "mid",
+  "track": "systemdesign",
+  "topic": "Swe mid systemdesign message queue",
+  "question": "You need to process uploaded video files (transcoding, thumbnail generation) after a user uploads one. Would you use a message queue for this, and how would you design the flow?",
+  "idealAnswer": "Recognizes this is a good fit for async processing, the upload request should respond quickly (e.g. 202 Accepted) rather than making the user wait for transcoding to finish synchronously\n\nDescribes the flow: the upload handler saves the file and publishes a message/job (e.g. video id, storage location) to a queue, then a separate worker pool consumes from the queue and does the actual transcoding\n\nAddresses failure handling: what happens if a worker crashes mid-job or a job repeatedly fails, mentions retries with backoff and eventually moving to a dead-letter queue rather than losing the job silently\n\nExplains how the client finds out the job is done, e.g. polling a status endpoint, a webhook callback, or a websocket/push notification, rather than leaving it unclear\n\nBonus: mentions idempotency for the worker, since queues can occasionally deliver a message more than once, processing the same video twice shouldn't produce duplicate or corrupted output",
+  "rubric": [
+    "Recognizes this is a good fit for async processing, the upload request should respond quickly (e.g. 202 Accepted) rather than making the user wait for transcoding to finish synchronously",
+    "Describes the flow: the upload handler saves the file and publishes a message/job (e.g. video id, storage location) to a queue, then a separate worker pool consumes from the queue and does the actual transcoding",
+    "Addresses failure handling: what happens if a worker crashes mid-job or a job repeatedly fails, mentions retries with backoff and eventually moving to a dead-letter queue rather than losing the job silently",
+    "Explains how the client finds out the job is done, e.g. polling a status endpoint, a webhook callback, or a websocket/push notification, rather than leaving it unclear",
+    "Bonus: mentions idempotency for the worker, since queues can occasionally deliver a message more than once, processing the same video twice shouldn't produce duplicate or corrupted output"
+  ],
+  "followUps": [
+    "How would you prioritize a paid user's video processing job ahead of a free user's, using this same queue design?"
+  ],
+  "raw": {
+    "id": "swe-mid-systemdesign-message-queue",
+    "track": "swe",
+    "specialization": "general",
+    "level": "mid",
+    "stage": "system-design",
+    "question": "You need to process uploaded video files (transcoding, thumbnail generation) after a user uploads one. Would you use a message queue for this, and how would you design the flow?",
+    "context": "Transcoding a video can take anywhere from a few seconds to several minutes depending on file size, and the upload endpoint needs to respond quickly.",
+    "key_points": [
+      "Recognizes this is a good fit for async processing, the upload request should respond quickly (e.g. 202 Accepted) rather than making the user wait for transcoding to finish synchronously",
+      "Describes the flow: the upload handler saves the file and publishes a message/job (e.g. video id, storage location) to a queue, then a separate worker pool consumes from the queue and does the actual transcoding",
+      "Addresses failure handling: what happens if a worker crashes mid-job or a job repeatedly fails, mentions retries with backoff and eventually moving to a dead-letter queue rather than losing the job silently",
+      "Explains how the client finds out the job is done, e.g. polling a status endpoint, a webhook callback, or a websocket/push notification, rather than leaving it unclear",
+      "Bonus: mentions idempotency for the worker, since queues can occasionally deliver a message more than once, processing the same video twice shouldn't produce duplicate or corrupted output"
+    ],
+    "follow_up": "How would you prioritize a paid user's video processing job ahead of a free user's, using this same queue design?",
+    "battle_eligible": false,
+    "related_lesson": {
+      "type": "system-design",
+      "id": "sd-message-queues-async"
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "backend-mid-scenario-zero-downtime-migration",
+  "fileName": "backend-mid-scenario-zero-downtime-migration",
+  "title": "Backend mid scenario zero downtime migration",
+  "role": "backend",
+  "level": "mid",
+  "track": "scenario",
+  "topic": "Backend mid scenario zero downtime migration",
+  "question": "You need to rename a column that's actively read and written by a live service handling continuous traffic, with no maintenance window. How do you do it safely?",
+  "idealAnswer": "Rejects the naive single-step rename, since a rolling deploy means old and new application code run simultaneously against the same database for a period, and either version would break if the column were renamed atomically\n\nProposes an expand-and-contract (multi-step) approach: first add the new column alongside the old one, deploy code that writes to both, backfill existing rows, then deploy code that reads from the new column, and only drop the old column once nothing references it\n\nExplains why each step needs to be independently safe and backward-compatible, so the deploy can proceed instance by instance without any window where some instances break\n\nConsiders backfilling large tables carefully, e.g. in batches, to avoid a single long-running migration that locks the table or overloads the database\n\nMentions verifying (e.g. via logging or a temporary check) that nothing is still reading the old column before actually dropping it, rather than assuming the code changes were complete",
+  "rubric": [
+    "Rejects the naive single-step rename, since a rolling deploy means old and new application code run simultaneously against the same database for a period, and either version would break if the column were renamed atomically",
+    "Proposes an expand-and-contract (multi-step) approach: first add the new column alongside the old one, deploy code that writes to both, backfill existing rows, then deploy code that reads from the new column, and only drop the old column once nothing references it",
+    "Explains why each step needs to be independently safe and backward-compatible, so the deploy can proceed instance by instance without any window where some instances break",
+    "Considers backfilling large tables carefully, e.g. in batches, to avoid a single long-running migration that locks the table or overloads the database",
+    "Mentions verifying (e.g. via logging or a temporary check) that nothing is still reading the old column before actually dropping it, rather than assuming the code changes were complete"
+  ],
+  "followUps": [
+    "How would you backfill a table with hundreds of millions of rows without causing replication lag or locking issues?"
+  ],
+  "raw": {
+    "id": "backend-mid-scenario-zero-downtime-migration",
+    "track": "swe",
+    "specialization": "backend",
+    "level": "mid",
+    "stage": "scenario",
+    "question": "You need to rename a column that's actively read and written by a live service handling continuous traffic, with no maintenance window. How do you do it safely?",
+    "context": "The column is 'email' and needs to become 'primary_email' to match a new schema. The service runs multiple instances, deployed one at a time (rolling deploy).",
+    "key_points": [
+      "Rejects the naive single-step rename, since a rolling deploy means old and new application code run simultaneously against the same database for a period, and either version would break if the column were renamed atomically",
+      "Proposes an expand-and-contract (multi-step) approach: first add the new column alongside the old one, deploy code that writes to both, backfill existing rows, then deploy code that reads from the new column, and only drop the old column once nothing references it",
+      "Explains why each step needs to be independently safe and backward-compatible, so the deploy can proceed instance by instance without any window where some instances break",
+      "Considers backfilling large tables carefully, e.g. in batches, to avoid a single long-running migration that locks the table or overloads the database",
+      "Mentions verifying (e.g. via logging or a temporary check) that nothing is still reading the old column before actually dropping it, rather than assuming the code changes were complete"
+    ],
+    "follow_up": "How would you backfill a table with hundreds of millions of rows without causing replication lag or locking issues?",
+    "battle_eligible": true
+  }
+}

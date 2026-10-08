@@ -1,0 +1,43 @@
+{
+  "id": "swe-mid-systemdesign-rate-limiter",
+  "fileName": "swe-mid-systemdesign-rate-limiter",
+  "title": "Swe mid systemdesign rate limiter",
+  "role": "swe",
+  "level": "mid",
+  "track": "systemdesign",
+  "topic": "Swe mid systemdesign rate limiter",
+  "question": "Design a rate limiter for a public API, so one client can't send more than, say, 100 requests per minute.",
+  "idealAnswer": "Picks and explains an algorithm, e.g. token bucket or sliding window, over a naive fixed-window counter, and can explain fixed window's boundary burst problem (a client can send 2x the limit right around a window edge)\n\nRecognizes that because there are multiple server instances, an in-memory per-instance counter won't correctly enforce a shared limit, and proposes a shared store like Redis to hold counts/timestamps\n\nAddresses atomicity of the increment-and-check operation in the shared store, so concurrent requests from the same client near the limit don't all get let through due to a race\n\nDefines what happens when the limit is hit: returning 429 Too Many Requests, ideally with a Retry-After header so the client knows when to try again\n\nBonus: mentions keying the limit appropriately, e.g. per API key or per user rather than per IP alone, since IPs can be shared (NAT, corporate networks) or spoofed",
+  "rubric": [
+    "Picks and explains an algorithm, e.g. token bucket or sliding window, over a naive fixed-window counter, and can explain fixed window's boundary burst problem (a client can send 2x the limit right around a window edge)",
+    "Recognizes that because there are multiple server instances, an in-memory per-instance counter won't correctly enforce a shared limit, and proposes a shared store like Redis to hold counts/timestamps",
+    "Addresses atomicity of the increment-and-check operation in the shared store, so concurrent requests from the same client near the limit don't all get let through due to a race",
+    "Defines what happens when the limit is hit: returning 429 Too Many Requests, ideally with a Retry-After header so the client knows when to try again",
+    "Bonus: mentions keying the limit appropriately, e.g. per API key or per user rather than per IP alone, since IPs can be shared (NAT, corporate networks) or spoofed"
+  ],
+  "followUps": [
+    "How would you extend this to support different rate limits for different pricing tiers of customer?"
+  ],
+  "raw": {
+    "id": "swe-mid-systemdesign-rate-limiter",
+    "track": "swe",
+    "specialization": "general",
+    "level": "mid",
+    "stage": "system-design",
+    "question": "Design a rate limiter for a public API, so one client can't send more than, say, 100 requests per minute.",
+    "context": "The API runs on multiple server instances behind a load balancer.",
+    "key_points": [
+      "Picks and explains an algorithm, e.g. token bucket or sliding window, over a naive fixed-window counter, and can explain fixed window's boundary burst problem (a client can send 2x the limit right around a window edge)",
+      "Recognizes that because there are multiple server instances, an in-memory per-instance counter won't correctly enforce a shared limit, and proposes a shared store like Redis to hold counts/timestamps",
+      "Addresses atomicity of the increment-and-check operation in the shared store, so concurrent requests from the same client near the limit don't all get let through due to a race",
+      "Defines what happens when the limit is hit: returning 429 Too Many Requests, ideally with a Retry-After header so the client knows when to try again",
+      "Bonus: mentions keying the limit appropriately, e.g. per API key or per user rather than per IP alone, since IPs can be shared (NAT, corporate networks) or spoofed"
+    ],
+    "follow_up": "How would you extend this to support different rate limits for different pricing tiers of customer?",
+    "battle_eligible": false,
+    "related_lesson": {
+      "type": "system-design",
+      "id": "sd-rate-limiting"
+    }
+  }
+}

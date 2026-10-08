@@ -40,6 +40,15 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
 
   const { entitlement } = useCourseEntitlement(course, user);
 
+  // Reference & case-study courses allow open exploration of topics & case studies
+  const isReferenceCourse = Boolean(
+    course?.courseId?.includes('high-level-design') ||
+    course?.courseId?.includes('visual-algorithm-lectures') ||
+    course?.courseId?.includes('system-design') ||
+    course?.isReference ||
+    course?.learningMode === 'reference'
+  );
+
   // Mount bounded active session tracker when in active learning class mode
   useEffect(() => {
     if (!course?.courseId || !uid || uid === 'demo-student' || entitlement.isLocked || activePlayerView !== 'CLASS') {
@@ -170,14 +179,14 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
   const handleSelectTopic = (module, topic, bypassLockCheck = false) => {
     // Freemium Preview Guard: Only Module 1 is free for preview users
     const modIdx = course?.modules?.findIndex(m => m.moduleId === module.moduleId) ?? 0;
-    if (modIdx > 0 && entitlement?.isPreview) {
+    if (modIdx > 0 && entitlement?.isPreview && !isReferenceCourse) {
       toast.error('Module locked. Free preview covers Module 1. Upgrade to SEED Premium on seedit.site to unlock Module 2 onwards.');
       return;
     }
 
     // Check if topic is locked (prior topic in module must be completed)
     const tIdx = module.topics?.findIndex(t => t.topicId === topic.topicId) ?? -1;
-    if (tIdx > 0 && !bypassLockCheck) {
+    if (tIdx > 0 && !bypassLockCheck && !isReferenceCourse) {
       const prevTopic = module.topics[tIdx - 1];
       const prevTopicProg = progress?.topics?.[prevTopic.topicId];
       const prevCompleted = Boolean(
@@ -206,7 +215,7 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
 
   const handleSelectSubActivity = (module, topic, subKey) => {
     const modIdx = course?.modules?.findIndex(m => m.moduleId === module.moduleId) ?? 0;
-    if (modIdx > 0 && entitlement?.isPreview) {
+    if (modIdx > 0 && entitlement?.isPreview && !isReferenceCourse) {
       toast.error('Module locked. Free preview covers Module 1. Upgrade to SEED Premium on seedit.site to unlock Module 2 onwards.');
       return;
     }
@@ -732,8 +741,8 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
           <div className="tree-modules-list">
             {course?.modules?.map((m, mIdx) => {
               const isExpanded = !!expandedModules[m.moduleId];
-              const isPreviewLocked = mIdx > 0 && entitlement?.isPreview;
-              const isLocked = (progress?.modules?.[m.moduleId]?.isUnlocked === false && mIdx > 0) || isPreviewLocked;
+              const isPreviewLocked = !isReferenceCourse && (mIdx > 0 && entitlement?.isPreview);
+              const isLocked = !isReferenceCourse && (((progress?.modules?.[m.moduleId]?.isUnlocked === false && mIdx > 0) || isPreviewLocked));
               const isCompleted = Boolean(progress?.modules?.[m.moduleId]?.completed);
               const isCurrentModule = selectedModuleId === m.moduleId;
 
@@ -791,7 +800,7 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
 
                         // Sequential Locking: topic i is locked unless topic i-1 is completed
                         const prevTopic = tIdx > 0 ? m.topics[tIdx - 1] : null;
-                        const isTopicLocked = isLocked || (tIdx > 0 && !progress?.topics?.[prevTopic?.topicId]?.completed);
+                        const isTopicLocked = !isReferenceCourse && (isLocked || (tIdx > 0 && !progress?.topics?.[prevTopic?.topicId]?.completed));
 
                         return (
                           <div key={topic.topicId} className="topic-group-container">

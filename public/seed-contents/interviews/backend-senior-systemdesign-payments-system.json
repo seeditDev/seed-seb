@@ -1,0 +1,43 @@
+{
+  "id": "backend-senior-systemdesign-payments-system",
+  "fileName": "backend-senior-systemdesign-payments-system",
+  "title": "Backend senior systemdesign payments system",
+  "role": "backend",
+  "level": "senior",
+  "track": "systemdesign",
+  "topic": "Backend senior systemdesign payments system",
+  "question": "Design the core backend for processing payments: a customer pays for an order, the money needs to move correctly, and the books need to stay accurate even when things fail partway through.",
+  "idealAnswer": "Treats correctness of money movement as the central constraint and designs around it, e.g. an append-only ledger of transactions rather than only mutable balance fields, so the full history of how a balance was reached is always reconstructable and auditable\n\nHandles the processor's uncertain outcomes (timeout, unclear success/failure) with idempotency keys on every charge attempt, and a reconciliation step that queries the processor's actual state for any payment left in an ambiguous status, rather than assuming failure and retrying blindly\n\nModels a payment as a state machine (e.g. created, pending, succeeded, failed, refunded) with explicit, valid transitions, so partial failures land in a well-defined state instead of an ambiguous one\n\nAddresses idempotency at the API layer as well, so a client's retried request for the same logical payment doesn't create a duplicate charge, distinct from idempotency between this service and the processor\n\nConsiders eventual consistency between 'payment succeeded' and dependent state (like marking an order as paid), e.g. via an event the order service consumes, and explains why doing both in one atomic step usually isn't possible when the processor is an external system",
+  "rubric": [
+    "Treats correctness of money movement as the central constraint and designs around it, e.g. an append-only ledger of transactions rather than only mutable balance fields, so the full history of how a balance was reached is always reconstructable and auditable",
+    "Handles the processor's uncertain outcomes (timeout, unclear success/failure) with idempotency keys on every charge attempt, and a reconciliation step that queries the processor's actual state for any payment left in an ambiguous status, rather than assuming failure and retrying blindly",
+    "Models a payment as a state machine (e.g. created, pending, succeeded, failed, refunded) with explicit, valid transitions, so partial failures land in a well-defined state instead of an ambiguous one",
+    "Addresses idempotency at the API layer as well, so a client's retried request for the same logical payment doesn't create a duplicate charge, distinct from idempotency between this service and the processor",
+    "Considers eventual consistency between 'payment succeeded' and dependent state (like marking an order as paid), e.g. via an event the order service consumes, and explains why doing both in one atomic step usually isn't possible when the processor is an external system"
+  ],
+  "followUps": [
+    "How would you reconcile your internal ledger against the payment processor's records to catch discrepancies, and how often would you do it?"
+  ],
+  "raw": {
+    "id": "backend-senior-systemdesign-payments-system",
+    "track": "swe",
+    "specialization": "backend",
+    "level": "senior",
+    "stage": "system-design",
+    "question": "Design the core backend for processing payments: a customer pays for an order, the money needs to move correctly, and the books need to stay accurate even when things fail partway through.",
+    "context": "Payments go through a third-party processor, which can be slow, can time out, and can occasionally report success after the caller already gave up waiting.",
+    "key_points": [
+      "Treats correctness of money movement as the central constraint and designs around it, e.g. an append-only ledger of transactions rather than only mutable balance fields, so the full history of how a balance was reached is always reconstructable and auditable",
+      "Handles the processor's uncertain outcomes (timeout, unclear success/failure) with idempotency keys on every charge attempt, and a reconciliation step that queries the processor's actual state for any payment left in an ambiguous status, rather than assuming failure and retrying blindly",
+      "Models a payment as a state machine (e.g. created, pending, succeeded, failed, refunded) with explicit, valid transitions, so partial failures land in a well-defined state instead of an ambiguous one",
+      "Addresses idempotency at the API layer as well, so a client's retried request for the same logical payment doesn't create a duplicate charge, distinct from idempotency between this service and the processor",
+      "Considers eventual consistency between 'payment succeeded' and dependent state (like marking an order as paid), e.g. via an event the order service consumes, and explains why doing both in one atomic step usually isn't possible when the processor is an external system"
+    ],
+    "follow_up": "How would you reconcile your internal ledger against the payment processor's records to catch discrepancies, and how often would you do it?",
+    "battle_eligible": false,
+    "related_lesson": {
+      "type": "system-design",
+      "id": "cs-payment-gateway"
+    }
+  }
+}

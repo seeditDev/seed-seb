@@ -1,0 +1,39 @@
+{
+  "id": "swe-mid-scenario-race-condition",
+  "fileName": "swe-mid-scenario-race-condition",
+  "title": "Swe mid scenario race condition",
+  "role": "swe",
+  "level": "mid",
+  "track": "scenario",
+  "topic": "Swe mid scenario race condition",
+  "question": "Two requests hit 'redeem coupon' for the same user at nearly the same instant. How do you make sure the coupon only gets redeemed once?",
+  "idealAnswer": "The naive check-then-act (read 'not used', then write 'used') has a race window, both requests can read 'not used' before either writes, both succeed\n\nFix with a database-level unique constraint (e.g. a unique index on user_id+coupon_id in a redemptions table) and let the second insert fail, rather than trying to prevent the race in application code\n\nAlternative: an atomic conditional update (UPDATE ... WHERE used = false, check rows affected) instead of separate read-then-write steps\n\nA strong answer explicitly identifies this as a race condition / concurrency bug, not just a logic bug, and reaches for a database-enforced guarantee rather than an application-level lock or check that can't actually be atomic across two requests\n\nBonus: mentioning that a distributed lock (Redis-based) is also a valid solution family, though it's more operationally complex than a unique constraint for a same-database case like this",
+  "rubric": [
+    "The naive check-then-act (read 'not used', then write 'used') has a race window, both requests can read 'not used' before either writes, both succeed",
+    "Fix with a database-level unique constraint (e.g. a unique index on user_id+coupon_id in a redemptions table) and let the second insert fail, rather than trying to prevent the race in application code",
+    "Alternative: an atomic conditional update (UPDATE ... WHERE used = false, check rows affected) instead of separate read-then-write steps",
+    "A strong answer explicitly identifies this as a race condition / concurrency bug, not just a logic bug, and reaches for a database-enforced guarantee rather than an application-level lock or check that can't actually be atomic across two requests",
+    "Bonus: mentioning that a distributed lock (Redis-based) is also a valid solution family, though it's more operationally complex than a unique constraint for a same-database case like this"
+  ],
+  "followUps": [
+    "Would your fix still work if the two requests hit two different application server instances?"
+  ],
+  "raw": {
+    "id": "swe-mid-scenario-race-condition",
+    "track": "swe",
+    "specialization": "general",
+    "level": "mid",
+    "stage": "scenario",
+    "question": "Two requests hit 'redeem coupon' for the same user at nearly the same instant. How do you make sure the coupon only gets redeemed once?",
+    "context": "Your coupon system checks 'has this user used this coupon' and, if not, applies the discount and marks it used, in two separate steps.",
+    "key_points": [
+      "The naive check-then-act (read 'not used', then write 'used') has a race window, both requests can read 'not used' before either writes, both succeed",
+      "Fix with a database-level unique constraint (e.g. a unique index on user_id+coupon_id in a redemptions table) and let the second insert fail, rather than trying to prevent the race in application code",
+      "Alternative: an atomic conditional update (UPDATE ... WHERE used = false, check rows affected) instead of separate read-then-write steps",
+      "A strong answer explicitly identifies this as a race condition / concurrency bug, not just a logic bug, and reaches for a database-enforced guarantee rather than an application-level lock or check that can't actually be atomic across two requests",
+      "Bonus: mentioning that a distributed lock (Redis-based) is also a valid solution family, though it's more operationally complex than a unique constraint for a same-database case like this"
+    ],
+    "follow_up": "Would your fix still work if the two requests hit two different application server instances?",
+    "battle_eligible": true
+  }
+}

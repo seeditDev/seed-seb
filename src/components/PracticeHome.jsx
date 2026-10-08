@@ -14,7 +14,7 @@ import {
   FaThLarge, FaTasks, FaTachometerAlt, FaClock, FaCheck,
   FaCheckSquare, FaChartLine, FaSyncAlt, FaEye,
   FaServer, FaCogs, FaClipboardList, FaLayerGroup, FaArrowRight,
-  FaGithub
+  FaGithub, FaPlay
 } from 'react-icons/fa';
 import SeedCreditCoin from './SeedCreditCoin';
 import roadmapsData from './roadmaps_data.json';
@@ -26,6 +26,8 @@ import GitHubSyncModal from './common/GitHubSyncModal';
 import PremiumUpgradeModal from './PremiumUpgradeModal';
 import DOMPurify from 'dompurify';
 import { toast } from 'sonner';
+import { PLACEMENT_TRACK_CONFIG } from '../config/placementTrackConfig';
+import { getPlacementTrackOverview, canAttemptAssessment, startAssessmentAttempt } from '../services/placementTrackService';
 
 const CATEGORIES = [
   'Arrays', 'Strings', 'Sorting', 'Searching', 'Recursion',
@@ -218,11 +220,37 @@ const PracticeHome = ({
     }
   }, [user?.uid, propUser?.uid]);
 
+  // Placement Track Progression State
+  const [placementOverview, setPlacementOverview] = useState(null);
+  const [assessmentModalLevel, setAssessmentModalLevel] = useState(null);
+  const [cooldownMap, setCooldownMap] = useState({});
+
+  useEffect(() => {
+    const authStorage = getAuthData();
+    const effectiveUid = user?.uid ?? propUser?.uid ?? authStorage?.uid;
+    if (effectiveUid && (activeTab === 'placementTrack' || !placementOverview)) {
+      getPlacementTrackOverview(effectiveUid).then(async (ov) => {
+        setPlacementOverview(ov);
+        const cdResults = {};
+        for (let l = 1; l <= 7; l++) {
+          try {
+            const elig = await canAttemptAssessment(effectiveUid, l);
+            cdResults[l] = elig;
+          } catch (_) {}
+        }
+        setCooldownMap(cdResults);
+      }).catch(err => {
+        console.warn('[PracticeHome] placement track fetch error:', err);
+      });
+    }
+  }, [activeTab, user?.uid, propUser?.uid]);
+
   // Filters for Flat Question Bank
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedDifficulty, setSelectedDifficulty] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
+  const [selectedLevel, setSelectedLevel] = useState('All');
   const [tabLoading, setTabLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -872,6 +900,268 @@ const PracticeHome = ({
       setSelectedSheet(sheet.id);
       setExpandedTopics({});
     }
+  };
+
+  const renderPlacementTrackTab = () => {
+    const studentPlacementLevel = placementOverview?.placementEligibilityLevel ?? 0;
+    const effectiveUid = user?.uid ?? propUser?.uid ?? getAuthData()?.uid;
+
+    return (
+      <div className="ph-section" style={{ margin: '30px auto' }}>
+        {/* Placement Track Hero Banner */}
+        <div className="ph-placement-hero-card">
+          <div className="ph-placement-hero-left">
+            <h2>SEED Seven-Level Placement Coding Track</h2>
+            <p>
+              Authoritative milestone progression for technical campus placements. Clear sequential curriculum requirements,
+              unlock levels, and pass rigorous 4-hour clearance assessments to elevate your Placement Eligibility Level.
+            </p>
+          </div>
+          <div className="ph-placement-eligibility-badge">
+            <span className="ph-placement-eligibility-title">Placement Eligibility</span>
+            <span className="ph-placement-eligibility-val">Level {studentPlacementLevel}</span>
+          </div>
+        </div>
+
+        {/* 7-Level Progression Grid */}
+        <div className="ph-placement-levels-grid">
+          {PLACEMENT_TRACK_CONFIG.modules.map((mod) => {
+            const levelNum = mod.level;
+            const levelDoc = placementOverview?.levels?.find(l => l.level === levelNum);
+            const isCleared = levelNum <= studentPlacementLevel || levelDoc?.cleared;
+            const isUnlocked = levelNum === 1 || levelNum <= studentPlacementLevel + 1 || levelDoc?.status === 'UNLOCKED';
+            const statusClass = isCleared ? 'cleared' : (isUnlocked ? 'in_progress' : 'locked');
+
+            // Count mapped questions from index/loaded questions
+            const mappedQuestions = questions.filter(q => q.level === levelNum || (levelNum === 1 && String(q.questionId || '').toLowerCase().startsWith('q0.')));
+            const totalQ = mappedQuestions.length;
+            const solvedQ = mappedQuestions.filter(q => solvedIds.includes(q.questionId) || solvedIds.includes(String(q.questionId).replace('Q0.', 'Q'))).length;
+            const pct = totalQ > 0 ? Math.round((solvedQ / totalQ) * 100) : 0;
+
+            const cdInfo = cooldownMap[levelNum];
+
+            return (
+              <div key={mod.id} className={`ph-placement-level-card ${statusClass}`}>
+                <div>
+                  <div className="ph-placement-level-card-header">
+                    <span className="ph-placement-level-name">Level {levelNum}</span>
+                    <span className={`ph-status-chip ${statusClass}`}>
+                      {isCleared ? 'Cleared' : isUnlocked ? 'In Progress' : 'Locked'}
+                    </span>
+                  </div>
+
+                  <h4 style={{ color: '#ffffff', fontSize: '15px', fontWeight: 700, margin: '0 0 6px 0' }}>{mod.title}</h4>
+                  <p style={{ color: '#94a3b8', fontSize: '13px', lineHeight: 1.5, margin: '0 0 16px 0' }}>{mod.description}</p>
+
+                  <div className="ph-level-progress-section">
+                    <div className="ph-level-progress-meta">
+                      <span>Curriculum: {totalQ > 0 ? `${solvedQ} / ${totalQ} Solved` : 'Questions Pending Mapping'}</span>
+                      <span>{pct}%</span>
+                    </div>
+                    <div className="ph-level-progress-track">
+                      <div className="ph-level-progress-fill" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+
+                  {totalQ > 0 && isUnlocked && !isCleared && (
+                    <button
+                      type="button"
+                      className="ph-btn-view-problems"
+                      style={{
+                        background: 'rgba(59, 130, 246, 0.12)',
+                        border: '1px solid rgba(59, 130, 246, 0.35)',
+                        color: '#60a5fa',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        width: '100%',
+                        margin: '12px 0 0 0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onClick={() => {
+                        setSelectedLevel(String(levelNum));
+                        handleTabChange('bank');
+                      }}
+                    >
+                      <FaCode size={12} /> View &amp; Solve Level {levelNum} Questions ({totalQ}) &rarr;
+                    </button>
+                  )}
+                </div>
+
+                <div className="ph-level-assessment-action">
+                  {isCleared ? (
+                    <div style={{ textAlign: 'center', color: '#10b981', fontWeight: 700, fontSize: '13px', padding: '6px' }}>
+                      ✓ Assessment Cleared &amp; Placement Badge Issued
+                    </div>
+                  ) : !isUnlocked ? (
+                    <button className="ph-btn-assessment" disabled>
+                      <FaLock size={12} /> Level Locked (Clear Level {levelNum - 1} First)
+                    </button>
+                  ) : cdInfo && !cdInfo.eligible ? (
+                    <div>
+                      <button className="ph-btn-assessment" disabled title={cdInfo.message || cdInfo.reason}>
+                        {cdInfo.reason === 'course_incomplete' ? (
+                          <>
+                            <FaLock size={12} /> Complete Curriculum to Unlock
+                          </>
+                        ) : cdInfo.reason === 'cooldown_active' ? (
+                          <>
+                            <FaClock size={12} /> Cooldown Active (15 Days)
+                          </>
+                        ) : cdInfo.reason === 'monthly_limit_reached' ? (
+                          <>
+                            <FaClock size={12} /> Max 2 Attempts Reached This Month
+                          </>
+                        ) : (
+                          <>
+                            <FaClock size={12} /> {cdInfo.message || cdInfo.reason}
+                          </>
+                        )}
+                      </button>
+                      {cdInfo.reason === 'course_incomplete' && (
+                        <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '6px', textAlign: 'center' }}>
+                          {cdInfo.remainingProblems || (totalQ - solvedQ)} problems remaining to qualify
+                        </div>
+                      )}
+                      {cdInfo.cooldownEndsAt && (
+                        <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '6px', textAlign: 'center' }}>
+                          Next attempt available: {new Date(cdInfo.cooldownEndsAt).toLocaleDateString()}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      className="ph-btn-assessment"
+                      onClick={() => setAssessmentModalLevel(mod)}
+                    >
+                      <FaRocket size={12} /> Take Clearance Assessment ({mod.assessment.durationMinutes / 60}h)
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Assessment Launch Confirmation Modal */}
+        {assessmentModalLevel && (
+          <div className="ph-pt-modal-backdrop" onClick={() => setAssessmentModalLevel(null)}>
+            <div className="ph-pt-modal-dialog" onClick={e => e.stopPropagation()}>
+              <h3 className="ph-pt-modal-title">
+                {assessmentModalLevel.assessment.title}
+              </h3>
+              <p style={{ color: '#94a3b8', fontSize: '13.5px', margin: '12px 0 20px 0', lineHeight: 1.6 }}>
+                You are about to launch the official Level {assessmentModalLevel.level} Placement Clearance Assessment powered by the <strong>MultiSectionAssessment (MSA) Coding Runtime</strong>.
+                This exam is strictly timed for <strong>{assessmentModalLevel.assessment.durationMinutes} minutes (4 hours)</strong> with comprehensive video and audio proctoring.
+              </p>
+              <div style={{ background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '14px', marginBottom: '20px', fontSize: '13px' }}>
+                <div style={{ marginBottom: '6px' }}><strong>• Duration:</strong> 4 Hours ({assessmentModalLevel.assessment.durationMinutes} mins)</div>
+                <div style={{ marginBottom: '6px' }}><strong>• Section:</strong> Coding Section (16 Questions: Q0.56 to Q0.71)</div>
+                <div style={{ marginBottom: '6px' }}><strong>• Proctoring:</strong> Full Visual &amp; Audio Proctoring (100 Video &amp; 100 Audio Violations Tolerance)</div>
+                <div style={{ marginBottom: '6px' }}><strong>• Pass Mark:</strong> {assessmentModalLevel.assessment.passPercentage}% All Test Cases Passed</div>
+                <div><strong>• Rule:</strong> 15-day cooldown on non-clearance. Maximum 2 attempts per calendar month.</div>
+              </div>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button
+                  className="ph-pagination-btn"
+                  onClick={() => setAssessmentModalLevel(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="ph-btn-assessment"
+                  style={{ width: 'auto', padding: '8px 20px' }}
+                  onClick={async () => {
+                    const slug = assessmentModalLevel.assessment.slug || 'l1-placement-clearance';
+                    let attemptId = `ATTEMPT-${assessmentModalLevel.level}-${Date.now()}`;
+                    if (effectiveUid) {
+                      try {
+                        const res = await startAssessmentAttempt(effectiveUid, assessmentModalLevel.level);
+                        if (res?.attemptId) {
+                          attemptId = res.attemptId;
+                        }
+                      } catch (_) {
+                        // Non-blocking fallback for dev testing / direct preview
+                      }
+                    }
+
+                    // Construct Canonical MultiSectionAssessment Blueprint
+                    const canonicalAss = {
+                      id: slug,
+                      slug: slug,
+                      title: assessmentModalLevel.assessment.title,
+                      name: assessmentModalLevel.assessment.title,
+                      courseId: 'placement-coding-track',
+                      trackType: 'placement',
+                      placementLevel: assessmentModalLevel.level,
+                      attemptId: attemptId,
+                      durationMinutes: assessmentModalLevel.assessment.durationMinutes || 240,
+                      totalDuration: assessmentModalLevel.assessment.durationMinutes || 240,
+                      passPercentage: assessmentModalLevel.assessment.passPercentage || 70,
+                      status: 'published',
+                      isGlobal: true,
+                      proctored: true,
+                      audioProctored: true,
+                      proctorMode: 'face+audio',
+                      cameraRequired: true,
+                      audioRequired: true,
+                      proctorConfig: {
+                        enabled: true,
+                        cameraRequired: true,
+                        audioRequired: true,
+                        proctorMode: 'face+audio',
+                        maxViolations: 100,
+                        maxCameraViolations: 100,
+                        maxAudioViolations: 100,
+                        tabSwitchLimit: 100,
+                        autoSubmitOnViolation: false
+                      },
+                      sections: [
+                        {
+                          id: `sec-coding-l${assessmentModalLevel.level}`,
+                          sectionId: `sec-coding-l${assessmentModalLevel.level}`,
+                          name: assessmentModalLevel.title,
+                          title: assessmentModalLevel.title,
+                          type: 'coding',
+                          duration_minutes: assessmentModalLevel.assessment.durationMinutes || 240,
+                          durationMinutes: assessmentModalLevel.assessment.durationMinutes || 240,
+                          maxScore: 1600,
+                          passPercentage: assessmentModalLevel.assessment.passPercentage || 70,
+                          proctored: true,
+                          audioProctored: true,
+                          qids: assessmentModalLevel.assessment.questions || [
+                            'Q0.56', 'Q0.57', 'Q0.58', 'Q0.59', 'Q0.60',
+                            'Q0.61', 'Q0.62', 'Q0.63', 'Q0.64', 'Q0.65',
+                            'Q0.66', 'Q0.67', 'Q0.68', 'Q0.69', 'Q0.70', 'Q0.71'
+                          ]
+                        }
+                      ]
+                    };
+
+                    sessionStorage.setItem('multisectionAssessmentData', JSON.stringify(canonicalAss));
+                    sessionStorage.setItem('msaSlug', slug);
+                    sessionStorage.setItem('placementAttemptId', attemptId);
+                    localStorage.setItem(`msaActiveAssessment_${slug}`, JSON.stringify(canonicalAss));
+
+                    toast.success(`Launching Level ${assessmentModalLevel.level} Clearance Assessment...`);
+                    setAssessmentModalLevel(null);
+                    navigate(`/student/assessment/id/${slug}`);
+                  }}
+                >
+                  <FaPlay size={11} style={{ marginRight: '6px' }} /> Start Assessment (Begin Timer)
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const renderSheetsTab = () => {
@@ -1708,7 +1998,7 @@ const PracticeHome = ({
   // Reset pagination on filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCategory, selectedDifficulty, selectedStatus]);
+  }, [searchQuery, selectedCategory, selectedDifficulty, selectedStatus, selectedLevel]);
 
   // Tab switching with smooth loader transition
   const handleTabChange = (targetTab) => {
@@ -1742,6 +2032,15 @@ const PracticeHome = ({
       const matchesDifficulty = selectedDifficulty === 'All' || q.difficulty === selectedDifficulty;
       if (!matchesDifficulty) return false;
 
+      if (selectedLevel !== 'All') {
+        const qLvl = q.level ? String(q.level) : (String(q.questionId || '').toLowerCase().startsWith('q0.') ? '1' : 'Pending');
+        if (selectedLevel === 'Pending') {
+          if (qLvl !== 'Pending') return false;
+        } else if (qLvl !== selectedLevel) {
+          return false;
+        }
+      }
+
       if (selectedStatus !== 'All') {
         const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.isPremium, isPremiumUser, attemptedIds);
         if (selectedStatus === 'ATTEMPTED' || selectedStatus === 'IN_PROGRESS') {
@@ -1753,7 +2052,7 @@ const PracticeHome = ({
 
       return true;
     });
-  }, [questions, searchQuery, selectedCategory, selectedDifficulty, selectedStatus, solvedIds, attemptedIds, problemDetails, isPremiumUser]);
+  }, [questions, searchQuery, selectedCategory, selectedDifficulty, selectedStatus, selectedLevel, solvedIds, attemptedIds, problemDetails, isPremiumUser]);
 
   const totalPages = Math.ceil(filteredQuestions.length / pageSize) || 1;
 
@@ -1781,6 +2080,13 @@ const PracticeHome = ({
               style={{ borderRadius: '8px' }}
             >
               Practice Bank
+            </button>
+            <button
+              className={`ph-topbar-btn ${activeTab === 'placementTrack' && !selectedModule ? 'active' : ''}`}
+              onClick={() => handleTabChange('placementTrack')}
+              style={{ borderRadius: '8px' }}
+            >
+              Placement Track
             </button>
           </div>
 
@@ -1908,6 +2214,8 @@ const PracticeHome = ({
             </div>
           )}
         </div>
+      ) : activeTab === 'placementTrack' ? (
+        renderPlacementTrackTab()
       ) : activeTab === 'sheets' ? (
         renderSheetsTab()
       ) : activeTab === 'paths' ? (
@@ -3238,12 +3546,30 @@ const PracticeHome = ({
                 <option value="UNSOLVED">Todo</option>
               </select>
 
+              {/* Level Filter */}
+              <select
+                value={selectedLevel}
+                onChange={e => { setSelectedLevel(e.target.value); setCurrentPage(1); }}
+                className="ph-problems-select"
+                aria-label="Filter questions by placement level"
+              >
+                <option value="All">Level: All</option>
+                <option value="1">Level 1 (Foundations)</option>
+                <option value="2">Level 2</option>
+                <option value="3">Level 3</option>
+                <option value="4">Level 4</option>
+                <option value="5">Level 5</option>
+                <option value="6">Level 6</option>
+                <option value="7">Level 7</option>
+                <option value="Pending">Level: Pending</option>
+              </select>
+
               {/* Count */}
               <span className="ph-problems-count">
                 {filteredQuestions.length} questions
               </span>
 
-              {(searchQuery || selectedCategory !== 'All' || selectedDifficulty !== 'All' || selectedStatus !== 'All') && (
+              {(searchQuery || selectedCategory !== 'All' || selectedDifficulty !== 'All' || selectedStatus !== 'All' || selectedLevel !== 'All') && (
                 <button
                   className="ph-reset-filter-btn"
                   onClick={() => {
@@ -3251,6 +3577,7 @@ const PracticeHome = ({
                     setSelectedCategory('All');
                     setSelectedDifficulty('All');
                     setSelectedStatus('All');
+                    setSelectedLevel('All');
                     setCurrentPage(1);
                   }}
                 >
@@ -3279,6 +3606,7 @@ const PracticeHome = ({
                       <th className="ph-col-title">TITLE</th>
                       <th className="ph-col-category">CATEGORY</th>
                       <th className="ph-col-diff">DIFFICULTY</th>
+                      <th className="ph-col-level">LEVEL</th>
                       <th className="ph-col-solvedby">SOLVED BY</th>
                       <th className="ph-col-score">SCORE</th>
                       <th className="ph-col-actions">ACTIONS</th>
@@ -3314,6 +3642,15 @@ const PracticeHome = ({
                           </td>
                           <td className="ph-col-diff">
                             <span className={`ph-diff-tag ${diffClass}`}>{q.difficulty ?? ''}</span>
+                          </td>
+                          <td className="ph-col-level">
+                            {q.level ? (
+                              <span className={`ph-level-tag level-${q.level}`}>Level {q.level}</span>
+                            ) : (String(q.questionId || '').toLowerCase().startsWith('q0.') ? (
+                              <span className="ph-level-tag level-1">Level 1</span>
+                            ) : (
+                              <span className="ph-level-tag pending">Pending</span>
+                            ))}
                           </td>
                           <td className="ph-col-solvedby">
                             <span style={{ color: 'var(--ph-text-dim)' }}>—</span>

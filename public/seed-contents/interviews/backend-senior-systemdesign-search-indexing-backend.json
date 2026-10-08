@@ -1,0 +1,43 @@
+{
+  "id": "backend-senior-systemdesign-search-indexing-backend",
+  "fileName": "backend-senior-systemdesign-search-indexing-backend",
+  "title": "Backend senior systemdesign search indexing backend",
+  "role": "backend",
+  "level": "senior",
+  "track": "systemdesign",
+  "topic": "Backend senior systemdesign search indexing backend",
+  "question": "Design the backend for large-scale search over a catalog of hundreds of millions of documents (e.g. product listings) that get created, updated, and deleted continuously, with search results expected to reflect recent changes within a few seconds.",
+  "idealAnswer": "Separates the write path (ingesting document changes) from the read path (serving search queries), and explains why the primary database isn't suited for full-text/faceted search at this scale, motivating a dedicated inverted-index-based search store\n\nDescribes keeping the search index in sync with the source of truth via an async pipeline, e.g. a change stream or event log (like CDC or a message queue) feeding indexing workers, rather than writing to the search index synchronously in the same request as the source-of-truth write\n\nAddresses horizontal scaling of the index itself, sharding the index across multiple nodes since it won't fit or perform well on one machine, and fanning a query out to relevant shards and merging results\n\nExplains the near-real-time freshness requirement concretely, e.g. index refresh intervals, and acknowledges the tradeoff between indexing throughput and how quickly a write becomes visible in search results\n\nConsiders relevance and ranking as a real design concern, not just retrieval, e.g. combining text match scores with business signals (popularity, recency), and mentions the need to reindex or backfill when ranking logic changes",
+  "rubric": [
+    "Separates the write path (ingesting document changes) from the read path (serving search queries), and explains why the primary database isn't suited for full-text/faceted search at this scale, motivating a dedicated inverted-index-based search store",
+    "Describes keeping the search index in sync with the source of truth via an async pipeline, e.g. a change stream or event log (like CDC or a message queue) feeding indexing workers, rather than writing to the search index synchronously in the same request as the source-of-truth write",
+    "Addresses horizontal scaling of the index itself, sharding the index across multiple nodes since it won't fit or perform well on one machine, and fanning a query out to relevant shards and merging results",
+    "Explains the near-real-time freshness requirement concretely, e.g. index refresh intervals, and acknowledges the tradeoff between indexing throughput and how quickly a write becomes visible in search results",
+    "Considers relevance and ranking as a real design concern, not just retrieval, e.g. combining text match scores with business signals (popularity, recency), and mentions the need to reindex or backfill when ranking logic changes"
+  ],
+  "followUps": [
+    "A document gets deleted from the source database but still shows up in search results for a few minutes. Is that acceptable, and if not, how would you tighten it?"
+  ],
+  "raw": {
+    "id": "backend-senior-systemdesign-search-indexing-backend",
+    "track": "swe",
+    "specialization": "backend",
+    "level": "senior",
+    "stage": "system-design",
+    "question": "Design the backend for large-scale search over a catalog of hundreds of millions of documents (e.g. product listings) that get created, updated, and deleted continuously, with search results expected to reflect recent changes within a few seconds.",
+    "context": null,
+    "key_points": [
+      "Separates the write path (ingesting document changes) from the read path (serving search queries), and explains why the primary database isn't suited for full-text/faceted search at this scale, motivating a dedicated inverted-index-based search store",
+      "Describes keeping the search index in sync with the source of truth via an async pipeline, e.g. a change stream or event log (like CDC or a message queue) feeding indexing workers, rather than writing to the search index synchronously in the same request as the source-of-truth write",
+      "Addresses horizontal scaling of the index itself, sharding the index across multiple nodes since it won't fit or perform well on one machine, and fanning a query out to relevant shards and merging results",
+      "Explains the near-real-time freshness requirement concretely, e.g. index refresh intervals, and acknowledges the tradeoff between indexing throughput and how quickly a write becomes visible in search results",
+      "Considers relevance and ranking as a real design concern, not just retrieval, e.g. combining text match scores with business signals (popularity, recency), and mentions the need to reindex or backfill when ranking logic changes"
+    ],
+    "follow_up": "A document gets deleted from the source database but still shows up in search results for a few minutes. Is that acceptable, and if not, how would you tighten it?",
+    "battle_eligible": false,
+    "related_lesson": {
+      "type": "system-design",
+      "id": "cs-distributed-search-index"
+    }
+  }
+}

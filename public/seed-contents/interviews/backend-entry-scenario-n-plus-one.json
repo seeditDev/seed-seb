@@ -1,0 +1,39 @@
+{
+  "id": "backend-entry-scenario-n-plus-one",
+  "fileName": "backend-entry-scenario-n-plus-one",
+  "title": "Backend entry scenario n plus one",
+  "role": "backend",
+  "level": "entry",
+  "track": "scenario",
+  "topic": "Backend entry scenario n plus one",
+  "question": "An endpoint that lists 20 blog posts along with each post's author name is making 21 separate database queries per request. What's going on, and how would you fix it?",
+  "idealAnswer": "Identifies this as the classic N+1 query problem: one query for the list, then N more queries (one per row) for related data\n\nExplains why it's slow: each extra query has its own round-trip latency, so the cost scales linearly with the number of rows instead of staying constant\n\nProposes fixing it with a JOIN to fetch posts and authors in a single query, or a batched second query (e.g. fetch all needed author ids at once with WHERE id IN (...)) instead of one query per row\n\nRecognizes that this pattern often hides inside ORMs via lazy-loading relations, and that awareness of what the ORM is actually generating (e.g. via query logging) is important to catch it\n\nBonus: notes the tradeoff between a single wide JOIN (simpler, but can duplicate data if there are multiple joined rows) versus a batched second query (slightly more code, avoids duplication)",
+  "rubric": [
+    "Identifies this as the classic N+1 query problem: one query for the list, then N more queries (one per row) for related data",
+    "Explains why it's slow: each extra query has its own round-trip latency, so the cost scales linearly with the number of rows instead of staying constant",
+    "Proposes fixing it with a JOIN to fetch posts and authors in a single query, or a batched second query (e.g. fetch all needed author ids at once with WHERE id IN (...)) instead of one query per row",
+    "Recognizes that this pattern often hides inside ORMs via lazy-loading relations, and that awareness of what the ORM is actually generating (e.g. via query logging) is important to catch it",
+    "Bonus: notes the tradeoff between a single wide JOIN (simpler, but can duplicate data if there are multiple joined rows) versus a batched second query (slightly more code, avoids duplication)"
+  ],
+  "followUps": [
+    "How would you catch this kind of problem before it reaches production, rather than after a user complains about slowness?"
+  ],
+  "raw": {
+    "id": "backend-entry-scenario-n-plus-one",
+    "track": "swe",
+    "specialization": "backend",
+    "level": "entry",
+    "stage": "scenario",
+    "question": "An endpoint that lists 20 blog posts along with each post's author name is making 21 separate database queries per request. What's going on, and how would you fix it?",
+    "context": "The code fetches the list of posts with one query, then loops over the posts and runs a separate query to fetch each post's author.",
+    "key_points": [
+      "Identifies this as the classic N+1 query problem: one query for the list, then N more queries (one per row) for related data",
+      "Explains why it's slow: each extra query has its own round-trip latency, so the cost scales linearly with the number of rows instead of staying constant",
+      "Proposes fixing it with a JOIN to fetch posts and authors in a single query, or a batched second query (e.g. fetch all needed author ids at once with WHERE id IN (...)) instead of one query per row",
+      "Recognizes that this pattern often hides inside ORMs via lazy-loading relations, and that awareness of what the ORM is actually generating (e.g. via query logging) is important to catch it",
+      "Bonus: notes the tradeoff between a single wide JOIN (simpler, but can duplicate data if there are multiple joined rows) versus a batched second query (slightly more code, avoids duplication)"
+    ],
+    "follow_up": "How would you catch this kind of problem before it reaches production, rather than after a user complains about slowness?",
+    "battle_eligible": true
+  }
+}

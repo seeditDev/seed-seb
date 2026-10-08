@@ -1,0 +1,39 @@
+{
+  "id": "backend-mid-scenario-connection-pool-exhaustion",
+  "fileName": "backend-mid-scenario-connection-pool-exhaustion",
+  "title": "Backend mid scenario connection pool exhaustion",
+  "role": "backend",
+  "level": "mid",
+  "track": "scenario",
+  "topic": "Backend mid scenario connection pool exhaustion",
+  "question": "Under moderate traffic, your API starts throwing 'timeout waiting for connection from pool' errors, even though the database itself isn't overloaded. What's happening, and how do you fix it?",
+  "idealAnswer": "Identifies that all connections in the pool are tied up, likely held by the slow report query (or several concurrent instances of it) for longer than usual, starving every other request of a connection\n\nWould check for connections not being released properly too, e.g. a code path that opens a connection and doesn't close/return it on an error path, slowly leaking pool capacity over time\n\nProposes fixes: adding a query timeout so a slow query can't hold a connection indefinitely, and/or moving the slow report query to a separate pool or a read replica so it can't starve the main request path\n\nConsiders pool sizing itself, but recognizes that just increasing pool size is a band-aid if the real problem is one query hogging connections for too long, and can push too many connections onto the database itself\n\nMentions adding monitoring/alerting on pool utilization so this is caught before it causes user-facing timeouts next time",
+  "rubric": [
+    "Identifies that all connections in the pool are tied up, likely held by the slow report query (or several concurrent instances of it) for longer than usual, starving every other request of a connection",
+    "Would check for connections not being released properly too, e.g. a code path that opens a connection and doesn't close/return it on an error path, slowly leaking pool capacity over time",
+    "Proposes fixes: adding a query timeout so a slow query can't hold a connection indefinitely, and/or moving the slow report query to a separate pool or a read replica so it can't starve the main request path",
+    "Considers pool sizing itself, but recognizes that just increasing pool size is a band-aid if the real problem is one query hogging connections for too long, and can push too many connections onto the database itself",
+    "Mentions adding monitoring/alerting on pool utilization so this is caught before it causes user-facing timeouts next time"
+  ],
+  "followUps": [
+    "How would you decide the right connection pool size for a service, rather than just picking a round number?"
+  ],
+  "raw": {
+    "id": "backend-mid-scenario-connection-pool-exhaustion",
+    "track": "swe",
+    "specialization": "backend",
+    "level": "mid",
+    "stage": "scenario",
+    "question": "Under moderate traffic, your API starts throwing 'timeout waiting for connection from pool' errors, even though the database itself isn't overloaded. What's happening, and how do you fix it?",
+    "context": "The service uses a connection pool with a fixed size to talk to the database. A recent change added a new endpoint that runs a slow report query.",
+    "key_points": [
+      "Identifies that all connections in the pool are tied up, likely held by the slow report query (or several concurrent instances of it) for longer than usual, starving every other request of a connection",
+      "Would check for connections not being released properly too, e.g. a code path that opens a connection and doesn't close/return it on an error path, slowly leaking pool capacity over time",
+      "Proposes fixes: adding a query timeout so a slow query can't hold a connection indefinitely, and/or moving the slow report query to a separate pool or a read replica so it can't starve the main request path",
+      "Considers pool sizing itself, but recognizes that just increasing pool size is a band-aid if the real problem is one query hogging connections for too long, and can push too many connections onto the database itself",
+      "Mentions adding monitoring/alerting on pool utilization so this is caught before it causes user-facing timeouts next time"
+    ],
+    "follow_up": "How would you decide the right connection pool size for a service, rather than just picking a round number?",
+    "battle_eligible": true
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "id": "frontend-mid-domain-rendering-pipeline",
+  "fileName": "frontend-mid-domain-rendering-pipeline",
+  "title": "Frontend mid domain rendering pipeline",
+  "role": "frontend",
+  "level": "mid",
+  "track": "domain",
+  "topic": "Frontend mid domain rendering pipeline",
+  "question": "Walk through what happens in the browser's rendering pipeline between a CSS/JS change and pixels updating on screen, and why some changes are more expensive than others.",
+  "idealAnswer": "The pipeline generally goes style (recalculate which CSS rules apply), layout/reflow (compute geometry, position and size of every element), paint (fill in pixels), and composite (combine painted layers on the GPU)\n\nChanging layout-affecting properties (width, position, font-size) forces layout to be recomputed, which cascades to paint and composite, this is the most expensive path\n\nChanging paint-only properties (background-color, visibility) skips layout but still requires a repaint of the affected area\n\nChanging composite-only properties (transform, opacity) can skip both layout and paint if the element is already promoted to its own layer, this is why animating transform/opacity is much cheaper than animating top/left or width\n\nReading layout properties (like offsetHeight) right after writing styles forces a synchronous layout recalculation ('layout thrashing'), doing this repeatedly in a loop is a classic performance bug\n\nBrowsers batch DOM changes and only actually run this pipeline once per frame, ideally hitting 60fps (about 16.7ms per frame) for smooth animation",
+  "rubric": [
+    "The pipeline generally goes style (recalculate which CSS rules apply), layout/reflow (compute geometry, position and size of every element), paint (fill in pixels), and composite (combine painted layers on the GPU)",
+    "Changing layout-affecting properties (width, position, font-size) forces layout to be recomputed, which cascades to paint and composite, this is the most expensive path",
+    "Changing paint-only properties (background-color, visibility) skips layout but still requires a repaint of the affected area",
+    "Changing composite-only properties (transform, opacity) can skip both layout and paint if the element is already promoted to its own layer, this is why animating transform/opacity is much cheaper than animating top/left or width",
+    "Reading layout properties (like offsetHeight) right after writing styles forces a synchronous layout recalculation ('layout thrashing'), doing this repeatedly in a loop is a classic performance bug",
+    "Browsers batch DOM changes and only actually run this pipeline once per frame, ideally hitting 60fps (about 16.7ms per frame) for smooth animation"
+  ],
+  "followUps": [
+    "You see janky scrolling caused by a fixed header's box-shadow changing on scroll. Why might that be expensive, and what's a cheaper alternative?"
+  ],
+  "raw": {
+    "id": "frontend-mid-domain-rendering-pipeline",
+    "track": "swe",
+    "specialization": "frontend",
+    "level": "mid",
+    "stage": "domain",
+    "question": "Walk through what happens in the browser's rendering pipeline between a CSS/JS change and pixels updating on screen, and why some changes are more expensive than others.",
+    "context": null,
+    "key_points": [
+      "The pipeline generally goes style (recalculate which CSS rules apply), layout/reflow (compute geometry, position and size of every element), paint (fill in pixels), and composite (combine painted layers on the GPU)",
+      "Changing layout-affecting properties (width, position, font-size) forces layout to be recomputed, which cascades to paint and composite, this is the most expensive path",
+      "Changing paint-only properties (background-color, visibility) skips layout but still requires a repaint of the affected area",
+      "Changing composite-only properties (transform, opacity) can skip both layout and paint if the element is already promoted to its own layer, this is why animating transform/opacity is much cheaper than animating top/left or width",
+      "Reading layout properties (like offsetHeight) right after writing styles forces a synchronous layout recalculation ('layout thrashing'), doing this repeatedly in a loop is a classic performance bug",
+      "Browsers batch DOM changes and only actually run this pipeline once per frame, ideally hitting 60fps (about 16.7ms per frame) for smooth animation"
+    ],
+    "follow_up": "You see janky scrolling caused by a fixed header's box-shadow changing on scroll. Why might that be expensive, and what's a cheaper alternative?",
+    "battle_eligible": true
+  }
+}

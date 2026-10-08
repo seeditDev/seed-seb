@@ -77,6 +77,7 @@ import {
   FaBriefcase
 } from "react-icons/fa";
 import Placements from './Placements';
+import AIInterviewSimulator from './AIInterviewSimulator';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { isQuestionBankProblem } from '../services/codingProgressService';
 import SeedCreditCoin from './SeedCreditCoin';
@@ -1436,7 +1437,7 @@ const StudentDashboard = () => {
 
   const [welcomeUpdates, setWelcomeUpdates] = useState(null);
   const [showUpdatesModal, setShowUpdatesModal] = useState(false);
-  const [isAiInterviewAllowed, setIsAiInterviewAllowed] = useState(false);
+  const [isAiInterviewAllowed, setIsAiInterviewAllowed] = useState(true);
   const [activeResumeSession, setActiveResumeSession] = useState(null);
 
   // Active assessment session detection (5-minute exit grace window)
@@ -1589,6 +1590,9 @@ const StudentDashboard = () => {
 
   useEffect(() => {
     const checkAiInterviewAccess = async () => {
+      // AI Placement Interview is unlocked for all candidates
+      setIsAiInterviewAllowed(true);
+      return;
       if (!user) return;
       const userEmail = (user.email ?? "").trim().toLowerCase();
       if (!userEmail) return;
@@ -6841,15 +6845,14 @@ const StudentDashboard = () => {
                 <FaHeadset />
                 {!collapsed && <span>Help &amp; Support</span>}
               </button>
-              {isAiInterviewAllowed && (
-                <button
-                  className="sidebar-nav-pill"
-                  onClick={() => navigate('/student/ai-interview')}
-                >
-                  <FaUserTie />
-                  {!collapsed && <span>AI Interview</span>}
-                </button>
-              )}
+              <button
+                className={`sidebar-nav-pill ${activeTab === "ai-interview" ? "active" : ""}`}
+                onClick={() => setActiveTab("ai-interview")}
+                title={collapsed ? "AI Interview" : undefined}
+              >
+                <FaUserTie />
+                {!collapsed && <span>AI Interview</span>}
+              </button>
               <button
                 className={`sidebar-nav-pill ${activeTab === "settings" ? "active" : ""}`}
                 onClick={() => setActiveTab("settings")}
@@ -7157,6 +7160,80 @@ const StudentDashboard = () => {
             ) :
             activeTab === "assessments" ? renderAssessments() :
              activeTab === "contests" ? renderContests() :
+              activeTab === "ai-interview" ? (
+                <div className="dashboard-ai-interview-view" style={{ padding: '0 24px 32px 24px', width: '100%', boxSizing: 'border-box' }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '20px',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    padding: '16px 20px',
+                    borderRadius: '14px',
+                    border: '1px solid var(--border-color, #334155)'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{
+                        width: '42px',
+                        height: '42px',
+                        borderRadius: '10px',
+                        background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#fff',
+                        fontSize: '20px',
+                        boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+                      }}>
+                        <FaUserTie />
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: 'var(--text-main, #f8fafc)' }}>
+                            AI Placement Interview Studio
+                          </h2>
+                          <span style={{
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            background: 'rgba(16, 185, 129, 0.15)',
+                            color: '#10b981',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            border: '1px solid rgba(16, 185, 129, 0.3)'
+                          }}>
+                            UNLOCKED
+                          </span>
+                        </div>
+                        <p style={{ fontSize: '0.82rem', color: 'var(--text-muted, #94a3b8)', margin: '3px 0 0' }}>
+                          Practice mock technical and HR rounds with intelligent speech analysis, live rubrics, and performance scorecards.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/student/ai-interview')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '9px 18px',
+                        borderRadius: '8px',
+                        background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                        color: '#ffffff',
+                        border: 'none',
+                        fontSize: '12.5px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        boxShadow: '0 3px 10px rgba(99, 102, 241, 0.35)',
+                        transition: 'transform 0.15s ease'
+                      }}
+                    >
+                      <FaExpand /> Open Fullscreen Studio
+                    </button>
+                  </div>
+                  <AIInterviewSimulator user={user} />
+                </div>
+              ) :
               activeTab === "placements" ? (
                 <Placements user={user} />
               ) :

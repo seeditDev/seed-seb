@@ -85,6 +85,14 @@ export async function saveSolution(uid, solution) {
           isAccepted: true,
         });
       }
+
+      // Record to placement track progression if accepted
+      try {
+        import('./placementTrackService').then(({ recordQuestionSolved }) => {
+          const resolvedLevel = solution.level || (String(solution.questionId).toLowerCase().startsWith('q0.') ? 1 : null);
+          recordQuestionSolved(uid, solution.questionId, resolvedLevel).catch(() => {});
+        }).catch(() => {});
+      } catch (_) {}
     }
   } catch (err) {
     console.error('[userSolutionsService] saveSolution error:', err);

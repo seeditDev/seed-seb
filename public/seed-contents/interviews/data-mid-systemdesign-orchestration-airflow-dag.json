@@ -1,0 +1,41 @@
+{
+  "id": "data-mid-systemdesign-orchestration-airflow-dag",
+  "fileName": "data-mid-systemdesign-orchestration-airflow-dag",
+  "title": "Data mid systemdesign orchestration airflow dag",
+  "role": "data",
+  "level": "mid",
+  "track": "systemdesign",
+  "topic": "Data mid systemdesign orchestration airflow dag",
+  "question": "How would you design the orchestration for this multi-step pipeline, and what would you use a DAG-based scheduler for versus what would you keep out of it?",
+  "idealAnswer": "Model the pipeline as a directed acyclic graph, DAG, where each extract, transform, quality-check, and publish step is a node with explicit dependencies, so independent extracts, e.g. the five sources, can run in parallel while downstream joins wait for all of them\n\nUse per-task retry policies and timeouts appropriate to each source, e.g. a flaky third-party API might need more retries with backoff than a stable internal database\n\nData quality checks should be a first-class step in the DAG that can block downstream publish steps, rather than something run manually or after the fact\n\nDesign for partial failure, e.g. if one of the five sources is unavailable, decide whether the pipeline should proceed with the other four and flag the gap, or halt entirely, this should be a deliberate choice, not an accident\n\nMentions idempotency and backfill support, since orchestrators are also used to manually rerun a specific date's DAG when something needed fixing\n\nA strong answer separates orchestration logic, scheduling, dependencies, retries, from business logic, the actual transform code, so the DAG definition stays simple and the heavy computation can run elsewhere, e.g. a Spark job triggered by the orchestrator",
+  "rubric": [
+    "Model the pipeline as a directed acyclic graph, DAG, where each extract, transform, quality-check, and publish step is a node with explicit dependencies, so independent extracts, e.g. the five sources, can run in parallel while downstream joins wait for all of them",
+    "Use per-task retry policies and timeouts appropriate to each source, e.g. a flaky third-party API might need more retries with backoff than a stable internal database",
+    "Data quality checks should be a first-class step in the DAG that can block downstream publish steps, rather than something run manually or after the fact",
+    "Design for partial failure, e.g. if one of the five sources is unavailable, decide whether the pipeline should proceed with the other four and flag the gap, or halt entirely, this should be a deliberate choice, not an accident",
+    "Mentions idempotency and backfill support, since orchestrators are also used to manually rerun a specific date's DAG when something needed fixing",
+    "A strong answer separates orchestration logic, scheduling, dependencies, retries, from business logic, the actual transform code, so the DAG definition stays simple and the heavy computation can run elsewhere, e.g. a Spark job triggered by the orchestrator"
+  ],
+  "followUps": [
+    "One of the third-party APIs has strict rate limits and fails your pipeline several times a week. How would you change the DAG design to make that source less disruptive to everything downstream?"
+  ],
+  "raw": {
+    "id": "data-mid-systemdesign-orchestration-airflow-dag",
+    "track": "ml-ai",
+    "specialization": "data",
+    "level": "mid",
+    "stage": "system-design",
+    "question": "How would you design the orchestration for this multi-step pipeline, and what would you use a DAG-based scheduler for versus what would you keep out of it?",
+    "context": "You need to build a pipeline that: pulls data from five different source systems, e.g. three internal databases and two third-party APIs, joins and transforms it into a unified customer table, runs data quality checks, and finally publishes it to both a warehouse and a downstream ML feature pipeline. Some sources are slow and occasionally unavailable, and different steps have different retry needs.",
+    "key_points": [
+      "Model the pipeline as a directed acyclic graph, DAG, where each extract, transform, quality-check, and publish step is a node with explicit dependencies, so independent extracts, e.g. the five sources, can run in parallel while downstream joins wait for all of them",
+      "Use per-task retry policies and timeouts appropriate to each source, e.g. a flaky third-party API might need more retries with backoff than a stable internal database",
+      "Data quality checks should be a first-class step in the DAG that can block downstream publish steps, rather than something run manually or after the fact",
+      "Design for partial failure, e.g. if one of the five sources is unavailable, decide whether the pipeline should proceed with the other four and flag the gap, or halt entirely, this should be a deliberate choice, not an accident",
+      "Mentions idempotency and backfill support, since orchestrators are also used to manually rerun a specific date's DAG when something needed fixing",
+      "A strong answer separates orchestration logic, scheduling, dependencies, retries, from business logic, the actual transform code, so the DAG definition stays simple and the heavy computation can run elsewhere, e.g. a Spark job triggered by the orchestrator"
+    ],
+    "follow_up": "One of the third-party APIs has strict rate limits and fails your pipeline several times a week. How would you change the DAG design to make that source less disruptive to everything downstream?",
+    "battle_eligible": false
+  }
+}

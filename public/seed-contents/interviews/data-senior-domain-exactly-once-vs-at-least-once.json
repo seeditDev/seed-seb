@@ -1,0 +1,45 @@
+{
+  "id": "data-senior-domain-exactly-once-vs-at-least-once",
+  "fileName": "data-senior-domain-exactly-once-vs-at-least-once",
+  "title": "Data senior domain exactly once vs at least once",
+  "role": "data",
+  "level": "senior",
+  "track": "domain",
+  "topic": "Data senior domain exactly once vs at least once",
+  "question": "What's the difference between at-least-once, at-most-once, and exactly-once processing semantics, and how do real systems actually achieve something close to exactly-once?",
+  "idealAnswer": "At-least-once guarantees every message is processed, but a message may be processed more than once, e.g. after a retry following a crash before an acknowledgment was sent\n\nAt-most-once guarantees a message is never processed more than once, but some messages may be lost, e.g. if the consumer crashes after receiving but before processing\n\nExactly-once means every message is processed once and only once, which is genuinely hard to guarantee end-to-end across distributed components, especially when external side effects are involved\n\nIn practice, true exactly-once delivery is rarely achieved at the network/transport level, instead systems achieve exactly-once effects by combining at-least-once delivery with idempotent processing, e.g. deduplicating by a unique message ID, or transactional writes, e.g. atomically committing both the output and the offset/checkpoint together\n\nA strong answer gives a concrete mechanism, e.g. Kafka's transactional producer/consumer APIs, or a sink that upserts on a unique key so reprocessing the same message has no additional effect\n\nNotes the tradeoff: exactly-once semantics add complexity and often reduce throughput, so many systems deliberately choose at-least-once plus idempotent consumers as a simpler, more practical path to the same end result",
+  "rubric": [
+    "At-least-once guarantees every message is processed, but a message may be processed more than once, e.g. after a retry following a crash before an acknowledgment was sent",
+    "At-most-once guarantees a message is never processed more than once, but some messages may be lost, e.g. if the consumer crashes after receiving but before processing",
+    "Exactly-once means every message is processed once and only once, which is genuinely hard to guarantee end-to-end across distributed components, especially when external side effects are involved",
+    "In practice, true exactly-once delivery is rarely achieved at the network/transport level, instead systems achieve exactly-once effects by combining at-least-once delivery with idempotent processing, e.g. deduplicating by a unique message ID, or transactional writes, e.g. atomically committing both the output and the offset/checkpoint together",
+    "A strong answer gives a concrete mechanism, e.g. Kafka's transactional producer/consumer APIs, or a sink that upserts on a unique key so reprocessing the same message has no additional effect",
+    "Notes the tradeoff: exactly-once semantics add complexity and often reduce throughput, so many systems deliberately choose at-least-once plus idempotent consumers as a simpler, more practical path to the same end result"
+  ],
+  "followUps": [
+    "If a downstream system has an external side effect that isn't naturally idempotent, e.g. sending an email or charging a credit card, how would you still achieve effectively-once behavior?"
+  ],
+  "raw": {
+    "id": "data-senior-domain-exactly-once-vs-at-least-once",
+    "track": "ml-ai",
+    "specialization": "data",
+    "level": "senior",
+    "stage": "domain",
+    "question": "What's the difference between at-least-once, at-most-once, and exactly-once processing semantics, and how do real systems actually achieve something close to exactly-once?",
+    "context": null,
+    "key_points": [
+      "At-least-once guarantees every message is processed, but a message may be processed more than once, e.g. after a retry following a crash before an acknowledgment was sent",
+      "At-most-once guarantees a message is never processed more than once, but some messages may be lost, e.g. if the consumer crashes after receiving but before processing",
+      "Exactly-once means every message is processed once and only once, which is genuinely hard to guarantee end-to-end across distributed components, especially when external side effects are involved",
+      "In practice, true exactly-once delivery is rarely achieved at the network/transport level, instead systems achieve exactly-once effects by combining at-least-once delivery with idempotent processing, e.g. deduplicating by a unique message ID, or transactional writes, e.g. atomically committing both the output and the offset/checkpoint together",
+      "A strong answer gives a concrete mechanism, e.g. Kafka's transactional producer/consumer APIs, or a sink that upserts on a unique key so reprocessing the same message has no additional effect",
+      "Notes the tradeoff: exactly-once semantics add complexity and often reduce throughput, so many systems deliberately choose at-least-once plus idempotent consumers as a simpler, more practical path to the same end result"
+    ],
+    "follow_up": "If a downstream system has an external side effect that isn't naturally idempotent, e.g. sending an email or charging a credit card, how would you still achieve effectively-once behavior?",
+    "battle_eligible": true,
+    "related_lesson": {
+      "type": "system-design",
+      "id": "sd-message-queues-async"
+    }
+  }
+}

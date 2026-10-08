@@ -1,0 +1,43 @@
+{
+  "id": "backend-senior-domain-exactly-once-delivery",
+  "fileName": "backend-senior-domain-exactly-once-delivery",
+  "title": "Backend senior domain exactly once delivery",
+  "role": "backend",
+  "level": "senior",
+  "track": "domain",
+  "topic": "Backend senior domain exactly once delivery",
+  "question": "People often say 'exactly-once delivery is impossible' in distributed systems, but plenty of production systems claim to offer it. How do you reconcile that?",
+  "idealAnswer": "Explains why true exactly-once at the network/transport level is impossible: you can't distinguish a lost acknowledgment from a lost message, so a sender genuinely cannot know whether to retry without risking a duplicate\n\nDistinguishes delivery semantics clearly: at-most-once (send and forget, can lose messages), at-least-once (retry until acknowledged, can duplicate), and explains that what's usually called 'exactly-once' is really at-least-once delivery plus idempotent processing on the receiving end\n\nDescribes how systems actually achieve effectively-once processing: deduplication using a unique message id or idempotency key, so a duplicate delivery is detected and discarded (or produces the same result) rather than being reprocessed\n\nMentions that this dedup step itself has to be atomic with the side effect it's guarding (e.g. writing 'processed message X' and applying its effect in the same transaction), otherwise a crash between the two steps reopens the same gap\n\nGives a concrete example, e.g. Kafka's idempotent producer plus transactional consumer offsets, or a payment processor using idempotency keys, as effectively-once in practice built on top of at-least-once delivery",
+  "rubric": [
+    "Explains why true exactly-once at the network/transport level is impossible: you can't distinguish a lost acknowledgment from a lost message, so a sender genuinely cannot know whether to retry without risking a duplicate",
+    "Distinguishes delivery semantics clearly: at-most-once (send and forget, can lose messages), at-least-once (retry until acknowledged, can duplicate), and explains that what's usually called 'exactly-once' is really at-least-once delivery plus idempotent processing on the receiving end",
+    "Describes how systems actually achieve effectively-once processing: deduplication using a unique message id or idempotency key, so a duplicate delivery is detected and discarded (or produces the same result) rather than being reprocessed",
+    "Mentions that this dedup step itself has to be atomic with the side effect it's guarding (e.g. writing 'processed message X' and applying its effect in the same transaction), otherwise a crash between the two steps reopens the same gap",
+    "Gives a concrete example, e.g. Kafka's idempotent producer plus transactional consumer offsets, or a payment processor using idempotency keys, as effectively-once in practice built on top of at-least-once delivery"
+  ],
+  "followUps": [
+    "Where would you put the deduplication check if the side effect is calling a third-party API that doesn't support idempotency keys itself?"
+  ],
+  "raw": {
+    "id": "backend-senior-domain-exactly-once-delivery",
+    "track": "swe",
+    "specialization": "backend",
+    "level": "senior",
+    "stage": "domain",
+    "question": "People often say 'exactly-once delivery is impossible' in distributed systems, but plenty of production systems claim to offer it. How do you reconcile that?",
+    "context": null,
+    "key_points": [
+      "Explains why true exactly-once at the network/transport level is impossible: you can't distinguish a lost acknowledgment from a lost message, so a sender genuinely cannot know whether to retry without risking a duplicate",
+      "Distinguishes delivery semantics clearly: at-most-once (send and forget, can lose messages), at-least-once (retry until acknowledged, can duplicate), and explains that what's usually called 'exactly-once' is really at-least-once delivery plus idempotent processing on the receiving end",
+      "Describes how systems actually achieve effectively-once processing: deduplication using a unique message id or idempotency key, so a duplicate delivery is detected and discarded (or produces the same result) rather than being reprocessed",
+      "Mentions that this dedup step itself has to be atomic with the side effect it's guarding (e.g. writing 'processed message X' and applying its effect in the same transaction), otherwise a crash between the two steps reopens the same gap",
+      "Gives a concrete example, e.g. Kafka's idempotent producer plus transactional consumer offsets, or a payment processor using idempotency keys, as effectively-once in practice built on top of at-least-once delivery"
+    ],
+    "follow_up": "Where would you put the deduplication check if the side effect is calling a third-party API that doesn't support idempotency keys itself?",
+    "battle_eligible": true,
+    "related_lesson": {
+      "type": "system-design",
+      "id": "sd-message-queues-async"
+    }
+  }
+}

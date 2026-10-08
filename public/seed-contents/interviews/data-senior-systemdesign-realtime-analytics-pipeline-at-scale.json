@@ -1,0 +1,43 @@
+{
+  "id": "data-senior-systemdesign-realtime-analytics-pipeline-at-scale",
+  "fileName": "data-senior-systemdesign-realtime-analytics-pipeline-at-scale",
+  "title": "Data senior systemdesign realtime analytics pipeline at scale",
+  "role": "data",
+  "level": "senior",
+  "track": "systemdesign",
+  "topic": "Data senior systemdesign realtime analytics pipeline at scale",
+  "question": "How would you design a real-time analytics pipeline to power this dashboard at that scale?",
+  "idealAnswer": "Use a streaming ingestion layer, e.g. a distributed log/message queue, to absorb high-throughput event traffic durably and decouple producers from downstream processing, so a slow consumer doesn't back up the producers\n\nUse a stream processing engine to compute rolling aggregates, e.g. windowed counts and sums, incrementally rather than recomputing from raw events on every dashboard refresh, since that wouldn't scale at hundreds of thousands of events per second\n\nHandle out-of-order and late events with watermarking/windowing strategies, and decide explicitly how late an event can be before it's dropped or handled as a correction\n\nServe the dashboard from a fast key-value or time-series store optimized for high-concurrency reads of pre-aggregated results, rather than having hundreds of dashboard users hit the stream processing layer or raw event store directly\n\nDesign for horizontal scalability and partitioning, e.g. partitioning the event stream by a key like region or product category, so the system scales by adding more processing nodes rather than hitting a ceiling\n\nAddress fault tolerance, e.g. checkpointing stream processing state so a node failure doesn't lose in-flight aggregations or double-count on recovery, and plan for reprocessing/backfill if the aggregation logic itself needs to change later\n\nA strong answer discusses the tradeoff between exact and approximate aggregates, e.g. using approximate algorithms like HyperLogLog for unique counts at this scale, when exact computation would be too expensive",
+  "rubric": [
+    "Use a streaming ingestion layer, e.g. a distributed log/message queue, to absorb high-throughput event traffic durably and decouple producers from downstream processing, so a slow consumer doesn't back up the producers",
+    "Use a stream processing engine to compute rolling aggregates, e.g. windowed counts and sums, incrementally rather than recomputing from raw events on every dashboard refresh, since that wouldn't scale at hundreds of thousands of events per second",
+    "Handle out-of-order and late events with watermarking/windowing strategies, and decide explicitly how late an event can be before it's dropped or handled as a correction",
+    "Serve the dashboard from a fast key-value or time-series store optimized for high-concurrency reads of pre-aggregated results, rather than having hundreds of dashboard users hit the stream processing layer or raw event store directly",
+    "Design for horizontal scalability and partitioning, e.g. partitioning the event stream by a key like region or product category, so the system scales by adding more processing nodes rather than hitting a ceiling",
+    "Address fault tolerance, e.g. checkpointing stream processing state so a node failure doesn't lose in-flight aggregations or double-count on recovery, and plan for reprocessing/backfill if the aggregation logic itself needs to change later",
+    "A strong answer discusses the tradeoff between exact and approximate aggregates, e.g. using approximate algorithms like HyperLogLog for unique counts at this scale, when exact computation would be too expensive"
+  ],
+  "followUps": [
+    "How would you handle a sudden 10x traffic spike, e.g. during a flash sale, without the dashboard falling behind or the pipeline falling over?"
+  ],
+  "raw": {
+    "id": "data-senior-systemdesign-realtime-analytics-pipeline-at-scale",
+    "track": "ml-ai",
+    "specialization": "data",
+    "level": "senior",
+    "stage": "system-design",
+    "question": "How would you design a real-time analytics pipeline to power this dashboard at that scale?",
+    "context": "You're designing a system to power a live analytics dashboard for a large e-commerce platform, showing metrics like orders per minute, revenue, and inventory levels, updated within seconds. The platform generates on the order of hundreds of thousands of events per second at peak, e.g. clicks, cart updates, orders, and the dashboard is used by hundreds of internal employees simultaneously.",
+    "key_points": [
+      "Use a streaming ingestion layer, e.g. a distributed log/message queue, to absorb high-throughput event traffic durably and decouple producers from downstream processing, so a slow consumer doesn't back up the producers",
+      "Use a stream processing engine to compute rolling aggregates, e.g. windowed counts and sums, incrementally rather than recomputing from raw events on every dashboard refresh, since that wouldn't scale at hundreds of thousands of events per second",
+      "Handle out-of-order and late events with watermarking/windowing strategies, and decide explicitly how late an event can be before it's dropped or handled as a correction",
+      "Serve the dashboard from a fast key-value or time-series store optimized for high-concurrency reads of pre-aggregated results, rather than having hundreds of dashboard users hit the stream processing layer or raw event store directly",
+      "Design for horizontal scalability and partitioning, e.g. partitioning the event stream by a key like region or product category, so the system scales by adding more processing nodes rather than hitting a ceiling",
+      "Address fault tolerance, e.g. checkpointing stream processing state so a node failure doesn't lose in-flight aggregations or double-count on recovery, and plan for reprocessing/backfill if the aggregation logic itself needs to change later",
+      "A strong answer discusses the tradeoff between exact and approximate aggregates, e.g. using approximate algorithms like HyperLogLog for unique counts at this scale, when exact computation would be too expensive"
+    ],
+    "follow_up": "How would you handle a sudden 10x traffic spike, e.g. during a flash sale, without the dashboard falling behind or the pipeline falling over?",
+    "battle_eligible": false
+  }
+}

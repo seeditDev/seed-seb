@@ -1,0 +1,39 @@
+{
+  "id": "backend-entry-scenario-slow-endpoint",
+  "fileName": "backend-entry-scenario-slow-endpoint",
+  "title": "Backend entry scenario slow endpoint",
+  "role": "backend",
+  "level": "entry",
+  "track": "scenario",
+  "topic": "Backend entry scenario slow endpoint",
+  "question": "GET /users/:id/orders used to respond in under 100ms and now takes 3 seconds. How would you go about figuring out why?",
+  "idealAnswer": "Starts by reproducing and measuring rather than guessing, e.g. checking logs/APM for where the time is actually going (database query vs application code vs network)\n\nSuspects the database query first given the growth in table size, and would check whether there's an index on the foreign key used in the query (e.g. orders.user_id)\n\nWould look at the query plan (e.g. EXPLAIN) to see if it's doing a full table scan instead of an index lookup\n\nConsiders that the endpoint might be returning way more rows than needed (no pagination or limit), making both the query and the JSON serialization slower as data grows\n\nMentions verifying the fix with a measurement afterward, not just assuming the change worked",
+  "rubric": [
+    "Starts by reproducing and measuring rather than guessing, e.g. checking logs/APM for where the time is actually going (database query vs application code vs network)",
+    "Suspects the database query first given the growth in table size, and would check whether there's an index on the foreign key used in the query (e.g. orders.user_id)",
+    "Would look at the query plan (e.g. EXPLAIN) to see if it's doing a full table scan instead of an index lookup",
+    "Considers that the endpoint might be returning way more rows than needed (no pagination or limit), making both the query and the JSON serialization slower as data grows",
+    "Mentions verifying the fix with a measurement afterward, not just assuming the change worked"
+  ],
+  "followUps": [
+    "You add the missing index and the query gets fast again, but the endpoint is still occasionally slow under load. What else would you check?"
+  ],
+  "raw": {
+    "id": "backend-entry-scenario-slow-endpoint",
+    "track": "swe",
+    "specialization": "backend",
+    "level": "entry",
+    "stage": "scenario",
+    "question": "GET /users/:id/orders used to respond in under 100ms and now takes 3 seconds. How would you go about figuring out why?",
+    "context": "The endpoint fetches a user's orders from the database and returns them as JSON. The user table and orders table have both grown a lot since launch.",
+    "key_points": [
+      "Starts by reproducing and measuring rather than guessing, e.g. checking logs/APM for where the time is actually going (database query vs application code vs network)",
+      "Suspects the database query first given the growth in table size, and would check whether there's an index on the foreign key used in the query (e.g. orders.user_id)",
+      "Would look at the query plan (e.g. EXPLAIN) to see if it's doing a full table scan instead of an index lookup",
+      "Considers that the endpoint might be returning way more rows than needed (no pagination or limit), making both the query and the JSON serialization slower as data grows",
+      "Mentions verifying the fix with a measurement afterward, not just assuming the change worked"
+    ],
+    "follow_up": "You add the missing index and the query gets fast again, but the endpoint is still occasionally slow under load. What else would you check?",
+    "battle_eligible": true
+  }
+}
