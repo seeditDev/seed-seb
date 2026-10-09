@@ -934,8 +934,10 @@ const PracticeHome = ({
 
             // Count mapped questions from index/loaded questions
             const mappedQuestions = questions.filter(q => q.level === levelNum || (levelNum === 1 && String(q.questionId || '').toLowerCase().startsWith('q0.')));
-            const totalQ = mappedQuestions.length;
-            const solvedQ = mappedQuestions.filter(q => solvedIds.includes(q.questionId) || solvedIds.includes(String(q.questionId).replace('Q0.', 'Q'))).length;
+            const totalQ = mappedQuestions.length || (levelNum === 1 ? 321 : (levelDoc?.totalQuestions || 0));
+            const solvedQ = mappedQuestions.length > 0
+              ? mappedQuestions.filter(q => solvedIds.includes(q.questionId) || solvedIds.includes(String(q.questionId).replace('Q0.', 'Q'))).length
+              : (levelDoc?.completedQuestions || 0);
             const pct = totalQ > 0 ? Math.round((solvedQ / totalQ) * 100) : 0;
 
             const cdInfo = cooldownMap[levelNum];

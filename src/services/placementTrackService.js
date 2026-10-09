@@ -124,7 +124,7 @@ export async function initializeUserPlacementTrack(uid) {
           level: l,
           levelId,
           status: isCleared ? LEVEL_STATUSES.CLEARED : (isUnlocked ? LEVEL_STATUSES.UNLOCKED : LEVEL_STATUSES.LOCKED),
-          totalQuestions: 0,
+          totalQuestions: l === 1 ? 321 : 0,
           completedQuestions: 0,
           completionPercentage: 0,
           courseCompletedAt: null,
@@ -138,7 +138,14 @@ export async function initializeUserPlacementTrack(uid) {
         await setDoc(levelDocRef, levelData, { merge: true });
         initialLevels.push(levelData);
       } else {
-        initialLevels.push(levelsMap[levelId]);
+        const existingData = { ...levelsMap[levelId] };
+        // Heal Level 1 totalQuestions if stored as 0
+        if (l === 1 && (!existingData.totalQuestions || existingData.totalQuestions === 0)) {
+          existingData.totalQuestions = 321;
+          const levelDocRef = doc(db, 'users', uid, 'placementTrack', 'levels', 'items', levelId);
+          setDoc(levelDocRef, { totalQuestions: 321 }, { merge: true }).catch(() => {});
+        }
+        initialLevels.push(existingData);
       }
     }
 
@@ -176,12 +183,94 @@ export async function initializeUserPlacementTrack(uid) {
 }
 
 /**
+ * Auto-synchronize solved questions from codingProgress into placementTrack.
+ * Runs idempotently to ensure students who solved questions in Practice are always in sync.
+ */
+export async function syncUserPlacementProgress(uid) {
+  if (!uid) return null;
+  try {
+    const cpSnap = await getDoc(doc(db, 'codingProgress', uid));
+    if (!cpSnap.exists()) return null;
+    const cpData = cpSnap.data() || {};
+    const solvedSet = new Set([
+      ...(cpData.completedQuestions || []),
+      ...(cpData.solvedProblems || []),
+      ...Object.keys(cpData.problemDetails || {}).filter(k => cpData.problemDetails[k]?.status === 'SOLVED')
+    ]);
+
+    const l1Solved = Array.from(solvedSet).filter(qId => String(qId).toLowerCase().startsWith('q0.'));
+    if (l1Solved.length === 0) return null;
+
+    const qCol = collection(db, 'users', uid, 'placementTrack', 'levels', 'items', 'level-1', 'questions');
+    const existingSnap = await getDocs(qCol);
+    const existingRecorded = new Set();
+    existingSnap.forEach(d => existingRecorded.add(d.id));
+
+    const missingSolves = l1Solved.filter(qId => !existingRecorded.has(qId));
+    const totalL1Count = 321;
+    const newCompletedCount = l1Solved.length;
+
+    if (missingSolves.length === 0 && existingSnap.size === newCompletedCount) {
+      return { syncedCount: 0, totalL1Solved: newCompletedCount };
+    }
+
+    const now = new Date().toISOString();
+    for (const qId of missingSolves) {
+      const detail = cpData.problemDetails?.[qId] || {};
+      const solvedAt = detail.lastSolvedAt || now;
+      await setDoc(doc(db, 'users', uid, 'placementTrack', 'levels', 'items', 'level-1', 'questions', qId), {
+        questionId: qId,
+        level: 1,
+        status: 'COMPLETED',
+        completedAt: solvedAt,
+        firstSolvedAt: solvedAt,
+        lastSolvedAt: solvedAt,
+        attemptCount: detail.attempts || 1
+      }, { merge: true });
+    }
+
+    const newPercentage = Number(((newCompletedCount / totalL1Count) * 100).toFixed(2));
+    const isComplete = newCompletedCount >= totalL1Count;
+
+    const levelDocRef = doc(db, 'users', uid, 'placementTrack', 'levels', 'items', 'level-1');
+    const l1Snap = await getDoc(levelDocRef);
+    const l1Data = l1Snap.exists() ? l1Snap.data() : {};
+    const isCleared = l1Data.cleared || false;
+
+    let newStatus = LEVEL_STATUSES.UNLOCKED;
+    if (isCleared) newStatus = LEVEL_STATUSES.CLEARED;
+    else if (isComplete) newStatus = LEVEL_STATUSES.ASSESSMENT_ELIGIBLE;
+    else if (newCompletedCount > 0) newStatus = LEVEL_STATUSES.IN_PROGRESS;
+
+    await setDoc(levelDocRef, {
+      level: 1,
+      levelId: 'level-1',
+      totalQuestions: totalL1Count,
+      completedQuestions: newCompletedCount,
+      completionPercentage: newPercentage,
+      status: newStatus,
+      assessmentEligible: isComplete || isCleared,
+      courseCompletedAt: isComplete ? (l1Data.courseCompletedAt || now) : null,
+      updatedAt: now
+    }, { merge: true });
+
+    return { syncedCount: missingSolves.length, totalL1Solved: newCompletedCount };
+  } catch (err) {
+    console.warn('[placementTrackService] syncUserPlacementProgress error:', err);
+    return null;
+  }
+}
+
+/**
  * Fetch complete placement track summary for a student.
  */
 export async function getPlacementTrackOverview(uid) {
   if (!uid) return null;
 
   try {
+    // Proactively heal/sync any practice solves from codingProgress
+    await syncUserPlacementProgress(uid).catch(() => {});
+
     const userDocRef = doc(db, 'users', uid);
     const userSnap = await getDoc(userDocRef);
     const userData = userSnap.exists() ? userSnap.data() : {};
@@ -265,16 +354,17 @@ export async function recordQuestionSolved(uid, questionId, levelNumber = null) 
 
       // Update Level Document Counters
       const levelSnap = await transaction.get(levelDocRef);
+      const defaultTotalQ = targetLevel === 1 ? 321 : 0;
       const levelData = levelSnap.exists() ? levelSnap.data() : {
         level: targetLevel,
         levelId,
         status: LEVEL_STATUSES.UNLOCKED,
-        totalQuestions: 0,
+        totalQuestions: defaultTotalQ,
         completedQuestions: 0
       };
 
+      const totalQ = (levelData.totalQuestions && levelData.totalQuestions > 0) ? levelData.totalQuestions : defaultTotalQ;
       const newCompleted = (levelData.completedQuestions || 0) + 1;
-      const totalQ = levelData.totalQuestions || 0;
       const newPercentage = totalQ > 0 ? (newCompleted / totalQ) * 100 : 0;
       const isCourseComplete = totalQ > 0 && newCompleted >= totalQ;
 
@@ -288,6 +378,7 @@ export async function recordQuestionSolved(uid, questionId, levelNumber = null) 
       }
 
       transaction.update(levelDocRef, {
+        totalQuestions: totalQ,
         completedQuestions: newCompleted,
         completionPercentage: Number(newPercentage.toFixed(2)),
         status: newStatus,
@@ -349,9 +440,10 @@ export async function getAssessmentEligibility(uid, levelNumber) {
     }
 
     // Gate 1: Candidate must complete course (all questions)
-    // Note: If level has 0 questions assigned yet, course completion requires at least 1 question
-    if (levelData.totalQuestions === 0 || levelData.completedQuestions < levelData.totalQuestions) {
-      const remaining = Math.max(0, (levelData.totalQuestions || 0) - (levelData.completedQuestions || 0));
+    // Note: Level 1 has 321 curriculum problems
+    const targetTotalQ = (levelData.totalQuestions && levelData.totalQuestions > 0) ? levelData.totalQuestions : (lvl === 1 ? 321 : 0);
+    if (targetTotalQ === 0 || (levelData.completedQuestions || 0) < targetTotalQ) {
+      const remaining = Math.max(0, targetTotalQ - (levelData.completedQuestions || 0));
       return {
         eligible: false,
         reason: 'course_incomplete',
