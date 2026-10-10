@@ -22,6 +22,7 @@
  */
 
 import { db, auth } from '../lib/firebase-config.js';
+import { fetchQuestionsIndex } from './codingQuestionBankService.js';
 import {
   doc,
   getDoc,
@@ -43,6 +44,16 @@ export const TOTAL_LEVELS = 7;
 export const DEFAULT_ASSESSMENT_DURATION_MINUTES = 240; // 4 hours
 export const COOLDOWN_DAYS = 15;
 export const MAX_MONTHLY_ATTEMPTS = 2;
+
+export const LEVEL_QUESTION_COUNTS = {
+  1: 321,
+  2: 130,
+  3: 130,
+  4: 125,
+  5: 125,
+  6: 125,
+  7: 125
+};
 
 export const LEVEL_STATUSES = {
   LOCKED: 'LOCKED',
@@ -124,7 +135,7 @@ export async function initializeUserPlacementTrack(uid) {
           level: l,
           levelId,
           status: isCleared ? LEVEL_STATUSES.CLEARED : (isUnlocked ? LEVEL_STATUSES.UNLOCKED : LEVEL_STATUSES.LOCKED),
-          totalQuestions: l === 1 ? 321 : 0,
+          totalQuestions: LEVEL_QUESTION_COUNTS[l] || 0,
           completedQuestions: 0,
           completionPercentage: 0,
           courseCompletedAt: null,
@@ -139,11 +150,12 @@ export async function initializeUserPlacementTrack(uid) {
         initialLevels.push(levelData);
       } else {
         const existingData = { ...levelsMap[levelId] };
-        // Heal Level 1 totalQuestions if stored as 0
-        if (l === 1 && (!existingData.totalQuestions || existingData.totalQuestions === 0)) {
-          existingData.totalQuestions = 321;
+        // Heal totalQuestions from authoritative curriculum counts
+        const expectedTotal = LEVEL_QUESTION_COUNTS[l] || 0;
+        if (!existingData.totalQuestions || existingData.totalQuestions !== expectedTotal) {
+          existingData.totalQuestions = expectedTotal;
           const levelDocRef = doc(db, 'users', uid, 'placementTrack', 'levels', 'items', levelId);
-          setDoc(levelDocRef, { totalQuestions: 321 }, { merge: true }).catch(() => {});
+          setDoc(levelDocRef, { totalQuestions: expectedTotal }, { merge: true }).catch(() => {});
         }
         initialLevels.push(existingData);
       }
@@ -182,8 +194,30 @@ export async function initializeUserPlacementTrack(uid) {
   }
 }
 
+let _questionLevelCache = null;
+export async function getQuestionLevelMap() {
+  if (_questionLevelCache) return _questionLevelCache;
+  const map = new Map();
+  try {
+    const list = await fetchQuestionsIndex();
+    if (Array.isArray(list)) {
+      list.forEach(q => {
+        if (q.level) {
+          const lvl = Number(q.level);
+          if (q.questionId) map.set(String(q.questionId).trim().toUpperCase(), lvl);
+          if (q.slug) map.set(String(q.slug).trim().toLowerCase(), lvl);
+        }
+      });
+    }
+  } catch (err) {
+    console.warn('[placementTrackService] Failed to load questions index:', err);
+  }
+  _questionLevelCache = map;
+  return _questionLevelCache;
+}
+
 /**
- * Auto-synchronize solved questions from codingProgress into placementTrack.
+ * Auto-synchronize solved questions from codingProgress into placementTrack across all 7 levels.
  * Runs idempotently to ensure students who solved questions in Practice are always in sync.
  */
 export async function syncUserPlacementProgress(uid) {
@@ -198,63 +232,84 @@ export async function syncUserPlacementProgress(uid) {
       ...Object.keys(cpData.problemDetails || {}).filter(k => cpData.problemDetails[k]?.status === 'SOLVED')
     ]);
 
-    const l1Solved = Array.from(solvedSet).filter(qId => String(qId).toLowerCase().startsWith('q0.'));
-    if (l1Solved.length === 0) return null;
+    if (solvedSet.size === 0) return null;
 
-    const qCol = collection(db, 'users', uid, 'placementTrack', 'levels', 'items', 'level-1', 'questions');
-    const existingSnap = await getDocs(qCol);
-    const existingRecorded = new Set();
-    existingSnap.forEach(d => existingRecorded.add(d.id));
+    const qMap = await getQuestionLevelMap();
+    const levelSolves = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [] };
 
-    const missingSolves = l1Solved.filter(qId => !existingRecorded.has(qId));
-    const totalL1Count = 321;
-    const newCompletedCount = l1Solved.length;
+    solvedSet.forEach(rawId => {
+      const qId = String(rawId).trim();
+      const upper = qId.toUpperCase();
+      const lower = qId.toLowerCase();
+      let lvl = null;
+      if (qMap.has(upper)) lvl = qMap.get(upper);
+      else if (qMap.has(lower)) lvl = qMap.get(lower);
+      else if (lower.startsWith('q0.')) lvl = 1;
 
-    if (missingSolves.length === 0 && existingSnap.size === newCompletedCount) {
-      return { syncedCount: 0, totalL1Solved: newCompletedCount };
-    }
+      if (lvl && lvl >= 1 && lvl <= TOTAL_LEVELS) {
+        levelSolves[lvl].push(qId);
+      }
+    });
 
     const now = new Date().toISOString();
-    for (const qId of missingSolves) {
-      const detail = cpData.problemDetails?.[qId] || {};
-      const solvedAt = detail.lastSolvedAt || now;
-      await setDoc(doc(db, 'users', uid, 'placementTrack', 'levels', 'items', 'level-1', 'questions', qId), {
-        questionId: qId,
-        level: 1,
-        status: 'COMPLETED',
-        completedAt: solvedAt,
-        firstSolvedAt: solvedAt,
-        lastSolvedAt: solvedAt,
-        attemptCount: detail.attempts || 1
-      }, { merge: true });
+    let totalSynced = 0;
+
+    for (let l = 1; l <= TOTAL_LEVELS; l++) {
+      const solvedList = levelSolves[l];
+      const totalCount = LEVEL_QUESTION_COUNTS[l] || 0;
+      const levelId = `level-${l}`;
+      const levelDocRef = doc(db, 'users', uid, 'placementTrack', 'levels', 'items', levelId);
+
+      const qCol = collection(db, 'users', uid, 'placementTrack', 'levels', 'items', levelId, 'questions');
+      const existingSnap = await getDocs(qCol);
+      const existingRecorded = new Set();
+      existingSnap.forEach(d => existingRecorded.add(d.id));
+
+      const missingSolves = solvedList.filter(qId => !existingRecorded.has(qId));
+      for (const qId of missingSolves) {
+        const detail = cpData.problemDetails?.[qId] || {};
+        const solvedAt = detail.lastSolvedAt || now;
+        await setDoc(doc(db, 'users', uid, 'placementTrack', 'levels', 'items', levelId, 'questions', qId), {
+          questionId: qId,
+          level: l,
+          status: 'COMPLETED',
+          completedAt: solvedAt,
+          firstSolvedAt: solvedAt,
+          lastSolvedAt: solvedAt,
+          attemptCount: detail.attempts || 1
+        }, { merge: true });
+        totalSynced++;
+      }
+
+      // Heal level stats if there are solves or outdated counts
+      if (missingSolves.length > 0 || solvedList.length > 0) {
+        const lSnap = await getDoc(levelDocRef);
+        const lData = lSnap.exists() ? lSnap.data() : {};
+        const isCleared = lData.cleared || false;
+        const newCompletedCount = solvedList.length;
+        const newPercentage = totalCount > 0 ? Number(((newCompletedCount / totalCount) * 100).toFixed(2)) : 0;
+        const isComplete = totalCount > 0 && newCompletedCount >= totalCount;
+
+        let newStatus = lData.status || (l === 1 ? LEVEL_STATUSES.UNLOCKED : LEVEL_STATUSES.LOCKED);
+        if (isCleared) newStatus = LEVEL_STATUSES.CLEARED;
+        else if (isComplete) newStatus = LEVEL_STATUSES.ASSESSMENT_ELIGIBLE;
+        else if (newCompletedCount > 0) newStatus = LEVEL_STATUSES.IN_PROGRESS;
+
+        await setDoc(levelDocRef, {
+          level: l,
+          levelId,
+          totalQuestions: totalCount,
+          completedQuestions: newCompletedCount,
+          completionPercentage: newPercentage,
+          status: newStatus,
+          assessmentEligible: isComplete || isCleared,
+          courseCompletedAt: isComplete ? (lData.courseCompletedAt || now) : null,
+          updatedAt: now
+        }, { merge: true });
+      }
     }
 
-    const newPercentage = Number(((newCompletedCount / totalL1Count) * 100).toFixed(2));
-    const isComplete = newCompletedCount >= totalL1Count;
-
-    const levelDocRef = doc(db, 'users', uid, 'placementTrack', 'levels', 'items', 'level-1');
-    const l1Snap = await getDoc(levelDocRef);
-    const l1Data = l1Snap.exists() ? l1Snap.data() : {};
-    const isCleared = l1Data.cleared || false;
-
-    let newStatus = LEVEL_STATUSES.UNLOCKED;
-    if (isCleared) newStatus = LEVEL_STATUSES.CLEARED;
-    else if (isComplete) newStatus = LEVEL_STATUSES.ASSESSMENT_ELIGIBLE;
-    else if (newCompletedCount > 0) newStatus = LEVEL_STATUSES.IN_PROGRESS;
-
-    await setDoc(levelDocRef, {
-      level: 1,
-      levelId: 'level-1',
-      totalQuestions: totalL1Count,
-      completedQuestions: newCompletedCount,
-      completionPercentage: newPercentage,
-      status: newStatus,
-      assessmentEligible: isComplete || isCleared,
-      courseCompletedAt: isComplete ? (l1Data.courseCompletedAt || now) : null,
-      updatedAt: now
-    }, { merge: true });
-
-    return { syncedCount: missingSolves.length, totalL1Solved: newCompletedCount };
+    return { syncedCount: totalSynced };
   } catch (err) {
     console.warn('[placementTrackService] syncUserPlacementProgress error:', err);
     return null;
@@ -317,6 +372,13 @@ export async function recordQuestionSolved(uid, questionId, levelNumber = null) 
     if (!targetLevel && cleanQId.toLowerCase().startsWith('q0.')) {
       targetLevel = 1;
     }
+    if (!targetLevel) {
+      const qMap = await getQuestionLevelMap();
+      const upper = cleanQId.toUpperCase();
+      const lower = cleanQId.toLowerCase();
+      if (qMap.has(upper)) targetLevel = qMap.get(upper);
+      else if (qMap.has(lower)) targetLevel = qMap.get(lower);
+    }
 
     if (!targetLevel || targetLevel < 1 || targetLevel > TOTAL_LEVELS) {
       return { success: false, reason: 'unmapped_level' };
@@ -354,7 +416,7 @@ export async function recordQuestionSolved(uid, questionId, levelNumber = null) 
 
       // Update Level Document Counters
       const levelSnap = await transaction.get(levelDocRef);
-      const defaultTotalQ = targetLevel === 1 ? 321 : 0;
+      const defaultTotalQ = LEVEL_QUESTION_COUNTS[targetLevel] || 0;
       const levelData = levelSnap.exists() ? levelSnap.data() : {
         level: targetLevel,
         levelId,

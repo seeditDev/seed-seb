@@ -26,6 +26,7 @@ import AudioProctoringEngine from './AudioProctoringEngine';
 import CodingAssessmentPage from './CodingAssessmentPage';
 import SpokenEnglishAssessment from './SpokenEnglishAssessment';
 import EssaySectionView from './EssaySectionView';
+import SQLSectionView from './SQLSectionView';
 import AssessmentFeedback from './AssessmentFeedback';
 import timeService from '../services/timeService';
 import { getViolations, writeViolationToFirestore } from '../utils/proctorCache';
@@ -1265,6 +1266,10 @@ const MultiSectionAssessment = () => {
         grammarAnalysis: sec.data?.grammarAnalysis || sec.data?.evaluation?.grammarAnalysis || {},
       }));
 
+    const aggregatedSql = Object.values(combinedResults)
+      .filter(sec => sec.type === 'sql' || sec.sectionType === 'sql' || sec.data?.sectionType === 'sql')
+      .reduce((acc, sec) => acc.concat(sec.data?.sqlSubmissions || sec.data?.submissions || []), []);
+
     const aggregatedQuestionTiming = Object.values(combinedResults)
       .filter(sec => sec.type === 'coding')
       .reduce((acc, sec) => {
@@ -1352,6 +1357,7 @@ const MultiSectionAssessment = () => {
       questions: aggregatedQuestions,
       codingSubmissions: aggregatedCoding,
       essaySubmissions: aggregatedEssay,
+      sqlSubmissions: aggregatedSql,
       questionTiming: aggregatedQuestionTiming,
       proctoring: {
         violationCount: totalViolations,
@@ -2155,7 +2161,8 @@ const MultiSectionAssessment = () => {
             const rawType = (secType || data.contentCategory || data.type || sec.type || '').toLowerCase();
             const isEssay = rawType === 'essay' || rawType === 'essay_writing' || data.contentCategory === 'essay';
             const isMcq = !isEssay && (rawType === 'mcq' || data.contentCategory === 'mcq');
-            const isCoding = !isEssay && !isMcq && (rawType === 'coding' || rawType === 'code' || data.contentCategory === 'coding' || Array.isArray(data.challenges) || Array.isArray(data.codingQuestions) || Array.isArray(data.qids) || Array.isArray(data.questionIds) || Boolean(data.problem));
+            const isSql = !isEssay && !isMcq && (rawType === 'sql' || rawType === 'sql_assessment' || data.contentCategory === 'sql' || Array.isArray(data.sqlQuestions) || Boolean(data.sqlSchema));
+            const isCoding = !isEssay && !isMcq && !isSql && (rawType === 'coding' || rawType === 'code' || data.contentCategory === 'coding' || Array.isArray(data.challenges) || Array.isArray(data.codingQuestions) || Array.isArray(data.qids) || Array.isArray(data.questionIds) || Boolean(data.problem));
 
             if (isMcq) {
               // Normalize MCQ questions for student view (support both Firestore 'text'/'correctIndex' and static 'question'/'correctAnswer')
@@ -2213,6 +2220,11 @@ const MultiSectionAssessment = () => {
                 data.questions = [];
                 data.challenges = [];
               }
+            } else if (isSql) {
+              data.questions = Array.isArray(data.sqlQuestions) && data.sqlQuestions.length > 0
+                ? data.sqlQuestions
+                : (Array.isArray(data.questions) ? data.questions : []);
+              data.schema = data.sqlSchema || data.schema || { tables: [] };
             }
 
             // Store under all possible identifiers
@@ -2700,6 +2712,10 @@ const MultiSectionAssessment = () => {
             grammarAnalysis: sec.data?.grammarAnalysis || sec.data?.evaluation?.grammarAnalysis || {},
           }));
 
+        const aggregatedSql = Object.values(updatedResults)
+          .filter(sec => sec.type === 'sql' || sec.sectionType === 'sql' || sec.data?.sectionType === 'sql')
+          .reduce((acc, sec) => acc.concat(sec.data?.sqlSubmissions || sec.data?.submissions || []), []);
+
         const aggregatedQuestionTiming = Object.values(updatedResults)
           .filter(sec => sec.type === 'coding')
           .reduce((acc, sec) => {
@@ -2840,6 +2856,7 @@ const MultiSectionAssessment = () => {
           questions: aggregatedQuestions,
           codingSubmissions: aggregatedCoding,
           essaySubmissions: aggregatedEssay,
+          sqlSubmissions: aggregatedSql,
           questionTiming: aggregatedQuestionTiming,
           proctoring: {
             violationCount: totalViolations,
@@ -3449,6 +3466,21 @@ const MultiSectionAssessment = () => {
             onSectionSubmit={autoSubmitSection}
             assessmentName={assessment.name ?? ''}
             assessmentId={assessment.id ?? ''}
+          />
+        )
+      : (activeSection.type === 'sql' || activeSection.type === 'sql_assessment' || activeSecData?.contentCategory === 'sql' || activeSecData?.type === 'sql')
+        ? (
+          <SQLSectionView
+            key={`sql-${activeSection.sectionId || activeSection.id || currentSecIdx}`}
+            sectionData={activeSecData}
+            secTimer={secTimer}
+            secStarted={secStarted}
+            proctoringData={proctoringData}
+            settings={sectionSettings}
+            onSectionSubmit={autoSubmitSection}
+            assessmentName={assessment.name ?? ''}
+            assessmentId={assessment.id ?? ''}
+            user={user}
           />
         )
         : (

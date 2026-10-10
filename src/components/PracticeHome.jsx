@@ -14,7 +14,7 @@ import {
   FaThLarge, FaTasks, FaTachometerAlt, FaClock, FaCheck,
   FaCheckSquare, FaChartLine, FaSyncAlt, FaEye,
   FaServer, FaCogs, FaClipboardList, FaLayerGroup, FaArrowRight,
-  FaGithub, FaPlay
+  FaGithub, FaPlay, FaGraduationCap, FaTrophy
 } from 'react-icons/fa';
 import SeedCreditCoin from './SeedCreditCoin';
 import roadmapsData from './roadmaps_data.json';
@@ -224,6 +224,9 @@ const PracticeHome = ({
   const [placementOverview, setPlacementOverview] = useState(null);
   const [assessmentModalLevel, setAssessmentModalLevel] = useState(null);
   const [cooldownMap, setCooldownMap] = useState({});
+  const [placementViewMode, setPlacementViewMode] = useState('card');
+  const [selectedDetailLevelNum, setSelectedDetailLevelNum] = useState(1);
+  const [detailActiveTab, setDetailActiveTab] = useState('topics');
 
   useEffect(() => {
     const authStorage = getAuthData();
@@ -902,154 +905,1079 @@ const PracticeHome = ({
     }
   };
 
+  const renderLevelIcon = (levelNum) => {
+    switch (levelNum) {
+      case 1:
+        return (
+          <div className="ph-level-icon-badge l1">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="16 18 22 12 16 6" />
+              <polyline points="8 6 2 12 8 18" />
+            </svg>
+          </div>
+        );
+      case 2:
+        return (
+          <div className="ph-level-icon-badge l2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="16" rx="2" />
+              <line x1="3" y1="9" x2="21" y2="9" />
+              <line x1="7" y1="14" x2="11" y2="14" />
+            </svg>
+          </div>
+        );
+      case 3:
+        return (
+          <div className="ph-level-icon-badge l3">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#a855f7">
+              <path d="M11 16.5V21h2v-4.5c3.2-.4 5.5-2.8 5.5-5.8 0-1.2-.4-2.3-1.1-3.1.4-.7.6-1.5.6-2.3 0-2.5-2-4.5-4.5-4.5-1.1 0-2.1.4-2.8 1.1-.7-.7-1.7-1.1-2.8-1.1C6.4 1.3 4.4 3.3 4.4 5.8c0 .8.2 1.6.6 2.3-.7.8-1.1 1.9-1.1 3.1 0 3 2.3 5.4 5.5 5.8z" />
+            </svg>
+          </div>
+        );
+      case 4:
+        return (
+          <div className="ph-level-icon-badge l4">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <ellipse cx="12" cy="5" rx="8" ry="3" />
+              <path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5" />
+              <path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" />
+            </svg>
+          </div>
+        );
+      case 5:
+        return (
+          <div className="ph-level-icon-badge l5">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="5" r="3" />
+              <circle cx="5" cy="18" r="3" />
+              <circle cx="19" cy="18" r="3" />
+              <line x1="10.2" y1="7.4" x2="6.8" y2="15.6" />
+              <line x1="13.8" y1="7.4" x2="17.2" y2="15.6" />
+              <line x1="8" y1="18" x2="16" y2="18" />
+            </svg>
+          </div>
+        );
+      case 6:
+        return (
+          <div className="ph-level-icon-badge l6">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0284c7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </div>
+        );
+      case 7:
+      default:
+        return (
+          <div className="ph-level-icon-badge l7">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <line x1="10" y1="9" x2="8" y2="9" />
+            </svg>
+          </div>
+        );
+    }
+  };
+
+  const handleLaunchLevelAssessment = (mod, solvedCount = 0, totalCount = 0) => {
+    const isCurriculumCompleted = totalCount > 0 && solvedCount >= totalCount;
+    if (!isCurriculumCompleted) {
+      toast.info(`Complete Level ${mod.level} curriculum (${solvedCount}/${totalCount} questions solved) to unlock this clearance assessment.`);
+      return;
+    }
+    setAssessmentModalLevel(mod);
+  };
+
   const renderPlacementTrackTab = () => {
     const studentPlacementLevel = placementOverview?.placementEligibilityLevel ?? 0;
     const effectiveUid = user?.uid ?? propUser?.uid ?? getAuthData()?.uid;
 
+    // Level 1 progress calculations
+    const l1Questions = questions.filter(q => q.level === 1 || String(q.questionId || '').toLowerCase().startsWith('q0.'));
+    const totalQ = l1Questions.length || 321;
+    const solvedQ = l1Questions.length > 0
+      ? l1Questions.filter(q => solvedIds.includes(q.questionId) || solvedIds.includes(String(q.questionId).replace('Q0.', 'Q'))).length
+      : (placementOverview?.levels?.[0]?.completedQuestions || 54);
+    const pct = totalQ > 0 ? Math.round((solvedQ / totalQ) * 100) : 17;
+    const remainingQ = Math.max(0, totalQ - solvedQ);
+    const remainingPct = Math.max(0, 100 - pct);
+
     return (
-      <div className="ph-section" style={{ margin: '30px auto' }}>
-        {/* Placement Track Hero Banner */}
-        <div className="ph-placement-hero-card">
-          <div className="ph-placement-hero-left">
-            <h2>SEED Seven-Level Placement Coding Track</h2>
-            <p>
-              Authoritative milestone progression for technical campus placements. Clear sequential curriculum requirements,
-              unlock levels, and pass rigorous 4-hour clearance assessments to elevate your Placement Eligibility Level.
+      <div className="ph-section ph-placement-track-container" style={{ margin: '10px auto 40px auto' }}>
+        {/* Top Header Row with Breadcrumb, Title & Mountain Trail Illustration */}
+        <div className="ph-pt-header-row">
+          <div className="ph-pt-header-left">
+            <div className="ph-pt-breadcrumb">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              <span className="ph-pt-breadcrumb-sep">&gt;</span>
+              <span className="ph-pt-breadcrumb-cur">Placement Track</span>
+            </div>
+            <h1 className="ph-pt-title">
+              SEED <span style={{ color: '#059669' }}>Seven-Level</span> Placement Coding Track
+            </h1>
+            <p className="ph-pt-subtitle">
+              Build placement-ready problem-solving skills through a structured seven-level curriculum.
+              Complete each level and pass its clearance assessment to unlock the next.
             </p>
           </div>
-          <div className="ph-placement-eligibility-badge">
-            <span className="ph-placement-eligibility-title">Placement Eligibility</span>
-            <span className="ph-placement-eligibility-val">Level {studentPlacementLevel}</span>
+
+          <div className="ph-pt-header-right">
+            {/* Mountain Trail Illustration with Placement Ready Flag */}
+            <div className="ph-hero-mountain-illustration">
+              <svg viewBox="0 0 460 115" fill="none" xmlns="http://www.w3.org/2000/svg" className="ph-mountain-svg">
+                <defs>
+                  <linearGradient id="mntGrad1" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity="0.22" />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity="0.02" />
+                  </linearGradient>
+                  <linearGradient id="mntGrad2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#059669" stopOpacity="0.45" />
+                    <stop offset="100%" stopColor="#047857" stopOpacity="0.05" />
+                  </linearGradient>
+                  <linearGradient id="mntGrad3" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#047857" stopOpacity="0.75" />
+                    <stop offset="100%" stopColor="#064e3b" stopOpacity="0.12" />
+                  </linearGradient>
+                </defs>
+                <path d="M0 115 L0 80 Q70 48 140 72 Q210 96 280 58 Q350 18 420 36 L460 28 L460 115 Z" fill="url(#mntGrad1)" />
+                <path d="M60 115 Q120 68 190 82 Q260 96 330 42 Q380 12 440 22 L460 14 L460 115 Z" fill="url(#mntGrad2)" />
+                <path d="M150 115 Q230 72 300 76 Q370 80 410 32 L440 16 L460 10 L460 115 Z" fill="url(#mntGrad3)" />
+                <path d="M20 94 Q90 88 160 84 T270 74 T340 58 T395 35 T425 16" stroke="#ffffff" strokeWidth="2.5" strokeDasharray="4 4" fill="none" />
+                
+                <circle cx="20" cy="94" r="5.5" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
+                <circle cx="90" cy="89" r="4.5" fill="#ffffff" stroke="#cbd5e1" strokeWidth="2" />
+                <circle cx="160" cy="84" r="4.5" fill="#ffffff" stroke="#cbd5e1" strokeWidth="2" />
+                <circle cx="230" cy="80" r="4.5" fill="#ffffff" stroke="#cbd5e1" strokeWidth="2" />
+                <circle cx="295" cy="70" r="4.5" fill="#ffffff" stroke="#cbd5e1" strokeWidth="2" />
+                <circle cx="355" cy="54" r="4.5" fill="#ffffff" stroke="#cbd5e1" strokeWidth="2" />
+                <circle cx="405" cy="30" r="4.5" fill="#ffffff" stroke="#cbd5e1" strokeWidth="2" />
+
+                <g transform="translate(365, 2)">
+                  <rect x="0" y="0" width="92" height="22" rx="6" fill="#059669" />
+                  <text x="46" y="15" fill="#ffffff" fontSize="10" fontWeight="700" textAnchor="middle" fontFamily="sans-serif">Placement Ready</text>
+                </g>
+              </svg>
+            </div>
           </div>
         </div>
 
-        {/* 7-Level Progression Grid */}
-        <div className="ph-placement-levels-grid">
-          {PLACEMENT_TRACK_CONFIG.modules.map((mod) => {
-            const levelNum = mod.level;
-            const levelDoc = placementOverview?.levels?.find(l => l.level === levelNum);
-            const isCleared = levelNum <= studentPlacementLevel || levelDoc?.cleared;
-            const isUnlocked = levelNum === 1 || levelNum <= studentPlacementLevel + 1 || levelDoc?.status === 'UNLOCKED';
-            const statusClass = isCleared ? 'cleared' : (isUnlocked ? 'in_progress' : 'locked');
+        {/* ─── Top 3-Card Summary Grid ─── */}
+        <div className="ph-pt-summary-grid">
+          {/* Card 1: Current Level (Emerald Green Gradient Hero) */}
+          <div className="ph-pt-current-hero-card">
+            <div className="ph-pt-current-top">
+              <div className="ph-pt-current-icon-badge">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="16 18 22 12 16 6" />
+                  <polyline points="8 6 2 12 8 18" />
+                </svg>
+              </div>
+              <div className="ph-pt-current-titles">
+                <span className="ph-pt-current-sublbl">Current Level</span>
+                <h3 className="ph-pt-current-level-title">Level 1</h3>
+                <p className="ph-pt-current-desc">
+                  Foundations of arrays, basic string manipulations, mathematical logic, and recursion.
+                </p>
+              </div>
+              <div className="ph-pt-current-chip">
+                IN PROGRESS
+              </div>
+            </div>
 
-            // Count mapped questions from index/loaded questions
-            const mappedQuestions = questions.filter(q => q.level === levelNum || (levelNum === 1 && String(q.questionId || '').toLowerCase().startsWith('q0.')));
-            const totalQ = mappedQuestions.length || (levelNum === 1 ? 321 : (levelDoc?.totalQuestions || 0));
-            const solvedQ = mappedQuestions.length > 0
-              ? mappedQuestions.filter(q => solvedIds.includes(q.questionId) || solvedIds.includes(String(q.questionId).replace('Q0.', 'Q'))).length
-              : (levelDoc?.completedQuestions || 0);
-            const pct = totalQ > 0 ? Math.round((solvedQ / totalQ) * 100) : 0;
+            {/* Curriculum Progress Bar */}
+            <div className="ph-pt-current-progress-wrap">
+              <div className="ph-pt-current-progress-meta">
+                <span>Curriculum Progress</span>
+                <span>{solvedQ} / {totalQ} solved <strong>{pct}%</strong></span>
+              </div>
+              <div className="ph-pt-current-progress-track">
+                <div className="ph-pt-current-progress-fill" style={{ width: `${pct}%` }} />
+              </div>
+            </div>
 
-            const cdInfo = cooldownMap[levelNum];
+            {/* Actions */}
+            <div className="ph-pt-current-actions">
+              <button
+                type="button"
+                className="ph-pt-btn-continue"
+                onClick={() => {
+                  setSelectedLevel('1');
+                  handleTabChange('bank');
+                }}
+              >
+                <span style={{ fontSize: '11px', marginRight: '6px' }}>▶</span> Continue Level 1
+              </button>
 
-            return (
-              <div key={mod.id} className={`ph-placement-level-card ${statusClass}`}>
-                <div>
-                  <div className="ph-placement-level-card-header">
-                    <span className="ph-placement-level-name">Level {levelNum}</span>
-                    <span className={`ph-status-chip ${statusClass}`}>
-                      {isCleared ? 'Cleared' : isUnlocked ? 'In Progress' : 'Locked'}
-                    </span>
-                  </div>
+              <div className="ph-pt-current-btn-row">
+                <button
+                  type="button"
+                  className="ph-pt-btn-secondary"
+                  onClick={() => {
+                    const el = document.getElementById('seven-level-curriculum-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  <FaBookOpen size={12} style={{ marginRight: '6px', color: '#059669' }} /> View Curriculum
+                </button>
+                <button
+                  type="button"
+                  className="ph-pt-btn-secondary"
+                  onClick={() => {
+                    setSelectedLevel('1');
+                    handleTabChange('bank');
+                  }}
+                >
+                  <FaCode size={12} style={{ marginRight: '6px', color: '#059669' }} /> Solve Questions ({totalQ})
+                </button>
+              </div>
+            </div>
+          </div>
 
-                  <h4 style={{ color: '#ffffff', fontSize: '15px', fontWeight: 700, margin: '0 0 6px 0' }}>{mod.title}</h4>
-                  <p style={{ color: '#94a3b8', fontSize: '13px', lineHeight: 1.5, margin: '0 0 16px 0' }}>{mod.description}</p>
+          {/* Card 2: Your Placement Track Progress */}
+          <div className="ph-pt-progress-card">
+            <div className="ph-pt-card-header-row">
+              <h3 className="ph-pt-card-title">Your Placement Track Progress</h3>
+              <div className="ph-pt-card-header-pills">
+                <span className="ph-pt-header-pill gray">Level 1 of 7</span>
+                <span className="ph-pt-header-pill blue">{pct}% Overall</span>
+              </div>
+            </div>
 
-                  <div className="ph-level-progress-section">
-                    <div className="ph-level-progress-meta">
-                      <span>Curriculum: {totalQ > 0 ? `${solvedQ} / ${totalQ} Solved` : 'Questions Pending Mapping'}</span>
-                      <span>{pct}%</span>
+            {/* Milestone Stepper */}
+            <div className="ph-pt-card-stepper">
+              <div className="ph-pt-card-stepper-line" />
+              {[1, 2, 3, 4, 5, 6, 7].map((lvl) => {
+                const isCurrent = lvl === 1;
+                const isCleared = lvl <= studentPlacementLevel;
+                return (
+                  <div key={lvl} className={`ph-pt-card-node ${isCleared ? 'cleared' : isCurrent ? 'current' : 'upcoming'}`}>
+                    <div className="ph-pt-card-node-circle">
+                      {isCleared ? (
+                        <FaCheck size={8} color="#ffffff" />
+                      ) : isCurrent ? (
+                        <FaCheck size={9} color="#ffffff" />
+                      ) : null}
                     </div>
-                    <div className="ph-level-progress-track">
-                      <div className="ph-level-progress-fill" style={{ width: `${pct}%` }} />
-                    </div>
+                    <span className="ph-pt-card-node-lbl">L{lvl}</span>
                   </div>
+                );
+              })}
+            </div>
 
-                  {totalQ > 0 && isUnlocked && !isCleared && (
-                    <button
-                      type="button"
-                      className="ph-btn-view-problems"
-                      style={{
-                        background: 'rgba(59, 130, 246, 0.12)',
-                        border: '1px solid rgba(59, 130, 246, 0.35)',
-                        color: '#60a5fa',
-                        padding: '9px 12px',
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        width: '100%',
-                        margin: '12px 0 0 0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onClick={() => {
-                        setSelectedLevel(String(levelNum));
-                        handleTabChange('bank');
-                      }}
-                    >
-                      <FaCode size={12} /> View &amp; Solve Level {levelNum} Questions ({totalQ}) &rarr;
-                    </button>
-                  )}
+            {/* 4 Stat Items Grid */}
+            <div className="ph-pt-stats-bar-4">
+              <div className="ph-pt-stat-box">
+                <div className="ph-pt-stat-icon-circle green">
+                  <FaCheck size={11} color="#059669" />
                 </div>
-
-                <div className="ph-level-assessment-action">
-                  {isCleared ? (
-                    <div style={{ textAlign: 'center', color: '#10b981', fontWeight: 700, fontSize: '13px', padding: '6px' }}>
-                      ✓ Assessment Cleared &amp; Placement Badge Issued
-                    </div>
-                  ) : !isUnlocked ? (
-                    <button className="ph-btn-assessment" disabled>
-                      <FaLock size={12} /> Level Locked (Clear Level {levelNum - 1} First)
-                    </button>
-                  ) : cdInfo && !cdInfo.eligible ? (
-                    <div>
-                      <button className="ph-btn-assessment" disabled title={cdInfo.message || cdInfo.reason}>
-                        {cdInfo.reason === 'course_incomplete' ? (
-                          <>
-                            <FaLock size={12} /> Complete Curriculum to Unlock
-                          </>
-                        ) : cdInfo.reason === 'cooldown_active' ? (
-                          <>
-                            <FaClock size={12} /> Cooldown Active (15 Days)
-                          </>
-                        ) : cdInfo.reason === 'monthly_limit_reached' ? (
-                          <>
-                            <FaClock size={12} /> Max 2 Attempts Reached This Month
-                          </>
-                        ) : (
-                          <>
-                            <FaClock size={12} /> {cdInfo.message || cdInfo.reason}
-                          </>
-                        )}
-                      </button>
-                      {cdInfo.reason === 'course_incomplete' && (
-                        <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '6px', textAlign: 'center' }}>
-                          {cdInfo.remainingProblems || (totalQ - solvedQ)} problems remaining to qualify
-                        </div>
-                      )}
-                      {cdInfo.cooldownEndsAt && (
-                        <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '6px', textAlign: 'center' }}>
-                          Next attempt available: {new Date(cdInfo.cooldownEndsAt).toLocaleDateString()}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <button
-                      className="ph-btn-assessment"
-                      onClick={() => setAssessmentModalLevel(mod)}
-                    >
-                      <FaRocket size={12} /> Take Clearance Assessment ({mod.assessment.durationMinutes / 60}h)
-                    </button>
-                  )}
+                <div className="ph-pt-stat-text-col">
+                  <span className="ph-pt-stat-num">{studentPlacementLevel}</span>
+                  <span className="ph-pt-stat-lbl">Levels Completed</span>
                 </div>
               </div>
-            );
-          })}
+
+              <div className="ph-pt-stat-box">
+                <div className="ph-pt-stat-icon-circle yellow">
+                  <FaTrophy size={11} color="#d97706" />
+                </div>
+                <div className="ph-pt-stat-text-col">
+                  <span className="ph-pt-stat-num">{studentPlacementLevel}</span>
+                  <span className="ph-pt-stat-lbl">Clearance Passed</span>
+                </div>
+              </div>
+
+              <div className="ph-pt-stat-box">
+                <div className="ph-pt-stat-icon-circle blue">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#2563eb">
+                    <rect x="2" y="12" width="4" height="9" rx="1" />
+                    <rect x="9" y="4" width="4" height="17" rx="1" />
+                    <rect x="16" y="8" width="4" height="13" rx="1" />
+                  </svg>
+                </div>
+                <div className="ph-pt-stat-text-col">
+                  <span className="ph-pt-stat-num">{solvedQ}</span>
+                  <span className="ph-pt-stat-lbl">Total Problems Solved</span>
+                </div>
+              </div>
+
+              <div className="ph-pt-stat-box">
+                <div className="ph-pt-stat-icon-circle sky">
+                  <FaClock size={11} color="#0284c7" />
+                </div>
+                <div className="ph-pt-stat-text-col">
+                  <span className="ph-pt-stat-num">4h 20m</span>
+                  <span className="ph-pt-stat-lbl">Time Spent</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Next Milestone Box */}
+            <div className="ph-pt-milestone-box">
+              <div className="ph-pt-milestone-left">
+                <div className="ph-pt-milestone-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2.2">
+                    <circle cx="12" cy="12" r="10" />
+                    <circle cx="12" cy="12" r="6" />
+                    <circle cx="12" cy="12" r="2" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="ph-pt-milestone-title">Next Milestone</div>
+                  <div className="ph-pt-milestone-desc">
+                    Solve {remainingQ} more problems to complete Level 1 curriculum.
+                  </div>
+                  <div className="ph-pt-milestone-mini-track">
+                    <div className="ph-pt-milestone-mini-fill" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              </div>
+              <span className="ph-pt-milestone-pill">
+                {remainingPct}% remaining
+              </span>
+            </div>
+          </div>
+
+          {/* Card 3: Placement Eligibility */}
+          <div className="ph-pt-eligibility-card">
+            <div className="ph-pt-eligibility-header">
+              <div className="ph-pt-eligibility-trophy-box">
+                <FaTrophy size={20} color="#2563eb" />
+              </div>
+              <div>
+                <span className="ph-pt-eligibility-toplbl">Placement Eligibility</span>
+                <div className="ph-pt-eligibility-val-row">
+                  <span className="ph-pt-eligibility-level-num">Level {studentPlacementLevel}</span>
+                  <span className="ph-pt-eligibility-status-pill">
+                    {studentPlacementLevel >= 7 ? 'Eligible' : 'Not Eligible'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <p className="ph-pt-eligibility-desc">
+              Complete all 7 levels and pass clearance assessments to become placement eligible.
+            </p>
+
+            {/* Checklist Items */}
+            <div className="ph-pt-checklist">
+              <div className={`ph-pt-check-item ${solvedQ >= totalQ ? 'done' : 'locked'}`}>
+                <FaLock size={12} className="ph-pt-check-icon" />
+                <span>Complete curriculum for each level</span>
+              </div>
+              <div className="ph-pt-check-item locked">
+                <FaLock size={12} className="ph-pt-check-icon" />
+                <span>Pass level clearance assessments</span>
+              </div>
+              <div className="ph-pt-check-item locked">
+                <FaLock size={12} className="ph-pt-check-icon" />
+                <span>Unlock all 7 levels</span>
+              </div>
+              <div className="ph-pt-check-item locked">
+                <FaLock size={12} className="ph-pt-check-icon" />
+                <span>Earn your placement certificate</span>
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* ─── Seven-Level Curriculum Section ─── */}
+        <div id="seven-level-curriculum-section" className="ph-pt-curriculum-section">
+          <div className="ph-pt-curriculum-header">
+            <div>
+              <h2 className="ph-pt-curriculum-title">Seven-Level Curriculum</h2>
+              <p className="ph-pt-curriculum-subtitle">
+                A structured learning path from fundamental problem solving to advanced algorithms.
+              </p>
+            </div>
+
+            <div className="ph-pt-view-toggle">
+              <button
+                type="button"
+                className={`ph-pt-toggle-btn ${placementViewMode === 'card' ? 'active' : ''}`}
+                onClick={() => setPlacementViewMode('card')}
+              >
+                <FaThLarge size={12} style={{ marginRight: '6px' }} /> Card View
+              </button>
+              <button
+                type="button"
+                className={`ph-pt-toggle-btn ${placementViewMode === 'timeline' ? 'active' : ''}`}
+                onClick={() => setPlacementViewMode('timeline')}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '6px' }}>
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+                Timeline View
+              </button>
+            </div>
+          </div>
+
+          {placementViewMode === 'card' ? (
+            /* 7 Cards Pipeline with Arrows */
+            <div className="ph-pt-pipeline-row">
+              {PLACEMENT_TRACK_CONFIG.modules.map((mod, idx) => {
+                const levelNum = mod.level;
+                const levelDoc = placementOverview?.levels?.find(l => l.level === levelNum);
+                const isCleared = levelNum <= studentPlacementLevel || levelDoc?.cleared;
+                const isUnlocked = levelNum === 1 || levelNum <= studentPlacementLevel + 1 || levelDoc?.status === 'UNLOCKED';
+                const statusClass = isCleared ? 'cleared' : (isUnlocked ? 'in_progress' : 'locked');
+
+                const mappedQuestions = questions.filter(q => q.level === levelNum || (levelNum === 1 && String(q.questionId || '').toLowerCase().startsWith('q0.')));
+                const levelTotalQ = mappedQuestions.length || (levelNum === 1 ? 321 : (levelDoc?.totalQuestions || 0));
+                const levelSolvedQ = mappedQuestions.length > 0
+                  ? mappedQuestions.filter(q => solvedIds.includes(q.questionId) || solvedIds.includes(String(q.questionId).replace('Q0.', 'Q'))).length
+                  : (levelDoc?.completedQuestions || 0);
+                const levelPct = levelTotalQ > 0 ? Math.round((levelSolvedQ / levelTotalQ) * 100) : 0;
+
+                // Short pipeline descriptions matching reference
+                const shortDesc = {
+                  1: 'Arrays, strings, mathematical logic, recursion.',
+                  2: 'Two pointers, sliding window, prefix sums, binary search.',
+                  3: 'Stacks, queues, trees, hashing techniques.',
+                  4: 'BST, priority queues, heaps, greedy paradigms.',
+                  5: 'Graphs, BFS, DFS, topological sorting, shortest paths.',
+                  6: 'DP, memoization, tabulation, bit masking, combinatorics.',
+                  7: 'Tries, segment trees, advanced data structures.'
+                }[levelNum] || mod.description;
+
+                return (
+                  <React.Fragment key={mod.id}>
+                    <div
+                      className={`ph-pt-pipeline-card ${statusClass} ${selectedDetailLevelNum === levelNum ? 'is-selected' : ''}`}
+                      onClick={() => {
+                        setSelectedDetailLevelNum(levelNum);
+                        const el = document.getElementById('placement-level-details-section');
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div className="ph-pt-pipeline-card-top">
+                        {renderLevelIcon(levelNum)}
+                        <span className={`ph-status-chip ${statusClass}`}>
+                          {isCleared ? 'CLEARED' : isUnlocked ? 'IN PROGRESS' : 'LOCKED'}
+                        </span>
+                      </div>
+
+                      <h4 className="ph-pt-pipeline-card-title">Level {levelNum}</h4>
+                      <p className="ph-pt-pipeline-card-desc">{shortDesc}</p>
+
+                      <div className="ph-pt-pipeline-card-progress">
+                        <div className="ph-pt-pipeline-progress-meta">
+                          <span>{isUnlocked ? `${levelSolvedQ} / ${levelTotalQ} solved` : 'Not Started'}</span>
+                          <span>{levelPct}%</span>
+                        </div>
+                        <div className="ph-pt-pipeline-progress-track">
+                          <div className="ph-pt-pipeline-progress-fill" style={{ width: `${levelPct}%` }} />
+                        </div>
+                      </div>
+
+                      <div className="ph-pt-pipeline-card-action">
+                        {isUnlocked && !isCleared ? (
+                          levelTotalQ > 0 && levelSolvedQ >= levelTotalQ ? (
+                            <button
+                              type="button"
+                              className="ph-pt-btn-pipeline-primary"
+                              style={{ background: '#2563eb' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleLaunchLevelAssessment(mod, levelSolvedQ, levelTotalQ);
+                              }}
+                            >
+                              🛡️ Take Assessment
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="ph-pt-btn-pipeline-primary"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedLevel(String(levelNum));
+                                handleTabChange('bank');
+                              }}
+                            >
+                              Continue &rarr;
+                            </button>
+                          )
+                        ) : (
+                          <button
+                            type="button"
+                            className="ph-pt-btn-pipeline-secondary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedDetailLevelNum(levelNum);
+                              const el = document.getElementById('placement-level-details-section');
+                              if (el) el.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                          >
+                            View Details
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {idx < PLACEMENT_TRACK_CONFIG.modules.length - 1 && (
+                      <div className="ph-pt-pipeline-arrow" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      </div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          ) : (
+            /* Timeline Roadmap View */
+            <div className="ph-pt-timeline-container">
+              {PLACEMENT_TRACK_CONFIG.modules.map((mod, idx) => {
+                const levelNum = mod.level;
+                const levelDoc = placementOverview?.levels?.find(l => l.level === levelNum);
+                const isCleared = levelNum <= studentPlacementLevel || levelDoc?.cleared;
+                const isUnlocked = levelNum === 1 || levelNum <= studentPlacementLevel + 1 || levelDoc?.status === 'UNLOCKED';
+                const statusClass = isCleared ? 'cleared' : (isUnlocked ? 'in_progress' : 'locked');
+
+                const mappedQuestions = questions.filter(q => q.level === levelNum || (levelNum === 1 && String(q.questionId || '').toLowerCase().startsWith('q0.')));
+                const levelTotalQ = mappedQuestions.length || (levelNum === 1 ? 321 : (levelDoc?.totalQuestions || 0));
+                const levelSolvedQ = mappedQuestions.length > 0
+                  ? mappedQuestions.filter(q => solvedIds.includes(q.questionId) || solvedIds.includes(String(q.questionId).replace('Q0.', 'Q'))).length
+                  : (levelDoc?.completedQuestions || 0);
+                const levelPct = levelTotalQ > 0 ? Math.round((levelSolvedQ / levelTotalQ) * 100) : 0;
+
+                const levelTags = {
+                  1: ['Arrays & Dynamic Lists', 'String Manipulations', 'Mathematical Logic', 'Basic Recursion', 'Two Sum Variations'],
+                  2: ['Two Pointers', 'Sliding Window', 'Prefix Sums', 'Binary Search', 'Subarrays'],
+                  3: ['Monotonic Stacks', 'Queues & Deques', 'Binary Trees', 'Tree Traversals', 'Hash Maps & Sets'],
+                  4: ['Binary Search Trees', 'Priority Queues', 'Heaps & Heapsort', 'Greedy Paradigms', 'Intervals'],
+                  5: ['Graph Representations', 'BFS & DFS', 'Topological Sorting', 'Cycle Detection', 'Shortest Paths (Dijkstra)'],
+                  6: ['1D / 2D Dynamic Programming', 'Memoization & Tabulation', 'Knapsack Patterns', 'Bitmasking', 'Combinatorics'],
+                  7: ['Tries (Prefix Trees)', 'Segment Trees', 'Disjoint Set Union', 'DP on Trees', 'Hard Interview Problems']
+                }[levelNum] || [];
+
+                return (
+                  <div key={mod.id} className="ph-pt-timeline-item">
+                    <div className="ph-pt-timeline-spine-col">
+                      <div className={`ph-pt-timeline-dot ${statusClass}`}>
+                        {isCleared ? (
+                          <FaCheckCircle size={18} />
+                        ) : isUnlocked ? (
+                          <span>{levelNum}</span>
+                        ) : (
+                          <FaLock size={14} />
+                        )}
+                      </div>
+                      {idx < PLACEMENT_TRACK_CONFIG.modules.length - 1 && (
+                        <div className={`ph-pt-timeline-line ${isCleared ? 'active' : ''}`} />
+                      )}
+                    </div>
+
+                    <div className={`ph-pt-timeline-card ${statusClass}`}>
+                      <div className="ph-pt-timeline-top">
+                        <div className="ph-pt-timeline-title-row">
+                          {renderLevelIcon(levelNum)}
+                          <h3 className="ph-pt-timeline-title">
+                            Level {levelNum}: {mod.title.replace(`Level ${levelNum}: `, '')}
+                          </h3>
+                        </div>
+                        <div className="ph-pt-timeline-badge-group">
+                          <span className="ph-pt-assessment-badge">
+                            🛡️ 4h Proctored Assessment (16 Qs • 70% Pass)
+                          </span>
+                          <span className={`ph-status-chip ${statusClass}`}>
+                            {isCleared ? 'CLEARED' : isUnlocked ? 'IN PROGRESS' : 'LOCKED'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="ph-pt-timeline-desc">{mod.description}</p>
+
+                      <div className="ph-pt-timeline-tags">
+                        {levelTags.map(tag => (
+                          <span key={tag} className="ph-pt-timeline-tag">{tag}</span>
+                        ))}
+                      </div>
+
+                      <div className="ph-pt-timeline-progress-wrap">
+                        <div className="ph-pt-timeline-progress-meta">
+                          <span>{isUnlocked ? `${levelSolvedQ} / ${levelTotalQ} solved questions` : 'Prerequisite locked'}</span>
+                          <span>{levelPct}% Complete</span>
+                        </div>
+                        <div className="ph-pt-timeline-progress-track">
+                          <div className="ph-pt-timeline-progress-fill" style={{ width: `${levelPct}%` }} />
+                        </div>
+                      </div>
+
+                      <div className="ph-pt-timeline-actions">
+                        {isUnlocked && (
+                          <button
+                            type="button"
+                            className="ph-pt-timeline-btn-primary"
+                            onClick={() => {
+                              setSelectedLevel(String(levelNum));
+                              handleTabChange('bank');
+                            }}
+                          >
+                            ▶ Continue Level {levelNum} ({levelTotalQ} Questions)
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="ph-pt-timeline-btn-secondary"
+                          onClick={() => {
+                            setSelectedDetailLevelNum(levelNum);
+                            const el = document.getElementById('placement-level-details-section');
+                            if (el) el.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                        >
+                          📖 View Syllabus & Topics
+                        </button>
+                        {isCleared ? (
+                          <span className="ph-pt-timeline-btn-cleared">
+                            <FaCheckCircle size={13} style={{ color: '#10b981' }} />
+                            Clearance Passed
+                          </span>
+                        ) : isUnlocked ? (
+                          levelTotalQ > 0 && levelSolvedQ >= levelTotalQ ? (
+                            <button
+                              type="button"
+                              className="ph-pt-timeline-btn-assess ready"
+                              onClick={() => handleLaunchLevelAssessment(mod, levelSolvedQ, levelTotalQ)}
+                            >
+                              🛡️ Take Clearance Assessment (4h)
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="ph-pt-timeline-btn-assess locked"
+                              onClick={() => handleLaunchLevelAssessment(mod, levelSolvedQ, levelTotalQ)}
+                              title={`Complete all ${levelTotalQ} questions to unlock assessment (${levelSolvedQ}/${levelTotalQ} solved)`}
+                            >
+                              <FaLock size={11} style={{ marginRight: '5px' }} />
+                              Clearance Assessment ({levelSolvedQ}/{levelTotalQ} Solved)
+                            </button>
+                          )
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* ─── Embedded Two-Panel Level Details Section (No Popup / No Blur) ─── */}
+        {(() => {
+          const activeDetailMod = PLACEMENT_TRACK_CONFIG.modules.find(m => m.level === selectedDetailLevelNum) || PLACEMENT_TRACK_CONFIG.modules[0];
+          const detailLevelNum = activeDetailMod.level;
+          const detailLevelDoc = placementOverview?.levels?.find(l => l.level === detailLevelNum);
+          const detailIsCleared = detailLevelNum <= studentPlacementLevel || detailLevelDoc?.cleared;
+          const detailIsUnlocked = detailLevelNum === 1 || detailLevelNum <= studentPlacementLevel + 1 || detailLevelDoc?.status === 'UNLOCKED';
+          const detailStatusClass = detailIsCleared ? 'cleared' : (detailIsUnlocked ? 'in_progress' : 'locked');
+
+          const detailMappedQuestions = questions.filter(q => q.level === detailLevelNum || (detailLevelNum === 1 && String(q.questionId || '').toLowerCase().startsWith('q0.')));
+          const detailTotalQ = detailMappedQuestions.length || activeDetailMod.totalQuestions;
+          const detailActualSolved = detailMappedQuestions.length > 0
+            ? detailMappedQuestions.filter(q => solvedIds.includes(q.questionId) || solvedIds.includes(String(q.questionId).replace('Q0.', 'Q'))).length
+            : (detailLevelDoc?.completedQuestions ?? (detailLevelNum === 1 ? 54 : 0));
+          const detailSolvedQ = detailActualSolved;
+          const detailPct = detailTotalQ > 0 ? Math.round((detailSolvedQ / detailTotalQ) * 100) : (detailLevelNum === 1 ? 17 : 0);
+          const detailRemainingQ = Math.max(0, detailTotalQ - detailSolvedQ);
+
+          return (
+            <div id="placement-level-details-section" className="ph-pt-level-details-section">
+              {/* Level Selector Bar */}
+              <div className="ph-pt-level-selector-row">
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', marginRight: '6px' }}>Select Level:</span>
+                {PLACEMENT_TRACK_CONFIG.modules.map((m) => {
+                  const isCleared = m.level <= studentPlacementLevel;
+                  const isSelected = selectedDetailLevelNum === m.level;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      className={`ph-pt-level-select-pill ${isSelected ? 'active' : ''} ${isCleared ? 'cleared-badge' : ''}`}
+                      onClick={() => setSelectedDetailLevelNum(m.level)}
+                    >
+                      <span>Level {m.level}</span>
+                      {isCleared && <FaCheckCircle size={11} color={isSelected ? '#ffffff' : '#10b981'} />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Two-Panel Cards Grid matching Reference Design */}
+              <div className="ph-pt-level-details-grid">
+                {/* Left Card: Summary, Progress & Solve Action */}
+                <div className="ph-pt-detail-card-left">
+                  <div>
+                    {/* Header Row */}
+                    <div className="ph-pt-detail-left-top">
+                      <div className={`ph-level-icon-badge l${detailLevelNum}`} style={{ width: '48px', height: '48px', borderRadius: '12px', flexShrink: 0 }}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="16 18 22 12 16 6" />
+                          <polyline points="8 6 2 12 8 18" />
+                        </svg>
+                      </div>
+                      <div className="ph-pt-detail-titles">
+                        <div className="ph-pt-detail-header-row">
+                          <h3 className="ph-pt-detail-title">Level {detailLevelNum}</h3>
+                          <span className={`ph-pt-detail-status-pill ${detailStatusClass}`}>
+                            {detailIsCleared ? 'CLEARED' : detailIsUnlocked ? 'IN PROGRESS' : 'LOCKED'}
+                          </span>
+                        </div>
+                        <p className="ph-pt-detail-desc">{activeDetailMod.description}</p>
+                      </div>
+                    </div>
+
+                    {/* Curriculum Progress */}
+                    <div className="ph-pt-detail-progress-wrap">
+                      <div className="ph-pt-detail-progress-header">
+                        <span className="ph-pt-detail-prog-lbl">Curriculum Progress</span>
+                        <div className="ph-pt-detail-prog-stats">
+                          <span className="ph-pt-detail-prog-ratio">{detailSolvedQ} / {detailTotalQ} solved</span>
+                          <span className="ph-pt-detail-prog-pct">{detailPct}%</span>
+                        </div>
+                      </div>
+                      <div className="ph-pt-detail-prog-track">
+                        <div className="ph-pt-detail-prog-fill" style={{ width: `${detailPct}%` }} />
+                      </div>
+                    </div>
+
+                    {/* 3 Stat Tiles */}
+                    <div className="ph-pt-detail-stat-tiles">
+                      <div className="ph-pt-detail-stat-tile green">
+                        <div className="ph-pt-detail-stat-icon-wrap">
+                          <FaFileAlt size={15} color="#059669" />
+                        </div>
+                        <div>
+                          <div className="ph-pt-detail-stat-val">{detailTotalQ}</div>
+                          <div className="ph-pt-detail-stat-lbl">Total Problems</div>
+                        </div>
+                      </div>
+
+                      <div className="ph-pt-detail-stat-tile green">
+                        <div className="ph-pt-detail-stat-icon-wrap">
+                          <FaCheckCircle size={15} color="#059669" />
+                        </div>
+                        <div>
+                          <div className="ph-pt-detail-stat-val">{detailSolvedQ}</div>
+                          <div className="ph-pt-detail-stat-lbl">Solved</div>
+                        </div>
+                      </div>
+
+                      <div className="ph-pt-detail-stat-tile blue">
+                        <div className="ph-pt-detail-stat-icon-wrap">
+                          <FaClock size={15} color="#2563eb" />
+                        </div>
+                        <div>
+                          <div className="ph-pt-detail-stat-val">{detailRemainingQ}</div>
+                          <div className="ph-pt-detail-stat-lbl">Remaining</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Solve Questions Button */}
+                  <button
+                    type="button"
+                    className="ph-pt-detail-btn-solve"
+                    onClick={() => {
+                      if (detailIsUnlocked) {
+                        setSelectedLevel(String(detailLevelNum));
+                        handleTabChange('bank');
+                      } else {
+                        toast.info(`Level ${detailLevelNum} is locked. Complete Level ${detailLevelNum - 1} and pass its clearance assessment first!`);
+                      }
+                    }}
+                  >
+                    <span>▶ View &amp; Solve Level {detailLevelNum} Questions ({detailTotalQ}) &rarr;</span>
+                  </button>
+                </div>
+
+                {/* Right Card: Tabs (Topics, Learning Resources, Assessment, Rewards) */}
+                <div className="ph-pt-detail-card-right">
+                  <div>
+                    {/* Tabs Navigation */}
+                    <div className="ph-pt-detail-tabs-bar">
+                      <button
+                        type="button"
+                        className={`ph-pt-detail-tab-btn ${detailActiveTab === 'topics' ? 'active' : ''}`}
+                        onClick={() => setDetailActiveTab('topics')}
+                      >
+                        Topics
+                      </button>
+                      <button
+                        type="button"
+                        className={`ph-pt-detail-tab-btn ${detailActiveTab === 'resources' ? 'active' : ''}`}
+                        onClick={() => setDetailActiveTab('resources')}
+                      >
+                        Learning Resources
+                      </button>
+                      <button
+                        type="button"
+                        className={`ph-pt-detail-tab-btn ${detailActiveTab === 'assessment' ? 'active' : ''}`}
+                        onClick={() => setDetailActiveTab('assessment')}
+                      >
+                        Assessment
+                      </button>
+                      <button
+                        type="button"
+                        className={`ph-pt-detail-tab-btn ${detailActiveTab === 'rewards' ? 'active' : ''}`}
+                        onClick={() => setDetailActiveTab('rewards')}
+                      >
+                        Rewards
+                      </button>
+                    </div>
+
+                    {/* Tab 1: Topics with Circular SVG Rings */}
+                    {detailActiveTab === 'topics' && (
+                      <div className="ph-pt-topics-list">
+                        {(activeDetailMod.topics || []).map((topic) => {
+                          const topicSolved = (detailLevelNum === 1 && detailSolvedQ === 54 && topic.defaultSolved !== undefined)
+                            ? topic.defaultSolved
+                            : (detailTotalQ > 0 ? Math.min(topic.count, Math.round((topic.count / detailTotalQ) * detailSolvedQ)) : 0);
+
+                          const radius = 10;
+                          const circumference = 2 * Math.PI * radius;
+                          const topicPct = topic.count > 0 ? Math.min(100, (topicSolved / topic.count) * 100) : 0;
+                          const strokeDashoffset = circumference - (topicPct / 100) * circumference;
+
+                          return (
+                            <div
+                              key={topic.id}
+                              className="ph-pt-topic-row"
+                              onClick={() => {
+                                if (detailIsUnlocked) {
+                                  setSelectedLevel(String(detailLevelNum));
+                                  handleTabChange('bank');
+                                }
+                              }}
+                            >
+                              <div className="ph-pt-topic-left">
+                                {topicSolved === 0 ? (
+                                  <svg width="22" height="22" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                                    <circle cx="12" cy="12" r={radius} fill="none" stroke="#cbd5e1" strokeWidth="2.5" />
+                                  </svg>
+                                ) : (
+                                  <svg width="22" height="22" viewBox="0 0 24 24" style={{ flexShrink: 0, transform: 'rotate(-90deg)' }}>
+                                    <circle cx="12" cy="12" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="2.5" />
+                                    <circle
+                                      cx="12"
+                                      cy="12"
+                                      r={radius}
+                                      fill="none"
+                                      stroke="#10b981"
+                                      strokeWidth="2.5"
+                                      strokeDasharray={circumference}
+                                      strokeDashoffset={strokeDashoffset}
+                                      strokeLinecap="round"
+                                    />
+                                  </svg>
+                                )}
+                                <span className="ph-pt-topic-name">{topic.name}</span>
+                              </div>
+                              <div className="ph-pt-topic-right">
+                                <span className="ph-pt-topic-ratio">{topicSolved} / {topic.count}</span>
+                                <FaChevronRight size={11} className="ph-pt-topic-chevron" />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Tab 2: Learning Resources */}
+                    {detailActiveTab === 'resources' && (
+                      <div className="ph-pt-resources-list">
+                        <div className="ph-pt-resource-block">
+                          <div className="ph-pt-resource-label">Who it's for</div>
+                          <div className="ph-pt-resource-val">{activeDetailMod.whoFor}</div>
+                        </div>
+
+                        <div className="ph-pt-resource-block">
+                          <div className="ph-pt-resource-label">What you practice</div>
+                          <div className="ph-pt-resource-val">{activeDetailMod.whatYouPractice}</div>
+                        </div>
+
+                        <div className="ph-pt-resource-block">
+                          <div className="ph-pt-resource-label">Target Companies</div>
+                          <div className="ph-pt-companies-wrap">
+                            {(activeDetailMod.targetCompanies || []).map((company) => (
+                              <span key={company} className="ph-pt-company-pill">{company}</span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="ph-pt-resource-block">
+                          <div className="ph-pt-resource-label">Practice Outcome</div>
+                          <div className="ph-pt-resource-val">{activeDetailMod.outcome}</div>
+                        </div>
+
+                        <div className="ph-pt-resource-block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Placement Milestone:</span>
+                          <span className="ph-pt-milestone-pill-tag">🎯 {activeDetailMod.placementMilestone}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tab 3: Assessment */}
+                    {detailActiveTab === 'assessment' && (
+                      <div className="ph-pt-assessment-tab-content">
+                        <div className="ph-pt-assessment-specs-grid">
+                          <div className="ph-pt-assessment-spec-item">
+                            <div className="ph-pt-assessment-spec-lbl">Duration</div>
+                            <div className="ph-pt-assessment-spec-val">4 Hours (240 mins)</div>
+                          </div>
+                          <div className="ph-pt-assessment-spec-item">
+                            <div className="ph-pt-assessment-spec-lbl">Assessment Questions</div>
+                            <div className="ph-pt-assessment-spec-val">16 Coding Problems</div>
+                          </div>
+                          <div className="ph-pt-assessment-spec-item">
+                            <div className="ph-pt-assessment-spec-lbl">Pass Threshold</div>
+                            <div className="ph-pt-assessment-spec-val">70% Passing Test Cases</div>
+                          </div>
+                          <div className="ph-pt-assessment-spec-item">
+                            <div className="ph-pt-assessment-spec-lbl">Proctoring Mode</div>
+                            <div className="ph-pt-assessment-spec-val">Camera + Audio Proctored</div>
+                          </div>
+                        </div>
+
+                        {detailIsCleared ? (
+                          <div className="ph-pt-assessment-gate-alert" style={{ background: '#ecfdf5', borderColor: '#a7f3d0', color: '#047857' }}>
+                            <FaCheckCircle size={16} color="#059669" style={{ flexShrink: 0, marginTop: '2px' }} />
+                            <div>
+                              <strong>Level {detailLevelNum} Cleared!</strong> You have passed this level's clearance assessment and unlocked the next tier.
+                            </div>
+                          </div>
+                        ) : detailSolvedQ >= detailTotalQ ? (
+                          <div className="ph-pt-assessment-gate-alert">
+                            <FaCheckCircle size={16} color="#2563eb" style={{ flexShrink: 0, marginTop: '2px' }} />
+                            <div>
+                              <strong>Curriculum Complete!</strong> You have solved all {detailTotalQ} questions. You are now eligible to launch the 4-Hour Proctored Clearance Assessment.
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="ph-pt-assessment-gate-alert" style={{ background: '#fffbeb', borderColor: '#fde68a', color: '#b45309' }}>
+                            <FaLock size={15} color="#d97706" style={{ flexShrink: 0, marginTop: '2px' }} />
+                            <div>
+                              <strong>Assessment Gated:</strong> Solve all {detailTotalQ} questions in Level {detailLevelNum} to unlock this clearance assessment ({detailSolvedQ}/{detailTotalQ} solved).
+                            </div>
+                          </div>
+                        )}
+
+                        {detailSolvedQ >= detailTotalQ ? (
+                          <button
+                            type="button"
+                            className="ph-pt-btn-launch-assessment"
+                            onClick={() => handleLaunchLevelAssessment(activeDetailMod, detailSolvedQ, detailTotalQ)}
+                          >
+                            🛡️ Start 4-Hour Level {detailLevelNum} Clearance Assessment
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="ph-pt-btn-launch-assessment locked"
+                            disabled
+                          >
+                            <FaLock size={12} />
+                            <span>Clearance Assessment Locked ({detailSolvedQ}/{detailTotalQ} Solved)</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Tab 4: Rewards */}
+                    {detailActiveTab === 'rewards' && (
+                      <div className="ph-pt-rewards-tab-grid">
+                        <div className="ph-pt-reward-card-item">
+                          <div className="ph-pt-stat-icon-wrap" style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <FaStar size={14} color="#2563eb" />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>+{activeDetailMod.rewards?.xp || 300} XP</div>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>Complete curriculum</div>
+                          </div>
+                        </div>
+
+                        <div className="ph-pt-reward-card-item">
+                          <div className="ph-pt-stat-icon-wrap" style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="#d97706">
+                              <circle cx="12" cy="12" r="10" stroke="#b45309" strokeWidth="1.5" />
+                              <text x="12" y="16" fill="#ffffff" fontSize="11" fontWeight="800" textAnchor="middle" fontFamily="sans-serif">¢</text>
+                            </svg>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>{activeDetailMod.rewards?.credits || 50} Credits</div>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>Pass clearance assessment</div>
+                          </div>
+                        </div>
+
+                        <div className="ph-pt-reward-card-item">
+                          <div className="ph-pt-stat-icon-wrap" style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <FaTrophy size={14} color="#d97706" />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>{activeDetailMod.rewards?.badgeName || `Level ${detailLevelNum} Badge`}</div>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>Verified Profile Badge</div>
+                          </div>
+                        </div>
+
+                        <div className="ph-pt-reward-card-item">
+                          <div className="ph-pt-stat-icon-wrap" style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#faf5ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <FaBookOpen size={14} color="#7c3aed" />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>{activeDetailMod.rewards?.certificate || 'Milestone Certificate'}</div>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>On 100% completion</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 🔒 How Progression & Gating Works Banner */}
+              <div className="ph-pt-gating-banner">
+                <div className="ph-pt-gating-banner-title">
+                  <span>🔒</span>
+                  <span>How Progression &amp; Gating Works</span>
+                </div>
+                <div className="ph-pt-gating-steps">
+                  <div className="ph-pt-gating-step">
+                    <div className="ph-pt-gating-num">1</div>
+                    <div>
+                      <div className="ph-pt-gating-step-title">Solve at Your Pace</div>
+                      <div className="ph-pt-gating-step-desc">Each level is unlocked sequentially. Complete the curated questions for your current level.</div>
+                    </div>
+                  </div>
+                  <div className="ph-pt-gating-step">
+                    <div className="ph-pt-gating-num">2</div>
+                    <div>
+                      <div className="ph-pt-gating-step-title">Clearance Assessment</div>
+                      <div className="ph-pt-gating-step-desc">Once you finish a level's questions, take the 4-Hour Proctored Clearance Assessment.</div>
+                    </div>
+                  </div>
+                  <div className="ph-pt-gating-step">
+                    <div className="ph-pt-gating-num">3</div>
+                    <div>
+                      <div className="ph-pt-gating-step-title">Unlock &amp; Level Up</div>
+                      <div className="ph-pt-gating-step-desc">Scoring ≥ 70% clears the level, unlocks the next tier, and elevates your verified placement eligibility badge!</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
 
         {/* Assessment Launch Confirmation Modal */}
         {assessmentModalLevel && (
@@ -2074,6 +3002,7 @@ const PracticeHome = ({
               onClick={() => handleTabChange('sheets')}
               style={{ borderRadius: '8px' }}
             >
+              <FaFileAlt size={13} style={{ marginRight: '6px' }} />
               Structured Sheets
             </button>
             <button
@@ -2081,6 +3010,7 @@ const PracticeHome = ({
               onClick={() => handleTabChange('bank')}
               style={{ borderRadius: '8px' }}
             >
+              <FaDatabase size={13} style={{ marginRight: '6px' }} />
               Practice Bank
             </button>
             <button
@@ -2088,20 +3018,27 @@ const PracticeHome = ({
               onClick={() => handleTabChange('placementTrack')}
               style={{ borderRadius: '8px' }}
             >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '6px' }}>
+                <rect x="2" y="10" width="4" height="11" rx="2" />
+                <rect x="9" y="3" width="4" height="18" rx="2" />
+                <rect x="16" y="7" width="4" height="14" rx="2" />
+              </svg>
               Placement Track
             </button>
           </div>
 
           <div className="ph-gamification-strip">
             <div className="ph-gamification-chip level">
-              <span>{userLevelInfo?.levelTitle || 'Level 1'}</span>
+              <FaGraduationCap size={13} style={{ marginRight: '6px' }} />
+              <span>{userLevelInfo?.levelTitle || 'Novice Developer'}</span>
             </div>
             <div className="ph-gamification-chip xp">
+              <FaStar size={11} style={{ marginRight: '6px' }} />
               <span>{totalXP || 0} XP</span>
             </div>
             <div className="ph-gamification-chip credits">
-              <SeedCreditCoin size={14} style={{ marginRight: '5px' }} />
-              <span>{seedCredits || 0} Credits</span>
+              <SeedCreditCoin size={14} style={{ marginRight: '6px' }} />
+              <span>SC {seedCredits || 0} Credits</span>
             </div>
           </div>
         </div>
