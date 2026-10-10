@@ -1,4 +1,6 @@
-import alasql from 'alasql';
+import alasqlEngine from 'alasql';
+
+const alasql = (alasqlEngine && alasqlEngine.default) ? alasqlEngine.default : alasqlEngine;
 
 /**
  * SQL Execution Sandbox for SEED-SEB Candidate Assessment.
@@ -72,6 +74,11 @@ export function executeStudentQuery(tables = [], queryText = '', options = {}) {
     }
   }
 
+  // Enable case-insensitive table and column matching
+  if (alasql && alasql.options) {
+    alasql.options.casesensitive = false;
+  }
+
   const dbId = `candidate_run_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 
   try {
@@ -91,16 +98,47 @@ export function executeStudentQuery(tables = [], queryText = '', options = {}) {
       alasql(createSql);
 
       if (Array.isArray(tbl.sampleData) && tbl.sampleData.length > 0) {
-        alasql(`INSERT INTO \`${tbl.tableName}\` VALUES ?`, [tbl.sampleData]);
+        // Coerce numbers stored as strings so comparisons and numeric operators work accurately
+        const cleanSampleData = tbl.sampleData.map((row) => {
+          if (!row || typeof row !== 'object') return row;
+          const cleanRow = {};
+          for (const [k, v] of Object.entries(row)) {
+            const colDef = (tbl.columns || []).find(
+              (c) => c.name && c.name.toLowerCase() === k.toLowerCase()
+            );
+            const isNum =
+              colDef &&
+              ['INTEGER', 'NUMERIC', 'REAL', 'INT', 'FLOAT', 'DOUBLE', 'NUMBER'].includes(
+                String(colDef.type).toUpperCase()
+              );
+            if (isNum && typeof v === 'string' && v.trim() !== '' && !isNaN(Number(v))) {
+              cleanRow[k] = Number(v);
+            } else {
+              cleanRow[k] = v;
+            }
+          }
+          return cleanRow;
+        });
+
+        try {
+          alasql(`INSERT INTO \`${tbl.tableName}\` SELECT * FROM ?`, [cleanSampleData]);
+        } catch (_) {
+          // Direct fallback into AlaSQL database table definition
+          const targetDb =
+            alasql.databases?.[dbId] ||
+            alasql.databases?.[alasql.useid];
+          if (targetDb?.tables?.[tbl.tableName]) {
+            targetDb.tables[tbl.tableName].data = JSON.parse(
+              JSON.stringify(cleanSampleData)
+            );
+          }
+        }
       }
     }
 
     // Execute candidate query
-    const rawResult = alasql(queryText);
+    const rawResult = alasql(queryText.trim());
     const executionTimeMs = Math.round(performance.now() - startTime);
-
-    // Drop temporary database
-    alasql(`DROP DATABASE ${dbId};`);
 
     if (executionTimeMs > timeoutMs) {
       return {
@@ -113,18 +151,29 @@ export function executeStudentQuery(tables = [], queryText = '', options = {}) {
       };
     }
 
+    // Multi-statement handling (if query contains comments, multiple selects or trailing ;)
+    let finalResult = rawResult;
+    if (
+      Array.isArray(rawResult) &&
+      rawResult.length > 0 &&
+      Array.isArray(rawResult[rawResult.length - 1]) &&
+      !('0' in rawResult[rawResult.length - 1] && typeof rawResult[rawResult.length - 1] === 'object' && !Array.isArray(rawResult[rawResult.length - 1]))
+    ) {
+      finalResult = rawResult[rawResult.length - 1];
+    }
+
     // Scalar result (e.g. SELECT 1+1 or SELECT count(*))
-    if (!rawResult || !Array.isArray(rawResult)) {
+    if (!finalResult || !Array.isArray(finalResult)) {
       return {
         success: true,
         columns: ['result'],
-        rows: [[rawResult]],
+        rows: [[finalResult]],
         rowCount: 1,
         executionTimeMs,
       };
     }
 
-    if (rawResult.length === 0) {
+    if (finalResult.length === 0) {
       return {
         success: true,
         columns: [],
@@ -134,9 +183,13 @@ export function executeStudentQuery(tables = [], queryText = '', options = {}) {
       };
     }
 
-    const firstRow = rawResult[0] || {};
-    const columns = Object.keys(firstRow);
-    const rows = rawResult.map((row) => columns.map((c) => row[c]));
+    // Extract all unique columns across rows to avoid missing keys
+    const columns = Array.from(
+      new Set(finalResult.flatMap((r) => (r && typeof r === 'object' ? Object.keys(r) : [])))
+    );
+    const rows = finalResult.map((row) =>
+      columns.map((c) => (row && typeof row === 'object' ? (row[c] ?? null) : null))
+    );
 
     return {
       success: true,
@@ -146,10 +199,6 @@ export function executeStudentQuery(tables = [], queryText = '', options = {}) {
       executionTimeMs,
     };
   } catch (err) {
-    try {
-      alasql(`DROP DATABASE IF EXISTS ${dbId};`);
-    } catch (_) {}
-
     const executionTimeMs = Math.round(performance.now() - startTime);
     return {
       success: false,
@@ -159,5 +208,9 @@ export function executeStudentQuery(tables = [], queryText = '', options = {}) {
       executionTimeMs,
       error: err?.message || String(err),
     };
+  } finally {
+    try {
+      alasql(`DROP DATABASE IF EXISTS ${dbId};`);
+    } catch (_) {}
   }
 }
