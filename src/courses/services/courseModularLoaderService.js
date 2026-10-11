@@ -15,7 +15,7 @@ import domainsManifest from '../data/catalog/domains.json';
 const manifestImports = import.meta.glob('../data/catalog/**/course.json', { eager: true });
 
 // Lazily import module mini-JSONs (only fetched over the network when requested)
-const moduleLoaders = import.meta.glob('../data/catalog/**/modules/*.json');
+import { moduleLoaders } from './moduleLoaders.js';
 
 // Memory cache for fetched modules
 const moduleCache = new Map();
