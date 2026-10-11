@@ -19,8 +19,12 @@ export default defineConfig({
         ignored: ['**/build/**', '**/.output/**', '**/dist/**', '**/.nitro/**'],
       },
     },
+    ssr: {
+      external: ['react-native', 'react-native-fs', 'react-native-fetch-blob'],
+    },
     build: {
       rollupOptions: {
+        external: ['react-native', 'react-native-fs', 'react-native-fetch-blob'],
         output: {
           manualChunks(id) {
             if (id.includes('realCourses') && id.endsWith('.json')) {
