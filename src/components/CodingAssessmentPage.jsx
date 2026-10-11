@@ -3556,6 +3556,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                     isTestActive={!!currentAssessment && !submissionSuccess}
                     isProctorActive={!loading && startCountdown === null && !submissionSuccess}
                     maxViolations={Number(currentAssessment.proctorConfig?.maxViolations ?? currentAssessment.maxViolations) || 200}
+                    premisesProctorRequired={Boolean(currentAssessment.proctorConfig?.premisesCameraRequired || currentAssessment.proctorConfig?.premisesProctoring || currentAssessment.premisesCameraRequired)}
                     onReady={() => {
                         console.log('[CodingAssessmentPage] Camera proctoring ready');
                     }}

@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback, useReducer } from 'react';
-import { FaCheckCircle, FaTimesCircle, FaCamera, FaExclamationTriangle, FaSpinner, FaSync, FaClock, FaLaptopCode, FaClipboardList } from 'react-icons/fa';
+import { FaCheckCircle, FaTimesCircle, FaCamera, FaExclamationTriangle, FaSpinner, FaSync, FaClock, FaLaptopCode, FaClipboardList, FaMobileAlt, FaQrcode } from 'react-icons/fa';
 import '../styles/ProctoringInstructions.css';
 import * as faceapi from 'face-api.js';
+import QRCode from 'qrcode';
 import { setProctorCacheExpiry } from '../utils/proctorCache';
+import { PremisesProctorSession } from '../services/premisesProctorService';
 
 // Helper to resolve models directory path under both file:// and http/https protocols
 const getModelsPath = (subPath) => {
@@ -32,6 +34,20 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
   const contentRef = useRef(null);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [isAcknowledged, setIsAcknowledged] = useState(false);
+
+  // Dual-Camera / Premises Proctoring Config
+  const isPremisesRequired = Boolean(
+    assessment?.proctorConfig?.premisesCameraRequired ||
+    assessment?.proctorConfig?.premisesProctoring ||
+    assessment?.premisesCameraRequired
+  );
+  const [premisesStatus, setPremisesStatus] = useState('initializing'); // initializing, waiting_for_mobile, connecting, connected, error
+  const [premisesPairingCode, setPremisesPairingCode] = useState('');
+  const [premisesQrDataUrl, setPremisesQrDataUrl] = useState('');
+  const [premisesBattery, setPremisesBattery] = useState(null);
+  const premisesSessionRef = useRef(null);
+  const premisesStreamRef = useRef(null);
+  const premisesVideoRef = useRef(null);
   
   // Single reducer for all photo state — batches into one render to prevent video flicker
   const [photoState, dispatchPhoto] = useReducer(
@@ -47,7 +63,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
   // Track if we are proceeding to test (must not stop camera on unmount if proceeding)
   const isProceedingRef = useRef(false);
 
-  const [currentStep, setCurrentStep] = useState(1); // 1 = Face capture, 2 = Guidelines agreement
+  const [currentStep, setCurrentStep] = useState(1); // 1 = Face capture, 2 = Mobile camera (if req) / Guidelines, 3 = Guidelines (if req)
 
   useEffect(() => {
     // Request camera access when component mounts
@@ -80,9 +96,96 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
           } catch (_) {}
           window.cameraStream = null;
         }
+
+        if (premisesSessionRef.current) {
+          try {
+            premisesSessionRef.current.destroy();
+          } catch (_) {}
+          premisesSessionRef.current = null;
+          window.premisesSession = null;
+          window.premisesStream = null;
+        }
       }
     };
   }, []);
+
+  // Initialize WebRTC Premises Camera Pairing Session when required
+  useEffect(() => {
+    if (!isPremisesRequired) return;
+
+    let session = null;
+    let isCancelled = false;
+
+    async function initPremisesSession() {
+      try {
+        const authData = JSON.parse(localStorage.getItem('auth_data') ?? '{}');
+        const candidateRoll = authData.rollNumber ?? 'CANDIDATE';
+        const uid = authData.uid ?? 'candidate_uid';
+        const tenantId = authData.tenantId ?? '';
+
+        session = new PremisesProctorSession({
+          uid,
+          assessmentId: assessment?.id || 'assessment',
+          candidateRoll,
+          tenantId,
+          onStream: (stream) => {
+            console.log('[ProctoringInstructions] Premises camera stream received!');
+            premisesStreamRef.current = stream;
+            window.premisesStream = stream;
+            if (premisesVideoRef.current) {
+              premisesVideoRef.current.srcObject = stream;
+              premisesVideoRef.current.play().catch(() => {});
+            }
+          },
+          onStatusChange: (status) => {
+            if (!isCancelled) {
+              console.log('[ProctoringInstructions] Premises status changed:', status);
+              setPremisesStatus(status);
+            }
+          },
+          onHeartbeat: (hb) => {
+            if (!isCancelled && hb?.battery !== null) {
+              setPremisesBattery(hb.battery);
+            }
+          },
+        });
+
+        premisesSessionRef.current = session;
+        window.premisesSession = session;
+
+        const info = await session.start();
+        if (isCancelled) return;
+
+        setPremisesPairingCode(info.pairingCode);
+        const qrUrl = await QRCode.toDataURL(info.qrPayload, {
+          width: 240,
+          margin: 1,
+          color: {
+            dark: '#0f172a',
+            light: '#ffffff',
+          },
+        });
+        if (!isCancelled) {
+          setPremisesQrDataUrl(qrUrl);
+        }
+      } catch (err) {
+        console.error('[ProctoringInstructions] Error starting premises session:', err);
+        if (!isCancelled) setPremisesStatus('error');
+      }
+    }
+
+    initPremisesSession();
+
+    return () => {
+      isCancelled = true;
+      if (!isProceedingRef.current && premisesSessionRef.current) {
+        premisesSessionRef.current.destroy();
+        premisesSessionRef.current = null;
+        window.premisesSession = null;
+        window.premisesStream = null;
+      }
+    };
+  }, [isPremisesRequired, assessment?.id]);
 
   useEffect(() => {
     const contentEl = contentRef.current;
@@ -284,7 +387,11 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
 
   const handleContinue = () => {
     if (canContinue && streamRef.current && hasScrolledToBottom && isAcknowledged && photoStatus === 'captured') {
-      console.log('[ProctoringInstructions] Continuing to test');
+      if (isPremisesRequired && premisesStatus !== 'connected') {
+        console.warn('[ProctoringInstructions] Cannot proceed without connected premises camera');
+        return;
+      }
+      console.log('[ProctoringInstructions] Continuing to test (Dual camera verified)');
       isProceedingRef.current = true;
       // Don't stop the stream here - let ProctoringEngine use it
       onContinue();
@@ -294,7 +401,8 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
         hasStream: !!streamRef.current,
         hasScrolledToBottom,
         isAcknowledged,
-        photoStatus
+        photoStatus,
+        premisesStatus: isPremisesRequired ? premisesStatus : 'not_required'
       });
     }
   };
@@ -339,6 +447,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
           background: 'var(--bg-primary, #0f172a)',
           borderBottom: '1px solid var(--border-color, #334155)'
         }}>
+          {/* Step 1: Face Registration */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{
               width: '24px',
@@ -352,32 +461,61 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
               fontSize: '11px',
               fontWeight: '700'
             }}>
-              {photoStatus === 'captured' ? '' : '1'}
+              {photoStatus === 'captured' ? '✓' : '1'}
             </span>
             <span style={{ fontSize: '13.5px', fontWeight: '600', color: currentStep === 1 ? 'var(--text-main, #f1f5f9)' : 'var(--text-muted, #94a3b8)' }}>
               Face Registration
             </span>
           </div>
 
-          <div style={{ width: '60px', height: '2px', background: currentStep === 2 ? '#10b981' : 'var(--border-color, #334155)' }}></div>
+          <div style={{ width: '40px', height: '2px', background: currentStep >= 2 ? '#10b981' : 'var(--border-color, #334155)' }}></div>
 
+          {/* Optional Step 2: Mobile Premises Camera */}
+          {isPremisesRequired && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  background: premisesStatus === 'connected' ? '#10b981' : currentStep === 2 ? 'var(--accent-coding, #10b981)' : 'var(--bg-secondary, #1e293b)',
+                  border: (currentStep === 2 || premisesStatus === 'connected') ? 'none' : '1px solid var(--border-color, #334155)',
+                  color: (currentStep === 2 || premisesStatus === 'connected') ? 'white' : 'var(--text-muted, #94a3b8)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '11px',
+                  fontWeight: '700'
+                }}>
+                  {premisesStatus === 'connected' ? '✓' : '2'}
+                </span>
+                <span style={{ fontSize: '13.5px', fontWeight: '600', color: currentStep === 2 ? 'var(--text-main, #f1f5f9)' : 'var(--text-muted, #94a3b8)' }}>
+                  Premises Camera
+                </span>
+              </div>
+
+              <div style={{ width: '40px', height: '2px', background: currentStep >= 3 ? '#10b981' : 'var(--border-color, #334155)' }}></div>
+            </>
+          )}
+
+          {/* Final Step: Guidelines */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{
               width: '24px',
               height: '24px',
               borderRadius: '50%',
-              background: currentStep === 2 ? 'var(--accent-coding, #10b981)' : 'var(--bg-secondary, #1e293b)',
-              border: currentStep === 2 ? 'none' : '1px solid var(--border-color, #334155)',
-              color: currentStep === 2 ? 'white' : 'var(--text-muted, #94a3b8)',
+              background: currentStep === (isPremisesRequired ? 3 : 2) ? 'var(--accent-coding, #10b981)' : 'var(--bg-secondary, #1e293b)',
+              border: currentStep === (isPremisesRequired ? 3 : 2) ? 'none' : '1px solid var(--border-color, #334155)',
+              color: currentStep === (isPremisesRequired ? 3 : 2) ? 'white' : 'var(--text-muted, #94a3b8)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '11px',
               fontWeight: '700'
             }}>
-              2
+              {isPremisesRequired ? '3' : '2'}
             </span>
-            <span style={{ fontSize: '13.5px', fontWeight: '600', color: currentStep === 2 ? 'var(--text-main, #f1f5f9)' : 'var(--text-muted, #94a3b8)' }}>
+            <span style={{ fontSize: '13.5px', fontWeight: '600', color: currentStep === (isPremisesRequired ? 3 : 2) ? 'var(--text-main, #f1f5f9)' : 'var(--text-muted, #94a3b8)' }}>
               Proctoring Guidelines
             </span>
           </div>
@@ -546,8 +684,227 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
           </div>
         )}
 
-        {/* STEP 2: GUIDELINES & AGREEMENT */}
-        {currentStep === 2 && (
+        {/* STEP 2: PREMISES CAMERA PAIRING (When required) */}
+        {isPremisesRequired && currentStep === 2 && (
+          <div className="instructions-content" style={{ padding: '24px 32px' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+              gap: '24px',
+              alignItems: 'start'
+            }}>
+              {/* Left Column: Instructions & Code */}
+              <div style={{
+                background: 'rgba(30, 41, 59, 0.5)',
+                border: '1px solid rgba(148, 163, 184, 0.2)',
+                borderRadius: '16px',
+                padding: '24px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                    fontSize: '18px'
+                  }}>
+                    <FaMobileAlt />
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#f8fafc' }}>
+                      Dual-Camera Setup Required
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>
+                      Connect your Android phone to monitor your desk &amp; room premises
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', margin: '20px 0' }}>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                    <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#3b82f6', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700', flexShrink: 0 }}>1</span>
+                    <span style={{ fontSize: '13px', color: '#cbd5e1', lineHeight: '1.4' }}>Open the <strong>SEEDit app</strong> on your Android mobile device.</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                    <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#3b82f6', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700', flexShrink: 0 }}>2</span>
+                    <span style={{ fontSize: '13px', color: '#cbd5e1', lineHeight: '1.4' }}>Tap the <strong>Premises Camera</strong> scanner icon in the header or Tests tab.</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                    <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#3b82f6', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700', flexShrink: 0 }}>3</span>
+                    <span style={{ fontSize: '13px', color: '#cbd5e1', lineHeight: '1.4' }}>Scan the QR code or manually enter the 6-digit session code:</span>
+                  </div>
+                </div>
+
+                {/* Session Code Display */}
+                <div style={{
+                  background: 'rgba(15, 23, 42, 0.8)',
+                  border: '1px dashed #10b981',
+                  borderRadius: '12px',
+                  padding: '14px',
+                  textAlign: 'center',
+                  marginBottom: '16px'
+                }}>
+                  <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700' }}>
+                    Manual Session Pairing Code
+                  </div>
+                  <div style={{ fontSize: '28px', fontWeight: '800', letterSpacing: '4px', color: '#34d399', fontFamily: 'monospace', margin: '4px 0' }}>
+                    {premisesPairingCode || '------'}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748b' }}>Direct WebRTC P2P (Zero cloud video cost)</div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                  <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#3b82f6', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700', flexShrink: 0 }}>4</span>
+                  <span style={{ fontSize: '13px', color: '#cbd5e1', lineHeight: '1.4' }}>Place your phone on your desk at a <strong>45° angle</strong> showing your keyboard, workspace, and immediate area.</span>
+                </div>
+              </div>
+
+              {/* Right Column: QR Code / Live Viewfinder */}
+              <div style={{
+                background: 'rgba(30, 41, 59, 0.5)',
+                border: '1px solid rgba(148, 163, 184, 0.2)',
+                borderRadius: '16px',
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '380px',
+                textAlign: 'center'
+              }}>
+                {premisesStatus === 'connected' ? (
+                  <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{
+                      position: 'relative',
+                      width: '100%',
+                      maxWidth: '360px',
+                      height: '240px',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      border: '2px solid #10b981',
+                      background: '#000',
+                      boxShadow: '0 8px 24px rgba(16, 185, 129, 0.25)'
+                    }}>
+                      <video
+                        ref={premisesVideoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      <div style={{
+                        position: 'absolute',
+                        top: '10px',
+                        left: '10px',
+                        background: 'rgba(16, 185, 129, 0.9)',
+                        color: '#fff',
+                        padding: '4px 10px',
+                        borderRadius: '20px',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fff' }}></span>
+                        PREMISES LIVE
+                      </div>
+                      {premisesBattery !== null && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '10px',
+                          right: '10px',
+                          background: 'rgba(15, 23, 42, 0.85)',
+                          color: '#f8fafc',
+                          padding: '4px 8px',
+                          borderRadius: '8px',
+                          fontSize: '11px',
+                          fontWeight: '600'
+                        }}>
+                          📱 {premisesBattery}%
+                        </div>
+                      )}
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginTop: '16px',
+                      color: '#10b981',
+                      fontWeight: '700',
+                      fontSize: '14px'
+                    }}>
+                      <FaCheckCircle style={{ fontSize: '18px' }} />
+                      <span>Phone Camera Connected &amp; Verified</span>
+                    </div>
+                    <p style={{ fontSize: '12px', color: '#94a3b8', margin: '6px 0 0 0' }}>
+                      Ensure phone remains steady and plugged in or well-charged.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{
+                      width: '240px',
+                      height: '240px',
+                      background: '#fff',
+                      borderRadius: '16px',
+                      padding: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 16px auto',
+                      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)'
+                    }}>
+                      {premisesQrDataUrl ? (
+                        <img
+                          src={premisesQrDataUrl}
+                          alt="Pairing QR Code"
+                          style={{ width: '100%', height: '100%', display: 'block', borderRadius: '8px' }}
+                        />
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', color: '#64748b' }}>
+                          <FaSpinner className="spinner-icon pulse" style={{ fontSize: '24px' }} />
+                          <span style={{ fontSize: '12px' }}>Generating Pairing QR...</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '6px 14px',
+                      borderRadius: '20px',
+                      background: premisesStatus === 'connecting' ? 'rgba(234, 179, 8, 0.2)' : 'rgba(59, 130, 246, 0.15)',
+                      color: premisesStatus === 'connecting' ? '#facc15' : '#60a5fa',
+                      fontSize: '12.5px',
+                      fontWeight: '600'
+                    }}>
+                      {premisesStatus === 'connecting' ? (
+                        <>
+                          <FaSpinner className="spinner-icon pulse" />
+                          <span>Establishing WebRTC Connection...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3b82f6', animation: 'blink-rec 1.2s infinite' }}></span>
+                          <span>Waiting for Mobile Phone to Scan...</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP GUIDELINES & AGREEMENT */}
+        {currentStep === (isPremisesRequired ? 3 : 2) && (
           <>
             <div
               className="instructions-content"
@@ -804,6 +1161,22 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                 onClick={() => setCurrentStep(2)}
                 disabled={!canContinue || photoStatus !== 'captured'}
               >
+                {isPremisesRequired ? 'Proceed to Premises Camera' : 'Proceed to Guidelines'}
+              </button>
+            </>
+          ) : isPremisesRequired && currentStep === 2 ? (
+            <>
+              <button 
+                className="instructions-btn cancel-btn"
+                onClick={() => setCurrentStep(1)}
+              >
+                Back to Registration
+              </button>
+              <button 
+                className={`instructions-btn continue-btn ${premisesStatus !== 'connected' ? 'disabled' : ''}`}
+                onClick={() => setCurrentStep(3)}
+                disabled={premisesStatus !== 'connected'}
+              >
                 Proceed to Guidelines
               </button>
             </>
@@ -811,9 +1184,9 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
             <>
               <button 
                 className="instructions-btn cancel-btn"
-                onClick={() => setCurrentStep(1)}
+                onClick={() => setCurrentStep(isPremisesRequired ? 2 : 1)}
               >
-                Back to Registration
+                {isPremisesRequired ? 'Back to Premises Camera' : 'Back to Registration'}
               </button>
               <button 
                 className={`instructions-btn continue-btn ${(!hasScrolledToBottom || !isAcknowledged) ? 'disabled' : ''}`}

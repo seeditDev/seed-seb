@@ -3506,6 +3506,7 @@ const MultiSectionAssessment = () => {
             isTestActive={currentSecIdx >= 0 && !examFinished}
             isProctorActive={currentSecIdx >= 0 && !examFinished && secStarted && sectionCountdown === null}
             maxViolations={maxViolations}
+            premisesProctorRequired={Boolean(assessment?.proctorConfig?.premisesCameraRequired || assessment?.proctorConfig?.premisesProctoring || assessment?.premisesCameraRequired)}
             onReady={handleProctorReady}
             onViolationUpdate={handleProctorViolationUpdate}
             onAutoSubmit={handleProctorAutoSubmit}

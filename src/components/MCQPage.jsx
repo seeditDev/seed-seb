@@ -3376,6 +3376,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                     isTestActive={!!currentTest && !currentTest.submitted}
                     isProctorActive={!loading && startCountdown === null && !showInstructions && !currentTest.submitted}
                     maxViolations={Number(currentTest.testInfo?.maxViolations) || 200}
+                    premisesProctorRequired={Boolean(currentTest?.testInfo?.proctorConfig?.premisesCameraRequired || currentTest?.testInfo?.premisesCameraRequired || currentTest?.proctorConfig?.premisesCameraRequired)}
                     onReady={() => {
                         console.log('[MCQPage] Camera proctoring ready');
                     }}

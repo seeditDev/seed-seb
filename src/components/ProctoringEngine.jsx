@@ -229,6 +229,7 @@ const ProctoringEngine = ({
   onViolationUpdate,
   isProctorActive = true,
   onReady,
+  premisesProctorRequired = false,
   // [Fix Audit-5 P1] required: when true, face model + YOLO model must both load
   // successfully. If either fails, onLoadFailed is called and the exam launch is blocked.
   // In practice/non-required mode (required=false), degraded camera-only mode is acceptable.
@@ -241,6 +242,12 @@ const ProctoringEngine = ({
   const initializedRef = useRef(false);
   const retryCountRef = useRef(0);
   const selectedDeviceIdRef = useRef(null);
+
+  // Dual Camera (Mobile Premises Proctor) State & Refs
+  const premisesVideoRef = useRef(null);
+  const [premisesConnected, setPremisesConnected] = useState(() => Boolean(window.premisesStream));
+  const [premisesBattery, setPremisesBattery] = useState(null);
+  const [swappedCamView, setSwappedCamView] = useState(false);
 
   // Dream AI Pipeline Interval & Concurrency Guards
   const tier1IntervalRef = useRef(null);
@@ -683,6 +690,12 @@ const ProctoringEngine = ({
         msg = 'Mobile phone detected in camera feed - Unauthorized device!';
       } else if (type === 'prohibited_object') {
         msg = 'Prohibited object (book/material) detected';
+      } else if (type === 'premises_disconnected') {
+        msg = 'Premises mobile camera connection lost! Please reconnect phone immediately.';
+      } else if (type === 'premises_cell_phone') {
+        msg = 'Secondary mobile phone detected on desk by premises camera!';
+      } else if (type === 'premises_book') {
+        msg = 'Unauthorized reading material/book detected on desk by premises camera!';
       } else if (type === 'looking_away') {
         msg = 'Suspicious activity: Student looking away from screen repeatedly';
       } else if (type === 'face_mismatch') {
@@ -719,6 +732,37 @@ const ProctoringEngine = ({
       return newCount;
     });
   }, [assessmentId, uid, showAlert]);
+
+  // Hook and manage secondary premises camera stream & connection lifecycle
+  useEffect(() => {
+    if (!premisesProctorRequired) return;
+
+    if (window.premisesStream && premisesVideoRef.current) {
+      premisesVideoRef.current.srcObject = window.premisesStream;
+      premisesVideoRef.current.play().catch(() => {});
+      setPremisesConnected(true);
+    }
+
+    const session = window.premisesSession;
+    if (session) {
+      session.onStatusChange = (status) => {
+        if (status === 'connected') {
+          setPremisesConnected(true);
+          showAlert('Premises mobile camera connected & verified', 'info');
+        } else if (status === 'disconnected' || status === 'failed') {
+          setPremisesConnected(false);
+          showAlert('Premises camera disconnected! Reconnect your mobile phone immediately.', 'warning');
+          handleViolation('premises_disconnected');
+        }
+      };
+
+      session.onHeartbeat = (hb) => {
+        if (hb?.battery !== null && hb?.battery !== undefined) {
+          setPremisesBattery(hb.battery);
+        }
+      };
+    }
+  }, [premisesProctorRequired, showAlert, handleViolation]);
 
   // ── Tier 1: High Frequency (1000ms) - Face Presence & 3D Head Pose ─────────
   const runTier1FaceCheck = useCallback(async () => {
@@ -902,13 +946,29 @@ const ProctoringEngine = ({
           noFaceStreakRef.current = 0;
         }
       }
+
+      // 4. Secondary Premises Camera Inference (Desk/Room Monitoring via YOLO)
+      if (premisesProctorRequired && premisesVideoRef.current && premisesVideoRef.current.readyState >= 2 && !premisesVideoRef.current.paused) {
+        try {
+          const premisesYolo = await runYolov8Inference(premisesVideoRef.current, window.yolov8Model);
+          if (premisesYolo.phoneDetected) {
+            handleViolation('premises_cell_phone');
+          } else if (premisesYolo.bookDetected) {
+            handleViolation('premises_book');
+          } else if (premisesYolo.personCount > 1) {
+            handleViolation('multiple_faces');
+          }
+        } catch (premErr) {
+          console.warn('[ProctoringEngine] Premises stream inference error:', premErr);
+        }
+      }
     } catch (err) {
       console.error('[ProctoringEngine] Tier 2 YOLO error:', err);
       window.yoloModelBroken = true;
     } finally {
       tier2RunningRef.current = false;
     }
-  }, [isTestActive, handleViolation]);
+  }, [isTestActive, premisesProctorRequired, handleViolation]);
 
   // ── Tier 3: Low Frequency (30000ms) - Biometric Identity Verification ──────
   const runTier3IdentityCheck = useCallback(async () => {
@@ -1303,24 +1363,117 @@ const ProctoringEngine = ({
       >
         <div className="proctoring-top-row">
           {/* Mini Camera View */}
-          <div className="mini-camera-view">
+          <div className={`mini-camera-view ${premisesProctorRequired ? 'is-dual' : ''}`} style={premisesProctorRequired ? { width: '256px', height: '176px' } : {}}>
             {/* Drag Handle Overlay */}
             <div className="camera-drag-handle" title="Click and drag to move camera preview anywhere on screen">
               <span className="drag-dots">⋮⋮</span>
               <span>DRAG TO MOVE</span>
             </div>
+
+            {/* Primary Webcam Video */}
             <video
               ref={videoRef}
               autoPlay
               muted
               playsInline
               className="mini-camera-video"
+              style={premisesProctorRequired && swappedCamView ? {
+                position: 'absolute',
+                bottom: '8px',
+                right: '8px',
+                width: '84px',
+                height: '60px',
+                borderRadius: '8px',
+                border: '1.5px solid rgba(255,255,255,0.7)',
+                zIndex: 4,
+                cursor: 'pointer',
+                objectFit: 'cover'
+              } : {
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
+              onClick={premisesProctorRequired && swappedCamView ? (e) => { e.stopPropagation(); setSwappedCamView(false); } : undefined}
             />
+
+            {/* Premises Mobile Video View */}
+            {premisesProctorRequired && (
+              <video
+                ref={premisesVideoRef}
+                autoPlay
+                muted
+                playsInline
+                className="mini-camera-video premises-stream"
+                style={!swappedCamView ? {
+                  position: 'absolute',
+                  bottom: '8px',
+                  right: '8px',
+                  width: '84px',
+                  height: '60px',
+                  borderRadius: '8px',
+                  border: '1.5px solid rgba(255,255,255,0.7)',
+                  zIndex: 4,
+                  cursor: 'pointer',
+                  objectFit: 'cover'
+                } : {
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+                onClick={!swappedCamView ? (e) => { e.stopPropagation(); setSwappedCamView(true); } : undefined}
+              />
+            )}
+
+            {/* Secondary Stream Overlay Badge / Offline indicator */}
+            {premisesProctorRequired && (
+              <div 
+                style={{
+                  position: 'absolute',
+                  bottom: '8px',
+                  right: '8px',
+                  width: '84px',
+                  pointerEvents: 'none',
+                  zIndex: 5
+                }}
+              >
+                {!premisesConnected && (
+                  <div style={{
+                    background: 'rgba(239, 68, 68, 0.9)',
+                    color: '#fff',
+                    fontSize: '8px',
+                    fontWeight: '800',
+                    padding: '2px 4px',
+                    borderRadius: '4px',
+                    textAlign: 'center'
+                  }}>
+                    ⚠️ PHONE OFFLINE
+                  </div>
+                )}
+                {premisesConnected && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    background: 'rgba(0,0,0,0.65)',
+                    padding: '1px 4px',
+                    borderRadius: '0 0 6px 6px',
+                    fontSize: '7.5px',
+                    color: '#fff',
+                    fontWeight: '700'
+                  }}>
+                    <span style={{ color: '#34d399' }}>{swappedCamView ? 'FACE' : 'DESK'}</span>
+                    <span>⇄ SWAP</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Live recording indicator */}
             <div className="camera-label">
               <span className="camera-rec-dot" /> LIVE 
               <span style={{ marginLeft: '4px', fontSize: '9px', opacity: 0.85, fontWeight: '700' }}>
-                | {modelStatus === 'active' ? 'AI ACTIVE (TIERED)' : modelStatus === 'face_only' ? 'AI ACTIVE (FACE ONLY)' : modelStatus === 'objects_only' ? 'AI ACTIVE (OBJECTS)' : modelStatus === 'loading' ? 'LOADING AI...' : 'CAMERA ONLY'}
+                | {premisesProctorRequired ? (swappedCamView ? 'DESK CAM' : 'PRIMARY FACE') : (modelStatus === 'active' ? 'AI ACTIVE (TIERED)' : modelStatus === 'face_only' ? 'AI ACTIVE (FACE ONLY)' : modelStatus === 'objects_only' ? 'AI ACTIVE (OBJECTS)' : modelStatus === 'loading' ? 'LOADING AI...' : 'CAMERA ONLY')}
+                {premisesProctorRequired && premisesBattery !== null ? ` | 📱${premisesBattery}%` : ''}
               </span>
             </div>
             {/* Violation count badge overlaid on camera */}
