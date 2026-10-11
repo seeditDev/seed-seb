@@ -15,7 +15,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
-  Download,
   Info,
   Code,
   MessageSquare,
@@ -504,40 +503,6 @@ export default function SQLSectionView({
       },
     }));
     toast.info('Query reset to default template.');
-  };
-
-  // Download CSV of current execution result
-  const handleDownloadCSV = () => {
-    const res = activeState?.lastResult;
-    if (!res || !res.columns || !res.rows || res.rows.length === 0) {
-      toast.error('No result data available to download.');
-      return;
-    }
-
-    const header = res.columns.join(',');
-    const rows = res.rows.map((row) =>
-      row
-        .map((cell) => {
-          if (cell === null || cell === undefined) return '';
-          const str = String(cell);
-          return str.includes(',') || str.includes('"') || str.includes('\n')
-            ? `"${str.replace(/"/g, '""')}"`
-            : str;
-        })
-        .join(',')
-    );
-
-    const csvContent = [header, ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `${activeQ.title.replace(/\s+/g, '_')}_result.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success('Downloaded query result as CSV.');
   };
 
   // Submit the entire SQL section
@@ -1508,17 +1473,6 @@ export default function SQLSectionView({
                   </button>
                 </div>
               </div>
-
-              {/* Download CSV Button */}
-              <button
-                type="button"
-                onClick={handleDownloadCSV}
-                disabled={!activeState.lastResult?.success || activeState.lastResult?.rows?.length === 0}
-                className="flex items-center gap-1 px-2.5 py-1 border border-slate-200 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
-              >
-                <Download className="size-3.5 text-slate-500" />
-                <span>Download CSV</span>
-              </button>
             </div>
 
             {/* Output Body Container */}
