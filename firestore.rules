@@ -621,6 +621,41 @@ service cloud.firestore {
     }
 
     // ══════════════════════════════════════════════════════════════════════
+    // 8.9 Premises Proctor (Dual Camera) WebRTC P2P Signaling
+    //     webrtcSignaling/{sessionId} (e.g., P-XXXXXX)
+    //     Used for ephemeral signaling handshake between desktop exam & mobile app
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /webrtcSignaling/{sessionId} {
+      // Ephemeral P2P session handshake (desktop creates offer, mobile updates answer/ICE/heartbeat)
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if true;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 8.10 Proctoring Logs & Audit Events (SEED-SEB Examination Integrity)
+    //      proctoringLogs/{attemptId}
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /proctoringLogs/{attemptId} {
+      allow read: if isPortal() || isSignedIn();
+      allow create, update: if isSignedIn() || isPortal();
+      allow delete: if isAdmin();
+
+      match /events/{eventId} {
+        allow read: if isPortal() || isSignedIn();
+        allow create, update: if isSignedIn() || isPortal();
+        allow delete: if isAdmin();
+      }
+
+      match /{allSub=**} {
+        allow read: if isPortal() || isSignedIn();
+        allow write: if isSignedIn() || isPortal();
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
     // 9. Collection Group Queries
     //    (Live Assessment Monitor in seed-admin, Presence Counts & Global Contests)
     // ══════════════════════════════════════════════════════════════════════
@@ -665,6 +700,15 @@ service cloud.firestore {
     }
 
     match /{path=**}/submissions/{submissionId} {
+      allow read: if isPortal() || isSignedIn();
+      allow write: if isPortal() || isSignedIn();
+    }
+
+    match /{path=**}/webrtcSignaling/{sessionId} {
+      allow read, write: if true;
+    }
+
+    match /{path=**}/proctoringLogs/{attemptId} {
       allow read: if isPortal() || isSignedIn();
       allow write: if isPortal() || isSignedIn();
     }
