@@ -43,6 +43,7 @@ function ssrOptimizerPlugin() {
 export default defineConfig({
   nitro: {
     preset: "cloudflare-module",
+    compatibilityDate: "2024-09-23",
     alias: {
       '@tensorflow/tfjs': path.resolve(__dirname, 'src/stubs/tfjs-stub.js'),
       'face-api.js': path.resolve(__dirname, 'src/stubs/faceapi-stub.js'),
