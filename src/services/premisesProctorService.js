@@ -37,6 +37,7 @@ export class PremisesProctorSession {
     onStatusChange = () => {},
     onHeartbeat = () => {},
     onViolation = () => {},
+    onFaceSnapshot = () => {},
   }) {
     this.uid = uid;
     this.assessmentId = assessmentId;
@@ -46,6 +47,7 @@ export class PremisesProctorSession {
     this.onStatusChange = onStatusChange;
     this.onHeartbeat = onHeartbeat;
     this.onViolation = onViolation;
+    this.onFaceSnapshot = onFaceSnapshot;
 
     this.pairingCode = generatePairingCode();
     this.sessionId = `P-${this.pairingCode}`;
@@ -57,6 +59,7 @@ export class PremisesProctorSession {
     this.hasConnectedOnce = false;
 
     this.appliedMobileIceKeys = new Set();
+    this.processedFaceSnapshots = new Set();
     this.lastHeartbeatTime = Date.now();
     this.heartbeatCheckInterval = null;
   }
@@ -137,9 +140,15 @@ export class PremisesProctorSession {
       this.pc.onicecandidate = async (event) => {
         if (!event.candidate || this.isDestroyed) return;
         try {
+          const cand = event.candidate;
+          const plainCand = {
+            candidate: cand.candidate || '',
+            sdpMid: cand.sdpMid !== null && cand.sdpMid !== undefined ? String(cand.sdpMid) : '',
+            sdpMLineIndex: cand.sdpMLineIndex !== null && cand.sdpMLineIndex !== undefined ? Number(cand.sdpMLineIndex) : 0,
+          };
           const docRef = doc(db, 'webrtcSignaling', this.sessionId);
           await updateDoc(docRef, {
-            desktopIce: arrayUnion(JSON.parse(JSON.stringify(event.candidate))),
+            desktopIce: arrayUnion(plainCand),
             updatedAt: serverTimestamp(),
           });
         } catch (iceErr) {
@@ -151,9 +160,8 @@ export class PremisesProctorSession {
       const offer = await this.pc.createOffer({
         offerToReceiveVideo: true,
       });
-      await this.pc.setLocalDescription(offer);
 
-      // Save initial signaling document to Firestore
+      // Save initial signaling document to Firestore FIRST so it exists before ICE candidates gather
       const sessionDocRef = doc(db, 'webrtcSignaling', this.sessionId);
       await setDoc(sessionDocRef, {
         sessionId: this.sessionId,
@@ -171,6 +179,9 @@ export class PremisesProctorSession {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
+
+      // Set local description — this begins ICE gathering against the newly created doc
+      await this.pc.setLocalDescription(offer);
 
       console.log(`[PremisesProctor] Session created. Pairing Code: ${this.pairingCode} (Session: ${this.sessionId})`);
       this.onStatusChange('waiting_for_mobile', { pairingCode: this.pairingCode });
@@ -220,6 +231,9 @@ export class PremisesProctorSession {
             cameraFacing: msg.cameraFacing ?? 'environment',
             timestamp: msg.timestamp || Date.now(),
           });
+        } else if (msg.type === 'mobile_face_snapshot' && msg.photoDataUrl) {
+          console.log('[PremisesProctor] Received mobile face snapshot via DataChannel');
+          this.onFaceSnapshot(msg.photoDataUrl);
         }
       } catch (e) {
         console.warn('[PremisesProctor] Failed to parse DataChannel message:', e);
@@ -229,6 +243,29 @@ export class PremisesProctorSession {
     channel.onerror = (e) => {
       console.warn('[PremisesProctor] DataChannel error:', e);
     };
+  }
+
+  sendVerificationResult(isMatched, reason = '') {
+    const payload = JSON.stringify({
+      type: isMatched ? 'face_verified' : 'face_mismatch',
+      reason,
+      timestamp: Date.now(),
+    });
+
+    if (this.dataChannel && this.dataChannel.readyState === 'open') {
+      try {
+        this.dataChannel.send(payload);
+      } catch (_) {}
+    }
+
+    try {
+      const sessionDocRef = doc(db, 'webrtcSignaling', this.sessionId);
+      updateDoc(sessionDocRef, {
+        faceVerificationStatus: isMatched ? 'verified' : 'mismatched',
+        faceVerificationReason: reason,
+        updatedAt: serverTimestamp(),
+      }).catch(() => {});
+    } catch (_) {}
   }
 
   _listenToSignalingDoc() {
@@ -265,6 +302,13 @@ export class PremisesProctorSession {
         }
       }
 
+      // Handle mobile face snapshot fallback via Firestore
+      if (data.mobileFaceSnapshot && !this.processedFaceSnapshots.has(data.mobileFaceSnapshot)) {
+        this.processedFaceSnapshots.add(data.mobileFaceSnapshot);
+        console.log('[PremisesProctor] Received mobile face snapshot via Firestore fallback');
+        this.onFaceSnapshot(data.mobileFaceSnapshot);
+      }
+
       // Read fallback Firestore heartbeat if DataChannel is pending
       if (data.battery !== undefined || data.lastActive) {
         this.lastHeartbeatTime = Date.now();
@@ -299,7 +343,7 @@ export class PremisesProctorSession {
   /**
    * Stop session, close WebRTC connection, and clean up signaling doc.
    */
-  async destroy() {
+  async destroy({ deleteFromFirestore = false } = {}) {
     this.isDestroyed = true;
 
     if (this.heartbeatCheckInterval) {
@@ -333,11 +377,13 @@ export class PremisesProctorSession {
       this.pc = null;
     }
 
-    try {
-      const sessionDocRef = doc(db, 'webrtcSignaling', this.sessionId);
-      await deleteDoc(sessionDocRef);
-    } catch (_) {}
+    if (deleteFromFirestore) {
+      try {
+        const sessionDocRef = doc(db, 'webrtcSignaling', this.sessionId);
+        await deleteDoc(sessionDocRef);
+      } catch (_) {}
+    }
 
-    console.log(`[PremisesProctor] Session ${this.sessionId} destroyed.`);
+    console.log(`[PremisesProctor] Session ${this.sessionId} destroyed (deleted=${deleteFromFirestore}).`);
   }
 }

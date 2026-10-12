@@ -159,6 +159,23 @@ export function stopAllMediaAndAI() {
     });
     window.__globalMediaStreams = [];
   }
+
+  // 9. Stop premises mobile camera stream and destroy session
+  if (window.premisesStream) {
+    try {
+      window.premisesStream.getTracks().forEach((t) => {
+        t.onended = null;
+        t.stop();
+      });
+    } catch (_) {}
+    window.premisesStream = null;
+  }
+  if (window.premisesSession) {
+    try {
+      window.premisesSession.destroy({ deleteFromFirestore: true });
+    } catch (_) {}
+    window.premisesSession = null;
+  }
 }
 
 export default stopAllMediaAndAI;

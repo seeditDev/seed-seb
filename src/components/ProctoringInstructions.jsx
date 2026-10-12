@@ -54,6 +54,9 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
   const [premisesPairingCode, setPremisesPairingCode] = useState('');
   const [premisesQrDataUrl, setPremisesQrDataUrl] = useState('');
   const [premisesBattery, setPremisesBattery] = useState(null);
+  const [premisesFaceVerified, setPremisesFaceVerified] = useState(false);
+  const [premisesFaceVerificationStatus, setPremisesFaceVerificationStatus] = useState('pending'); // pending, verifying, verified, mismatch, no_face, error
+  const [premisesFaceDistance, setPremisesFaceDistance] = useState(null);
   const premisesSessionRef = useRef(null);
   const premisesStreamRef = useRef(null);
   const premisesVideoRef = useRef(null);
@@ -73,6 +76,73 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
   const isProceedingRef = useRef(false);
 
   const [currentStep, setCurrentStep] = useState(1); // 1 = Face capture, 2 = Mobile camera (if req) / Guidelines, 3 = Guidelines (if req)
+
+  const handleMobileFaceSnapshot = useCallback(async (mobilePhotoDataUrl) => {
+    if (!mobilePhotoDataUrl) return;
+    console.log('[ProctoringInstructions] Evaluating mobile face snapshot for dual identity match...');
+    setPremisesFaceVerificationStatus('verifying');
+
+    try {
+      const assessmentId = assessment?.id || 'unknown';
+      const laptopDescriptorStr = localStorage.getItem('proctor_reference_descriptor_' + assessmentId);
+      if (!laptopDescriptorStr) {
+        console.warn('[ProctoringInstructions] No laptop reference photo descriptor found in localStorage');
+        premisesSessionRef.current?.sendVerificationResult(false, 'Laptop face photo not registered yet');
+        setPremisesFaceVerificationStatus('mismatch');
+        return;
+      }
+      const laptopDescriptor = new Float32Array(JSON.parse(laptopDescriptorStr));
+
+      const modelsReady = await loadFaceApiForPhoto();
+      if (!modelsReady) {
+        premisesSessionRef.current?.sendVerificationResult(false, 'AI models not ready on laptop');
+        setPremisesFaceVerificationStatus('error');
+        return;
+      }
+
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = mobilePhotoDataUrl;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+
+      const detection = await faceapi.detectSingleFace(
+        img,
+        new faceapi.SsdMobilenetv1Options({ minConfidence: 0.55 })
+      ).withFaceLandmarks().withFaceDescriptor();
+
+      if (!detection) {
+        console.warn('[ProctoringInstructions] No clear face detected in mobile snapshot');
+        premisesSessionRef.current?.sendVerificationResult(false, 'No face detected in mobile photo. Please face the mobile camera directly.');
+        setPremisesFaceVerificationStatus('no_face');
+        setPremisesFaceVerified(false);
+        return;
+      }
+
+      const distance = faceapi.euclideanDistance(laptopDescriptor, detection.descriptor);
+      console.log(`[ProctoringInstructions] Dual Face Distance: ${distance.toFixed(4)} (Threshold: 0.52)`);
+      setPremisesFaceDistance(distance);
+
+      if (distance <= 0.52) {
+        console.log('[ProctoringInstructions] Dual Face MATCH CONFIRMED!');
+        premisesSessionRef.current?.sendVerificationResult(true, 'Face verified successfully');
+        setPremisesFaceVerified(true);
+        setPremisesFaceVerificationStatus('verified');
+      } else {
+        console.warn(`[ProctoringInstructions] Dual Face MISMATCH! Distance: ${distance.toFixed(4)}`);
+        premisesSessionRef.current?.sendVerificationResult(false, 'Face does not match laptop photo. Retake required.');
+        setPremisesFaceVerified(false);
+        setPremisesFaceVerificationStatus('mismatch');
+      }
+    } catch (err) {
+      console.error('[ProctoringInstructions] Error comparing dual face snapshots:', err);
+      premisesSessionRef.current?.sendVerificationResult(false, 'Internal verification error on laptop');
+      setPremisesFaceVerificationStatus('error');
+      setPremisesFaceVerified(false);
+    }
+  }, [assessment?.id]);
 
   useEffect(() => {
     // Request camera access when component mounts
@@ -105,15 +175,6 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
           } catch (_) {}
           window.cameraStream = null;
         }
-
-        if (premisesSessionRef.current) {
-          try {
-            premisesSessionRef.current.destroy();
-          } catch (_) {}
-          premisesSessionRef.current = null;
-          window.premisesSession = null;
-          window.premisesStream = null;
-        }
       }
     };
   }, []);
@@ -122,7 +183,13 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
   useEffect(() => {
     if (!isPremisesRequired) return;
 
-    let session = null;
+    // Reuse existing active session across re-renders
+    if (premisesSessionRef.current && !premisesSessionRef.current.isDestroyed) {
+      console.log('[ProctoringInstructions] Reusing active premises session:', premisesSessionRef.current.sessionId);
+      setPremisesPairingCode(premisesSessionRef.current.pairingCode);
+      return;
+    }
+
     let isCancelled = false;
 
     async function initPremisesSession() {
@@ -132,7 +199,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
         const uid = authData.uid ?? 'candidate_uid';
         const tenantId = authData.tenantId ?? '';
 
-        session = new PremisesProctorSession({
+        const session = new PremisesProctorSession({
           uid,
           assessmentId: assessment?.id || 'assessment',
           candidateRoll,
@@ -157,6 +224,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
               setPremisesBattery(hb.battery);
             }
           },
+          onFaceSnapshot: handleMobileFaceSnapshot,
         });
 
         premisesSessionRef.current = session;
@@ -187,14 +255,87 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
 
     return () => {
       isCancelled = true;
-      if (!isProceedingRef.current && premisesSessionRef.current) {
-        premisesSessionRef.current.destroy();
+      // Do NOT destroy the session during render transitions; session stays live until test proceeds or user cancels
+    };
+  }, [isPremisesRequired, assessment?.id, handleMobileFaceSnapshot]);
+
+  const handleRegeneratePremisesSession = async () => {
+    try {
+      setPremisesStatus('initializing');
+      setPremisesPairingCode('');
+      setPremisesQrDataUrl('');
+      setPremisesFaceVerified(false);
+      setPremisesFaceVerificationStatus('pending');
+      setPremisesFaceDistance(null);
+      if (premisesSessionRef.current) {
+        try {
+          premisesSessionRef.current.destroy({ deleteFromFirestore: true });
+        } catch (_) {}
         premisesSessionRef.current = null;
         window.premisesSession = null;
-        window.premisesStream = null;
       }
-    };
-  }, [isPremisesRequired, assessment?.id]);
+      const authData = JSON.parse(localStorage.getItem('auth_data') ?? '{}');
+      const candidateRoll = authData.rollNumber ?? 'CANDIDATE';
+      const uid = authData.uid ?? 'candidate_uid';
+      const tenantId = authData.tenantId ?? '';
+
+      const session = new PremisesProctorSession({
+        uid,
+        assessmentId: assessment?.id || 'assessment',
+        candidateRoll,
+        tenantId,
+        onStream: (stream) => {
+          console.log('[ProctoringInstructions] Premises camera stream received!');
+          premisesStreamRef.current = stream;
+          window.premisesStream = stream;
+          if (premisesVideoRef.current) {
+            premisesVideoRef.current.srcObject = stream;
+            premisesVideoRef.current.play().catch(() => {});
+          }
+        },
+        onStatusChange: (status) => {
+          console.log('[ProctoringInstructions] Premises status changed:', status);
+          setPremisesStatus(status);
+        },
+        onHeartbeat: (hb) => {
+          if (hb?.battery !== null) {
+            setPremisesBattery(hb.battery);
+          }
+        },
+        onFaceSnapshot: handleMobileFaceSnapshot,
+      });
+
+      premisesSessionRef.current = session;
+      window.premisesSession = session;
+
+      const info = await session.start();
+      setPremisesPairingCode(info.pairingCode);
+      const qrUrl = await QRCode.toDataURL(info.qrPayload, {
+        width: 240,
+        margin: 1,
+        color: {
+          dark: '#0f172a',
+          light: '#ffffff',
+        },
+      });
+      setPremisesQrDataUrl(qrUrl);
+    } catch (err) {
+      console.error('[ProctoringInstructions] Error regenerating premises session:', err);
+      setPremisesStatus('error');
+    }
+  };
+
+  const handleCancelInstructions = () => {
+    if (premisesSessionRef.current) {
+      try {
+        premisesSessionRef.current.destroy({ deleteFromFirestore: true });
+      } catch (_) {}
+      premisesSessionRef.current = null;
+      window.premisesSession = null;
+      window.premisesStream = null;
+    }
+    onCancel();
+  };
 
   useEffect(() => {
     const contentEl = contentRef.current;
@@ -396,11 +537,11 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
 
   const handleContinue = () => {
     if (canContinue && streamRef.current && hasScrolledToBottom && isAcknowledged && photoStatus === 'captured') {
-      if (isPremisesRequired && premisesStatus !== 'connected') {
-        console.warn('[ProctoringInstructions] Cannot proceed without connected premises camera');
+      if (isPremisesRequired && (premisesStatus !== 'connected' || !premisesFaceVerified)) {
+        console.warn('[ProctoringInstructions] Cannot proceed without connected and face-verified premises camera');
         return;
       }
-      console.log('[ProctoringInstructions] Continuing to test (Dual camera verified)');
+      console.log('[ProctoringInstructions] Continuing to test (Dual camera & face verified)');
       isProceedingRef.current = true;
       // Don't stop the stream here - let ProctoringEngine use it
       onContinue();
@@ -763,7 +904,31 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                   <div style={{ fontSize: '28px', fontWeight: '800', letterSpacing: '4px', color: '#34d399', fontFamily: 'monospace', margin: '4px 0' }}>
                     {premisesPairingCode || '------'}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#64748b' }}>Direct WebRTC P2P (Zero cloud video cost)</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '6px' }}>
+                    <span style={{ fontSize: '11px', color: '#64748b' }}>
+                      Session ID: {premisesSessionRef.current?.sessionId || ('P-' + premisesPairingCode)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleRegeneratePremisesSession}
+                      title="Generate new pairing code"
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid rgba(52, 211, 153, 0.4)',
+                        borderRadius: '6px',
+                        color: '#34d399',
+                        fontSize: '11px',
+                        padding: '2px 8px',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <FaSync style={{ fontSize: '10px' }} />
+                      <span>Refresh Code</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
@@ -842,16 +1007,92 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      marginTop: '16px',
-                      color: '#10b981',
+                      marginTop: '14px',
+                      color: premisesFaceVerified ? '#10b981' : '#f59e0b',
                       fontWeight: '700',
-                      fontSize: '14px'
+                      fontSize: '13.5px'
                     }}>
                       <FaCheckCircle style={{ fontSize: '18px' }} />
-                      <span>Phone Camera Connected &amp; Verified</span>
+                      <span>Phone Camera Connected &amp; Streaming</span>
                     </div>
-                    <p style={{ fontSize: '12px', color: '#94a3b8', margin: '6px 0 0 0' }}>
-                      Ensure phone remains steady and plugged in or well-charged.
+
+                    {/* Dual Face Identity Verification Status Card */}
+                    <div style={{
+                      marginTop: '12px',
+                      padding: '12px 14px',
+                      borderRadius: '10px',
+                      width: '100%',
+                      maxWidth: '360px',
+                      background: premisesFaceVerified 
+                        ? 'rgba(16, 185, 129, 0.14)' 
+                        : premisesFaceVerificationStatus === 'verifying'
+                        ? 'rgba(59, 130, 246, 0.14)'
+                        : premisesFaceVerificationStatus === 'mismatch' || premisesFaceVerificationStatus === 'no_face'
+                        ? 'rgba(239, 68, 68, 0.16)'
+                        : 'rgba(245, 158, 11, 0.14)',
+                      border: premisesFaceVerified
+                        ? '1px solid #10b981'
+                        : premisesFaceVerificationStatus === 'verifying'
+                        ? '1px solid #3b82f6'
+                        : premisesFaceVerificationStatus === 'mismatch' || premisesFaceVerificationStatus === 'no_face'
+                        ? '1px solid #ef4444'
+                        : '1px solid #f59e0b',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '6px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontWeight: '700',
+                        fontSize: '13px',
+                        color: premisesFaceVerified 
+                          ? '#10b981' 
+                          : premisesFaceVerificationStatus === 'verifying'
+                          ? '#60a5fa'
+                          : premisesFaceVerificationStatus === 'mismatch' || premisesFaceVerificationStatus === 'no_face'
+                          ? '#f87171'
+                          : '#fbbf24'
+                      }}>
+                        {premisesFaceVerified ? (
+                          <>
+                            <FaCheckCircle style={{ fontSize: '16px' }} />
+                            <span>Dual Face Match Confirmed (Same Candidate)</span>
+                          </>
+                        ) : premisesFaceVerificationStatus === 'verifying' ? (
+                          <>
+                            <FaSpinner className="spinner-icon pulse" style={{ fontSize: '15px' }} />
+                            <span>Comparing Laptop &amp; Mobile Face...</span>
+                          </>
+                        ) : premisesFaceVerificationStatus === 'mismatch' ? (
+                          <>
+                            <FaTimesCircle style={{ fontSize: '16px' }} />
+                            <span>Face Mismatch! Please retake on mobile phone.</span>
+                          </>
+                        ) : premisesFaceVerificationStatus === 'no_face' ? (
+                          <>
+                            <FaExclamationTriangle style={{ fontSize: '16px' }} />
+                            <span>No face detected in mobile selfie. Retake required.</span>
+                          </>
+                        ) : (
+                          <>
+                            <FaClock style={{ fontSize: '15px' }} />
+                            <span>Waiting for Mobile Face Verification Selfie...</span>
+                          </>
+                        )}
+                      </div>
+                      <p style={{ margin: 0, fontSize: '11.5px', color: '#cbd5e1' }}>
+                        {premisesFaceVerified
+                          ? 'Face confirmed identical to registered webcam photo. Now position phone on desk.'
+                          : 'Hold your mobile phone at eye level in the SEEDit app to verify your identity.'}
+                      </p>
+                    </div>
+
+                    <p style={{ fontSize: '11.5px', color: '#94a3b8', margin: '8px 0 0 0' }}>
+                      Ensure phone remains steady at a 45° angle on your desk showing your workspace.
                     </p>
                   </div>
                 ) : (
@@ -1161,7 +1402,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
             <>
               <button 
                 className="instructions-btn cancel-btn"
-                onClick={onCancel}
+                onClick={handleCancelInstructions}
               >
                 Cancel
               </button>
@@ -1182,9 +1423,9 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                 Back to Registration
               </button>
               <button 
-                className={`instructions-btn continue-btn ${premisesStatus !== 'connected' ? 'disabled' : ''}`}
+                className={`instructions-btn continue-btn ${(premisesStatus !== 'connected' || !premisesFaceVerified) ? 'disabled' : ''}`}
                 onClick={() => setCurrentStep(3)}
-                disabled={premisesStatus !== 'connected'}
+                disabled={premisesStatus !== 'connected' || !premisesFaceVerified}
               >
                 Proceed to Guidelines
               </button>
