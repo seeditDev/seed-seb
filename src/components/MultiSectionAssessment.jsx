@@ -1063,7 +1063,14 @@ const MultiSectionAssessment = () => {
       assessment.proctorConfig?.premisesProctoring ||
       assessment.premisesCameraRequired ||
       assessment.premisesProctoring ||
-      (assessment.sections || []).some(s => isTruthy(s?.premisesCameraRequired) || isTruthy(s?.premisesProctoring))
+      assessment.settings?.premisesCameraRequired ||
+      assessment.settings?.premisesProctoring ||
+      (assessment.sections || []).some(s =>
+        isTruthy(s?.premisesCameraRequired) ||
+        isTruthy(s?.premisesProctoring) ||
+        isTruthy(s?.proctorConfig?.premisesCameraRequired) ||
+        isTruthy(s?.proctorConfig?.premisesProctoring)
+      )
     );
   }, [assessment]);
 
@@ -2070,15 +2077,22 @@ const MultiSectionAssessment = () => {
         setSecTimer(adjustedTimer);
         setSectionCountdown(null);
       } else {
-        // Was on prelaunch screen — restart prelaunch properly
-        handleStartSection(restoredProgress.currentSecIdx);
+        // Was on prelaunch screen — remain on prelaunch screen
+        setCurrentSecIdx(-1);
+        setSecStarted(false);
         if (adjustedTimer > 0) setSecTimer(adjustedTimer);
       }
     } else {
       const nextIdx = (restoredProgress.lastSectionIdx ?? -1) + 1;
       const sectionsCount = (assessment.sections || []).length;
       if (nextIdx < sectionsCount) {
-        handleStartSection(nextIdx);
+        if (nextIdx === 0) {
+          // Section 0 not started yet — remain on prelaunch screen so proctoring & pairing can be completed
+          setCurrentSecIdx(-1);
+          setSecStarted(false);
+        } else {
+          handleStartSection(nextIdx);
+        }
       } else {
         setExamFinished(true);
       }
@@ -2484,6 +2498,13 @@ const MultiSectionAssessment = () => {
   const submittingSecIdxRef = useRef(-1);
 
   const handleStartSection = useCallback((idx) => {
+    // Hard guard: if proctoring or dual-camera is required and setup is not active, enforce instructions modal
+    if (idx === 0 && (shouldUseProctoring || isPremisesRequired) && (!window.cameraStream || (isPremisesRequired && !window.premisesStream))) {
+      console.warn('[MSA] Blocking direct section 0 start: proctoring setup / dual camera pairing required.');
+      setShowInstructions(true);
+      return;
+    }
+
     submittingSecIdxRef.current = -1;
     setCurrentSecIdx(idx);
 
@@ -2534,7 +2555,7 @@ const MultiSectionAssessment = () => {
         setSecTimer(durationSecs);
       }
     }
-  }, [assessment]);
+  }, [assessment, shouldUseProctoring, isPremisesRequired]);
 
   const handleBeginAssessment = useCallback(() => {
     if (assessment?.passkey) {

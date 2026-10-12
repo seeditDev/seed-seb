@@ -40,6 +40,24 @@ function ssrOptimizerPlugin() {
   };
 }
 
+function isolateFaceApiTfEnginePlugin() {
+  return {
+    name: 'isolate-faceapi-tfengine',
+    enforce: 'pre' as const,
+    transform(code: string, id: string) {
+      if (id.includes('face-api.js') || id.includes('face-api')) {
+        if (code.includes('_tfengine')) {
+          return {
+            code: code.replaceAll('_tfengine', '_faceapi_tfengine'),
+            map: null,
+          };
+        }
+      }
+      return null;
+    },
+  };
+}
+
 export default defineConfig({
   nitro: {
     preset: "cloudflare-module",
@@ -60,6 +78,7 @@ export default defineConfig({
   },
   vite: {
     plugins: [
+      isolateFaceApiTfEnginePlugin(),
       ssrOptimizerPlugin(),
     ],
     server: {

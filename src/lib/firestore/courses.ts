@@ -91,6 +91,9 @@ export interface TestDoc {
   difficulty: "Easy" | "Medium" | "Hard";
   proctored: boolean;
   audioProctored: boolean;
+  premisesProctoring?: boolean;
+  premisesCameraRequired?: boolean;
+  proctorConfig?: Record<string, unknown>;
   maxViolations: number;
   maxAudioViolations: number;
   maxAttempts: number;
@@ -174,6 +177,26 @@ function mapTest(
     difficulty: (d["difficulty"] as TestDoc["difficulty"]) ?? "Medium",
     proctored: Boolean(d["proctored"]),
     audioProctored: Boolean(d["audioProctored"]),
+    premisesProctoring: Boolean(
+      d["premisesProctoring"] ||
+      d["premisesCameraRequired"] ||
+      (d["proctorConfig"] as any)?.premisesProctoring ||
+      (d["proctorConfig"] as any)?.premisesCameraRequired ||
+      (s["premisesProctoring"]) ||
+      (s["premisesCameraRequired"])
+    ),
+    premisesCameraRequired: Boolean(
+      d["premisesCameraRequired"] ||
+      d["premisesProctoring"] ||
+      (d["proctorConfig"] as any)?.premisesCameraRequired ||
+      (d["proctorConfig"] as any)?.premisesProctoring ||
+      (s["premisesCameraRequired"]) ||
+      (s["premisesProctoring"])
+    ),
+    proctorConfig: (d["proctorConfig"] as Record<string, unknown>) || {
+      premisesCameraRequired: Boolean(d["premisesCameraRequired"] || d["premisesProctoring"] || s["premisesCameraRequired"] || s["premisesProctoring"]),
+      premisesProctoring: Boolean(d["premisesProctoring"] || d["premisesCameraRequired"] || s["premisesProctoring"] || s["premisesCameraRequired"]),
+    },
     maxViolations: Number(d["maxViolations"] ?? 200),
     maxAudioViolations: Number(d["maxAudioViolations"] ?? 200),
     maxAttempts: Number(d["maxAttempts"] ?? 1),

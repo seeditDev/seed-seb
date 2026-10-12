@@ -1945,6 +1945,28 @@ const StudentDashboard = () => {
             // ── proctor ──
             proctored: t.proctored !== false,
             audioProctored: Boolean(t.audioProctored),
+            premisesProctoring: Boolean(
+              t.premisesProctoring ||
+              t.premisesCameraRequired ||
+              t.proctorConfig?.premisesProctoring ||
+              t.proctorConfig?.premisesCameraRequired ||
+              t.settings?.premisesProctoring ||
+              t.settings?.premisesCameraRequired ||
+              (t.sections && t.sections.some(s => s?.premisesCameraRequired || s?.premisesProctoring || s?.proctorConfig?.premisesCameraRequired || s?.proctorConfig?.premisesProctoring))
+            ),
+            premisesCameraRequired: Boolean(
+              t.premisesCameraRequired ||
+              t.premisesProctoring ||
+              t.proctorConfig?.premisesCameraRequired ||
+              t.proctorConfig?.premisesProctoring ||
+              t.settings?.premisesCameraRequired ||
+              t.settings?.premisesProctoring ||
+              (t.sections && t.sections.some(s => s?.premisesCameraRequired || s?.premisesProctoring || s?.proctorConfig?.premisesCameraRequired || s?.proctorConfig?.premisesProctoring))
+            ),
+            proctorConfig: t.proctorConfig || {
+              premisesCameraRequired: Boolean(t.premisesCameraRequired || t.premisesProctoring || t.settings?.premisesCameraRequired || t.settings?.premisesProctoring),
+              premisesProctoring: Boolean(t.premisesProctoring || t.premisesCameraRequired || t.settings?.premisesProctoring || t.settings?.premisesCameraRequired),
+            },
             maxViolations: t.maxViolations ?? 200,
             maxAudioViolations: t.maxAudioViolations ?? 200,
             // ── settings ──

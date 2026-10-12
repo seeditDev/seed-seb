@@ -41,7 +41,14 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
     assessment?.proctorConfig?.premisesProctoring ||
     assessment?.premisesCameraRequired ||
     assessment?.premisesProctoring ||
-    (assessment?.sections || []).some(s => s?.premisesCameraRequired || s?.premisesProctoring)
+    assessment?.settings?.premisesCameraRequired ||
+    assessment?.settings?.premisesProctoring ||
+    (assessment?.sections || []).some(s =>
+      s?.premisesCameraRequired ||
+      s?.premisesProctoring ||
+      s?.proctorConfig?.premisesCameraRequired ||
+      s?.proctorConfig?.premisesProctoring
+    )
   );
   const [premisesStatus, setPremisesStatus] = useState('initializing'); // initializing, waiting_for_mobile, connecting, connected, error
   const [premisesPairingCode, setPremisesPairingCode] = useState('');
