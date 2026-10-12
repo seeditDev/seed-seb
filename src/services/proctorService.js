@@ -59,8 +59,8 @@ const CREATED_PARENTS = new Set();
 
 // ─── Offline Queue ─────────────────────────────────────────────────────────────
 
-const OFFLINE_QUEUE_PREFIX     = 'proctor_offline_';
-const MAX_RETRY_COUNT          = 5;          // Applies only when isAssessmentActive=false
+const OFFLINE_QUEUE_PREFIX = 'proctor_offline_';
+const MAX_RETRY_COUNT = 5;          // Applies only when isAssessmentActive=false
 const ASSESSMENT_MAX_QUEUE_SIZE = 500;       // [P2] Hard cap on queued events during active assessment
 
 function offlineQueueKey(uid, assessmentId) {
@@ -80,7 +80,7 @@ function readOfflineQueue(uid, assessmentId) {
 function writeOfflineQueue(uid, assessmentId, events) {
   try {
     localStorage.setItem(offlineQueueKey(uid, assessmentId), JSON.stringify(events));
-  } catch (_) {}
+  } catch (_) { }
 }
 
 function appendToOfflineQueue(uid, assessmentId, event) {
@@ -133,9 +133,28 @@ function nextSequence(uid, assessmentId) {
 // [P2] Caps the number of snapshots accumulated during long offline sessions.
 
 const MAX_OFFLINE_SNAPSHOTS = 100;
-const SNAPSHOT_MAX_AGE_MS   = 24 * 60 * 60 * 1000; // 24 hours
+const SNAPSHOT_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 // ─── ProctorService ────────────────────────────────────────────────────────────
+
+function cleanForFirestore(val) {
+  if (val === undefined) return null;
+  if (val === null || typeof val !== 'object') return val;
+  // If it's a Firestore FieldValue (e.g. serverTimestamp()), preserve it as-is
+  if (val._methodName || (val.constructor && val.constructor.name === 'FieldValue')) return val;
+  if (Array.isArray(val)) {
+    return val.map((item) => cleanForFirestore(item));
+  }
+  const clean = {};
+  for (const [key, value] of Object.entries(val)) {
+    if (value === undefined) {
+      clean[key] = null;
+    } else {
+      clean[key] = cleanForFirestore(value);
+    }
+  }
+  return clean;
+}
 
 class ProctorService {
   /**
@@ -159,15 +178,15 @@ class ProctorService {
       }
 
       // Storage path scoped to UID (not email) to prevent cross-user data mixing
-      const sanitizedUid        = uid.replace(/[^a-zA-Z0-9]/g, '_');
+      const sanitizedUid = uid.replace(/[^a-zA-Z0-9]/g, '_');
       const sanitizedAssessment = assessmentId.replace(/[^a-zA-Z0-9]/g, '_');
-      const sanitizedFilename   = filename.replace(/[^a-zA-Z0-9]/g, '_');
+      const sanitizedFilename = filename.replace(/[^a-zA-Z0-9]/g, '_');
 
       const storagePath = `proctor_snapshots/${sanitizedUid}/${sanitizedAssessment}/${sanitizedFilename}.jpg`;
-      const storageRef  = ref(storage, storagePath);
+      const storageRef = ref(storage, storagePath);
 
-      const snapshot    = await uploadBytes(storageRef, imageBlob, {
-        contentType:  'image/jpeg',
+      const snapshot = await uploadBytes(storageRef, imageBlob, {
+        contentType: 'image/jpeg',
         cacheControl: 'private, max-age=86400',
       });
 
@@ -182,25 +201,6 @@ class ProctorService {
       return null;
     }
   }
-
-function cleanForFirestore(val) {
-  if (val === undefined) return null;
-  if (val === null || typeof val !== 'object') return val;
-  // If it's a Firestore FieldValue (e.g. serverTimestamp()), preserve it as-is
-  if (val._methodName || (val.constructor && val.constructor.name === 'FieldValue')) return val;
-  if (Array.isArray(val)) {
-    return val.map((item) => cleanForFirestore(item));
-  }
-  const clean = {};
-  for (const [key, value] of Object.entries(val)) {
-    if (value === undefined) {
-      clean[key] = null;
-    } else {
-      clean[key] = cleanForFirestore(value);
-    }
-  }
-  return clean;
-}
 
   /**
    * Log a proctoring event to Firestore.
@@ -220,94 +220,94 @@ function cleanForFirestore(val) {
    * @returns {Promise<string|null>} eventId or null on failure
    */
   static async logProctorEvent(uid, assessmentId, tenantId, eventData) {
-    if (!uid || !assessmentId) {
-      console.error('[ProctorService] logProctorEvent: uid and assessmentId are required. Not reading from localStorage.');
-      return null;
-    }
-
-    const normEvent = eventData || {};
-    const {
-      eventType, misbehaviorCount,
-      snapshotUrl, sectionId,
-    } = normEvent;
-
-    const attemptId      = `${assessmentId}_${uid}`;
-    const eventId        = generateEventId();
-    const eventTimestamp = (normEvent.timestamp ? new Date(normEvent.timestamp).toISOString() : null) || new Date().toISOString();
-    const seqNum         = nextSequence(uid, assessmentId);
-
-    const logData = {
-      // ── Identity (from Firebase Auth, not localStorage) ──────────────────
-      uid,
-      tenantId:        tenantId ?? '',
-      attemptId,
-      assessmentId,
-
-      // ── Event data ───────────────────────────────────────────────────────
-      eventId,
-      type:            normEvent.type !== 'unknown' ? normEvent.type : (eventType || 'violation'),
-      severity:        normEvent.severity || 'low',
-
-      // ── Sequence ordering ─────────────────────────────────────────────────
-      // [P2] sessionId + sequence provide reliable within-session ordering.
-      // For cross-session ordering use serverTimestamp or clientTimestamp.
-      sequence:        seqNum,
-      sessionId:       SESSION_ID,
-
-      // ── Timestamps ───────────────────────────────────────────────────────
-      timestamp:       serverTimestamp(),  // Server-authoritative (Firestore sets this)
-      clientTimestamp: eventTimestamp,     // Client clock (may drift; use for correlation)
-
-      // ── Context ──────────────────────────────────────────────────────────
-      sectionId:       sectionId || null,
-      snapshotUrl:     snapshotUrl || null,
-      metadata: {
-        confidence:       typeof normEvent.confidence === 'number' ? normEvent.confidence : null,
-        faceCount:        normEvent.faceCount     ?? null,
-        misbehaviorCount: misbehaviorCount        ?? 0,
-        details:          normEvent.details ? cleanForFirestore(normEvent.details) : null,
-      },
-
-      synced: true,
-    };
-
-    const sanitizedLogData = cleanForFirestore(logData);
-
-    try {
-      // [Single Write Proctoring] Only write parent proctoringLogs document ONCE per session.
-      // Eliminates redundant parent writes on every violation event.
-      if (!CREATED_PARENTS.has(attemptId)) {
-        const parentRef = doc(db, 'proctoringLogs', attemptId);
-        await setDoc(parentRef, {
-          userId:       uid,        // rules check userId field
-          attemptId,               // required for ownership validation
-          assessmentId,
-          tenantId:     tenantId ?? '',
-          createdAt:    serverTimestamp(),
-        }, { merge: true });
-        CREATED_PARENTS.add(attemptId);
-      }
-
-      // v2: proctoringLogs/{attemptId}/events/{eventId}
-      const v2Ref  = collection(db, 'proctoringLogs', attemptId, 'events');
-      const docRef = await addDoc(v2Ref, sanitizedLogData);
-
-      console.log('[ProctorService] Event logged (v2):', attemptId, docRef.id, `seq=${seqNum} session=${SESSION_ID}`);
-      return docRef.id;
-
-    } catch (error) {
-      console.error('[ProctorService] Error logging proctor event:', error);
-      // Queue for offline retry with full identity
-      appendToOfflineQueue(uid, assessmentId, {
-        ...sanitizedLogData,
-        eventId,   // stable for idempotent retry
-        synced:    false,
-        retryCount: 0,
-        timestamp:  eventTimestamp,  // client timestamp (serverTimestamp not available offline)
-      });
-      return null;
-    }
+  if (!uid || !assessmentId) {
+    console.error('[ProctorService] logProctorEvent: uid and assessmentId are required. Not reading from localStorage.');
+    return null;
   }
+
+  const normEvent = eventData || {};
+  const {
+    eventType, misbehaviorCount,
+    snapshotUrl, sectionId,
+  } = normEvent;
+
+  const attemptId = `${assessmentId}_${uid}`;
+  const eventId = generateEventId();
+  const eventTimestamp = (normEvent.timestamp ? new Date(normEvent.timestamp).toISOString() : null) || new Date().toISOString();
+  const seqNum = nextSequence(uid, assessmentId);
+
+  const logData = {
+    // ── Identity (from Firebase Auth, not localStorage) ──────────────────
+    uid,
+    tenantId: tenantId ?? '',
+    attemptId,
+    assessmentId,
+
+    // ── Event data ───────────────────────────────────────────────────────
+    eventId,
+    type: normEvent.type !== 'unknown' ? normEvent.type : (eventType || 'violation'),
+    severity: normEvent.severity || 'low',
+
+    // ── Sequence ordering ─────────────────────────────────────────────────
+    // [P2] sessionId + sequence provide reliable within-session ordering.
+    // For cross-session ordering use serverTimestamp or clientTimestamp.
+    sequence: seqNum,
+    sessionId: SESSION_ID,
+
+    // ── Timestamps ───────────────────────────────────────────────────────
+    timestamp: serverTimestamp(),  // Server-authoritative (Firestore sets this)
+    clientTimestamp: eventTimestamp,     // Client clock (may drift; use for correlation)
+
+    // ── Context ──────────────────────────────────────────────────────────
+    sectionId: sectionId || null,
+    snapshotUrl: snapshotUrl || null,
+    metadata: {
+      confidence: typeof normEvent.confidence === 'number' ? normEvent.confidence : null,
+      faceCount: normEvent.faceCount ?? null,
+      misbehaviorCount: misbehaviorCount ?? 0,
+      details: normEvent.details ? cleanForFirestore(normEvent.details) : null,
+    },
+
+    synced: true,
+  };
+
+  const sanitizedLogData = cleanForFirestore(logData);
+
+  try {
+    // [Single Write Proctoring] Only write parent proctoringLogs document ONCE per session.
+    // Eliminates redundant parent writes on every violation event.
+    if (!CREATED_PARENTS.has(attemptId)) {
+      const parentRef = doc(db, 'proctoringLogs', attemptId);
+      await setDoc(parentRef, {
+        userId: uid,        // rules check userId field
+        attemptId,               // required for ownership validation
+        assessmentId,
+        tenantId: tenantId ?? '',
+        createdAt: serverTimestamp(),
+      }, { merge: true });
+      CREATED_PARENTS.add(attemptId);
+    }
+
+    // v2: proctoringLogs/{attemptId}/events/{eventId}
+    const v2Ref = collection(db, 'proctoringLogs', attemptId, 'events');
+    const docRef = await addDoc(v2Ref, sanitizedLogData);
+
+    console.log('[ProctorService] Event logged (v2):', attemptId, docRef.id, `seq=${seqNum} session=${SESSION_ID}`);
+    return docRef.id;
+
+  } catch (error) {
+    console.error('[ProctorService] Error logging proctor event:', error);
+    // Queue for offline retry with full identity
+    appendToOfflineQueue(uid, assessmentId, {
+      ...sanitizedLogData,
+      eventId,   // stable for idempotent retry
+      synced: false,
+      retryCount: 0,
+      timestamp: eventTimestamp,  // client timestamp (serverTimestamp not available offline)
+    });
+    return null;
+  }
+}
 
   /**
    * Flush queued offline proctoring events to Firestore.
@@ -325,83 +325,83 @@ function cleanForFirestore(val) {
    * @returns {Promise<{ uploaded: number, failed: number, retained: number }>}
    */
   static async flushOfflineEvents(uid, assessmentId, isAssessmentActive = false) {
-    if (!uid || !assessmentId) return { uploaded: 0, failed: 0, retained: 0 };
+  if (!uid || !assessmentId) return { uploaded: 0, failed: 0, retained: 0 };
 
-    const queue = readOfflineQueue(uid, assessmentId);
-    if (queue.length === 0) return { uploaded: 0, failed: 0, retained: 0 };
+  const queue = readOfflineQueue(uid, assessmentId);
+  if (queue.length === 0) return { uploaded: 0, failed: 0, retained: 0 };
 
-    const attemptId = `${assessmentId}_${uid}`;
+  const attemptId = `${assessmentId}_${uid}`;
 
-    // [Single Write Proctoring] Only write parent document if not yet recorded
-    if (!CREATED_PARENTS.has(attemptId)) {
-      try {
-        const parentRef = doc(db, 'proctoringLogs', attemptId);
-        await setDoc(parentRef, {
-          userId: uid,
-          attemptId,
-          assessmentId,
-        }, { merge: true });
-        CREATED_PARENTS.add(attemptId);
-      } catch (parentErr) {
-        console.warn('[ProctorService] Offline flush aborted — parent write failed:', parentErr?.code);
-        return { uploaded: 0, failed: 0, retained: queue.length };
-      }
+  // [Single Write Proctoring] Only write parent document if not yet recorded
+  if (!CREATED_PARENTS.has(attemptId)) {
+    try {
+      const parentRef = doc(db, 'proctoringLogs', attemptId);
+      await setDoc(parentRef, {
+        userId: uid,
+        attemptId,
+        assessmentId,
+      }, { merge: true });
+      CREATED_PARENTS.add(attemptId);
+    } catch (parentErr) {
+      console.warn('[ProctorService] Offline flush aborted — parent write failed:', parentErr?.code);
+      return { uploaded: 0, failed: 0, retained: queue.length };
     }
+  }
 
-    const remaining = [];
-    let uploaded    = 0;
-    let failed      = 0;
-    let retained    = 0;
+  const remaining = [];
+  let uploaded = 0;
+  let failed = 0;
+  let retained = 0;
 
-    for (const event of queue) {
-      if (event.synced) continue; // Already uploaded in a previous run
+  for (const event of queue) {
+    if (event.synced) continue; // Already uploaded in a previous run
 
-      try {
-        // Use setDoc with stable eventId for idempotent write
-        const eventRef = doc(db, 'proctoringLogs', attemptId, 'events', event.eventId);
-        await setDoc(eventRef, {
-          ...event,
-          timestamp: serverTimestamp(), // Use server timestamp on upload
-          synced:    true,
-        }, { merge: false }); // Overwrite — idempotent by eventId
+    try {
+      // Use setDoc with stable eventId for idempotent write
+      const eventRef = doc(db, 'proctoringLogs', attemptId, 'events', event.eventId);
+      await setDoc(eventRef, {
+        ...event,
+        timestamp: serverTimestamp(), // Use server timestamp on upload
+        synced: true,
+      }, { merge: false }); // Overwrite — idempotent by eventId
 
-        uploaded++;
-        console.log('[ProctorService] Offline event flushed:', event.eventId);
+      uploaded++;
+      console.log('[ProctorService] Offline event flushed:', event.eventId);
 
-      } catch (err) {
-        console.warn('[ProctorService] Offline flush failed for event:', event.eventId, err?.code);
-        event.retryCount = (event.retryCount || 0) + 1;
+    } catch (err) {
+      console.warn('[ProctorService] Offline flush failed for event:', event.eventId, err?.code);
+      event.retryCount = (event.retryCount || 0) + 1;
 
-        if (isAssessmentActive) {
-          // [P1] Assessment is still active — NEVER drop evidence events.
-          // Retain all failed events in the queue regardless of retry count.
+      if (isAssessmentActive) {
+        // [P1] Assessment is still active — NEVER drop evidence events.
+        // Retain all failed events in the queue regardless of retry count.
+        remaining.push(event);
+        retained++;
+        if (event.retryCount >= MAX_RETRY_COUNT) {
+          console.warn(
+            `[ProctorService] Event ${event.eventId} has exceeded normal retry limit ` +
+            `(retries=${event.retryCount}) but assessment is active — retaining indefinitely.`
+          );
+        }
+      } else {
+        // Post-assessment: apply normal discard policy after MAX_RETRY_COUNT.
+        if (event.retryCount < MAX_RETRY_COUNT) {
           remaining.push(event);
-          retained++;
-          if (event.retryCount >= MAX_RETRY_COUNT) {
-            console.warn(
-              `[ProctorService] Event ${event.eventId} has exceeded normal retry limit ` +
-              `(retries=${event.retryCount}) but assessment is active — retaining indefinitely.`
-            );
-          }
         } else {
-          // Post-assessment: apply normal discard policy after MAX_RETRY_COUNT.
-          if (event.retryCount < MAX_RETRY_COUNT) {
-            remaining.push(event);
-          } else {
-            console.error('[ProctorService] Event dropped after max retries (post-assessment):', event.eventId);
-            failed++;
-          }
+          console.error('[ProctorService] Event dropped after max retries (post-assessment):', event.eventId);
+          failed++;
         }
       }
     }
-
-    writeOfflineQueue(uid, assessmentId, remaining);
-    console.log(
-      `[ProctorService] Offline flush complete — uploaded: ${uploaded}, ` +
-      `failed: ${failed}, retained: ${retained}, queued: ${remaining.length}`
-    );
-    return { uploaded, failed, retained };
   }
+
+  writeOfflineQueue(uid, assessmentId, remaining);
+  console.log(
+    `[ProctorService] Offline flush complete — uploaded: ${uploaded}, ` +
+    `failed: ${failed}, retained: ${retained}, queued: ${remaining.length}`
+  );
+  return { uploaded, failed, retained };
+}
 
   /**
    * Clear all offline proctor queues for a specific user.
@@ -410,22 +410,22 @@ function cleanForFirestore(val) {
    * @param {string} uid
    */
   static clearUserQueues(uid) {
-    if (!uid) return;
-    try {
-      const keysToRemove = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith(`${OFFLINE_QUEUE_PREFIX}${uid}_`)) {
-          keysToRemove.push(key);
-        }
+  if (!uid) return;
+  try {
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(`${OFFLINE_QUEUE_PREFIX}${uid}_`)) {
+        keysToRemove.push(key);
       }
-      keysToRemove.forEach((k) => localStorage.removeItem(k));
-      sequenceCounters.forEach((_, key) => {
-        if (key.startsWith(uid)) sequenceCounters.delete(key);
-      });
-      console.log(`[ProctorService] Cleared ${keysToRemove.length} offline queue(s) for uid:`, uid);
-    } catch (_) {}
-  }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+    sequenceCounters.forEach((_, key) => {
+      if (key.startsWith(uid)) sequenceCounters.delete(key);
+    });
+    console.log(`[ProctorService] Cleared ${keysToRemove.length} offline queue(s) for uid:`, uid);
+  } catch (_) { }
+}
 
   /**
    * Remove offline snapshots older than SNAPSHOT_MAX_AGE_MS from IndexedDB.
@@ -437,53 +437,53 @@ function cleanForFirestore(val) {
    * @param {string} assessmentId
    */
   static async clearExpiredSnapshots(uid, assessmentId) {
-    if (!uid || !assessmentId) return;
-    try {
-      const snapshots = await getProctorSnapshots(uid, assessmentId);
-      const cutoff    = Date.now() - SNAPSHOT_MAX_AGE_MS;
-      let cleared     = 0;
-      for (const snapshot of snapshots) {
-        const ts = snapshot.timestamp || 0; // safeStorage stores a ms timestamp if available
-        if (ts > 0 && ts < cutoff) {
-          await removeProctorSnapshot(snapshot.key);
-          cleared++;
-        }
+  if (!uid || !assessmentId) return;
+  try {
+    const snapshots = await getProctorSnapshots(uid, assessmentId);
+    const cutoff = Date.now() - SNAPSHOT_MAX_AGE_MS;
+    let cleared = 0;
+    for (const snapshot of snapshots) {
+      const ts = snapshot.timestamp || 0; // safeStorage stores a ms timestamp if available
+      if (ts > 0 && ts < cutoff) {
+        await removeProctorSnapshot(snapshot.key);
+        cleared++;
       }
-      if (cleared > 0) {
-        console.log(`[ProctorService] Cleared ${cleared} expired offline snapshot(s) for uid=${uid}`);
-      }
-    } catch (err) {
-      console.warn('[ProctorService] clearExpiredSnapshots error:', err);
     }
+    if (cleared > 0) {
+      console.log(`[ProctorService] Cleared ${cleared} expired offline snapshot(s) for uid=${uid}`);
+    }
+  } catch (err) {
+    console.warn('[ProctorService] clearExpiredSnapshots error:', err);
   }
+}
 
   // ── Private: offline snapshot queue (IndexedDB — v2) ─────────────────────────────────
   // Blobs are stored natively — no Base64 encoding, no FileReader,
   // no localStorage quota risk, no main-thread blocking.
 
   static async _saveOfflineSnapshot(uid, assessmentId, imageBlob, filename) {
-    try {
-      // [P2] Check existing snapshot count before storing.
-      const existing = await getProctorSnapshots(uid, assessmentId);
-      if (existing.length >= MAX_OFFLINE_SNAPSHOTS) {
-        console.warn(
-          `[ProctorService] Offline snapshot cap (${MAX_OFFLINE_SNAPSHOTS}) reached for ` +
-          `uid=${uid} assessmentId=${assessmentId}. Snapshot NOT saved: ${filename}. ` +
-          'Restore connectivity to flush pending snapshots.'
-        );
-        return;
-      }
-
-      const key = await saveProctorSnapshot(uid, assessmentId, imageBlob, filename);
-      if (key) {
-        console.log('[ProctorService] Offline snapshot persisted to IndexedDB:', key);
-      } else {
-        console.warn('[ProctorService] IndexedDB unavailable — offline snapshot may be lost.');
-      }
-    } catch (error) {
-      console.error('[ProctorService] Error saving offline snapshot to IndexedDB:', error);
+  try {
+    // [P2] Check existing snapshot count before storing.
+    const existing = await getProctorSnapshots(uid, assessmentId);
+    if (existing.length >= MAX_OFFLINE_SNAPSHOTS) {
+      console.warn(
+        `[ProctorService] Offline snapshot cap (${MAX_OFFLINE_SNAPSHOTS}) reached for ` +
+        `uid=${uid} assessmentId=${assessmentId}. Snapshot NOT saved: ${filename}. ` +
+        'Restore connectivity to flush pending snapshots.'
+      );
+      return;
     }
+
+    const key = await saveProctorSnapshot(uid, assessmentId, imageBlob, filename);
+    if (key) {
+      console.log('[ProctorService] Offline snapshot persisted to IndexedDB:', key);
+    } else {
+      console.warn('[ProctorService] IndexedDB unavailable — offline snapshot may be lost.');
+    }
+  } catch (error) {
+    console.error('[ProctorService] Error saving offline snapshot to IndexedDB:', error);
   }
+}
 
   /**
    * Retry uploading offline snapshots stored in IndexedDB.
@@ -494,35 +494,35 @@ function cleanForFirestore(val) {
    * @param {string} assessmentId
    */
   static async retryOfflineSnapshots(uid, assessmentId) {
-    if (!uid || !assessmentId) return;
+  if (!uid || !assessmentId) return;
 
-    const snapshots = await getProctorSnapshots(uid, assessmentId);
-    if (!snapshots.length) return;
+  const snapshots = await getProctorSnapshots(uid, assessmentId);
+  if (!snapshots.length) return;
 
-    for (const snapshot of snapshots) {
-      // Belt-and-braces: skip entries belonging to a different uid
-      if (snapshot.uid !== uid) {
-        console.warn('[ProctorService] Snapshot uid mismatch — skipping.');
-        continue;
-      }
-      try {
-        // snapshot.blob is a native Blob — pass directly to uploadSnapshot()
-        const url = await this.uploadSnapshot(uid, assessmentId, snapshot.blob, snapshot.filename);
-        if (url) {
-          // Successfully uploaded — remove from IndexedDB
-          await removeProctorSnapshot(snapshot.key);
-          console.log('[ProctorService] Offline snapshot synced and removed:', snapshot.key);
-        } else {
-          console.warn('[ProctorService] Snapshot upload returned no URL — will retry later:', snapshot.key);
-        }
-      } catch (error) {
-        console.warn('[ProctorService] Snapshot upload error — will retry on next sync:', snapshot.key, error);
-      }
+  for (const snapshot of snapshots) {
+    // Belt-and-braces: skip entries belonging to a different uid
+    if (snapshot.uid !== uid) {
+      console.warn('[ProctorService] Snapshot uid mismatch — skipping.');
+      continue;
     }
-
-    // [P2] Always clean up expired snapshots after a retry pass.
-    await this.clearExpiredSnapshots(uid, assessmentId);
+    try {
+      // snapshot.blob is a native Blob — pass directly to uploadSnapshot()
+      const url = await this.uploadSnapshot(uid, assessmentId, snapshot.blob, snapshot.filename);
+      if (url) {
+        // Successfully uploaded — remove from IndexedDB
+        await removeProctorSnapshot(snapshot.key);
+        console.log('[ProctorService] Offline snapshot synced and removed:', snapshot.key);
+      } else {
+        console.warn('[ProctorService] Snapshot upload returned no URL — will retry later:', snapshot.key);
+      }
+    } catch (error) {
+      console.warn('[ProctorService] Snapshot upload error — will retry on next sync:', snapshot.key, error);
+    }
   }
+
+  // [P2] Always clean up expired snapshots after a retry pass.
+  await this.clearExpiredSnapshots(uid, assessmentId);
+}
 }
 
 export default ProctorService;
