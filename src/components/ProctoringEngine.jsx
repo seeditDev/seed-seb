@@ -169,9 +169,13 @@ const runYolov8Inference = async (videoElement, model) => {
     
     const candidates = [];
     
+    // COCO target classes:
+    // 0: person, 24: backpack, 26: handbag, 28: suitcase, 63: laptop, 67: cell phone, 73: book
+    const TARGET_CLASSES = new Set([0, 24, 26, 28, 63, 67, 73]);
+
     for (let i = 0; i < classesArray.length; i++) {
       const classId = classesArray[i];
-      if (classId === 0 || classId === 67 || classId === 73) {
+      if (TARGET_CLASSES.has(classId)) {
         const [x_center, y_center, w, h] = boxesArray[i];
         const x1 = x_center - w / 2;
         const y1 = y_center - h / 2;
@@ -190,20 +194,38 @@ const runYolov8Inference = async (videoElement, model) => {
     const suppressed = cpuNMS(candidates, 0.45);
     
     let personCount = 0;
+    let laptopDetected = false;
     let phoneDetected = false;
     let bookDetected = false;
+    let bagDetected = false;
     
     for (const item of suppressed) {
       if (item.classId === 0 && item.score >= 0.40) {
         personCount++;
+      } else if (item.classId === 63 && item.score >= 0.38) {
+        laptopDetected = true;
       } else if (item.classId === 67 && item.score >= 0.42) {
         phoneDetected = true;
       } else if (item.classId === 73 && item.score >= 0.45) {
         bookDetected = true;
+      } else if ((item.classId === 24 || item.classId === 26 || item.classId === 28) && item.score >= 0.40) {
+        bagDetected = true;
       }
     }
     
-    result = { personCount, phoneDetected, bookDetected };
+    result = { 
+      personCount, 
+      laptopDetected, 
+      phoneDetected, 
+      bookDetected, 
+      bagDetected,
+      prohibitedDetected: phoneDetected || bookDetected || bagDetected,
+      prohibitedItems: [
+        ...(phoneDetected ? ['cell phone'] : []),
+        ...(bookDetected ? ['book/notes'] : []),
+        ...(bagDetected ? ['bag/backpack'] : [])
+      ]
+    };
     
     filteredBoxes.dispose();
     filteredScores.dispose();
@@ -219,6 +241,11 @@ const runYolov8Inference = async (videoElement, model) => {
   
   return result;
 };
+
+// Expose globally for pre-assessment angle & workspace verification in ProctoringInstructions
+if (typeof window !== 'undefined') {
+  window.runYolov8Inference = runYolov8Inference;
+}
 
 const ProctoringEngine = ({ 
   uid, 
@@ -263,6 +290,8 @@ const ProctoringEngine = ({
   const multiFaceStreakRef = useRef(0);
   const yoloMultiPersonStreakRef = useRef(0);
   const mismatchStreakRef = useRef(0);
+  const premisesAbsentStreakRef = useRef(0);
+  const premisesLaptopMissingStreakRef = useRef(0);
 
   // Cross-Model Corroboration & Gating
   const lastYoloPersonCountRef = useRef(0);
@@ -696,6 +725,12 @@ const ProctoringEngine = ({
         msg = 'Secondary mobile phone detected on desk by premises camera!';
       } else if (type === 'premises_book') {
         msg = 'Unauthorized reading material/book detected on desk by premises camera!';
+      } else if (type === 'premises_bag') {
+        msg = 'Prohibited item (bag/backpack) detected in workspace by premises camera!';
+      } else if (type === 'premises_candidate_absent') {
+        msg = 'Candidate not detected in premises camera view! Please remain seated and visible to premises camera.';
+      } else if (type === 'premises_camera_misaligned') {
+        msg = 'Assessment laptop not visible in premises camera feed! Keep mobile camera angled towards candidate and laptop.';
       } else if (type === 'looking_away') {
         msg = 'Suspicious activity: Student looking away from screen repeatedly';
       } else if (type === 'face_mismatch') {
@@ -955,8 +990,29 @@ const ProctoringEngine = ({
             handleViolation('premises_cell_phone');
           } else if (premisesYolo.bookDetected) {
             handleViolation('premises_book');
+          } else if (premisesYolo.bagDetected) {
+            handleViolation('premises_bag');
           } else if (premisesYolo.personCount > 1) {
             handleViolation('multiple_faces');
+          } else if (premisesYolo.personCount === 0) {
+            // Candidate absent from secondary premises view
+            premisesAbsentStreakRef.current = (premisesAbsentStreakRef.current || 0) + 1;
+            if (premisesAbsentStreakRef.current >= 3) { // ~9 seconds sustained absence
+              handleViolation('premises_candidate_absent');
+              premisesAbsentStreakRef.current = 0;
+            }
+          } else {
+            premisesAbsentStreakRef.current = 0;
+            // Candidate is present; ensure the assessment laptop remains visible in frame
+            if (!premisesYolo.laptopDetected) {
+              premisesLaptopMissingStreakRef.current = (premisesLaptopMissingStreakRef.current || 0) + 1;
+              if (premisesLaptopMissingStreakRef.current >= 4) { // ~12 seconds sustained misalignment
+                handleViolation('premises_camera_misaligned');
+                premisesLaptopMissingStreakRef.current = 0;
+              }
+            } else {
+              premisesLaptopMissingStreakRef.current = 0;
+            }
           }
         } catch (premErr) {
           console.warn('[ProctoringEngine] Premises stream inference error:', premErr);

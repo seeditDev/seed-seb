@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useReducer } from 'rea
 import { FaCheckCircle, FaTimesCircle, FaCamera, FaExclamationTriangle, FaSpinner, FaSync, FaClock, FaLaptopCode, FaClipboardList, FaMobileAlt, FaQrcode } from 'react-icons/fa';
 import '../styles/ProctoringInstructions.css';
 import * as faceapi from 'face-api.js';
+import * as tf from '@tensorflow/tfjs';
 import QRCode from 'qrcode';
 import { setProctorCacheExpiry } from '../utils/proctorCache';
 import { PremisesProctorSession } from '../services/premisesProctorService';
@@ -22,6 +23,19 @@ const getModelsPath = (subPath) => {
     }
   }
   return `/${subPath}`;
+};
+
+const ensureYolov8ForInstructions = async () => {
+  if (window.yolov8Loaded && window.yolov8Model) return window.yolov8Model;
+  try {
+    const model = await tf.loadGraphModel(getModelsPath('models/yolov8/model.json'));
+    window.yolov8Model = model;
+    window.yolov8Loaded = true;
+    return model;
+  } catch (err) {
+    console.warn('[ProctoringInstructions] Error loading YOLOv8 model:', err);
+    return null;
+  }
 };
 
 const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
@@ -60,6 +74,16 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
   const premisesSessionRef = useRef(null);
   const premisesStreamRef = useRef(null);
   const premisesVideoRef = useRef(null);
+  const [premisesAngleVerified, setPremisesAngleVerified] = useState(false);
+  const [premisesAngleCheck, setPremisesAngleCheck] = useState({
+    candidateSeated: false,
+    laptopVisible: false,
+    noProhibited: true,
+    prohibitedItems: [],
+    streak: 0,
+    reason: 'Align phone at 45° angle showing your desk and laptop.'
+  });
+  const angleCheckStreakRef = useRef(0);
   
   // Single reducer for all photo state — batches into one render to prevent video flicker
   const [photoState, dispatchPhoto] = useReducer(
@@ -325,6 +349,109 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
     }
   };
 
+  const handleReconnectPremises = async () => {
+    try {
+      console.log('[ProctoringInstructions] Initiating premises camera stream reconnection...');
+      setPremisesStatus('connecting');
+      if (premisesSessionRef.current && typeof premisesSessionRef.current.reconnect === 'function') {
+        await premisesSessionRef.current.reconnect();
+      } else {
+        await handleRegeneratePremisesSession();
+      }
+    } catch (err) {
+      console.error('[ProctoringInstructions] Error reconnecting premises camera:', err);
+      setPremisesStatus('error');
+    }
+  };
+
+  // Continuous Angle & Workspace Calibration Loop (Checks: Seated, Laptop visible, Strict 2-item rule)
+  useEffect(() => {
+    if (!isPremisesRequired || premisesStatus !== 'connected' || !premisesFaceVerified || premisesAngleVerified) {
+      return;
+    }
+
+    let isMounted = true;
+    let timer = null;
+
+    const runCalibrationCheck = async () => {
+      try {
+        const video = premisesVideoRef.current;
+        if (!video || video.readyState < 2 || video.videoWidth === 0) {
+          if (isMounted) timer = setTimeout(runCalibrationCheck, 1200);
+          return;
+        }
+
+        const model = await ensureYolov8ForInstructions();
+        if (!model || typeof window.runYolov8Inference !== 'function') {
+          if (isMounted) timer = setTimeout(runCalibrationCheck, 1500);
+          return;
+        }
+
+        const res = await window.runYolov8Inference(video, model);
+        if (!isMounted) return;
+
+        const candidateSeated = res.personCount === 1;
+        const laptopVisible = Boolean(res.laptopDetected);
+        const noProhibited = !res.prohibitedDetected;
+        const prohibitedItems = res.prohibitedItems || [];
+
+        let reason = '';
+        if (res.personCount === 0) {
+          reason = 'Candidate not detected in premises camera. Please ensure you are seated at your desk.';
+        } else if (res.personCount > 1) {
+          reason = 'Multiple people detected in premises camera. Only candidate allowed.';
+        } else if (!noProhibited) {
+          reason = `Prohibited object detected: ${prohibitedItems.join(', ')}. Workspace must only have candidate and laptop.`;
+        } else if (!laptopVisible) {
+          reason = 'Laptop/keyboard not clearly visible. Adjust phone angle to show your workspace & laptop.';
+        } else {
+          reason = 'Desk setup and camera angle verified! Candidate and laptop detected.';
+        }
+
+        const allPassed = candidateSeated && laptopVisible && noProhibited;
+        if (allPassed) {
+          angleCheckStreakRef.current += 1;
+        } else {
+          angleCheckStreakRef.current = 0;
+        }
+
+        setPremisesAngleCheck({
+          candidateSeated,
+          laptopVisible,
+          noProhibited,
+          prohibitedItems,
+          streak: angleCheckStreakRef.current,
+          reason
+        });
+
+        if (angleCheckStreakRef.current >= 2) {
+          console.log('[ProctoringInstructions] Premises angle and desk setup VERIFIED!');
+          setPremisesAngleVerified(true);
+          try {
+            premisesSessionRef.current?.dataChannel?.send(JSON.stringify({
+              type: 'angle_verified',
+              message: 'Desk setup and camera angle confirmed.'
+            }));
+          } catch (_) {}
+          return;
+        }
+      } catch (calibErr) {
+        console.warn('[ProctoringInstructions] Calibration check error:', calibErr);
+      }
+
+      if (isMounted) {
+        timer = setTimeout(runCalibrationCheck, 1600);
+      }
+    };
+
+    timer = setTimeout(runCalibrationCheck, 1000);
+
+    return () => {
+      isMounted = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, [isPremisesRequired, premisesStatus, premisesFaceVerified, premisesAngleVerified]);
+
   const handleCancelInstructions = () => {
     if (premisesSessionRef.current) {
       try {
@@ -537,11 +664,11 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
 
   const handleContinue = () => {
     if (canContinue && streamRef.current && hasScrolledToBottom && isAcknowledged && photoStatus === 'captured') {
-      if (isPremisesRequired && (premisesStatus !== 'connected' || !premisesFaceVerified)) {
-        console.warn('[ProctoringInstructions] Cannot proceed without connected and face-verified premises camera');
+      if (isPremisesRequired && (premisesStatus !== 'connected' || !premisesFaceVerified || !premisesAngleVerified)) {
+        console.warn('[ProctoringInstructions] Cannot proceed without connected, face-verified, and angle-verified premises camera');
         return;
       }
-      console.log('[ProctoringInstructions] Continuing to test (Dual camera & face verified)');
+      console.log('[ProctoringInstructions] Continuing to test (Dual camera, face & angle verified)');
       isProceedingRef.current = true;
       // Don't stop the stream here - let ProctoringEngine use it
       onContinue();
@@ -1091,12 +1218,112 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                       </p>
                     </div>
 
+                    {/* Setup & Camera Angle Verification Checklist Card */}
+                    {premisesFaceVerified && (
+                      <div style={{
+                        marginTop: '12px',
+                        padding: '14px 16px',
+                        borderRadius: '12px',
+                        width: '100%',
+                        maxWidth: '360px',
+                        background: premisesAngleVerified ? 'rgba(16, 185, 129, 0.12)' : 'rgba(30, 41, 59, 0.85)',
+                        border: premisesAngleVerified ? '1px solid #10b981' : '1px solid #334155',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '10px',
+                        textAlign: 'left'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '12.5px', fontWeight: '700', color: premisesAngleVerified ? '#34d399' : '#f1f5f9' }}>
+                            {premisesAngleVerified ? '✅ Desk Setup & Angle Verified' : '📐 Workspace & Angle Check'}
+                          </span>
+                          <span style={{
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            padding: '2px 8px',
+                            borderRadius: '10px',
+                            background: premisesAngleVerified ? 'rgba(16, 185, 129, 0.25)' : 'rgba(245, 158, 11, 0.2)',
+                            color: premisesAngleVerified ? '#10b981' : '#fbbf24'
+                          }}>
+                            {premisesAngleVerified ? 'PASSED' : `STABILITY ${premisesAngleCheck.streak}/2`}
+                          </span>
+                        </div>
+
+                        {/* Checklist items */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11.5px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: premisesAngleCheck.candidateSeated ? '#10b981' : '#cbd5e1' }}>
+                            <span>👤 Candidate Seated at Desk</span>
+                            <span>{premisesAngleCheck.candidateSeated ? '✓ Visible' : '○ Sit in View'}</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: premisesAngleCheck.laptopVisible ? '#10b981' : '#cbd5e1' }}>
+                            <span>💻 Assessment Laptop in View</span>
+                            <span>{premisesAngleCheck.laptopVisible ? '✓ Visible' : '○ Adjust Phone Angle'}</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: premisesAngleCheck.noProhibited ? '#10b981' : '#f87171' }}>
+                            <span>🚫 Strict 2-Item Rule (No bags, phones, books)</span>
+                            <span>{premisesAngleCheck.noProhibited ? '✓ Clean Desk' : `⚠ Prohibited: ${premisesAngleCheck.prohibitedItems.join(', ')}`}</span>
+                          </div>
+                        </div>
+
+                        <div style={{
+                          fontSize: '11px',
+                          color: premisesAngleVerified ? '#94a3b8' : '#fbbf24',
+                          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                          paddingTop: '6px'
+                        }}>
+                          {premisesAngleCheck.reason}
+                        </div>
+                      </div>
+                    )}
+
                     <p style={{ fontSize: '11.5px', color: '#94a3b8', margin: '8px 0 0 0' }}>
-                      Ensure phone remains steady at a 45° angle on your desk showing your workspace.
+                      Place phone on your desk at a 45° angle. Only candidate and laptop are permitted in frame.
                     </p>
                   </div>
                 ) : (
                   <div>
+                    {(premisesStatus === 'disconnected' || premisesStatus === 'error') && (
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '16px',
+                        background: 'rgba(239, 68, 68, 0.12)',
+                        border: '1px solid rgba(239, 68, 68, 0.35)',
+                        borderRadius: '12px',
+                        marginBottom: '16px',
+                        maxWidth: '320px'
+                      }}>
+                        <FaExclamationTriangle style={{ color: '#ef4444', fontSize: '24px' }} />
+                        <div style={{ color: '#f87171', fontWeight: '700', fontSize: '13px' }}>
+                          Premises Camera Disconnected
+                        </div>
+                        <p style={{ margin: 0, fontSize: '11.5px', color: '#cbd5e1', textAlign: 'center' }}>
+                          Connection to mobile phone was lost. Keep your phone active and click below to reconnect.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleReconnectPremises}
+                          style={{
+                            background: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '8px 16px',
+                            fontWeight: '600',
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          <FaSync />
+                          <span>Reconnect Stream</span>
+                        </button>
+                      </div>
+                    )}
                     <div style={{
                       width: '240px',
                       height: '240px',
@@ -1423,11 +1650,15 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                 Back to Registration
               </button>
               <button 
-                className={`instructions-btn continue-btn ${(premisesStatus !== 'connected' || !premisesFaceVerified) ? 'disabled' : ''}`}
+                className={`instructions-btn continue-btn ${(premisesStatus !== 'connected' || !premisesFaceVerified || !premisesAngleVerified) ? 'disabled' : ''}`}
                 onClick={() => setCurrentStep(3)}
-                disabled={premisesStatus !== 'connected' || !premisesFaceVerified}
+                disabled={premisesStatus !== 'connected' || !premisesFaceVerified || !premisesAngleVerified}
               >
-                Proceed to Guidelines
+                {!premisesFaceVerified 
+                  ? 'Verify Face on Mobile' 
+                  : !premisesAngleVerified 
+                  ? 'Align Desk Setup & Angle' 
+                  : 'Proceed to Guidelines'}
               </button>
             </>
           ) : (
@@ -1439,9 +1670,9 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                 {isPremisesRequired ? 'Back to Premises Camera' : 'Back to Registration'}
               </button>
               <button 
-                className={`instructions-btn continue-btn ${(!hasScrolledToBottom || !isAcknowledged) ? 'disabled' : ''}`}
+                className={`instructions-btn continue-btn ${(!hasScrolledToBottom || !isAcknowledged || (isPremisesRequired && (premisesStatus !== 'connected' || !premisesFaceVerified || !premisesAngleVerified))) ? 'disabled' : ''}`}
                 onClick={handleContinue}
-                disabled={!hasScrolledToBottom || !isAcknowledged}
+                disabled={!hasScrolledToBottom || !isAcknowledged || (isPremisesRequired && (premisesStatus !== 'connected' || !premisesFaceVerified || !premisesAngleVerified))}
               >
                 I Understand, Start Test
               </button>
