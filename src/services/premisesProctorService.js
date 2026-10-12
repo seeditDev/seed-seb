@@ -111,6 +111,7 @@ export class PremisesProctorSession {
             type: isReconnect ? 'PREMISES_CAMERA_RECONNECTED' : 'PREMISES_CAMERA_CONNECTED',
             severity: 'info',
             eventType: 'premises_camera',
+            confidence: 1.0,
             details: {
               sessionId: this.sessionId,
               pairingCode: this.pairingCode,
@@ -128,6 +129,7 @@ export class PremisesProctorSession {
             type: 'PREMISES_CAMERA_DISCONNECTED',
             severity: 'warning',
             eventType: 'premises_camera',
+            confidence: 1.0,
             details: {
               sessionId: this.sessionId,
               connectionState: state,

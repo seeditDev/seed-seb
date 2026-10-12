@@ -183,6 +183,25 @@ class ProctorService {
     }
   }
 
+function cleanForFirestore(val) {
+  if (val === undefined) return null;
+  if (val === null || typeof val !== 'object') return val;
+  // If it's a Firestore FieldValue (e.g. serverTimestamp()), preserve it as-is
+  if (val._methodName || (val.constructor && val.constructor.name === 'FieldValue')) return val;
+  if (Array.isArray(val)) {
+    return val.map((item) => cleanForFirestore(item));
+  }
+  const clean = {};
+  for (const [key, value] of Object.entries(val)) {
+    if (value === undefined) {
+      clean[key] = null;
+    } else {
+      clean[key] = cleanForFirestore(value);
+    }
+  }
+  return clean;
+}
+
   /**
    * Log a proctoring event to Firestore.
    *
@@ -206,11 +225,11 @@ class ProctorService {
       return null;
     }
 
-    const normEvent = eventData;
+    const normEvent = eventData || {};
     const {
       eventType, misbehaviorCount,
       snapshotUrl, sectionId,
-    } = eventData;
+    } = normEvent;
 
     const attemptId      = `${assessmentId}_${uid}`;
     const eventId        = generateEventId();
@@ -227,7 +246,7 @@ class ProctorService {
       // ── Event data ───────────────────────────────────────────────────────
       eventId,
       type:            normEvent.type !== 'unknown' ? normEvent.type : (eventType || 'violation'),
-      severity:        normEvent.severity,
+      severity:        normEvent.severity || 'low',
 
       // ── Sequence ordering ─────────────────────────────────────────────────
       // [P2] sessionId + sequence provide reliable within-session ordering.
@@ -243,13 +262,16 @@ class ProctorService {
       sectionId:       sectionId || null,
       snapshotUrl:     snapshotUrl || null,
       metadata: {
-        confidence:       normEvent.confidence,
-        faceCount:        eventData.faceCount     || null,
-        misbehaviorCount: misbehaviorCount        || 0,
+        confidence:       typeof normEvent.confidence === 'number' ? normEvent.confidence : null,
+        faceCount:        normEvent.faceCount     ?? null,
+        misbehaviorCount: misbehaviorCount        ?? 0,
+        details:          normEvent.details ? cleanForFirestore(normEvent.details) : null,
       },
 
       synced: true,
     };
+
+    const sanitizedLogData = cleanForFirestore(logData);
 
     try {
       // [Single Write Proctoring] Only write parent proctoringLogs document ONCE per session.
@@ -268,7 +290,7 @@ class ProctorService {
 
       // v2: proctoringLogs/{attemptId}/events/{eventId}
       const v2Ref  = collection(db, 'proctoringLogs', attemptId, 'events');
-      const docRef = await addDoc(v2Ref, logData);
+      const docRef = await addDoc(v2Ref, sanitizedLogData);
 
       console.log('[ProctorService] Event logged (v2):', attemptId, docRef.id, `seq=${seqNum} session=${SESSION_ID}`);
       return docRef.id;
@@ -277,7 +299,7 @@ class ProctorService {
       console.error('[ProctorService] Error logging proctor event:', error);
       // Queue for offline retry with full identity
       appendToOfflineQueue(uid, assessmentId, {
-        ...logData,
+        ...sanitizedLogData,
         eventId,   // stable for idempotent retry
         synced:    false,
         retryCount: 0,
