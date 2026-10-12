@@ -39,7 +39,9 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
   const isPremisesRequired = Boolean(
     assessment?.proctorConfig?.premisesCameraRequired ||
     assessment?.proctorConfig?.premisesProctoring ||
-    assessment?.premisesCameraRequired
+    assessment?.premisesCameraRequired ||
+    assessment?.premisesProctoring ||
+    (assessment?.sections || []).some(s => s?.premisesCameraRequired || s?.premisesProctoring)
   );
   const [premisesStatus, setPremisesStatus] = useState('initializing'); // initializing, waiting_for_mobile, connecting, connected, error
   const [premisesPairingCode, setPremisesPairingCode] = useState('');

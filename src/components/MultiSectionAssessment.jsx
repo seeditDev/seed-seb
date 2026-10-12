@@ -23,6 +23,7 @@ import { doc, setDoc, getDoc, collection, getDocs, query, where, serverTimestamp
 import { fetchQuestionsForContest } from '../services/codingQuestionBankService';
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
+import ProctoringInstructions from './ProctoringInstructions';
 import CodingAssessmentPage from './CodingAssessmentPage';
 import SpokenEnglishAssessment from './SpokenEnglishAssessment';
 import EssaySectionView from './EssaySectionView';
@@ -1053,10 +1054,23 @@ const MultiSectionAssessment = () => {
   const [completedAttemptId, setCompletedAttemptId] = useState('');
   const [completedTenant, setCompletedTenant] = useState(null);
 
+  const [showInstructions, setShowInstructions] = useState(false);
+
+  const isPremisesRequired = useMemo(() => {
+    if (!assessment) return false;
+    return Boolean(
+      assessment.proctorConfig?.premisesCameraRequired ||
+      assessment.proctorConfig?.premisesProctoring ||
+      assessment.premisesCameraRequired ||
+      assessment.premisesProctoring ||
+      (assessment.sections || []).some(s => isTruthy(s?.premisesCameraRequired) || isTruthy(s?.premisesProctoring))
+    );
+  }, [assessment]);
+
   const shouldUseProctoring = useMemo(() => {
     if (!assessment) return false;
-    return isTruthy(assessment.proctored) || (assessment.sections || []).some(s => isTruthy(s.proctored));
-  }, [assessment]);
+    return isTruthy(assessment.proctored) || (assessment.sections || []).some(s => isTruthy(s.proctored)) || isPremisesRequired;
+  }, [assessment, isPremisesRequired]);
 
   const shouldUseAudioProctoring = useMemo(() => {
     if (!assessment) return false;
@@ -2537,8 +2551,14 @@ const MultiSectionAssessment = () => {
     }
     setPasskeyError('');
     const targetIdx = (assessment?.sections || []).findIndex(sec => !secCompleted[sec.sectionId]);
-    handleStartSection(targetIdx >= 0 ? targetIdx : 0);
-  }, [assessment, passkeyInput, secCompleted, handleStartSection]);
+    const finalTargetIdx = targetIdx >= 0 ? targetIdx : 0;
+
+    if (shouldUseProctoring || isPremisesRequired) {
+      setShowInstructions(true);
+    } else {
+      handleStartSection(finalTargetIdx);
+    }
+  }, [assessment, passkeyInput, secCompleted, shouldUseProctoring, isPremisesRequired, handleStartSection]);
 
   const autoSubmitSection = useCallback(async (sectionResults) => {
     if (examFinishedRef.current) return;
@@ -3506,7 +3526,7 @@ const MultiSectionAssessment = () => {
             isTestActive={currentSecIdx >= 0 && !examFinished}
             isProctorActive={currentSecIdx >= 0 && !examFinished && secStarted && sectionCountdown === null}
             maxViolations={maxViolations}
-            premisesProctorRequired={Boolean(assessment?.proctorConfig?.premisesCameraRequired || assessment?.proctorConfig?.premisesProctoring || assessment?.premisesCameraRequired)}
+            premisesProctorRequired={isPremisesRequired}
             onReady={handleProctorReady}
             onViolationUpdate={handleProctorViolationUpdate}
             onAutoSubmit={handleProctorAutoSubmit}
@@ -3796,7 +3816,7 @@ const MultiSectionAssessment = () => {
                     <FaShieldAlt style={{ color: shouldUseProctoring ? '#0284c7' : '#94a3b8' }} />
                   </div>
                   <div className="msa-readiness-chip-val" style={{ color: shouldUseProctoring ? '#0284c7' : 'var(--text-main)' }}>
-                    {shouldUseProctoring ? 'Active' : 'Standard'}
+                    {isPremisesRequired ? 'Dual Camera' : (shouldUseProctoring ? 'AI Active' : 'Standard')}
                   </div>
                 </div>
 
@@ -3818,6 +3838,12 @@ const MultiSectionAssessment = () => {
                   <span>Important Examination Instructions:</span>
                 </div>
                 <div className="msa-guidelines-grid">
+                  {isPremisesRequired && (
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                      <FaCamera style={{ color: '#10b981', fontSize: '13px', marginTop: '3px', flexShrink: 0 }} />
+                      <span style={{ color: '#10b981', fontWeight: '600' }}>Dual camera setup required: you will pair your mobile camera before launch.</span>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                     <FaCheckCircle style={{ color: 'var(--accent-primary, #16a34a)', fontSize: '13px', marginTop: '3px', flexShrink: 0 }} />
                     <span>Fullscreen mode is strictly enforced during the exam.</span>
@@ -3903,6 +3929,22 @@ const MultiSectionAssessment = () => {
           )}
         </main>
       </div>
+
+      {/* Proctoring & Dual-Camera Pairing Instructions Modal */}
+      {showInstructions && (
+        <ProctoringInstructions
+          assessment={assessment}
+          onContinue={() => {
+            setShowInstructions(false);
+            const targetIdx = (assessment?.sections || []).findIndex(sec => !secCompleted[sec.sectionId]);
+            handleStartSection(targetIdx >= 0 ? targetIdx : 0);
+          }}
+          onCancel={() => {
+            setShowInstructions(false);
+            try { stopAllMediaAndAI(); } catch (_) {}
+          }}
+        />
+      )}
     </div>
   );
 };
