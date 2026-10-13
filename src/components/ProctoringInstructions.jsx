@@ -68,6 +68,9 @@ const ProctoringInstructions = ({
   const contentRef = useRef(null);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [isAcknowledged, setIsAcknowledged] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1); // 1 = Face capture, 2 = Mobile camera (if req) / Guidelines, 3 = Guidelines (if req)
+  // Track if we are proceeding to test (must not stop camera on unmount if proceeding)
+  const isProceedingRef = useRef(false);
 
   // Dual-Camera / Premises Proctoring Config
   const isPremisesRequired = Boolean(
@@ -135,11 +138,6 @@ const ProctoringInstructions = ({
       stream: streamRef.current
     });
   }, [photoStatus, premisesStatus, premisesFaceVerified, premisesAngleVerified, isAcknowledged, isPremisesRequired, currentStep, cameraStatus, onStatusChange]);
-
-  // Track if we are proceeding to test (must not stop camera on unmount if proceeding)
-  const isProceedingRef = useRef(false);
-
-  const [currentStep, setCurrentStep] = useState(1); // 1 = Face capture, 2 = Mobile camera (if req) / Guidelines, 3 = Guidelines (if req)
 
   const handleMobileFaceSnapshot = useCallback(async (mobilePhotoDataUrl) => {
     if (!mobilePhotoDataUrl) return;
