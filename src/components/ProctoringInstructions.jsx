@@ -7,9 +7,9 @@ import QRCode from 'qrcode';
 import { setProctorCacheExpiry } from '../utils/proctorCache';
 import { PremisesProctorSession } from '../services/premisesProctorService';
 
-// Helper to resolve models directory path under both file:// and http/https protocols
+// Helper to resolve models directory path under file://, base path, and http/https protocols
 const getModelsPath = (subPath) => {
-  if (window.location.protocol === 'file:') {
+  if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
     const path = window.location.pathname;
     const buildIndex = path.indexOf('/build/');
     if (buildIndex !== -1) {
@@ -22,7 +22,10 @@ const getModelsPath = (subPath) => {
       return `file://${basePath}${subPath}`;
     }
   }
-  return `/${subPath}`;
+  const cleanSub = String(subPath || '').replace(/^\/+/, '');
+  const baseUrl = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) || '/';
+  const prefix = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  return `${prefix}${cleanSub}`;
 };
 
 const ensureYolov8ForInstructions = async () => {
@@ -33,8 +36,16 @@ const ensureYolov8ForInstructions = async () => {
     window.yolov8Loaded = true;
     return model;
   } catch (err) {
-    console.warn('[ProctoringInstructions] Error loading YOLOv8 model:', err);
-    return null;
+    console.warn('[ProctoringInstructions] Primary YOLOv8 load failed, trying /models/yolov8 fallback:', err);
+    try {
+      const model = await tf.loadGraphModel('/models/yolov8/model.json');
+      window.yolov8Model = model;
+      window.yolov8Loaded = true;
+      return model;
+    } catch (err2) {
+      console.warn('[ProctoringInstructions] Error loading YOLOv8 model:', err2);
+      return null;
+    }
   }
 };
 
@@ -132,10 +143,19 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
         img.onerror = reject;
       });
 
-      const detection = await faceapi.detectSingleFace(
-        img,
-        new faceapi.SsdMobilenetv1Options({ minConfidence: 0.55 })
-      ).withFaceLandmarks().withFaceDescriptor();
+      // Progressive detection cascade for mobile photo
+      const mobileConfidences = [0.55, 0.38, 0.25];
+      let detection = null;
+      for (const minConf of mobileConfidences) {
+        detection = await faceapi.detectSingleFace(
+          img,
+          new faceapi.SsdMobilenetv1Options({ minConfidence: minConf })
+        ).withFaceLandmarks().withFaceDescriptor();
+        if (detection) {
+          console.log(`[ProctoringInstructions] Mobile face detected at minConfidence: ${minConf}`);
+          break;
+        }
+      }
 
       if (!detection) {
         console.warn('[ProctoringInstructions] No clear face detected in mobile snapshot');
@@ -526,8 +546,13 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
 
   const loadFaceApiForPhoto = async () => {
     try {
-      if (!window.faceApiLoaded) {
-        console.log('[ProctoringInstructions] Loading faceapi models...');
+      const isLoaded = Boolean(
+        faceapi.nets.ssdMobilenetv1?.isLoaded &&
+        faceapi.nets.faceLandmark68Net?.isLoaded &&
+        faceapi.nets.faceRecognitionNet?.isLoaded
+      );
+      if (!isLoaded) {
+        console.log('[ProctoringInstructions] Loading faceapi models from:', getModelsPath('models/face-api'));
         await Promise.all([
           faceapi.nets.ssdMobilenetv1.loadFromUri(getModelsPath('models/face-api')),
           faceapi.nets.faceLandmark68Net.loadFromUri(getModelsPath('models/face-api')),
@@ -537,8 +562,31 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
       }
       return true;
     } catch (err) {
-      console.error('[ProctoringInstructions] Error loading faceapi models:', err);
-      return false;
+      console.warn('[ProctoringInstructions] Primary faceapi model load failed:', err);
+      try {
+        console.log('[ProctoringInstructions] Retrying faceapi models from /models/face-api fallback...');
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri('/models/face-api'),
+          faceapi.nets.faceLandmark68Net.loadFromUri('/models/face-api'),
+          faceapi.nets.faceRecognitionNet.loadFromUri('/models/face-api')
+        ]);
+        window.faceApiLoaded = true;
+        return true;
+      } catch (err2) {
+        try {
+          console.log('[ProctoringInstructions] Retrying faceapi models from ./models/face-api fallback...');
+          await Promise.all([
+            faceapi.nets.ssdMobilenetv1.loadFromUri('./models/face-api'),
+            faceapi.nets.faceLandmark68Net.loadFromUri('./models/face-api'),
+            faceapi.nets.faceRecognitionNet.loadFromUri('./models/face-api')
+          ]);
+          window.faceApiLoaded = true;
+          return true;
+        } catch (err3) {
+          console.error('[ProctoringInstructions] All faceapi model load attempts failed:', err3);
+          return false;
+        }
+      }
     }
   };
 
@@ -572,41 +620,151 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
     }
     
     const video = videoRef.current;
-    if (!video || video.videoWidth === 0 || video.videoHeight === 0) {
+    if (!video) {
       dispatchPhoto({ error: "Camera stream is not ready yet. Please wait.", capturing: false });
+      return;
+    }
+
+    // Wait for video frame to be ready/decoded if needed
+    if (video.videoWidth === 0 || video.videoHeight === 0 || video.readyState < 2) {
+      console.log('[ProctoringInstructions] Waiting for video stream frame decoding...');
+      await new Promise(resolve => {
+        if (video.videoWidth > 0 && video.videoHeight > 0 && video.readyState >= 2) return resolve();
+        const handler = () => {
+          video.removeEventListener('loadeddata', handler);
+          video.removeEventListener('canplay', handler);
+          resolve();
+        };
+        video.addEventListener('loadeddata', handler);
+        video.addEventListener('canplay', handler);
+        setTimeout(resolve, 800);
+      });
+    }
+
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      dispatchPhoto({ error: "Camera stream resolution is not available. Please ensure camera is active.", capturing: false });
       return;
     }
     
     try {
-      console.log('[ProctoringInstructions] Executing manual face capture...');
-      const detection = await faceapi.detectSingleFace(
-        video,
-        new faceapi.SsdMobilenetv1Options({ minConfidence: 0.75 })
-      ).withFaceLandmarks().withFaceDescriptor();
-      
-      if (!detection) {
-        dispatchPhoto({ error: "No face detected in the frame. Please look directly at the camera and try again.", status: 'failed', capturing: false });
-        return;
-      }
-      
-      const box = detection.detection.box;
+      console.log('[ProctoringInstructions] Capturing frame to high-precision canvas...');
       const videoWidth = video.videoWidth;
       const videoHeight = video.videoHeight;
       
-      // 1. Verify margins (Face too close to edges)
-      const borderThresholdX = videoWidth * 0.05;
-      const borderThresholdY = videoHeight * 0.05;
-      if (
-        box.x < borderThresholdX || 
-        box.y < borderThresholdY || 
-        (box.x + box.width) > (videoWidth - borderThresholdX) || 
-        (box.y + box.height) > (videoHeight - borderThresholdY)
-      ) {
-        dispatchPhoto({ error: "Face is too close to boundaries. Please center your face inside the guide.", status: 'failed', capturing: false });
+      // Step 1: Draw directly to canvas first.
+      // This creates a static, uncompressed bitmap buffer immune to live video decoding race conditions.
+      const canvas = document.createElement('canvas');
+      canvas.width = videoWidth;
+      canvas.height = videoHeight;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+      
+      // Step 2: Quality & Brightness Guard
+      try {
+        const sampleData = ctx.getImageData(0, 0, videoWidth, videoHeight).data;
+        let sum = 0;
+        const step = Math.max(4, Math.floor(sampleData.length / 3000) * 4);
+        let count = 0;
+        for (let i = 0; i < sampleData.length; i += step) {
+          sum += (sampleData[i] + sampleData[i + 1] + sampleData[i + 2]) / 3;
+          count++;
+        }
+        const avgBrightness = count > 0 ? (sum / count) : 100;
+        console.log(`[ProctoringInstructions] Captured frame brightness: ${avgBrightness.toFixed(1)}/255`);
+        if (avgBrightness < 10) {
+          dispatchPhoto({
+            error: "Camera frame is completely dark. Check if your camera privacy shutter is closed or room lighting is too dim.",
+            status: 'failed',
+            capturing: false
+          });
+          return;
+        }
+      } catch (pixelErr) {
+        console.warn('[ProctoringInstructions] Brightness check non-fatal error:', pixelErr);
+      }
+
+      // Step 3: Progressive Multi-Tier Face Detection on the static Canvas
+      // In production/deployment, webcams with varying ambient lighting, auto-exposure,
+      // and WebGL precision differences often yield confidence scores between 0.40 and 0.70.
+      // A multi-tier cascade avoids false rejections while maintaining 68-landmark structural accuracy.
+      const confidenceLevels = [0.55, 0.40, 0.28];
+      let detection = null;
+      let usedConfidence = null;
+
+      for (const minConf of confidenceLevels) {
+        detection = await faceapi.detectSingleFace(
+          canvas,
+          new faceapi.SsdMobilenetv1Options({ minConfidence: minConf })
+        ).withFaceLandmarks().withFaceDescriptor();
+
+        if (detection) {
+          usedConfidence = minConf;
+          console.log(`[ProctoringInstructions] Face detected at minConfidence ${minConf}! Score: ${detection.detection.score?.toFixed(3)}`);
+          break;
+        }
+      }
+
+      // Step 4: If still not detected, try contrast-boosted fallback pass
+      if (!detection) {
+        console.log('[ProctoringInstructions] Standard passes yielded no face, attempting auto-contrast pass...');
+        const boostedCanvas = document.createElement('canvas');
+        boostedCanvas.width = videoWidth;
+        boostedCanvas.height = videoHeight;
+        const bCtx = boostedCanvas.getContext('2d');
+        bCtx.filter = 'contrast(1.3) brightness(1.1)';
+        bCtx.drawImage(canvas, 0, 0);
+
+        detection = await faceapi.detectSingleFace(
+          boostedCanvas,
+          new faceapi.SsdMobilenetv1Options({ minConfidence: 0.22 })
+        ).withFaceLandmarks().withFaceDescriptor();
+
+        if (detection) {
+          console.log(`[ProctoringInstructions] Face detected via contrast-boosted pass! Score: ${detection.detection.score?.toFixed(3)}`);
+        }
+      }
+
+      // Step 5: Check multiple faces or complete absence
+      if (!detection) {
+        try {
+          const allFaces = await faceapi.detectAllFaces(
+            canvas,
+            new faceapi.SsdMobilenetv1Options({ minConfidence: 0.25 })
+          );
+          if (allFaces && allFaces.length > 1) {
+            dispatchPhoto({
+              error: `Multiple people (${allFaces.length}) detected. Please ensure only you are visible in the camera frame.`,
+              status: 'failed',
+              capturing: false
+            });
+            return;
+          }
+        } catch (_) {}
+
+        dispatchPhoto({
+          error: "No face detected in the frame. Please look directly at the camera, ensure good lighting, and try again.",
+          status: 'failed',
+          capturing: false
+        });
         return;
       }
 
-      // 2. Verify pose/symmetry (Looking straight check)
+      const box = detection.detection.box;
+
+      // 6. Verify margins (Face must not be severely clipped outside viewport)
+      const borderThresholdX = videoWidth * 0.02;
+      const borderThresholdY = videoHeight * 0.02;
+      if (
+        box.x < -borderThresholdX || 
+        box.y < -borderThresholdY || 
+        (box.x + box.width) > (videoWidth + borderThresholdX) || 
+        (box.y + box.height) > (videoHeight + borderThresholdY)
+      ) {
+        dispatchPhoto({ error: "Face is cut off at the edge. Please center your face inside the guide.", status: 'failed', capturing: false });
+        return;
+      }
+
+      // 7. Verify pose/symmetry (Looking straight check)
       const landmarks = detection.landmarks;
       const leftEye = landmarks.getLeftEye()[0];
       const rightEye = landmarks.getRightEye()[3];
@@ -618,20 +776,14 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
       if (distLeft > 0 && distRight > 0) {
         const ratio = distLeft / distRight;
         console.log('[ProctoringInstructions] Manual capture symmetry ratio:', ratio);
-        if (ratio < 0.55 || ratio > 1.8) {
-          dispatchPhoto({ error: "Please look straight at the camera. Side-facing photos are rejected.", status: 'failed', capturing: false });
+        if (ratio < 0.40 || ratio > 2.5) {
+          dispatchPhoto({ error: "Please look straight at the camera. Severe side-facing photos are rejected.", status: 'failed', capturing: false });
           return;
         }
       }
       
-      // Draw image to canvas
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      // Step 8: Export snapshot & descriptor
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
       
       const assessmentId = assessment?.id || 'unknown';
       localStorage.setItem('proctor_reference_photo_' + assessmentId, dataUrl);

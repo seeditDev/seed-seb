@@ -8,7 +8,7 @@ import { recordViolation, getViolations } from '../utils/proctorCache';
 
 // Helper to resolve models directory path under both file:// and http/https protocols
 const getModelsPath = (subPath) => {
-  if (window.location.protocol === 'file:') {
+  if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
     const path = window.location.pathname;
     const buildIndex = path.indexOf('/build/');
     if (buildIndex !== -1) {
@@ -21,7 +21,10 @@ const getModelsPath = (subPath) => {
       return `file://${basePath}${subPath}`;
     }
   }
-  return `/${subPath}`;
+  const cleanSub = String(subPath || '').replace(/^\/+/, '');
+  const baseUrl = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) || '/';
+  const prefix = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  return `${prefix}${cleanSub}`;
 };
 
 // Dream AI Proctoring Pipeline Timing Configuration
@@ -421,8 +424,19 @@ const ProctoringEngine = ({
         window.faceApiLoaded = true;
         console.log('[ProctoringEngine] Face-API loaded successfully');
       } catch (faceErr) {
-        window.faceApiLoaded = false;
-        console.warn('[ProctoringEngine] Face-API loading failed:', faceErr);
+        console.warn('[ProctoringEngine] Face-API primary loading failed, retrying fallback /models/face-api:', faceErr);
+        try {
+          await Promise.all([
+            faceapi.nets.ssdMobilenetv1.loadFromUri('/models/face-api'),
+            faceapi.nets.faceLandmark68Net.loadFromUri('/models/face-api'),
+            faceapi.nets.faceRecognitionNet.loadFromUri('/models/face-api')
+          ]);
+          window.faceApiLoaded = true;
+          console.log('[ProctoringEngine] Face-API loaded via fallback successfully');
+        } catch (fbErr) {
+          window.faceApiLoaded = false;
+          console.warn('[ProctoringEngine] Face-API fallback loading also failed:', fbErr);
+        }
       }
 
       // 2. Load YOLOv8 model — LOCAL PACKAGED MODEL ONLY
@@ -438,9 +452,15 @@ const ProctoringEngine = ({
         window.yolov8Loaded = true;
         console.log('[ProctoringEngine] YOLOv8 loaded from local model successfully');
       } catch (yoloErr) {
-        window.yolov8Loaded = false;
-        console.warn('[ProctoringEngine] YOLOv8 local model load failed:', yoloErr.message);
-        // No CDN fallback — fail is surfaced via modelStatus and the required-guard below
+        console.warn('[ProctoringEngine] YOLOv8 primary model load failed, retrying /models/yolov8/model.json:', yoloErr.message);
+        try {
+          window.yolov8Model = await tf.loadGraphModel('/models/yolov8/model.json');
+          window.yolov8Loaded = true;
+          console.log('[ProctoringEngine] YOLOv8 loaded from fallback successfully');
+        } catch (yoloFbErr) {
+          window.yolov8Loaded = false;
+          console.warn('[ProctoringEngine] YOLOv8 local model fallback load failed:', yoloFbErr.message);
+        }
       }
 
       globalModelsLoaded = true;
