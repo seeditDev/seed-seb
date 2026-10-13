@@ -563,18 +563,23 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
 
     const loadPromise = (async () => {
       try {
-        console.log('[ProctoringInstructions] Loading faceapi models from:', getModelsPath('models/face-api'));
+        console.log('[ProctoringInstructions] [v2.4.4-bin-weights] Loading faceapi models from:', getModelsPath('models/face-api'));
         await Promise.all([
           faceapi.nets.ssdMobilenetv1.loadFromUri(getModelsPath('models/face-api')),
           faceapi.nets.faceLandmark68Net.loadFromUri(getModelsPath('models/face-api')),
           faceapi.nets.faceRecognitionNet.loadFromUri(getModelsPath('models/face-api'))
         ]);
         window.faceApiLoaded = true;
+        console.log('[ProctoringInstructions] [v2.4.4-bin-weights] Models loaded successfully. Params present:', {
+          ssd: !!faceapi.nets.ssdMobilenetv1?.params,
+          landmarks: !!faceapi.nets.faceLandmark68Net?.params,
+          recognition: !!faceapi.nets.faceRecognitionNet?.params
+        });
         return true;
       } catch (err) {
-        console.warn('[ProctoringInstructions] Primary faceapi model load failed:', err);
+        console.warn('[ProctoringInstructions] [v2.4.4-bin-weights] Primary faceapi model load failed:', err);
         try {
-          console.log('[ProctoringInstructions] Retrying faceapi models from /models/face-api fallback...');
+          console.log('[ProctoringInstructions] [v2.4.4-bin-weights] Retrying faceapi models from /models/face-api fallback...');
           await Promise.all([
             faceapi.nets.ssdMobilenetv1.loadFromUri('/models/face-api'),
             faceapi.nets.faceLandmark68Net.loadFromUri('/models/face-api'),
@@ -801,7 +806,9 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
           console.warn('[ProctoringInstructions] Diagnostic canvas detectAllFaces error:', errC);
         }
 
-        console.warn('[ProctoringInstructions] Diagnostic face scan results:', {
+        console.warn('[ProctoringInstructions] [v2.4.4-bin-weights] Diagnostic face scan results:', {
+          modelLoaded: window.faceApiLoaded,
+          ssdParams: !!faceapi.nets.ssdMobilenetv1?.params,
           videoFaceCount: safeVideoFaces.length,
           videoScores: safeVideoFaces.map(f => (typeof f?.score === 'number' ? f.score.toFixed(3) : 'N/A')),
           canvasFaceCount: safeCanvasFaces.length,
