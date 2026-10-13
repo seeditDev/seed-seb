@@ -544,54 +544,74 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
 
  
 
-  const loadFaceApiForPhoto = async () => {
-    try {
-      const isAlreadyLoaded = Boolean(
-        window.faceApiLoaded ||
-        (faceapi.nets.ssdMobilenetv1?.params &&
-         faceapi.nets.faceLandmark68Net?.params &&
-         faceapi.nets.faceRecognitionNet?.params)
-      );
-      if (isAlreadyLoaded) {
-        window.faceApiLoaded = true;
-        return true;
-      }
-      console.log('[ProctoringInstructions] Loading faceapi models from:', getModelsPath('models/face-api'));
-      await Promise.all([
-        faceapi.nets.ssdMobilenetv1.loadFromUri(getModelsPath('models/face-api')),
-        faceapi.nets.faceLandmark68Net.loadFromUri(getModelsPath('models/face-api')),
-        faceapi.nets.faceRecognitionNet.loadFromUri(getModelsPath('models/face-api'))
-      ]);
+  // Concurrency lock for face-api model loading
+  const faceApiLoadingPromiseRef = useRef(null);
+
+  const loadFaceApiForPhoto = useCallback(async () => {
+    if (window.faceApiLoaded) return true;
+    if (
+      faceapi.nets.ssdMobilenetv1?.params &&
+      faceapi.nets.faceLandmark68Net?.params &&
+      faceapi.nets.faceRecognitionNet?.params
+    ) {
       window.faceApiLoaded = true;
       return true;
-    } catch (err) {
-      console.warn('[ProctoringInstructions] Primary faceapi model load failed:', err);
+    }
+    if (faceApiLoadingPromiseRef.current) {
+      return faceApiLoadingPromiseRef.current;
+    }
+
+    const loadPromise = (async () => {
       try {
-        console.log('[ProctoringInstructions] Retrying faceapi models from /models/face-api fallback...');
+        console.log('[ProctoringInstructions] Loading faceapi models from:', getModelsPath('models/face-api'));
         await Promise.all([
-          faceapi.nets.ssdMobilenetv1.loadFromUri('/models/face-api'),
-          faceapi.nets.faceLandmark68Net.loadFromUri('/models/face-api'),
-          faceapi.nets.faceRecognitionNet.loadFromUri('/models/face-api')
+          faceapi.nets.ssdMobilenetv1.loadFromUri(getModelsPath('models/face-api')),
+          faceapi.nets.faceLandmark68Net.loadFromUri(getModelsPath('models/face-api')),
+          faceapi.nets.faceRecognitionNet.loadFromUri(getModelsPath('models/face-api'))
         ]);
         window.faceApiLoaded = true;
         return true;
-      } catch (err2) {
+      } catch (err) {
+        console.warn('[ProctoringInstructions] Primary faceapi model load failed:', err);
         try {
-          console.log('[ProctoringInstructions] Retrying faceapi models from ./models/face-api fallback...');
+          console.log('[ProctoringInstructions] Retrying faceapi models from /models/face-api fallback...');
           await Promise.all([
-            faceapi.nets.ssdMobilenetv1.loadFromUri('./models/face-api'),
-            faceapi.nets.faceLandmark68Net.loadFromUri('./models/face-api'),
-            faceapi.nets.faceRecognitionNet.loadFromUri('./models/face-api')
+            faceapi.nets.ssdMobilenetv1.loadFromUri('/models/face-api'),
+            faceapi.nets.faceLandmark68Net.loadFromUri('/models/face-api'),
+            faceapi.nets.faceRecognitionNet.loadFromUri('/models/face-api')
           ]);
           window.faceApiLoaded = true;
           return true;
-        } catch (err3) {
-          console.error('[ProctoringInstructions] All faceapi model load attempts failed:', err3);
-          return false;
+        } catch (err2) {
+          try {
+            console.log('[ProctoringInstructions] Retrying faceapi models from ./models/face-api fallback...');
+            await Promise.all([
+              faceapi.nets.ssdMobilenetv1.loadFromUri('./models/face-api'),
+              faceapi.nets.faceLandmark68Net.loadFromUri('./models/face-api'),
+              faceapi.nets.faceRecognitionNet.loadFromUri('./models/face-api')
+            ]);
+            window.faceApiLoaded = true;
+            return true;
+          } catch (err3) {
+            console.error('[ProctoringInstructions] All faceapi model load attempts failed:', err3);
+            return false;
+          }
         }
+      } finally {
+        faceApiLoadingPromiseRef.current = null;
       }
-    }
-  };
+    })();
+
+    faceApiLoadingPromiseRef.current = loadPromise;
+    return loadPromise;
+  }, []);
+
+  // Pre-load face-api models immediately in background when component mounts
+  useEffect(() => {
+    loadFaceApiForPhoto().then(loaded => {
+      if (loaded) console.log('[ProctoringInstructions] Background faceapi models pre-loaded successfully');
+    }).catch(() => {});
+  }, [loadFaceApiForPhoto]);
 
   // Bind stream to video element when videoRef becomes available after permission is granted
   useEffect(() => {
@@ -689,32 +709,42 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
       let detection = null;
 
       // PASS 1: Test HTMLVideoElement directly (Hardware WebGL video texture)
-      const videoConfidenceLevels = [0.55, 0.40, 0.25, 0.15];
+      const videoConfidenceLevels = [0.55, 0.40, 0.25, 0.15, 0.08];
       for (const minConf of videoConfidenceLevels) {
-        detection = await faceapi.detectSingleFace(
-          video,
-          new faceapi.SsdMobilenetv1Options({ minConfidence: minConf })
-        ).withFaceLandmarks().withFaceDescriptor();
+        try {
+          const task = faceapi.detectSingleFace(
+            video,
+            new faceapi.SsdMobilenetv1Options({ minConfidence: minConf })
+          ).withFaceLandmarks().withFaceDescriptor();
+          detection = typeof task.run === 'function' ? await task.run() : await task;
 
-        if (detection) {
-          console.log(`[ProctoringInstructions] Face detected directly on video stream at minConfidence ${minConf}! Score: ${detection.detection.score?.toFixed(3)}`);
-          break;
+          if (detection) {
+            console.log(`[ProctoringInstructions] Face detected directly on video stream at minConfidence ${minConf}! Score: ${detection.detection?.score?.toFixed(3)}`);
+            break;
+          }
+        } catch (passErr) {
+          console.warn(`[ProctoringInstructions] Video detection pass at ${minConf} error:`, passErr);
         }
       }
 
       // PASS 2: If video pass yielded no face, test the static Canvas bitmap buffer
       if (!detection) {
         console.log('[ProctoringInstructions] Video pass yielded no face, attempting static canvas buffer...');
-        const canvasConfidenceLevels = [0.40, 0.25, 0.15];
+        const canvasConfidenceLevels = [0.40, 0.25, 0.15, 0.08];
         for (const minConf of canvasConfidenceLevels) {
-          detection = await faceapi.detectSingleFace(
-            canvas,
-            new faceapi.SsdMobilenetv1Options({ minConfidence: minConf })
-          ).withFaceLandmarks().withFaceDescriptor();
+          try {
+            const task = faceapi.detectSingleFace(
+              canvas,
+              new faceapi.SsdMobilenetv1Options({ minConfidence: minConf })
+            ).withFaceLandmarks().withFaceDescriptor();
+            detection = typeof task.run === 'function' ? await task.run() : await task;
 
-          if (detection) {
-            console.log(`[ProctoringInstructions] Face detected on canvas buffer at minConfidence ${minConf}! Score: ${detection.detection.score?.toFixed(3)}`);
-            break;
+            if (detection) {
+              console.log(`[ProctoringInstructions] Face detected on canvas buffer at minConfidence ${minConf}! Score: ${detection.detection?.score?.toFixed(3)}`);
+              break;
+            }
+          } catch (passErr) {
+            console.warn(`[ProctoringInstructions] Canvas detection pass at ${minConf} error:`, passErr);
           }
         }
       }
@@ -726,46 +756,65 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
         boostedCanvas.width = videoWidth;
         boostedCanvas.height = videoHeight;
         const bCtx = boostedCanvas.getContext('2d');
-        bCtx.filter = 'contrast(1.3) brightness(1.1)';
+        bCtx.filter = 'contrast(1.35) brightness(1.15)';
         bCtx.drawImage(canvas, 0, 0);
 
-        detection = await faceapi.detectSingleFace(
-          boostedCanvas,
-          new faceapi.SsdMobilenetv1Options({ minConfidence: 0.15 })
-        ).withFaceLandmarks().withFaceDescriptor();
+        try {
+          const task = faceapi.detectSingleFace(
+            boostedCanvas,
+            new faceapi.SsdMobilenetv1Options({ minConfidence: 0.08 })
+          ).withFaceLandmarks().withFaceDescriptor();
+          detection = typeof task.run === 'function' ? await task.run() : await task;
 
-        if (detection) {
-          console.log(`[ProctoringInstructions] Face detected via contrast-boosted pass! Score: ${detection.detection.score?.toFixed(3)}`);
+          if (detection) {
+            console.log(`[ProctoringInstructions] Face detected via contrast-boosted pass! Score: ${detection.detection?.score?.toFixed(3)}`);
+          }
+        } catch (boostErr) {
+          console.warn('[ProctoringInstructions] Contrast boost pass error:', boostErr);
         }
       }
 
-      // Step 4: Verification of Multiple Faces or Complete Absence + Diagnostic logging
+      // Step 4: Verification of Multiple Faces or Complete Absence + Safe Diagnostic logging
       if (!detection) {
+        let safeVideoFaces = [];
+        let safeCanvasFaces = [];
+
         try {
-          const allVideoFaces = await faceapi.detectAllFaces(
+          const taskV = faceapi.detectAllFaces(
             video,
             new faceapi.SsdMobilenetv1Options({ minConfidence: 0.05 })
           );
-          const allCanvasFaces = await faceapi.detectAllFaces(
+          const rawV = typeof taskV.run === 'function' ? await taskV.run() : await taskV;
+          safeVideoFaces = Array.isArray(rawV) ? rawV : [];
+        } catch (errV) {
+          console.warn('[ProctoringInstructions] Diagnostic video detectAllFaces error:', errV);
+        }
+
+        try {
+          const taskC = faceapi.detectAllFaces(
             canvas,
             new faceapi.SsdMobilenetv1Options({ minConfidence: 0.05 })
           );
-          console.warn('[ProctoringInstructions] Diagnostic face scan results:', {
-            videoFaceCount: allVideoFaces?.length || 0,
-            videoScores: allVideoFaces?.map(f => f.score) || [],
-            canvasFaceCount: allCanvasFaces?.length || 0,
-            canvasScores: allCanvasFaces?.map(f => f.score) || []
+          const rawC = typeof taskC.run === 'function' ? await taskC.run() : await taskC;
+          safeCanvasFaces = Array.isArray(rawC) ? rawC : [];
+        } catch (errC) {
+          console.warn('[ProctoringInstructions] Diagnostic canvas detectAllFaces error:', errC);
+        }
+
+        console.warn('[ProctoringInstructions] Diagnostic face scan results:', {
+          videoFaceCount: safeVideoFaces.length,
+          videoScores: safeVideoFaces.map(f => (typeof f?.score === 'number' ? f.score.toFixed(3) : 'N/A')),
+          canvasFaceCount: safeCanvasFaces.length,
+          canvasScores: safeCanvasFaces.map(f => (typeof f?.score === 'number' ? f.score.toFixed(3) : 'N/A'))
+        });
+
+        if (safeVideoFaces.length > 1 || safeCanvasFaces.length > 1) {
+          dispatchPhoto({
+            error: 'Multiple people detected in the camera frame. Please ensure only you are visible.',
+            status: 'failed',
+            capturing: false
           });
-          if ((allVideoFaces && allVideoFaces.length > 1) || (allCanvasFaces && allCanvasFaces.length > 1)) {
-            dispatchPhoto({
-              error: 'Multiple people detected in the camera frame. Please ensure only you are visible.',
-              status: 'failed',
-              capturing: false
-            });
-            return;
-          }
-        } catch (diagErr) {
-          console.warn('[ProctoringInstructions] Diagnostic face check error:', diagErr);
+          return;
         }
 
         dispatchPhoto({
