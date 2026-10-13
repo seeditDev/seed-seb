@@ -223,9 +223,9 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
     };
   }, []);
 
-  // Initialize WebRTC Premises Camera Pairing Session when required
+  // Initialize WebRTC Premises Camera Pairing Session ONLY after face photo is registered and user enters Step 2
   useEffect(() => {
-    if (!isPremisesRequired) return;
+    if (!isPremisesRequired || photoStatus !== 'captured' || currentStep < 2) return;
 
     // Reuse existing active session across re-renders
     if (premisesSessionRef.current && !premisesSessionRef.current.isDestroyed) {
@@ -301,7 +301,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
       isCancelled = true;
       // Do NOT destroy the session during render transitions; session stays live until test proceeds or user cancels
     };
-  }, [isPremisesRequired, assessment?.id, handleMobileFaceSnapshot]);
+  }, [isPremisesRequired, photoStatus, currentStep, assessment?.id, handleMobileFaceSnapshot]);
 
   const handleRegeneratePremisesSession = async () => {
     try {
@@ -546,20 +546,23 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
 
   const loadFaceApiForPhoto = async () => {
     try {
-      const isLoaded = Boolean(
-        faceapi.nets.ssdMobilenetv1?.isLoaded &&
-        faceapi.nets.faceLandmark68Net?.isLoaded &&
-        faceapi.nets.faceRecognitionNet?.isLoaded
+      const isAlreadyLoaded = Boolean(
+        window.faceApiLoaded ||
+        (faceapi.nets.ssdMobilenetv1?.params &&
+         faceapi.nets.faceLandmark68Net?.params &&
+         faceapi.nets.faceRecognitionNet?.params)
       );
-      if (!isLoaded) {
-        console.log('[ProctoringInstructions] Loading faceapi models from:', getModelsPath('models/face-api'));
-        await Promise.all([
-          faceapi.nets.ssdMobilenetv1.loadFromUri(getModelsPath('models/face-api')),
-          faceapi.nets.faceLandmark68Net.loadFromUri(getModelsPath('models/face-api')),
-          faceapi.nets.faceRecognitionNet.loadFromUri(getModelsPath('models/face-api'))
-        ]);
+      if (isAlreadyLoaded) {
         window.faceApiLoaded = true;
+        return true;
       }
+      console.log('[ProctoringInstructions] Loading faceapi models from:', getModelsPath('models/face-api'));
+      await Promise.all([
+        faceapi.nets.ssdMobilenetv1.loadFromUri(getModelsPath('models/face-api')),
+        faceapi.nets.faceLandmark68Net.loadFromUri(getModelsPath('models/face-api')),
+        faceapi.nets.faceRecognitionNet.loadFromUri(getModelsPath('models/face-api'))
+      ]);
+      window.faceApiLoaded = true;
       return true;
     } catch (err) {
       console.warn('[ProctoringInstructions] Primary faceapi model load failed:', err);
@@ -652,7 +655,6 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
       const videoHeight = video.videoHeight;
       
       // Step 1: Draw directly to canvas first.
-      // This creates a static, uncompressed bitmap buffer immune to live video decoding race conditions.
       const canvas = document.createElement('canvas');
       canvas.width = videoWidth;
       canvas.height = videoHeight;
@@ -683,28 +685,41 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
         console.warn('[ProctoringInstructions] Brightness check non-fatal error:', pixelErr);
       }
 
-      // Step 3: Progressive Multi-Tier Face Detection on the static Canvas
-      // In production/deployment, webcams with varying ambient lighting, auto-exposure,
-      // and WebGL precision differences often yield confidence scores between 0.40 and 0.70.
-      // A multi-tier cascade avoids false rejections while maintaining 68-landmark structural accuracy.
-      const confidenceLevels = [0.55, 0.40, 0.28];
+      // Step 3: Multi-Tier Face Detection Cascade
       let detection = null;
-      let usedConfidence = null;
 
-      for (const minConf of confidenceLevels) {
+      // PASS 1: Test HTMLVideoElement directly (Hardware WebGL video texture)
+      const videoConfidenceLevels = [0.55, 0.40, 0.25, 0.15];
+      for (const minConf of videoConfidenceLevels) {
         detection = await faceapi.detectSingleFace(
-          canvas,
+          video,
           new faceapi.SsdMobilenetv1Options({ minConfidence: minConf })
         ).withFaceLandmarks().withFaceDescriptor();
 
         if (detection) {
-          usedConfidence = minConf;
-          console.log(`[ProctoringInstructions] Face detected at minConfidence ${minConf}! Score: ${detection.detection.score?.toFixed(3)}`);
+          console.log(`[ProctoringInstructions] Face detected directly on video stream at minConfidence ${minConf}! Score: ${detection.detection.score?.toFixed(3)}`);
           break;
         }
       }
 
-      // Step 4: If still not detected, try contrast-boosted fallback pass
+      // PASS 2: If video pass yielded no face, test the static Canvas bitmap buffer
+      if (!detection) {
+        console.log('[ProctoringInstructions] Video pass yielded no face, attempting static canvas buffer...');
+        const canvasConfidenceLevels = [0.40, 0.25, 0.15];
+        for (const minConf of canvasConfidenceLevels) {
+          detection = await faceapi.detectSingleFace(
+            canvas,
+            new faceapi.SsdMobilenetv1Options({ minConfidence: minConf })
+          ).withFaceLandmarks().withFaceDescriptor();
+
+          if (detection) {
+            console.log(`[ProctoringInstructions] Face detected on canvas buffer at minConfidence ${minConf}! Score: ${detection.detection.score?.toFixed(3)}`);
+            break;
+          }
+        }
+      }
+
+      // PASS 3: Contrast-boosted fallback pass
       if (!detection) {
         console.log('[ProctoringInstructions] Standard passes yielded no face, attempting auto-contrast pass...');
         const boostedCanvas = document.createElement('canvas');
@@ -716,7 +731,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
 
         detection = await faceapi.detectSingleFace(
           boostedCanvas,
-          new faceapi.SsdMobilenetv1Options({ minConfidence: 0.22 })
+          new faceapi.SsdMobilenetv1Options({ minConfidence: 0.15 })
         ).withFaceLandmarks().withFaceDescriptor();
 
         if (detection) {
@@ -724,22 +739,34 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
         }
       }
 
-      // Step 5: Check multiple faces or complete absence
+      // Step 4: Verification of Multiple Faces or Complete Absence + Diagnostic logging
       if (!detection) {
         try {
-          const allFaces = await faceapi.detectAllFaces(
-            canvas,
-            new faceapi.SsdMobilenetv1Options({ minConfidence: 0.25 })
+          const allVideoFaces = await faceapi.detectAllFaces(
+            video,
+            new faceapi.SsdMobilenetv1Options({ minConfidence: 0.05 })
           );
-          if (allFaces && allFaces.length > 1) {
+          const allCanvasFaces = await faceapi.detectAllFaces(
+            canvas,
+            new faceapi.SsdMobilenetv1Options({ minConfidence: 0.05 })
+          );
+          console.warn('[ProctoringInstructions] Diagnostic face scan results:', {
+            videoFaceCount: allVideoFaces?.length || 0,
+            videoScores: allVideoFaces?.map(f => f.score) || [],
+            canvasFaceCount: allCanvasFaces?.length || 0,
+            canvasScores: allCanvasFaces?.map(f => f.score) || []
+          });
+          if ((allVideoFaces && allVideoFaces.length > 1) || (allCanvasFaces && allCanvasFaces.length > 1)) {
             dispatchPhoto({
-              error: `Multiple people (${allFaces.length}) detected. Please ensure only you are visible in the camera frame.`,
+              error: 'Multiple people detected in the camera frame. Please ensure only you are visible.',
               status: 'failed',
               capturing: false
             });
             return;
           }
-        } catch (_) {}
+        } catch (diagErr) {
+          console.warn('[ProctoringInstructions] Diagnostic face check error:', diagErr);
+        }
 
         dispatchPhoto({
           error: "No face detected in the frame. Please look directly at the camera, ensure good lighting, and try again.",
@@ -751,7 +778,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
 
       const box = detection.detection.box;
 
-      // 6. Verify margins (Face must not be severely clipped outside viewport)
+      // Step 5: Verify margins (Face must not be severely clipped outside viewport)
       const borderThresholdX = videoWidth * 0.02;
       const borderThresholdY = videoHeight * 0.02;
       if (
@@ -764,7 +791,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
         return;
       }
 
-      // 7. Verify pose/symmetry (Looking straight check)
+      // Step 6: Verify pose/symmetry (Looking straight check)
       const landmarks = detection.landmarks;
       const leftEye = landmarks.getLeftEye()[0];
       const rightEye = landmarks.getRightEye()[3];
@@ -782,7 +809,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
         }
       }
       
-      // Step 8: Export snapshot & descriptor
+      // Step 7: Export snapshot & descriptor
       const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
       
       const assessmentId = assessment?.id || 'unknown';
@@ -1083,6 +1110,20 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                           const assessmentId = assessment?.id || 'unknown';
                           localStorage.removeItem('proctor_reference_photo_' + assessmentId);
                           localStorage.removeItem('proctor_reference_descriptor_' + assessmentId);
+                          if (premisesSessionRef.current) {
+                            try {
+                              premisesSessionRef.current.destroy({ deleteFromFirestore: true });
+                            } catch (_) {}
+                            premisesSessionRef.current = null;
+                            window.premisesSession = null;
+                          }
+                          setPremisesStatus('initializing');
+                          setPremisesPairingCode('');
+                          setPremisesQrDataUrl('');
+                          setPremisesFaceVerified(false);
+                          setPremisesFaceVerificationStatus('pending');
+                          setPremisesFaceDistance(null);
+                          setPremisesAngleVerified(false);
                         }}
                       >
                         <FaSync />
