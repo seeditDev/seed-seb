@@ -6,6 +6,7 @@ import * as tf from '@tensorflow/tfjs';
 import QRCode from 'qrcode';
 import { setProctorCacheExpiry } from '../utils/proctorCache';
 import { PremisesProctorSession } from '../services/premisesProctorService';
+import { runYolov8Inference } from '../utils/yolov8Utils';
 
 // Helper to resolve models directory path under file://, base path, and http/https protocols
 const getModelsPath = (subPath) => {
@@ -85,6 +86,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
   const premisesSessionRef = useRef(null);
   const premisesStreamRef = useRef(null);
   const premisesVideoRef = useRef(null);
+  const [premisesStreamActive, setPremisesStreamActive] = useState(false);
   const [premisesAngleVerified, setPremisesAngleVerified] = useState(false);
   const [premisesAngleCheck, setPremisesAngleCheck] = useState({
     candidateSeated: false,
@@ -192,6 +194,11 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
     // Request camera access when component mounts
     requestCameraAccess();
 
+    // Preload YOLOv8 model in background if dual-camera/premises proctoring is required
+    if (isPremisesRequired) {
+      ensureYolov8ForInstructions().catch((e) => console.warn('[ProctoringInstructions] Preload YOLOv8 error:', e));
+    }
+
     // Cleanup on unmount - stop stream if not proceeding to the test
     return () => {
       if (verificationIntervalRef.current) {
@@ -249,18 +256,22 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
           candidateRoll,
           tenantId,
           onStream: (stream) => {
-            console.log('[ProctoringInstructions] Premises camera stream received!');
+            console.log('[ProctoringInstructions] Premises camera stream received!', stream);
             premisesStreamRef.current = stream;
             window.premisesStream = stream;
+            setPremisesStreamActive(prev => !prev);
             if (premisesVideoRef.current) {
               premisesVideoRef.current.srcObject = stream;
-              premisesVideoRef.current.play().catch(() => {});
+              premisesVideoRef.current.play().catch((e) => console.warn('[ProctoringInstructions] play err:', e));
             }
           },
           onStatusChange: (status) => {
             if (!isCancelled) {
               console.log('[ProctoringInstructions] Premises status changed:', status);
               setPremisesStatus(status);
+              if (status === 'connected') {
+                setPremisesStreamActive(prev => !prev);
+              }
             }
           },
           onHeartbeat: (hb) => {
@@ -329,17 +340,21 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
         candidateRoll,
         tenantId,
         onStream: (stream) => {
-          console.log('[ProctoringInstructions] Premises camera stream received!');
+          console.log('[ProctoringInstructions] Premises camera stream received!', stream);
           premisesStreamRef.current = stream;
           window.premisesStream = stream;
+          setPremisesStreamActive(prev => !prev);
           if (premisesVideoRef.current) {
             premisesVideoRef.current.srcObject = stream;
-            premisesVideoRef.current.play().catch(() => {});
+            premisesVideoRef.current.play().catch((e) => console.warn('[ProctoringInstructions] play err:', e));
           }
         },
         onStatusChange: (status) => {
           console.log('[ProctoringInstructions] Premises status changed:', status);
           setPremisesStatus(status);
+          if (status === 'connected') {
+            setPremisesStreamActive(prev => !prev);
+          }
         },
         onHeartbeat: (hb) => {
           if (hb?.battery !== null) {
@@ -384,6 +399,20 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
     }
   };
 
+  // Synchronize premises stream to video preview whenever connected or stream updates
+  useEffect(() => {
+    if (premisesStatus === 'connected') {
+      const activeStream = premisesStreamRef.current || window.premisesStream;
+      if (activeStream && premisesVideoRef.current) {
+        if (premisesVideoRef.current.srcObject !== activeStream) {
+          console.log('[ProctoringInstructions] Binding active stream to premises preview via effect');
+          premisesVideoRef.current.srcObject = activeStream;
+        }
+        premisesVideoRef.current.play().catch((err) => console.warn('[ProctoringInstructions] premisesVideo play failed:', err));
+      }
+    }
+  }, [premisesStatus, premisesStreamActive]);
+
   // Continuous Angle & Workspace Calibration Loop (Checks: Seated, Laptop visible, Strict 2-item rule)
   useEffect(() => {
     if (!isPremisesRequired || premisesStatus !== 'connected' || !premisesFaceVerified || premisesAngleVerified) {
@@ -397,17 +426,22 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
       try {
         const video = premisesVideoRef.current;
         if (!video || video.readyState < 2 || video.videoWidth === 0) {
+          const activeStream = premisesStreamRef.current || window.premisesStream;
+          if (video && activeStream && video.srcObject !== activeStream) {
+            video.srcObject = activeStream;
+            video.play().catch(() => {});
+          }
           if (isMounted) timer = setTimeout(runCalibrationCheck, 1200);
           return;
         }
 
         const model = await ensureYolov8ForInstructions();
-        if (!model || typeof window.runYolov8Inference !== 'function') {
+        if (!model) {
           if (isMounted) timer = setTimeout(runCalibrationCheck, 1500);
           return;
         }
 
-        const res = await window.runYolov8Inference(video, model);
+        const res = await runYolov8Inference(video, model);
         if (!isMounted) return;
 
         const candidateSeated = res.personCount === 1;
@@ -1340,7 +1374,15 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                       boxShadow: '0 8px 24px rgba(16, 185, 129, 0.25)'
                     }}>
                       <video
-                        ref={premisesVideoRef}
+                        ref={(el) => {
+                          premisesVideoRef.current = el;
+                          const activeStream = premisesStreamRef.current || window.premisesStream;
+                          if (el && activeStream && el.srcObject !== activeStream) {
+                            console.log('[ProctoringInstructions] Binding active stream in video ref callback');
+                            el.srcObject = activeStream;
+                            el.play().catch((err) => console.warn('[ProctoringInstructions] ref play error:', err));
+                          }
+                        }}
                         autoPlay
                         playsInline
                         muted

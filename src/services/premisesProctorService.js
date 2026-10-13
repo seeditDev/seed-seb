@@ -105,10 +105,22 @@ export class PremisesProctorSession {
 
     // Remote stream track handler
     this.pc.ontrack = (event) => {
-      if (event.streams && event.streams[0]) {
-        this.remoteStream = event.streams[0];
-        console.log('[PremisesProctor] Received remote premises video track:', event.track.id);
+      let stream = (event.streams && event.streams[0]) ? event.streams[0] : null;
+      if (!stream && event.track) {
+        stream = new MediaStream([event.track]);
+      }
+      if (stream) {
+        this.remoteStream = stream;
+        console.log('[PremisesProctor] Received remote premises video track:', event.track?.id, 'stream:', stream.id);
         this.onStream(this.remoteStream);
+        if (event.track) {
+          event.track.onunmute = () => {
+            console.log('[PremisesProctor] Remote track unmuted:', event.track.id);
+            if (this.remoteStream) {
+              this.onStream(this.remoteStream);
+            }
+          };
+        }
       }
     };
 
@@ -126,6 +138,11 @@ export class PremisesProctorSession {
         this.hasConnectedOnce = true;
         this.lastHeartbeatTime = Date.now();
         this.onStatusChange('connected', { isReconnect });
+
+        // Ensure stream is provided if already acquired during handshake
+        if (this.remoteStream) {
+          this.onStream(this.remoteStream);
+        }
 
         ProctorService.logProctorEvent(this.uid, this.assessmentId, this.tenantId, {
           type: isReconnect ? 'PREMISES_CAMERA_RECONNECTED' : 'PREMISES_CAMERA_CONNECTED',
@@ -171,6 +188,9 @@ export class PremisesProctorSession {
           this.hasConnectedOnce = true;
           this.lastHeartbeatTime = Date.now();
           this.onStatusChange('connected', { isReconnect: false });
+        }
+        if (this.remoteStream) {
+          this.onStream(this.remoteStream);
         }
       }
     };
