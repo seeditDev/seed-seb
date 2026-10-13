@@ -146,7 +146,7 @@ function PortalActivityTracker() {
     if (!isAssessment) {
       try {
         stopAllMediaAndAI();
-      } catch (_) {}
+      } catch (_) { }
     }
   }, [location.pathname]);
 
@@ -185,7 +185,7 @@ function PortalActivityTracker() {
         if (typeof mod.flushPendingActivityTime === 'function') {
           mod.flushPendingActivityTime(uid);
         }
-      }).catch(() => {});
+      }).catch(() => { });
     };
 
     window.addEventListener('beforeunload', handleUnloadOrHide);
@@ -254,12 +254,35 @@ export default function AppShell({ children }) {
   }, []);
 
   useEffect(() => {
-    // Browser access enabled: Allow opening and running directly in standard web browsers
-    // (Chrome, Edge, Safari, Firefox) for debugging and testing via DevTools Console
-    if (typeof window !== 'undefined') {
-      window.__seedSebActive = true;
-    }
-    setIsDesktopApp(true);
+    const ua = navigator.userAgent ?? "";
+    const hostname = window.location.hostname;
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const isDev =
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname.endsWith(".vercel.app") ||
+      hostname.endsWith(".pages.dev") ||
+      hostname.includes("seedit.site") ||
+      import.meta.env.DEV;
+    // URL-parameter bypass is restricted to DEV builds only.
+    // In production, the gate can only be bypassed via a valid SEEDSEB/QtWebEngine user-agent.
+    // localStorage 'web_access_bypass' is also restricted to DEV — production students
+    // must use the desktop app and cannot unlock the gate through localStorage.
+    const hasWebBypass = isDev && (
+      localStorage.getItem("web_access_bypass") === "true" ||
+      urlParams?.get("bypass") === "true" ||
+      urlParams?.get("mode") === "web"
+    );
+    // Web bypass disabled per production security policy.
+    // Desktop environment is verified via SEEDSEB/QtWebEngine user agent or PyQt window bridge.
+    const isUAOk =
+      ua.includes("SEEDSEB") ||
+      ua.includes("QtWebEngine") ||
+      ua.includes("QtWebKit") ||
+      !!window.qt ||
+      !!window.desktopBackend ||
+      window.pyqtFlag === true;
+    setIsDesktopApp(isUAOk || isDev || hasWebBypass);
   }, []);
   // Desktop environment is verified via SEEDSEB/QtWebEngine user agent or PyQt window bridge.
   //   const isUAOk =
@@ -399,7 +422,7 @@ export default function AppShell({ children }) {
               setDoc(doc(db, "userSessions", firebaseUser.uid), {
                 activeSessionId: newSessionId,
                 lastLoginAt: serverTimestamp()
-              }, { merge: true }).catch(() => {});
+              }, { merge: true }).catch(() => { });
               currentLocal = newSessionId;
             }
           }
@@ -411,10 +434,10 @@ export default function AppShell({ children }) {
           // Conflict: remote session ID has changed (logged in on another device / browser)
           if (remoteSessionId && currentLocal && remoteSessionId !== currentLocal) {
             console.warn("[SessionGuard] Simultaneous login detected on another system! Terminating current session.");
-            try { desktopBridge.clearStudentSession(); } catch(_) {}
-            try { TrackingService.stopTracking(); } catch(_) {}
+            try { desktopBridge.clearStudentSession(); } catch (_) { }
+            try { TrackingService.stopTracking(); } catch (_) { }
             clearAllStudentLocalData();
-            auth.signOut().catch(() => {});
+            auth.signOut().catch(() => { });
             sessionStorage.setItem("session_terminated_reason", "simultaneous_login");
             setSimultaneousLoginAlert(true);
           }
@@ -507,7 +530,7 @@ export default function AppShell({ children }) {
     keysToRemove.forEach((k) => localStorage.removeItem(k));
     try {
       sessionStorage.clear();
-    } catch (_) {}
+    } catch (_) { }
     console.log('[AppShell] Cleared', keysToRemove.length, 'student session keys from localStorage.');
   }
 
@@ -535,295 +558,294 @@ export default function AppShell({ children }) {
     return <AppShellLoading />;
   }
 
-function EngineDisconnectedPopup() {
-  const [isOpen, setIsOpen] = useState(false);
+  function EngineDisconnectedPopup() {
+    const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    const handleDisconnected = () => {
-      setIsOpen(true);
-    };
+    useEffect(() => {
+      const handleDisconnected = () => {
+        setIsOpen(true);
+      };
 
-    window.addEventListener("seed:engine_disconnected", handleDisconnected);
-    return () => {
-      window.removeEventListener("seed:engine_disconnected", handleDisconnected);
-    };
-  }, []);
+      window.addEventListener("seed:engine_disconnected", handleDisconnected);
+      return () => {
+        window.removeEventListener("seed:engine_disconnected", handleDisconnected);
+      };
+    }, []);
 
-  if (!isOpen) return null;
+    if (!isOpen) return null;
 
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: "rgba(15, 23, 42, 0.65)",
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 999999,
-      }}
-    >
+    return (
       <div
         style={{
-          background: "var(--bg-primary, #ffffff)",
-          border: "1.5px solid var(--border-color, #e2e8f0)",
-          borderRadius: "16px",
-          padding: "28px",
-          maxWidth: "460px",
-          width: "90%",
-          boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(15, 23, 42, 0.65)",
+          backdropFilter: "blur(4px)",
           display: "flex",
-          flexDirection: "column",
-          gap: "16px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div
-            style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "10px",
-              background: "#fee2e2",
-              color: "#dc2626",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "18px",
-              fontWeight: 800,
-            }}
-          >
-            !
-          </div>
-          <div>
-            <h3
-              style={{
-                margin: 0,
-                fontSize: "17px",
-                fontWeight: 800,
-                color: "var(--text-main, #0f172a)",
-              }}
-            >
-              Evaluation Engine Not Connected
-            </h3>
-            <p
-              style={{
-                margin: "2px 0 0",
-                fontSize: "12px",
-                color: "var(--text-muted, #64748b)",
-              }}
-            >
-              Code execution compiler bridge unavailable
-            </p>
-          </div>
-        </div>
-
-        <p
-          style={{
-            margin: 0,
-            fontSize: "14px",
-            color: "var(--text-main, #334155)",
-            lineHeight: 1.5,
-          }}
-        >
-          The code evaluation engine is currently disconnected. Other test cases have been halted to prevent execution delays.
-        </p>
-
-        <p
-          style={{
-            margin: 0,
-            fontSize: "13px",
-            color: "var(--text-muted, #64748b)",
-          }}
-        >
-          Please restart the application or rerun your code to re-establish the compiler connection.
-        </p>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: "10px",
-            marginTop: "8px",
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setIsOpen(false)}
-            style={{
-              padding: "10px 18px",
-              borderRadius: "8px",
-              border: "1px solid var(--border-color, #cbd5e1)",
-              background: "transparent",
-              color: "var(--text-main, #475569)",
-              fontSize: "13px",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            Rerun Code
-          </button>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            style={{
-              padding: "10px 20px",
-              borderRadius: "8px",
-              border: "none",
-              background: "var(--accent-coding, #15803d)",
-              color: "#ffffff",
-              fontSize: "13px",
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            Restart Application
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SimultaneousLoginModal({ countdownSeconds }) {
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 9999999,
-        backgroundColor: "rgba(15, 23, 42, 0.88)",
-        backdropFilter: "blur(14px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "20px",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "460px",
-          background: "#0f172a",
-          color: "#ffffff",
-          borderRadius: "20px",
-          border: "1.5px solid rgba(239, 68, 68, 0.4)",
-          boxShadow: "0 25px 60px -15px rgba(220, 38, 38, 0.45)",
-          padding: "32px 28px",
-          textAlign: "center",
-          display: "flex",
-          flexDirection: "column",
           alignItems: "center",
-          gap: "18px",
+          justifyContent: "center",
+          zIndex: 999999,
         }}
       >
         <div
           style={{
-            width: "60px",
-            height: "60px",
-            borderRadius: "50%",
-            background: "rgba(239, 68, 68, 0.15)",
-            border: "2px solid #ef4444",
+            background: "var(--bg-primary, #ffffff)",
+            border: "1.5px solid var(--border-color, #e2e8f0)",
+            borderRadius: "16px",
+            padding: "28px",
+            maxWidth: "460px",
+            width: "90%",
+            boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#ef4444",
-            fontSize: "28px",
-            fontWeight: 800,
+            flexDirection: "column",
+            gap: "16px",
           }}
         >
-          ⚠
-        </div>
-        <div>
-          <h3
-            style={{
-              margin: "0 0 8px",
-              fontSize: "20px",
-              fontWeight: 800,
-              color: "#f87171",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Simultaneous Login Detected
-          </h3>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div
+              style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "10px",
+                background: "#fee2e2",
+                color: "#dc2626",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "18px",
+                fontWeight: 800,
+              }}
+            >
+              !
+            </div>
+            <div>
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: "17px",
+                  fontWeight: 800,
+                  color: "var(--text-main, #0f172a)",
+                }}
+              >
+                Evaluation Engine Not Connected
+              </h3>
+              <p
+                style={{
+                  margin: "2px 0 0",
+                  fontSize: "12px",
+                  color: "var(--text-muted, #64748b)",
+                }}
+              >
+                Code execution compiler bridge unavailable
+              </p>
+            </div>
+          </div>
+
           <p
             style={{
               margin: 0,
               fontSize: "14px",
-              color: "#cbd5e1",
-              lineHeight: 1.55,
+              color: "var(--text-main, #334155)",
+              lineHeight: 1.5,
             }}
           >
-            Your account has been logged in on another machine or browser.
-            For exam security, this session has been ended.
+            The code evaluation engine is currently disconnected. Other test cases have been halted to prevent execution delays.
           </p>
-        </div>
 
-        <div
-          style={{
-            width: "100%",
-            background: "rgba(255, 255, 255, 0.05)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: "10px",
-            padding: "12px 16px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-            fontSize: "13px",
-            color: "#94a3b8",
-          }}
-        >
-          <span>Logging out and redirecting in</span>
-          <span
+          <p
             style={{
-              fontFamily: "monospace",
-              fontWeight: 800,
-              fontSize: "15px",
-              color: "#ef4444",
-              background: "rgba(239, 68, 68, 0.25)",
-              padding: "2px 8px",
-              borderRadius: "6px",
+              margin: 0,
+              fontSize: "13px",
+              color: "var(--text-muted, #64748b)",
             }}
           >
-            {countdownSeconds}s
-          </span>
-        </div>
+            Please restart the application or rerun your code to re-establish the compiler connection.
+          </p>
 
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "10px",
+              marginTop: "8px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              style={{
+                padding: "10px 18px",
+                borderRadius: "8px",
+                border: "1px solid var(--border-color, #cbd5e1)",
+                background: "transparent",
+                color: "var(--text-main, #475569)",
+                fontSize: "13px",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Rerun Code
+            </button>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              style={{
+                padding: "10px 20px",
+                borderRadius: "8px",
+                border: "none",
+                background: "var(--accent-coding, #15803d)",
+                color: "#ffffff",
+                fontSize: "13px",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              Restart Application
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function SimultaneousLoginModal({ countdownSeconds }) {
+    return (
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 9999999,
+          backgroundColor: "rgba(15, 23, 42, 0.88)",
+          backdropFilter: "blur(14px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "20px",
+        }}
+      >
         <div
           style={{
             width: "100%",
-            height: "4px",
-            borderRadius: "2px",
-            background: "rgba(255, 255, 255, 0.12)",
-            overflow: "hidden",
+            maxWidth: "460px",
+            background: "#0f172a",
+            color: "#ffffff",
+            borderRadius: "20px",
+            border: "1.5px solid rgba(239, 68, 68, 0.4)",
+            boxShadow: "0 25px 60px -15px rgba(220, 38, 38, 0.45)",
+            padding: "32px 28px",
+            textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "18px",
           }}
         >
           <div
             style={{
-              height: "100%",
-              width: `${(countdownSeconds / 3) * 100}%`,
-              background: "#ef4444",
-              transition: "width 1s linear",
+              width: "60px",
+              height: "60px",
+              borderRadius: "50%",
+              background: "rgba(239, 68, 68, 0.15)",
+              border: "2px solid #ef4444",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#ef4444",
+              fontSize: "28px",
+              fontWeight: 800,
             }}
-          />
+          >
+            ⚠
+          </div>
+          <div>
+            <h3
+              style={{
+                margin: "0 0 8px",
+                fontSize: "20px",
+                fontWeight: 800,
+                color: "#f87171",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Simultaneous Login Detected
+            </h3>
+            <p
+              style={{
+                margin: 0,
+                fontSize: "14px",
+                color: "#cbd5e1",
+                lineHeight: 1.55,
+              }}
+            >
+              Your account has been logged in on another machine or browser.
+              For exam security, this session has been ended.
+            </p>
+          </div>
+
+          <div
+            style={{
+              width: "100%",
+              background: "rgba(255, 255, 255, 0.05)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: "10px",
+              padding: "12px 16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              fontSize: "13px",
+              color: "#94a3b8",
+            }}
+          >
+            <span>Logging out and redirecting in</span>
+            <span
+              style={{
+                fontFamily: "monospace",
+                fontWeight: 800,
+                fontSize: "15px",
+                color: "#ef4444",
+                background: "rgba(239, 68, 68, 0.25)",
+                padding: "2px 8px",
+                borderRadius: "6px",
+              }}
+            >
+              {countdownSeconds}s
+            </span>
+          </div>
+
+          <div
+            style={{
+              width: "100%",
+              height: "4px",
+              borderRadius: "2px",
+              background: "rgba(255, 255, 255, 0.12)",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                width: `${(countdownSeconds / 3) * 100}%`,
+                background: "#ef4444",
+                transition: "width 1s linear",
+              }}
+            />
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   if (simultaneousLoginAlert) {
     return <SimultaneousLoginModal countdownSeconds={countdownSeconds} />;
   }
 
-  // Desktop-only gate bypassed to allow browser testing & console debugging
-  // if (!isDesktopApp) {
-  //   return <DesktopOnlyNotice onEnableWebAccess={handleEnableWebAccess} />;
-  // }
+  if (!isDesktopApp) {
+    return <DesktopOnlyNotice onEnableWebAccess={handleEnableWebAccess} />;
+  }
 
   return (
     <ErrorBoundary>
