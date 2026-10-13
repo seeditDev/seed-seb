@@ -63,8 +63,6 @@ export default defineConfig({
     preset: "cloudflare-module",
     compatibilityDate: "2024-09-23",
     alias: {
-      '@tensorflow/tfjs': path.resolve(__dirname, 'src/stubs/tfjs-stub.js'),
-      'face-api.js': path.resolve(__dirname, 'src/stubs/faceapi-stub.js'),
       'mermaid': path.resolve(__dirname, 'src/stubs/mermaid-stub.js'),
       'alasql': path.resolve(__dirname, 'src/stubs/alasql-stub.js'),
       [path.resolve(__dirname, 'src/courses/services/moduleLoaders.js')]: path.resolve(__dirname, 'src/courses/services/moduleLoaders.ssr.js'),
