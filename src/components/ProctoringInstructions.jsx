@@ -50,7 +50,15 @@ const ensureYolov8ForInstructions = async () => {
   }
 };
 
-const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
+const ProctoringInstructions = ({ 
+  assessment, 
+  onContinue, 
+  onCancel,
+  variant = 'modal',
+  passkeyVerified = true,
+  onStatusChange
+}) => {
+  const isInline = variant === 'inline';
   const [cameraStatus, setCameraStatus] = useState('requesting'); // requesting, granted, denied, error
   const [cameraError, setCameraError] = useState(null);
   const videoRef = useRef(null);
@@ -108,6 +116,25 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
   const photoURL = photoState.url;
   const captureError = photoState.error;
   const isCapturing = photoState.capturing;
+
+  // Notify parent of proctoring readiness in real-time
+  useEffect(() => {
+    const isReady =
+      photoStatus === 'captured' &&
+      (!isPremisesRequired || (premisesStatus === 'connected' && premisesFaceVerified && premisesAngleVerified)) &&
+      isAcknowledged;
+
+    onStatusChange?.({
+      photoCaptured: photoStatus === 'captured',
+      premisesConnected: premisesStatus === 'connected',
+      premisesVerified: premisesFaceVerified && premisesAngleVerified,
+      acknowledged: isAcknowledged,
+      isReady,
+      currentStep,
+      cameraStatus,
+      stream: streamRef.current
+    });
+  }, [photoStatus, premisesStatus, premisesFaceVerified, premisesAngleVerified, isAcknowledged, isPremisesRequired, currentStep, cameraStatus, onStatusChange]);
 
   // Track if we are proceeding to test (must not stop camera on unmount if proceeding)
   const isProceedingRef = useRef(false);
@@ -973,14 +1000,18 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
     requestCameraAccess();
   };
   return (
-    <div className="proctoring-instructions-overlay">
-      <div className="proctoring-instructions-modal">
-        <div className="instructions-header">
+    <div className={isInline ? "proctoring-instructions-inline" : "proctoring-instructions-overlay"}>
+      <div className={isInline ? "proctoring-inline-card" : "proctoring-instructions-modal"}>
+        <div className={`instructions-header ${isInline ? 'inline-header' : ''}`}>
           <h2>
             <FaCamera className="header-icon" />
-            Exam Entry & Proctoring Guidelines
+            {isInline ? 'Exam Entry & Identity Verification' : 'Exam Entry & Proctoring Guidelines'}
           </h2>
-          <p className="instructions-subtitle">Follow the steps below to verify your identity and start your assessment</p>
+          <p className="instructions-subtitle">
+            {isInline
+              ? 'Complete identity verification and camera setup below to begin your assessment'
+              : 'Follow the steps below to verify your identity and start your assessment'}
+          </p>
         </div>
 
         {/* Wizard Progress Bar */}
@@ -1066,6 +1097,25 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
             </span>
           </div>
         </div>
+
+        {!passkeyVerified && (
+          <div style={{
+            margin: isInline ? '14px 24px 0 24px' : '14px 32px 0 32px',
+            padding: '10px 16px',
+            background: 'rgba(239, 68, 68, 0.12)',
+            border: '1px solid rgba(239, 68, 68, 0.35)',
+            borderRadius: '10px',
+            color: '#f87171',
+            fontSize: '12.5px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <FaExclamationTriangle style={{ fontSize: '15px', flexShrink: 0 }} />
+            <span>Please enter and verify the access passkey above before proceeding with the assessment.</span>
+          </div>
+        )}
 
         {/* STEP 1: IDENTITY VERIFICATION & CAPTURE */}
         {currentStep === 1 && (
@@ -1918,12 +1968,14 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
         <div className="instructions-footer">
           {currentStep === 1 ? (
             <>
-              <button 
-                className="instructions-btn cancel-btn"
-                onClick={handleCancelInstructions}
-              >
-                Cancel
-              </button>
+              {!isInline && (
+                <button 
+                  className="instructions-btn cancel-btn"
+                  onClick={handleCancelInstructions}
+                >
+                  Cancel
+                </button>
+              )}
               <button 
                 className={`instructions-btn continue-btn ${(!canContinue || photoStatus !== 'captured') ? 'disabled' : ''}`}
                 onClick={() => setCurrentStep(2)}
@@ -1961,11 +2013,17 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                 {isPremisesRequired ? 'Back to Premises Camera' : 'Back to Registration'}
               </button>
               <button 
-                className={`instructions-btn continue-btn ${(!hasScrolledToBottom || !isAcknowledged || (isPremisesRequired && (premisesStatus !== 'connected' || !premisesFaceVerified || !premisesAngleVerified))) ? 'disabled' : ''}`}
-                onClick={handleContinue}
-                disabled={!hasScrolledToBottom || !isAcknowledged || (isPremisesRequired && (premisesStatus !== 'connected' || !premisesFaceVerified || !premisesAngleVerified))}
+                className={`instructions-btn continue-btn ${(!hasScrolledToBottom || !isAcknowledged || !passkeyVerified || (isPremisesRequired && (premisesStatus !== 'connected' || !premisesFaceVerified || !premisesAngleVerified))) ? 'disabled' : ''}`}
+                onClick={() => {
+                  if (!passkeyVerified) {
+                    alert('Please enter and verify the access passkey above before starting the assessment.');
+                    return;
+                  }
+                  handleContinue();
+                }}
+                disabled={!hasScrolledToBottom || !isAcknowledged || !passkeyVerified || (isPremisesRequired && (premisesStatus !== 'connected' || !premisesFaceVerified || !premisesAngleVerified))}
               >
-                I Understand, Start Test
+                {!passkeyVerified ? 'Enter Passkey Above to Start' : 'I Understand, Begin Assessment'}
               </button>
             </>
           )}

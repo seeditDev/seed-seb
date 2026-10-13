@@ -2574,12 +2574,8 @@ const MultiSectionAssessment = () => {
     const targetIdx = (assessment?.sections || []).findIndex(sec => !secCompleted[sec.sectionId]);
     const finalTargetIdx = targetIdx >= 0 ? targetIdx : 0;
 
-    if (shouldUseProctoring || isPremisesRequired) {
-      setShowInstructions(true);
-    } else {
-      handleStartSection(finalTargetIdx);
-    }
-  }, [assessment, passkeyInput, secCompleted, shouldUseProctoring, isPremisesRequired, handleStartSection]);
+    handleStartSection(finalTargetIdx);
+  }, [assessment, passkeyInput, secCompleted, handleStartSection]);
 
   const autoSubmitSection = useCallback(async (sectionResults) => {
     if (examFinishedRef.current) return;
@@ -3852,40 +3848,58 @@ const MultiSectionAssessment = () => {
                 </div>
               </div>
 
-              {/* Examination Guidelines */}
-              <div className="msa-preflight-guidelines">
-                <div className="msa-preflight-guidelines-header">
-                  <FaInfoCircle style={{ color: 'var(--accent-primary, #16a34a)' }} />
-                  <span>Important Examination Instructions:</span>
+              {/* Identity Verification & Camera Setup (Inline) OR Standard Guidelines */}
+              {(shouldUseProctoring || isPremisesRequired) ? (
+                <div style={{ marginTop: '20px', marginBottom: '16px' }}>
+                  <ProctoringInstructions
+                    variant="inline"
+                    assessment={assessment}
+                    passkeyVerified={!assessment.passkey || passkeyInput.trim() === assessment.passkey}
+                    onContinue={() => {
+                      if (assessment?.passkey && passkeyInput.trim() !== assessment.passkey) {
+                        setPasskeyError('Please enter the access passkey provided by your instructor.');
+                        if (passkeyInputRef.current) passkeyInputRef.current.focus();
+                        return;
+                      }
+                      const targetIdx = (assessment?.sections || []).findIndex(sec => !secCompleted[sec.sectionId]);
+                      handleStartSection(targetIdx >= 0 ? targetIdx : 0);
+                    }}
+                    onCancel={() => {
+                      try { stopAllMediaAndAI(); } catch (_) {}
+                      window.history.replaceState(null, '', '/student/dashboard');
+                      navigate('/student/dashboard', { replace: true });
+                    }}
+                  />
                 </div>
-                <div className="msa-guidelines-grid">
-                  {isPremisesRequired && (
+              ) : (
+                <div className="msa-preflight-guidelines">
+                  <div className="msa-preflight-guidelines-header">
+                    <FaInfoCircle style={{ color: 'var(--accent-primary, #16a34a)' }} />
+                    <span>Important Examination Instructions:</span>
+                  </div>
+                  <div className="msa-guidelines-grid">
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                      <FaCamera style={{ color: '#10b981', fontSize: '13px', marginTop: '3px', flexShrink: 0 }} />
-                      <span style={{ color: '#10b981', fontWeight: '600' }}>Dual camera setup required: you will pair your mobile camera before launch.</span>
+                      <FaCheckCircle style={{ color: 'var(--accent-primary, #16a34a)', fontSize: '13px', marginTop: '3px', flexShrink: 0 }} />
+                      <span>Fullscreen mode is strictly enforced during the exam.</span>
                     </div>
-                  )}
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                    <FaCheckCircle style={{ color: 'var(--accent-primary, #16a34a)', fontSize: '13px', marginTop: '3px', flexShrink: 0 }} />
-                    <span>Fullscreen mode is strictly enforced during the exam.</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                    <FaCheckCircle style={{ color: 'var(--accent-primary, #16a34a)', fontSize: '13px', marginTop: '3px', flexShrink: 0 }} />
-                    <span>Switching tabs or minimizing the window will log violations.</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                    <FaCheckCircle style={{ color: 'var(--accent-primary, #16a34a)', fontSize: '13px', marginTop: '3px', flexShrink: 0 }} />
-                    <span>Each section has its own timer running continuously once started.</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                    <FaCheckCircle style={{ color: 'var(--accent-primary, #16a34a)', fontSize: '13px', marginTop: '3px', flexShrink: 0 }} />
-                    <span>Responses and code drafts are automatically saved to the cloud.</span>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                      <FaCheckCircle style={{ color: 'var(--accent-primary, #16a34a)', fontSize: '13px', marginTop: '3px', flexShrink: 0 }} />
+                      <span>Switching tabs or minimizing the window will log violations.</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                      <FaCheckCircle style={{ color: 'var(--accent-primary, #16a34a)', fontSize: '13px', marginTop: '3px', flexShrink: 0 }} />
+                      <span>Each section has its own timer running continuously once started.</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                      <FaCheckCircle style={{ color: 'var(--accent-primary, #16a34a)', fontSize: '13px', marginTop: '3px', flexShrink: 0 }} />
+                      <span>Responses and code drafts are automatically saved to the cloud.</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Preflight Actions */}
-              <div className="msa-preflight-actions">
+              <div className="msa-preflight-actions" style={{ justifyContent: (shouldUseProctoring || isPremisesRequired) ? 'flex-start' : 'space-between' }}>
                 <button
                   type="button"
                   onClick={() => {
@@ -3911,35 +3925,37 @@ const MultiSectionAssessment = () => {
                   <FaArrowLeft /> Return to Dashboard
                 </button>
 
-                <button
-                  type="button"
-                  className="msa-action-btn primary"
-                  onClick={handleBeginAssessment}
-                  disabled={Boolean(assessment.passkey && passkeyInput.trim() !== assessment.passkey)}
-                  style={{
-                    padding: '12px 28px',
-                    borderRadius: '10px',
-                    fontSize: '14.5px',
-                    fontWeight: '700',
-                    background: (assessment.passkey && passkeyInput.trim() !== assessment.passkey)
-                      ? 'var(--border-color, #cbd5e1)'
-                      : 'var(--accent-primary, #16a34a)',
-                    color: '#ffffff',
-                    border: 'none',
-                    boxShadow: (assessment.passkey && passkeyInput.trim() !== assessment.passkey)
-                      ? 'none'
-                      : '0 4px 14px rgba(22, 163, 74, 0.35)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    cursor: (assessment.passkey && passkeyInput.trim() !== assessment.passkey)
-                      ? 'not-allowed'
-                      : 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <FaPlay style={{ fontSize: '12px' }} /> Begin Assessment <FaChevronRight style={{ fontSize: '11px' }} />
-                </button>
+                {(!shouldUseProctoring && !isPremisesRequired) && (
+                  <button
+                    type="button"
+                    className="msa-action-btn primary"
+                    onClick={handleBeginAssessment}
+                    disabled={Boolean(assessment.passkey && passkeyInput.trim() !== assessment.passkey)}
+                    style={{
+                      padding: '12px 28px',
+                      borderRadius: '10px',
+                      fontSize: '14.5px',
+                      fontWeight: '700',
+                      background: (assessment.passkey && passkeyInput.trim() !== assessment.passkey)
+                        ? 'var(--border-color, #cbd5e1)'
+                        : 'var(--accent-primary, #16a34a)',
+                      color: '#ffffff',
+                      border: 'none',
+                      boxShadow: (assessment.passkey && passkeyInput.trim() !== assessment.passkey)
+                        ? 'none'
+                        : '0 4px 14px rgba(22, 163, 74, 0.35)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: (assessment.passkey && passkeyInput.trim() !== assessment.passkey)
+                        ? 'not-allowed'
+                        : 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <FaPlay style={{ fontSize: '12px' }} /> Begin Assessment <FaChevronRight style={{ fontSize: '11px' }} />
+                  </button>
+                )}
               </div>
             </div>
           ) : (
