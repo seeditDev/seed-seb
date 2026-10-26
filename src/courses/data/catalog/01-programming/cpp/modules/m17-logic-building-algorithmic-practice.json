@@ -7925,7 +7925,34 @@
       "description": "Study concepts and solve targeted engineering problems for Review: Logic building.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 35,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m17-algo-rev-01",
+          "title": "Algorithmic Problem-Solving Patterns in C++",
+          "content": "### Core Algorithmic Paradigms\n\nEfficient problem solving relies on recognizing standard patterns:\n\n1. **Prefix Sums**:\n   - Precompute prefix sum array: `P[i] = P[i-1] + arr[i]`.\n   - Answer range sum query for $[L, R]$ in $O(1)$ time: `Sum(L, R) = P[R] - P[L-1]`.\n\n2. **Two Pointers Technique**:\n   - In sorted arrays: One pointer at index 0, one at $N-1$.\n   - If current sum is smaller than target, increment left pointer; if larger, decrement right pointer ($O(N)$ time, $O(1)$ space).\n\n3. **Sliding Window**:\n   - Tracks a contiguous subsegment of elements.\n   - Expand window by adding right element; shrink window by removing left element.\n\n4. **Binary Search on Answer**:\n   - If a predicate function `isValid(mid)` is monotonic (e.g. true for all $x \\ge T$ and false for all $x < T$), binary search can find the optimal threshold in $O(\\log(\\text{search\\_space}))$.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Prefix Sums for Range Queries",
+            "text": "Precomputing prefix sums takes O(N) time and turns any number of subsequent range sum queries into instantaneous O(1) operations."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <vector>\n\n// Prefix Sums for O(1) range queries\nint main() {\n    std::vector<int> arr = {3, 1, 4, 1, 5, 9, 2};\n    int n = arr.size();\n    std::vector<int> prefix(n + 1, 0);\n    \n    for (int i = 0; i < n; ++i) {\n        prefix[i + 1] = prefix[i] + arr[i];\n    }\n    \n    // Sum from index 2 to 5 inclusive (4 + 1 + 5 + 9 = 19)\n    int l = 2, r = 5;\n    int rangeSum = prefix[r + 1] - prefix[l];\n    std::cout << \"Range sum [2, 5]: \" << rangeSum << \"\\n\"; // 19\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m17-rev-cp1",
+            "question": "Given an array of size N, what is the time complexity to answer Q range-sum queries using a prefix sum array?",
+            "options": [
+              "O(N + Q) overall (O(N) preprocessing, O(1) per query)",
+              "O(N * Q)",
+              "O(Q log N)",
+              "O(N^2)"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Computing prefix sums takes O(N) one-time preprocessing. Each of the Q queries is answered by a single subtraction in O(1) time, totaling O(N + Q)."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -9573,14 +9600,14 @@
           "checkpoint": {
             "checkpointId": "cp-LB08B",
             "question": "Which relationship gives the minimum extra shoes?",
-            "options": "Compare N required pairs with M available left shoes: answer is N when M≥N, otherwise 2N−M.",
-            "correctAnswer": [
+            "options": [
               "Use M≥N to buy N right shoes; otherwise buy N−M left plus N right.",
               "Always buy 2N shoes.",
               "Only buy missing left shoes.",
               "Sort the shoe counts first."
             ],
-            "explanation": 0
+            "correctAnswer": 0,
+            "explanation": "Compare N required pairs with M available left shoes: answer is N when M≥N, otherwise 2N−M."
           }
         }
       ],
@@ -10532,5 +10559,402 @@
       "_sourceFile": "cpp-beginner-v2-p2.json",
       "_moduleTitle": "Recap"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m17-logic-building-algorithmic-practice",
+    "title": "Module Assessment: Logic Building & Algorithmic Practice",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "m17-q01",
+          "question": "What is the time complexity of finding a pair with a target sum in a sorted array using two pointers?",
+          "options": [
+            "O(N) time and O(1) extra space",
+            "O(N^2) time and O(1) space",
+            "O(N log N) time and O(N) space",
+            "O(1) time"
+          ],
+          "correctAnswer": 0,
+          "explanation": "With two pointers starting at opposite ends of the sorted array, each step either increments the left pointer or decrements the right pointer, scanning all elements in O(N) time."
+        },
+        {
+          "questionId": "m17-q02",
+          "question": "Why is `int mid = low + (high - low) / 2;` preferred over `int mid = (low + high) / 2;` in binary search?",
+          "options": [
+            "It prevents potential 32-bit signed integer overflow when low + high exceeds INT_MAX",
+            "It calculates floating-point division accurately",
+            "It allows the compiler to vectorize the loop",
+            "The syntax (low + high) / 2 is illegal in modern C++"
+          ],
+          "correctAnswer": 0,
+          "explanation": "If low and high are large (e.g. > 1 billion), low + high overflows positive 32-bit signed integers into negative values. low + (high - low) / 2 avoids this overflow."
+        },
+        {
+          "questionId": "m17-q03",
+          "question": "What is the optimal algorithm to rotate an array of N elements to the right by K positions in O(N) time and O(1) auxiliary space?",
+          "options": [
+            "Three reversals: reverse entire array, reverse first K elements, reverse remaining N - K elements",
+            "Shifting elements one-by-one K times in nested loops",
+            "Copying all elements to a temporary array",
+            "Sorting the array with std::sort"
+          ],
+          "correctAnswer": 0,
+          "explanation": "The reversal algorithm reverses the whole array, then reverses the first K elements, and then the remaining N - K elements, taking O(N) time and O(1) extra space."
+        },
+        {
+          "questionId": "m17-q04",
+          "question": "What is the sliding window technique best suited for?",
+          "options": [
+            "Finding contiguous subarray or substring properties (e.g. max sum subarray of size K, longest substring without repeats)",
+            "Sorting non-contiguous linked lists",
+            "Calculating matrix determinants",
+            "Finding shortest paths in general weighted graphs"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Sliding window maintains state over contiguous linear ranges, allowing incremental window expansion and contraction in overall linear O(N) time."
+        },
+        {
+          "questionId": "m17-q05",
+          "question": "How many times does the inner loop execute in: `for(int i=0; i<N; ++i) for(int j=i+1; j<N; ++j)`?",
+          "options": [
+            "N * (N - 1) / 2 times (O(N^2))",
+            "N * N times",
+            "N log N times",
+            "2 * N times"
+          ],
+          "correctAnswer": 0,
+          "explanation": "The loop sums (N - 1) + (N - 2) + ... + 1 = N * (N - 1) / 2, which is O(N^2)."
+        },
+        {
+          "questionId": "m17-q06",
+          "question": "Which data structure provides O(1) average lookup to check whether an integer has been seen before?",
+          "options": [
+            "std::unordered_set",
+            "std::vector",
+            "std::set",
+            "std::priority_queue"
+          ],
+          "correctAnswer": 0,
+          "explanation": "std::unordered_set is a hash set offering O(1) average time complexity for insertions and membership checks."
+        },
+        {
+          "questionId": "m17-q07",
+          "question": "What algorithmic condition must hold to apply Binary Search on an array?",
+          "options": [
+            "The array elements or search predicate must be monotonic (e.g. sorted order)",
+            "The array must contain only positive integers",
+            "The array size must be a power of two",
+            "The array must not contain duplicate values"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Binary search requires monotonicity: knowing whether the target is greater or less than mid allows discarding half the remaining search space with certainty."
+        },
+        {
+          "questionId": "m17-q08",
+          "question": "What is the space complexity of an in-place algorithm that modifies input vectors without allocating additional dynamic memory?",
+          "options": [
+            "O(1) auxiliary space",
+            "O(N) auxiliary space",
+            "O(log N) auxiliary space",
+            "O(N^2) auxiliary space"
+          ],
+          "correctAnswer": 0,
+          "explanation": "In-place algorithms use only a fixed number of scalar variables regardless of input size, having O(1) auxiliary space complexity."
+        },
+        {
+          "questionId": "m17-q09",
+          "question": "Which algorithmic strategy makes the locally optimal choice at each step with the hope of finding a global optimum?",
+          "options": [
+            "Greedy Algorithm",
+            "Dynamic Programming",
+            "Backtracking",
+            "Divide and Conquer"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Greedy algorithms make the locally best choice at each stage without reconsidering past decisions."
+        },
+        {
+          "questionId": "m17-q10",
+          "question": "What is the maximum recursion depth typically allowed by default stack sizes (1-8 MB) before causing a stack overflow in standard desktop environments?",
+          "options": [
+            "Approximately 10^4 to 10^5 stack frames",
+            "Exactly 100 frames",
+            "Unlimited frames",
+            "10^9 frames"
+          ],
+          "correctAnswer": 0,
+          "explanation": "With each stack frame consuming local variables and return addresses (e.g., 32-128 bytes), typical thread stacks (1-8 MB) overflow when recursion exceeds ~100,000 frames."
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.295",
+          "questionId": "Q0.295",
+          "title": "Sum of Unique Elements in Array",
+          "difficulty": "Beginner",
+          "problemStatement": "You are given a function,\nint SumUniqueElements(int* arr, int length);\nint SumUniqueElements(int* arr, int length);\nstatic int SumUniqueElements(int[] arr){}\nstatic int SumUniqueElements(int[] arr){}\ndef SumUniqueElements(arr):\nThe function accepts an integer array 'arr' of size 'length' as input. Implement the function such that\nit returns the sum of unique (non-duplicate) elements in the array.\nNote:\nReturn 0 if no unique element is found.\nComputed values lie within integer range.",
+          "description": "You are given a function,\nint SumUniqueElements(int* arr, int length);\nint SumUniqueElements(int* arr, int length);\nstatic int SumUniqueElements(int[] arr){}\nstatic int SumUniqueElements(int[] arr){}\ndef SumUniqueElements(arr):\nThe function accepts an integer array 'arr' of size 'length' as input. Implement the function such that\nit returns the sum of unique (non-duplicate) elements in the array.\nNote:\nReturn 0 if no unique element is found.\nComputed values lie within integer range.",
+          "constraints": "1 <= N <= 10^5",
+          "inputFormat": "8\n2 5 4 7 9 2 4 8",
+          "outputFormat": "29",
+          "sampleTestCases": [
+            {
+              "input": "8\n2 5 4 7 9 2 4 8",
+              "output": "29",
+              "explanation": "Example demonstrating Sum elements that appear exactly once in the array."
+            },
+            {
+              "input": "6\n10 12 22 10 12 98",
+              "output": "120",
+              "explanation": "Example demonstrating Sum elements that appear exactly once in the array."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "8\n2 5 4 7 9 2 4 8",
+              "output": "29",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "6\n10 12 22 10 12 98",
+              "output": "120",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "5\n1 2 3 2 1",
+              "output": "3",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "6\n1 2 3 1 2 3",
+              "output": "0",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "8\n2 5 4 7 9 2 4 8",
+              "output": "29",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "6\n10 12 22 10 12 98",
+              "output": "120",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "5\n1 2 3 2 1",
+              "output": "3",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "6\n1 2 3 1 2 3",
+              "output": "0",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "8\n2 5 4 7 9 2 4 8",
+              "output": "29",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "6\n10 12 22 10 12 98",
+              "output": "120",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\n#include <vector>\n#include <unordered_map>\nusing namespace std;\nint main() {\n    int n; if (cin >> n) {\n        vector<int> a(n);\n        unordered_map<int, int> cnt;\n        for (int i = 0; i < n; i++) { cin >> a[i]; cnt[a[i]]++; }\n        long long sum = 0;\n        for (int x : a) if (cnt[x] == 1) sum += x;\n        cout << sum << \"\\n\";\n    }\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n#include <stdlib.h>\nint cmp(const void *a, const void *b) { return (*(int*)a - *(int*)b); }\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    int *arr = (int*)malloc(n * sizeof(int));\n    for (int i = 0; i < n; i++) scanf(\"%d\", &arr[i]);\n    qsort(arr, n, sizeof(int), cmp);\n    long long sum = 0;\n    for (int i = 0; i < n; i++) {\n        int is_uniq = 1;\n        if (i > 0 && arr[i] == arr[i-1]) is_uniq = 0;\n        if (i < n - 1 && arr[i] == arr[i+1]) is_uniq = 0;\n        if (is_uniq) sum += arr[i];\n    }\n    printf(\"%lld\\n\", sum);\n    free(arr);\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.300",
+          "questionId": "Q0.300",
+          "title": "Minimum Element and its Index",
+          "difficulty": "Beginner",
+          "problemStatement": "You are given a function,\nvoid MinInArray(int arr[], int length);\nvoid MinInArray(int arr[], int length);\nstatic void MinInArray(int[] arr){}\nstatic void MinInArray(int[] arr){}\ndef MinInArray(arr):\nThe function accepts an integer array 'arr' of size 'length' as its argument. Implement the function\nto find the minimum element of the array and print the minimum element and its index to the\nstandard output (STDOUT). The minimum element and its index should be printed in separate lines.\nNote:\nArray index starts with 0\nMinimum element and its index should be separated by a line in the output\nAssume there is only 1 minimum element in the array\nPrint exactly what is asked, do not print any additional greeting messages",
+          "description": "You are given a function,\nvoid MinInArray(int arr[], int length);\nvoid MinInArray(int arr[], int length);\nstatic void MinInArray(int[] arr){}\nstatic void MinInArray(int[] arr){}\ndef MinInArray(arr):\nThe function accepts an integer array 'arr' of size 'length' as its argument. Implement the function\nto find the minimum element of the array and print the minimum element and its index to the\nstandard output (STDOUT). The minimum element and its index should be printed in separate lines.\nNote:\nArray index starts with 0\nMinimum element and its index should be separated by a line in the output\nAssume there is only 1 minimum element in the array\nPrint exactly what is asked, do not print any additional greeting messages",
+          "constraints": "1 <= N <= 10^5",
+          "inputFormat": "23 45 82 27 66 12 78 13 71 86",
+          "outputFormat": "12\n5",
+          "sampleTestCases": [
+            {
+              "input": "10\n23 45 82 27 66 12 78 13 71 86",
+              "output": "12\n5",
+              "explanation": "Example demonstrating Find minimum element and its 0-based index in the array."
+            },
+            {
+              "input": "8\n1 9 11 144 6 7 112 95",
+              "output": "1\n0",
+              "explanation": "Example demonstrating Find minimum element and its 0-based index in the array."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "10\n23 45 82 27 66 12 78 13 71 86",
+              "output": "12\n5",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "8\n1 9 11 144 6 7 112 95",
+              "output": "1\n0",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "5\n5 4 3 2 1",
+              "output": "1\n4",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "7\n10 21 17 31 7 55 9",
+              "output": "7\n4",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "10\n23 45 82 27 66 12 78 13 71 86",
+              "output": "12\n5",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "8\n1 9 11 144 6 7 112 95",
+              "output": "1\n0",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "5\n5 4 3 2 1",
+              "output": "1\n4",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "7\n10 21 17 31 7 55 9",
+              "output": "7\n4",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "10\n23 45 82 27 66 12 78 13 71 86",
+              "output": "12\n5",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "8\n1 9 11 144 6 7 112 95",
+              "output": "1\n0",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\nusing namespace std;\nint main() {\n    int n; if (cin >> n) {\n        long long min_val = 0; int min_idx = 0;\n        for (int i = 0; i < n; i++) {\n            long long val; cin >> val;\n            if (i == 0 || val < min_val) { min_val = val; min_idx = i; }\n        }\n        cout << min_val << \"\\n\" << min_idx << \"\\n\";\n    }\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    long long min_val = 2e18; int min_idx = 0;\n    for (int i = 0; i < n; i++) {\n        long long val; scanf(\"%lld\", &val);\n        if (i == 0 || val < min_val) { min_val = val; min_idx = i; }\n    }\n    printf(\"%lld\\n%d\\n\", min_val, min_idx);\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.306",
+          "questionId": "Q0.306",
+          "title": "Rearrange Array with Alternating Parity",
+          "difficulty": "Beginner",
+          "problemStatement": "You are given a function:\nint* ReArrangeArrayElements(int* arr, int length);\nint* ReArrangeArrayElements(int* arr, int length);\nstatic int[] ReArrangeArrayElements(int[] arr){}\nstatic int[] ReArrangeArrayElements(int[] arr){}\ndef ReArrangeArrayElements(arr):\nThe function accepts an array of integers and its length as input. Implement the function so that it\nreturns the array after re-arranging it such that even numbers occupy even indices and odd\nnumbers occupy odd indices.\nNote:\n1. The relative ordering of even numbers should not change among themselves.\n2. The relative ordering of odd numbers should not change among themselves.\n3. The re-arrangement is to be done in-place i.e. you cannot use another array.\n4. The 0th index of the re-arranged array should contain an even number.\nAssumption: You may assume that the array is of even length and half the numbers are even and\nhalf are odd.",
+          "description": "You are given a function:\nint* ReArrangeArrayElements(int* arr, int length);\nint* ReArrangeArrayElements(int* arr, int length);\nstatic int[] ReArrangeArrayElements(int[] arr){}\nstatic int[] ReArrangeArrayElements(int[] arr){}\ndef ReArrangeArrayElements(arr):\nThe function accepts an array of integers and its length as input. Implement the function so that it\nreturns the array after re-arranging it such that even numbers occupy even indices and odd\nnumbers occupy odd indices.\nNote:\n1. The relative ordering of even numbers should not change among themselves.\n2. The relative ordering of odd numbers should not change among themselves.\n3. The re-arrangement is to be done in-place i.e. you cannot use another array.\n4. The 0th index of the re-arranged array should contain an even number.\nAssumption: You may assume that the array is of even length and half the numbers are even and\nhalf are odd.",
+          "constraints": "1 <= N <= 10^5, N is even",
+          "inputFormat": "14 24 63 264 327 585 1 3 572 896",
+          "outputFormat": "14 63 24 327 264 585 572 1 896 3",
+          "sampleTestCases": [
+            {
+              "input": "10\n14 24 63 264 327 585 1 3 572 896",
+              "output": "14 63 24 327 264 585 572 1 896 3",
+              "explanation": "Example demonstrating Rearrange array so even elements occupy even indices and odd elements occupy odd indices."
+            },
+            {
+              "input": "12\n10 4 6 26 32 58 1 3 57 89 93 105",
+              "output": "10 1 4 3 6 57 26 89 32 93 58 105",
+              "explanation": "Example demonstrating Rearrange array so even elements occupy even indices and odd elements occupy odd indices."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "10\n14 24 63 264 327 585 1 3 572 896",
+              "output": "14 63 24 327 264 585 572 1 896 3",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "12\n10 4 6 26 32 58 1 3 57 89 93 105",
+              "output": "10 1 4 3 6 57 26 89 32 93 58 105",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "6\n2 1 4 3 6 5",
+              "output": "2 1 4 3 6 5",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "8\n2 4 6 8 1 3 5 7",
+              "output": "2 1 4 3 6 5 8 7",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "10\n14 24 63 264 327 585 1 3 572 896",
+              "output": "14 63 24 327 264 585 572 1 896 3",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "12\n10 4 6 26 32 58 1 3 57 89 93 105",
+              "output": "10 1 4 3 6 57 26 89 32 93 58 105",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "6\n2 1 4 3 6 5",
+              "output": "2 1 4 3 6 5",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "8\n2 4 6 8 1 3 5 7",
+              "output": "2 1 4 3 6 5 8 7",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "10\n14 24 63 264 327 585 1 3 572 896",
+              "output": "14 63 24 327 264 585 572 1 896 3",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "12\n10 4 6 26 32 58 1 3 57 89 93 105",
+              "output": "10 1 4 3 6 57 26 89 32 93 58 105",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\n#include <vector>\nusing namespace std;\nint main() {\n    int n; if (cin >> n) {\n        vector<int> evens, odds;\n        for (int i = 0; i < n; i++) {\n            int x; cin >> x;\n            if (x % 2 == 0) evens.push_back(x);\n            else odds.push_back(x);\n        }\n        for (size_t i = 0; i < evens.size() && i < odds.size(); i++) {\n            if (i > 0) cout << \" \";\n            cout << evens[i] << \" \" << odds[i];\n        }\n        cout << \"\\n\";\n    }\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n#include <stdlib.h>\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    int *arr = (int*)malloc(n * sizeof(int));\n    int *evens = (int*)malloc(n * sizeof(int)); int e = 0;\n    int *odds = (int*)malloc(n * sizeof(int)); int o = 0;\n    for (int i = 0; i < n; i++) {\n        scanf(\"%d\", &arr[i]);\n        if (arr[i] % 2 == 0) evens[e++] = arr[i];\n        else odds[o++] = arr[i];\n    }\n    int first = 1;\n    for (int i = 0; i < e && i < o; i++) {\n        if (!first) putchar(' ');\n        printf(\"%d %d\", evens[i], odds[i]);\n        first = 0;\n    }\n    putchar('\\n');\n    free(arr); free(evens); free(odds);\n    return 0;\n}\n"
+          }
+        }
+      ]
+    }
+  }
 }

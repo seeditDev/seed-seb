@@ -291,7 +291,112 @@
       "description": "Study concepts and solve targeted engineering problems for Practice debugging.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 30,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-js-m06-t02-p1",
+          "title": "JavaScript Error Types (SyntaxError, ReferenceError, TypeError)",
+          "content": "# Core JavaScript Error Types\n\nUnderstanding common built-in error constructors is crucial for rapid debugging:\n\n### 1. SyntaxError\nRaised when the JavaScript engine encounters code that violates language grammar during the parsing phase.\n- *Example*: `const x = ;`, missing closing brackets or quotes.\n\n### 2. ReferenceError\nOccurs when code references a variable that has not been declared or is inaccessible in the current scope.\n- *Example*: Accessing `myVar` before declaration or outside its function.\n\n### 3. TypeError\nRaised when an operation is performed on an inappropriate type or a non-existent method is invoked.\n- *Example*: `null.toUpperCase()`, calling a non-function `const x = 5; x();`.\n\n### 4. RangeError\nOccurs when a numeric value or array length is outside the allowed range (e.g. `new Array(-1)` or maximum call stack recursion).",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Runtime vs Parse-time",
+            "text": "SyntaxErrors prevent code execution altogether during parsing. ReferenceErrors and TypeErrors occur dynamically during script execution."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "try {\n  // Accessing undeclared identifier\n  console.log(undeclaredVar);\n} catch (err) {\n  console.log(\"Error Name:\", err.name); // \"ReferenceError\"\n  console.log(\"Error Message:\", err.message);\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m06-t02-p1",
+            "question": "Which error is thrown when attempting to invoke a property that is not a function (e.g. num())?",
+            "options": [
+              "SyntaxError",
+              "ReferenceError",
+              "TypeError",
+              "RangeError"
+            ],
+            "correctAnswer": 2,
+            "explanation": "A TypeError occurs when an operation is performed on a value of the wrong type, such as attempting to call a number as a function."
+          }
+        },
+        {
+          "pageId": "p-js-m06-t02-p2",
+          "title": "Exception Handling with try, catch, and finally",
+          "content": "# Exception Handling with try / catch / finally\n\nThe `try...catch` statement marks a block of statements to try and specifies a response should an exception be thrown.\n\n### Structure\n```javascript\ntry {\n  // Code that may throw an error\n} catch (error) {\n  // Handles any error thrown inside the try block\n} finally {\n  // Always executes regardless of whether an error occurred\n}\n```\n\n### The finally Block\nThe `finally` block runs unconditionally—even if the try or catch block returns early. It is primarily used for cleanup tasks like releasing file handles, stopping timers, or closing network streams.",
+          "callout": {
+            "type": "TIP",
+            "title": "Optional Catch Binding (ES2019)",
+            "text": "If you do not need to inspect the error object, you can omit the catch parameter: try { ... } catch { ... }"
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "function parseUserData(jsonStr) {\n  try {\n    const user = JSON.parse(jsonStr);\n    return user.name;\n  } catch (err) {\n    console.error(\"Invalid JSON format:\", err.message);\n    return \"Anonymous\";\n  } finally {\n    console.log(\"parseUserData completed.\");\n  }\n}\n\nconsole.log(parseUserData(\"{ invalid }\"));"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m06-t02-p2",
+            "question": "When does the finally block in a try...catch...finally construct execute?",
+            "options": [
+              "Only when an exception is thrown",
+              "Only when no exception is thrown",
+              "Always, regardless of whether an exception occurred or was handled",
+              "Only if the catch block throws an error"
+            ],
+            "correctAnswer": 2,
+            "explanation": "The finally block always executes after the try and catch blocks finish, regardless of whether an error was thrown or handled."
+          }
+        },
+        {
+          "pageId": "p-js-m06-t02-p3",
+          "title": "Throwing Custom Errors with the throw Statement",
+          "content": "# Throwing Errors with throw\n\nThe `throw` statement allows developers to signal custom exceptional conditions and interrupt program flow.\n\n### Best Practice: Throw Error Objects\nWhile JavaScript permits throwing any value (strings, numbers), always throw an instance of `Error` (or a subclass) so that stack traces and error metadata are properly captured.\n\n```javascript\nif (age < 0) {\n  throw new Error(\"Age cannot be negative\");\n}\n```\n\n### Custom Error Classes\nYou can create specialized error types by extending the built-in `Error` class:\n```javascript\nclass ValidationError extends Error {\n  constructor(message) {\n    super(message);\n    this.name = \"ValidationError\";\n  }\n}\n```",
+          "callout": {
+            "type": "WARNING",
+            "title": "Do Not Throw Plain Strings",
+            "text": "Throwing plain strings (throw 'error') prevents debugging tools from capturing line numbers, file names, and call stack traces."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "function divide(a, b) {\n  if (b === 0) {\n    throw new Error(\"DivisionByZeroError: Divisor cannot be 0.\");\n  }\n  return a / b;\n}\n\ntry {\n  console.log(divide(10, 0));\n} catch (err) {\n  console.log(\"Caught:\", err.message);\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m06-t02-p3",
+            "question": "Why is it recommended to throw new Error('msg') instead of a raw string like throw 'msg'?",
+            "options": [
+              "Strings cannot be caught by catch blocks",
+              "Error objects include stack trace information and standardized properties",
+              "Raw strings crash the JavaScript runtime permanently",
+              "Only Error objects can be displayed in console.log"
+            ],
+            "correctAnswer": 1,
+            "explanation": "Creating an Error object automatically captures the call stack trace and provides standard .name and .message properties."
+          }
+        },
+        {
+          "pageId": "p-js-m06-t02-p4",
+          "title": "Interactive Debugging with DevTools and the debugger Statement",
+          "content": "# Modern Debugging Tools\n\nModern web browsers and Node.js provide world-class developer tools for step-by-step program inspection:\n\n### 1. The debugger Statement\nPlacing `debugger;` in your code acts as a programmatic breakpoint. When developer tools are open, execution pauses at that exact line, allowing you to inspect variable values in the Scope panel.\n\n### 2. Rich Console Methods\n- **`console.table(data)`**: Formats arrays of objects as structured tabular displays.\n- **`console.time(label)` / `console.timeEnd(label)`**: Benchmarks execution time.\n- **`console.trace()`**: Dumps the current function call stack.\n- **`console.assert(condition, message)`**: Writes an error message only if the assertion evaluates to false.",
+          "callout": {
+            "type": "TIP",
+            "title": "Conditional Breakpoints",
+            "text": "In Chrome/Edge DevTools, right-click on a line number to set a conditional breakpoint that only triggers when a specific expression is true."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const users = [\n  { id: 1, name: \"Alice\", role: \"Admin\" },\n  { id: 2, name: \"Bob\", role: \"User\" }\n];\n\n// Display structured data cleanly\nconsole.table(users);\n\nconsole.time(\"LoopPerformance\");\nfor (let i = 0; i < 10000; i++) {}\nconsole.timeEnd(\"LoopPerformance\");"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m06-t02-p4",
+            "question": "What built-in JavaScript keyword pauses code execution and triggers the browser's debugger if DevTools are active?",
+            "options": [
+              "pause",
+              "breakpoint",
+              "debugger",
+              "stop"
+            ],
+            "correctAnswer": 2,
+            "explanation": "The debugger keyword invokes any available debugging functionality, pausing execution like a breakpoint."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -519,5 +624,717 @@
       "_sourceFile": "javascript.json",
       "_moduleTitle": "Debug your code"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m06-debug-your-code",
+    "title": "Module Assessment: Debug your code",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "mcq-js-m06-1",
+          "question": "Which error occurs when you attempt to access a variable that has never been declared?",
+          "options": [
+            "TypeError",
+            "ReferenceError",
+            "SyntaxError",
+            "RangeError"
+          ],
+          "correctAnswer": 1,
+          "explanation": "A ReferenceError is thrown when an invalid reference to an undeclared variable is accessed."
+        },
+        {
+          "questionId": "mcq-js-m06-2",
+          "question": "What does the debugger statement do in JavaScript?",
+          "options": [
+            "Prints a debug message to stdout",
+            "Pauses execution and launches the debugger if DevTools are attached",
+            "Clears all breakpoints in the script",
+            "Validates syntax before compiling"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The debugger statement invokes debugging functionality such as setting a breakpoint at that line."
+        },
+        {
+          "questionId": "mcq-js-m06-3",
+          "question": "Which console method renders arrays of objects or data in a clean tabular view?",
+          "options": [
+            "console.grid()",
+            "console.table()",
+            "console.matrix()",
+            "console.view()"
+          ],
+          "correctAnswer": 1,
+          "explanation": "console.table() outputs tabular data as a formatted table in the console."
+        },
+        {
+          "questionId": "mcq-js-m06-4",
+          "question": "What is the primary purpose of the finally block in a try...catch...finally statement?",
+          "options": [
+            "To retry the failed operation",
+            "To execute cleanup code unconditionally after try/catch blocks finish",
+            "To suppress all thrown errors",
+            "To log errors to a remote server"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The finally block always runs after try and catch blocks complete, ensuring cleanup operations take place."
+        },
+        {
+          "questionId": "mcq-js-m06-5",
+          "question": "What error is triggered by executing const obj = null; obj.name?",
+          "options": [
+            "ReferenceError",
+            "TypeError",
+            "SyntaxError",
+            "NullError"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Attempting to access properties on null or undefined throws a TypeError: Cannot read properties of null."
+        },
+        {
+          "questionId": "mcq-js-m06-6",
+          "question": "Which method logs the current call stack trace to the console?",
+          "options": [
+            "console.stack()",
+            "console.trace()",
+            "console.dump()",
+            "console.track()"
+          ],
+          "correctAnswer": 1,
+          "explanation": "console.trace() outputs a stack trace from the point where it was called."
+        },
+        {
+          "questionId": "mcq-js-m06-7",
+          "question": "What does console.assert(x > 0, 'x must be positive') do if x is -5?",
+          "options": [
+            "It throws a fatal exception stopping the program",
+            "It logs an error message 'Assertion failed: x must be positive' to the console",
+            "It ignores the check",
+            "It returns false without logging"
+          ],
+          "correctAnswer": 1,
+          "explanation": "console.assert() writes an error message to the console if the assertion is false. It does not stop execution."
+        },
+        {
+          "questionId": "mcq-js-m06-8",
+          "question": "How do you measure code execution time using the console API?",
+          "options": [
+            "console.start() and console.finish()",
+            "console.time('label') and console.timeEnd('label')",
+            "console.benchmark()",
+            "console.clock()"
+          ],
+          "correctAnswer": 1,
+          "explanation": "console.time('label') starts a timer and console.timeEnd('label') stops it, printing the elapsed time in milliseconds."
+        },
+        {
+          "questionId": "mcq-js-m06-9",
+          "question": "Which of the following creates and throws a custom error object?",
+          "options": [
+            "raise Exception('Invalid input')",
+            "throw new Error('Invalid input')",
+            "catch new Error('Invalid input')",
+            "error('Invalid input')"
+          ],
+          "correctAnswer": 1,
+          "explanation": "In JavaScript, errors are thrown using the throw keyword with an instance of Error: throw new Error('Invalid input')."
+        },
+        {
+          "questionId": "mcq-js-m06-10",
+          "question": "What error is thrown by new Array(-5)?",
+          "options": [
+            "TypeError",
+            "RangeError",
+            "SyntaxError",
+            "SizeError"
+          ],
+          "correctAnswer": 1,
+          "explanation": "A RangeError indicates that a value is outside the allowed set or range, such as an invalid negative array length."
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.16",
+          "questionId": "Q0.16",
+          "title": "Zero Padded Integer Formatting",
+          "difficulty": "Beginner",
+          "estimatedMinutes": 10,
+          "tags": [
+            "JavaScript",
+            ".c",
+            "programming"
+          ],
+          "problemStatement": "Write a program to accept 2 numbers as input from the user. Print the 2 numbers such that the second number is 17 width spaces away from the first.",
+          "description": "Write a program to accept 2 numbers as input from the user. Print the 2 numbers such that the second number is 17 width spaces away from the first.",
+          "constraints": "0 <= A, B <= 10^9",
+          "inputFormat": "Integer Integer",
+          "outputFormat": "Integer Integer",
+          "sampleTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "25 35",
+              "output": "2500000000000000035",
+              "expectedOutput": "2500000000000000035",
+              "explanation": "Input '25 35' produces expected output '' following problem rules."
+            },
+            {
+              "caseNumber": 2,
+              "input": "12 123",
+              "output": "1200000000000000123",
+              "expectedOutput": "1200000000000000123",
+              "explanation": "Input '12 123' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenValidationCases": [
+            {
+              "caseNumber": 1,
+              "input": "25 35",
+              "output": "2500000000000000035",
+              "expectedOutput": "2500000000000000035",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "12 123",
+              "output": "1200000000000000123",
+              "expectedOutput": "1200000000000000123",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "25 35",
+              "output": "2500000000000000035",
+              "expectedOutput": "2500000000000000035",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "12 123",
+              "output": "1200000000000000123",
+              "expectedOutput": "1200000000000000123",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "25 35",
+              "output": "2500000000000000035",
+              "expectedOutput": "2500000000000000035",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "12 123",
+              "output": "1200000000000000123",
+              "expectedOutput": "1200000000000000123",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "25 35",
+              "output": "2500000000000000035",
+              "expectedOutput": "2500000000000000035",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "12 123",
+              "output": "1200000000000000123",
+              "expectedOutput": "1200000000000000123",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "25 35",
+              "output": "2500000000000000035",
+              "expectedOutput": "2500000000000000035",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "12 123",
+              "output": "1200000000000000123",
+              "expectedOutput": "1200000000000000123",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "25 35",
+              "output": "2500000000000000035",
+              "expectedOutput": "2500000000000000035",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "12 123",
+              "output": "1200000000000000123",
+              "expectedOutput": "1200000000000000123",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "25 35",
+              "output": "2500000000000000035",
+              "expectedOutput": "2500000000000000035",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "12 123",
+              "output": "1200000000000000123",
+              "expectedOutput": "1200000000000000123",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "25 35",
+              "output": "2500000000000000035",
+              "expectedOutput": "2500000000000000035",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "12 123",
+              "output": "1200000000000000123",
+              "expectedOutput": "1200000000000000123",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "25 35",
+              "output": "2500000000000000035",
+              "expectedOutput": "2500000000000000035",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "12 123",
+              "output": "1200000000000000123",
+              "expectedOutput": "1200000000000000123",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "25 35",
+              "output": "2500000000000000035",
+              "expectedOutput": "2500000000000000035",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "12 123",
+              "output": "1200000000000000123",
+              "expectedOutput": "1200000000000000123",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "boilerPlates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "solution": {
+            "javascript": "const fs = require('fs');\n\nfunction main() {\n    const parts = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\n    if (parts.length >= 2) {\n        console.log(parts[0] + parts[1].padStart(17, '0'));\n    }\n}\n\nmain();\n"
+          }
+        },
+        {
+          "problemId": "Q0.17",
+          "questionId": "Q0.17",
+          "title": "Octal or Hexadecimal to Decimal",
+          "difficulty": "Beginner",
+          "estimatedMinutes": 10,
+          "tags": [
+            "JavaScript",
+            ".c",
+            "programming"
+          ],
+          "problemStatement": "Write a program to accept a number as input (Octal or Hexadecimal) from the user and print it decimal equivalent.",
+          "description": "Write a program to accept a number as input (Octal or Hexadecimal) from the user and print it decimal equivalent.",
+          "constraints": "Valid octal or hex representation up to 32-bit int",
+          "inputFormat": "Integer",
+          "outputFormat": "Integer",
+          "sampleTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "0144",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Input '0144' produces expected output '' following problem rules."
+            },
+            {
+              "caseNumber": 2,
+              "input": "0x64",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Input '0x64' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenValidationCases": [
+            {
+              "caseNumber": 1,
+              "input": "0144",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "0x64",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "0144",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "0x64",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "0144",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "0x64",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "0144",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "0x64",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "0144",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "0x64",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "0144",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "0x64",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "0144",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "0x64",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "0144",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "0x64",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "0144",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "0x64",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "0144",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "0x64",
+              "output": "100",
+              "expectedOutput": "100",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "boilerPlates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "solution": {
+            "javascript": "const fs = require('fs');\n\nfunction main() {\n    const s = fs.readFileSync(0, 'utf-8').trim();\n    if (s.length > 0) {\n        let val;\n        if (s.startsWith('0x') || s.startsWith('0X')) {\n            val = parseInt(s, 16);\n        } else if (s.startsWith('0') && s.length > 1) {\n            val = parseInt(s, 8);\n        } else {\n            val = parseInt(s, 10);\n        }\n        console.log(val);\n    }\n}\n\nmain();\n"
+          }
+        },
+        {
+          "problemId": "Q0.18",
+          "questionId": "Q0.18",
+          "title": "Format Float with Variable Precision",
+          "difficulty": "Beginner",
+          "estimatedMinutes": 10,
+          "tags": [
+            "JavaScript",
+            ".c",
+            "programming"
+          ],
+          "problemStatement": "Write a program to accept a float value and an integer as input. The integer represents the precision. Print the float value according to the precision.",
+          "description": "Write a program to accept a float value and an integer as input. The integer represents the precision. Print the float value according to the precision.",
+          "constraints": "-10^6 <= val <= 10^6, 0 <= k <= 10",
+          "inputFormat": "Float Integer",
+          "outputFormat": "Float",
+          "sampleTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "123.4567 2",
+              "output": "123.46",
+              "expectedOutput": "123.46",
+              "explanation": "Input '123.4567 2' produces expected output '' following problem rules."
+            },
+            {
+              "caseNumber": 2,
+              "input": "987.346732 3",
+              "output": "987.347",
+              "expectedOutput": "987.347",
+              "explanation": "Input '987.346732 3' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenValidationCases": [
+            {
+              "caseNumber": 1,
+              "input": "123.4567 2",
+              "output": "123.46",
+              "expectedOutput": "123.46",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "987.346732 3",
+              "output": "987.347",
+              "expectedOutput": "987.347",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "123.4567 2",
+              "output": "123.46",
+              "expectedOutput": "123.46",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "987.346732 3",
+              "output": "987.347",
+              "expectedOutput": "987.347",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "123.4567 2",
+              "output": "123.46",
+              "expectedOutput": "123.46",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "987.346732 3",
+              "output": "987.347",
+              "expectedOutput": "987.347",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "123.4567 2",
+              "output": "123.46",
+              "expectedOutput": "123.46",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "987.346732 3",
+              "output": "987.347",
+              "expectedOutput": "987.347",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "123.4567 2",
+              "output": "123.46",
+              "expectedOutput": "123.46",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "987.346732 3",
+              "output": "987.347",
+              "expectedOutput": "987.347",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "123.4567 2",
+              "output": "123.46",
+              "expectedOutput": "123.46",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "987.346732 3",
+              "output": "987.347",
+              "expectedOutput": "987.347",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "123.4567 2",
+              "output": "123.46",
+              "expectedOutput": "123.46",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "987.346732 3",
+              "output": "987.347",
+              "expectedOutput": "987.347",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "123.4567 2",
+              "output": "123.46",
+              "expectedOutput": "123.46",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "987.346732 3",
+              "output": "987.347",
+              "expectedOutput": "987.347",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "123.4567 2",
+              "output": "123.46",
+              "expectedOutput": "123.46",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "987.346732 3",
+              "output": "987.347",
+              "expectedOutput": "987.347",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "123.4567 2",
+              "output": "123.46",
+              "expectedOutput": "123.46",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "987.346732 3",
+              "output": "987.347",
+              "expectedOutput": "987.347",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "boilerPlates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "solution": {
+            "javascript": "const fs = require('fs');\n\nfunction main() {\n    const parts = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\n    if (parts.length >= 2) {\n        const val = parseFloat(parts[0]);\n        const k = parseInt(parts[1], 10);\n        console.log(val.toFixed(k));\n    }\n}\n\nmain();\n"
+          }
+        }
+      ]
+    }
+  }
 }

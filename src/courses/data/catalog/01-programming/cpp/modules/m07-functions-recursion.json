@@ -5102,7 +5102,34 @@
       "description": "Study concepts and solve targeted engineering problems for Call by value and call by reference.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 35,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m07-call-ref-01",
+          "title": "Parameter Passing: Value, Reference, and Const Reference",
+          "content": "### Mechanics of Parameter Passing in C++\n\nC++ provides explicit control over parameter copying and mutation:\n\n1. **Pass-by-Value (`void func(int x)`)**:\n   - Creates an independent copy of the argument.\n   - Modifications inside the function do not affect the caller's variable.\n   - Ideal for cheap primitive types (`int`, `float`, `char`, pointers).\n\n2. **Pass-by-Reference (`void func(int& x)`)**:\n   - Binds an alias directly to the caller's variable without copying.\n   - Modifications inside the function directly mutate the caller's argument.\n   - Used for output parameters, swap functions, and in-place updates.\n\n3. **Pass-by-Const-Reference (`void func(const std::string& s)`)**:\n   - Binds an alias without copying, but forbids modification via compiler enforcement.\n   - Ideal for large objects (`std::string`, `std::vector`, custom classes) to eliminate copy overhead safely.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Modern C++ Passing Rule",
+            "text": "Pass cheap primitives by value (<= 16 bytes). Pass complex objects by const reference unless move semantics or copies are explicitly required."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n\nvoid swapValues(int& a, int& b) {\n    int temp = a;\n    a = b;\n    b = temp;\n}\n\nint main() {\n    int x = 10, y = 20;\n    swapValues(x, y);\n    std::cout << \"x = \" << x << \", y = \" << y << \"\\n\"; // 20, 10\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m07-ref-cp1",
+            "question": "What is the primary benefit of passing a large std::vector by const reference (`const std::vector<int>& v`)?",
+            "options": [
+              "It avoids copying all elements in the vector while ensuring the function cannot modify the original vector",
+              "It converts the vector into an array automatically",
+              "It makes the function run concurrently in multiple threads",
+              "It dynamically allocates new memory on the heap"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Const reference passes an alias (avoiding expensive deep copying of dynamic memory) and enforces read-only access."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -5515,5 +5542,442 @@
       "_sourceFile": "college-programming-cpp.json",
       "_moduleTitle": "Arrays, Strings & introduction to sorting"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m07-functions-recursion",
+    "title": "Module Assessment: Functions & Recursion",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "msa-cpp-m07-q1",
+          "question": "What is function overloading in C++?",
+          "options": [
+            "Creating functions with the same name but different parameter lists (types, number of parameters, or qualifiers)",
+            "Having multiple return statements",
+            "Writing functions that exceed memory limits",
+            "Overriding virtual methods"
+          ],
+          "correctAnswer": 0,
+          "explanation": "C++ allows multiple functions to share the exact same identifier as long as their signatures (parameter types/counts) differ.",
+          "tags": [
+            "Functions",
+            "Overloading"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m07-q2",
+          "question": "Can functions in C++ be overloaded based ONLY on their return type (e.g. `int get()` vs `double get()`)?",
+          "options": [
+            "Yes, compiler resolves based on assignment",
+            "No, functions cannot be overloaded solely on return type (results in compile-time error)",
+            "Yes, in C++20",
+            "Only with auto keyword"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The return type is not part of the function signature used for overload resolution in C++.",
+          "tags": [
+            "Overloading",
+            "Language Rules"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m07-q3",
+          "question": "What does the `inline` keyword suggest to the compiler regarding a function?",
+          "options": [
+            "Forces the function to run in a separate thread",
+            "Recommends replacing function call sites directly with the function body to eliminate call overhead",
+            "Makes the function private",
+            "Prevents recursion"
+          ],
+          "correctAnswer": 1,
+          "explanation": "inline advises the compiler to expand the function code inline at call sites, eliminating stack frame setup costs for small functions.",
+          "tags": [
+            "Optimization",
+            "inline"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m07-q4",
+          "question": "How are default arguments specified in a C++ function declaration?",
+          "options": [
+            "In the declaration from right to left (trailing parameters only): `void draw(int x, int y = 0);`",
+            "At any parameter position",
+            "Only in the function body",
+            "Using default keyword"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Default arguments must be specified from right to left with no non-default parameters following them.",
+          "tags": [
+            "Functions",
+            "Default Arguments"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m07-q5",
+          "question": "What is a lambda expression in modern C++ (introduced in C++11)?",
+          "options": [
+            "An anonymous inline function object capable of capturing variables from its enclosing scope",
+            "A pointer to main",
+            "A macro definition",
+            "A type cast"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Lambdas are anonymous callable objects defined with syntax `[captures](params) -> ret { body }`.",
+          "tags": [
+            "C++11",
+            "Lambdas"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m07-q6",
+          "question": "What does the capture clause `[&]` indicate in a C++ lambda expression?",
+          "options": [
+            "Capture all outer local variables by copy",
+            "Capture all outer local variables by reference",
+            "Capture nothing",
+            "Capture only global variables"
+          ],
+          "correctAnswer": 1,
+          "explanation": "[&] captures all automatic variables in scope by reference, allowing the lambda to inspect and mutate them.",
+          "tags": [
+            "Lambdas",
+            "Capture Clause"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m07-q7",
+          "question": "What is tail call optimization (TCO)?",
+          "options": [
+            "A compiler optimization where a recursive call in tail position is transformed into an iterative loop, preventing stack growth",
+            "Deleting tail elements",
+            "Reversing recursion",
+            "Allocating heap memory for recursion"
+          ],
+          "correctAnswer": 0,
+          "explanation": "When the recursive call is the very last operation before return, compilers can reuse the current stack frame, eliminating stack overflow.",
+          "tags": [
+            "Recursion",
+            "Optimization"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m07-q8",
+          "question": "What happens to local variables when a recursive function enters a new activation frame?",
+          "options": [
+            "They are overwritten",
+            "A fresh independent set of local variables is allocated on the new stack frame",
+            "They are moved to heap",
+            "They become global"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Each recursive invocation receives its own separate stack frame with its own independent local variables.",
+          "tags": [
+            "Call Stack",
+            "Recursion"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m07-q9",
+          "question": "What modern C++14 return type deduction feature allows omitting the return type in function definitions?",
+          "options": [
+            "`auto func() { return 42; }`",
+            "`var func()`",
+            "`def func()`",
+            "`template func()`"
+          ],
+          "correctAnswer": 0,
+          "explanation": "C++14 allows auto as the return type; the compiler deduces the return type from the return statements inside the body.",
+          "tags": [
+            "C++14",
+            "auto Return"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m07-q10",
+          "question": "What does the `[[nodiscard]]` attribute (C++17) signal on a function declaration?",
+          "options": [
+            "The function cannot be deleted",
+            "The compiler issues a warning if caller ignores the function's return value",
+            "The function returns void",
+            "The function is pure virtual"
+          ],
+          "correctAnswer": 1,
+          "explanation": "[[nodiscard]] warns developers when a critical return value (e.g. error code or resource) is accidentally discarded.",
+          "tags": [
+            "C++17",
+            "Attributes"
+          ]
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.60",
+          "questionId": "Q0.60",
+          "title": "Multiplication Table",
+          "difficulty": "Beginner",
+          "problemStatement": "Print the multiplication table as per the multiplicant and n.",
+          "description": "Print the multiplication table as per the multiplicant and n.",
+          "constraints": "1 <= Limit, Multiplicand <= 1000",
+          "inputFormat": "Integer Integer",
+          "outputFormat": "Integer * Integer = Integer",
+          "sampleTestCases": [
+            {
+              "input": "6 5",
+              "output": "1 * 5 = 5\n2 * 5 = 10\n3 * 5 = 15\n4 * 5 = 20\n5 * 5 = 25\n6 * 5 = 30",
+              "explanation": "Input '6 5' produces expected output ''."
+            },
+            {
+              "input": "4 2",
+              "output": "1 * 2 = 2\n2 * 2 = 4\n3 * 2 = 6\n4 * 2 = 8",
+              "explanation": "Input '4 2' produces expected output ''."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "6 5",
+              "output": "1 * 5 = 5\n2 * 5 = 10\n3 * 5 = 15\n4 * 5 = 20\n5 * 5 = 25\n6 * 5 = 30",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "4 2",
+              "output": "1 * 2 = 2\n2 * 2 = 4\n3 * 2 = 6\n4 * 2 = 8",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "6 5",
+              "output": "1 * 5 = 5\n2 * 5 = 10\n3 * 5 = 15\n4 * 5 = 20\n5 * 5 = 25\n6 * 5 = 30",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "4 2",
+              "output": "1 * 2 = 2\n2 * 2 = 4\n3 * 2 = 6\n4 * 2 = 8",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "6 5",
+              "output": "1 * 5 = 5\n2 * 5 = 10\n3 * 5 = 15\n4 * 5 = 20\n5 * 5 = 25\n6 * 5 = 30",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "4 2",
+              "output": "1 * 2 = 2\n2 * 2 = 4\n3 * 2 = 6\n4 * 2 = 8",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "6 5",
+              "output": "1 * 5 = 5\n2 * 5 = 10\n3 * 5 = 15\n4 * 5 = 20\n5 * 5 = 25\n6 * 5 = 30",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "4 2",
+              "output": "1 * 2 = 2\n2 * 2 = 4\n3 * 2 = 6\n4 * 2 = 8",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "6 5",
+              "output": "1 * 5 = 5\n2 * 5 = 10\n3 * 5 = 15\n4 * 5 = 20\n5 * 5 = 25\n6 * 5 = 30",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "4 2",
+              "output": "1 * 2 = 2\n2 * 2 = 4\n3 * 2 = 6\n4 * 2 = 8",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int limit, m;\n    if (cin >> limit >> m) {\n        for (int i = 1; i <= limit; i++) {\n            cout << i << \" * \" << m << \" = \" << i * m << \"\\n\";\n        }\n    }\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    int limit, m;\n    if (scanf(\"%d %d\", &limit, &m) == 2) {\n        for (int i = 1; i <= limit; i++) {\n            printf(\"%d * %d = %d\\n\", i, m, i * m);\n        }\n    }\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.62",
+          "questionId": "Q0.62",
+          "title": "Integer Division Without Division Operator",
+          "difficulty": "Beginner",
+          "problemStatement": "Divide the given two numbers and print the quotient without using / operator.",
+          "description": "Divide the given two numbers and print the quotient without using / operator.",
+          "constraints": "1 <= A, B <= 10^9",
+          "inputFormat": "Integer Integer",
+          "outputFormat": "Integer",
+          "sampleTestCases": [
+            {
+              "input": "10 2",
+              "output": "5",
+              "explanation": "Input produces the corresponding formatted output according to problem rules."
+            },
+            {
+              "input": "13 3",
+              "output": "4",
+              "explanation": "Input produces the corresponding formatted output according to problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "10 2",
+              "output": "5",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "13 3",
+              "output": "4",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "10 2",
+              "output": "5",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "13 3",
+              "output": "4",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "10 2",
+              "output": "5",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "13 3",
+              "output": "4",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "10 2",
+              "output": "5",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "13 3",
+              "output": "4",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "10 2",
+              "output": "5",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "13 3",
+              "output": "4",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    long long a, b;\n    if (cin >> a >> b) {\n        long long q = 0;\n        while (a >= b) {\n            a -= b;\n            q++;\n        }\n        cout << q << \"\\n\";\n    }\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    long long a, b;\n    if (scanf(\"%lld %lld\", &a, &b) == 2) {\n        long long q = 0;\n        while (a >= b) {\n            a -= b;\n            q++;\n        }\n        printf(\"%lld\\n\", q);\n    }\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.65",
+          "questionId": "Q0.65",
+          "title": "Print Lowercase Alphabet N Times",
+          "difficulty": "Beginner",
+          "problemStatement": "Print all the alphabets for given n times.",
+          "description": "Print all the alphabets for given n times.",
+          "constraints": "1 <= N <= 100",
+          "inputFormat": "Integer",
+          "outputFormat": "All the alphabets",
+          "sampleTestCases": [
+            {
+              "input": "2",
+              "output": "a b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z",
+              "explanation": "Input produces the corresponding formatted output according to problem rules."
+            },
+            {
+              "input": "4",
+              "output": "a b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z",
+              "explanation": "Input produces the corresponding formatted output according to problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "2",
+              "output": "a b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "4",
+              "output": "a b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "2",
+              "output": "a b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "4",
+              "output": "a b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "2",
+              "output": "a b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "4",
+              "output": "a b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "2",
+              "output": "a b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "4",
+              "output": "a b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "2",
+              "output": "a b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "4",
+              "output": "a b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z\na b c d e f g h i j k l m n o p q r s t u v w x y z",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int n;\n    if (cin >> n) {\n        for (int r = 0; r < n; r++) {\n            for (char c = 'a'; c <= 'z'; c++) {\n                cout << c << (c == 'z' ? \"\" : \" \");\n            }\n            cout << \"\\n\";\n        }\n    }\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    int n;\n    if (scanf(\"%d\", &n) == 1) {\n        for (int r = 0; r < n; r++) {\n            for (char c = 'a'; c <= 'z'; c++) {\n                printf(\"%c%s\", c, (c == 'z' ? \"\" : \" \"));\n            }\n            printf(\"\\n\");\n        }\n    }\n    return 0;\n}\n"
+          }
+        }
+      ]
+    }
+  }
 }

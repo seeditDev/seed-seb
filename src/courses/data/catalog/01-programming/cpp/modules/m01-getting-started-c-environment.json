@@ -1223,7 +1223,34 @@
       "description": "Study concepts and solve targeted engineering problems for Review problems.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 20,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m01-review-01",
+          "title": "Practice & Review: Basic C++ Structure and Output",
+          "content": "### Reviewing Fundamental C++ Program Structure\n\nBefore moving further, let us review the essential building blocks of every C++ executable:\n\n1. **Pre-processor Directives (`#include <iostream>`)**: Instructs the preprocessor to include standard input/output stream definitions.\n2. **The `main()` Function**: The operating system entry point. Every C++ program must have exactly one `main()` function returning an integer status code.\n3. **Namespaces (`std::`)**: Standard library identifiers live inside the `std` namespace to prevent naming collisions.\n4. **Streams (`std::cout`, `<<`)**: The stream insertion operator `<<` sends formatted text or numeric data to standard output.\n5. **Return Status (`return 0;`)**: Indicates successful execution to the operating system shell.\n\n#### Key Best Practices\n- Prefer `\\n` over `std::endl` in performance-sensitive loops because `std::endl` forces a costly buffer flush.\n- Maintain clean indentation (2 or 4 spaces) and descriptive identifiers.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "C++ Entry Point",
+            "text": "The main() function signature is int main() or int main(int argc, char* argv[]). Void main is non-standard in modern C++."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n\nint main() {\n    // Output greeting across multiple lines\n    std::cout << \"C++ Standard: C++17/20\\n\";\n    std::cout << \"Execution Status: Ready\\n\";\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m01-rev-01",
+            "question": "Why is '\\n' generally preferred over 'std::endl' when printing frequent output lines?",
+            "options": [
+              "'\\n' writes a newline without forcing an immediate stream buffer flush, making it faster",
+              "'std::endl' is deprecated in modern C++ standard versions",
+              "'\\n' automatically converts all text to uppercase",
+              "'std::endl' cannot be used with std::cout"
+            ],
+            "correctAnswer": 0,
+            "explanation": "'\\n' outputs a newline character. 'std::endl' outputs a newline AND calls flush(), which causes noticeable I/O overhead in performance-critical code."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -2795,7 +2822,34 @@
       "description": "Study concepts and solve targeted engineering problems for Custom input.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 15,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-CPP-M01-T06-1",
+          "title": "std::cin Stream Extraction, Whitespace, and State Handling",
+          "content": "### Stream Extraction with `std::cin` in C++\n\nIn C++, standard input is handled through the input stream object `std::cin` (defined in `<iostream>`) paired with the extraction operator `>>`.\n\n```cpp\nint age;\nstd::string name;\nstd::cin >> age >> name; // Chains extraction seamlessly\n```\n\n### How `std::cin >>` Handles Whitespace:\nBy default, `std::cin >>` **skips all leading whitespace** (spaces, tabs, newlines) and reads until the next whitespace delimiter. If you need to read a full line containing spaces (e.g. a full name or sentence), use `std::getline(std::cin, str)`.\n\n### Handling Leftover Newlines with `std::cin.ignore()`:\nWhen you read a number with `std::cin >> num;` and press Enter, the integer is consumed, but the newline character `\\n` remains unread in the stream buffer. If you subsequently call `std::getline(std::cin, line);`, `getline` immediately encounters `\\n` and reads an empty line!\n\n**The Solution:** Use `std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\\n');` (from `<limits>`) to discard leftover buffer characters.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Buffer Clearing before getline",
+            "text": "Always call `std::cin.ignore();` after `std::cin >> var;` before calling `std::getline()` to flush the trailing newline."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <string>\n#include <limits>\n\nint main() {\n    int studentId;\n    std::string fullName;\n    \n    std::cout << \"Enter ID: \";\n    std::cin >> studentId;\n    \n    // Discard leftover newline from the stream\n    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\\n');\n    \n    std::cout << \"Enter full name: \";\n    std::getline(std::cin, fullName);\n    \n    std::cout << \"Registered: \" << fullName << \" (ID: \" << studentId << \")\\n\";\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CPP-M01-T06-1",
+            "question": "What function in C++ is used to read an entire line of text including spaces into a `std::string`?",
+            "options": [
+              "std::cin.read()",
+              "std::getline(std::cin, str)",
+              "std::cin >> str",
+              "scanf(\"%s\", str)"
+            ],
+            "correctAnswer": 1,
+            "explanation": "std::getline(std::cin, str) reads all characters up to the next newline delimiter into the string."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -3255,7 +3309,34 @@
       "description": "Study concepts and solve targeted engineering problems for Quiz.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 20,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m01-quiz-01",
+          "title": "Module 1 Knowledge Check & Quiz",
+          "content": "### C++ Toolchain & Compilation Stages\n\nA C++ compiler translates human-readable source code into native machine code through four sequential stages:\n\n1. **Preprocessing (`g++ -E`)**: Expands `#include` directives, substitutes `#define` macros, and strips comments.\n2. **Compilation (`g++ -S`)**: Translates preprocessed C++ source into architecture-specific assembly language instructions.\n3. **Assembly (`g++ -c`)**: Converts assembly instructions into binary object code files (`.o` or `.obj`).\n4. **Linking (`g++`)**: Combines object files and external libraries, resolves cross-file function calls, and produces the final executable binary.\n\nUnderstanding these steps helps pinpoint whether an error is a syntax error (compilation), missing header (preprocessing), or undefined reference (linker).",
+          "callout": {
+            "type": "TIP",
+            "title": "Compiler Diagnostics",
+            "text": "Always enable compiler warnings with -Wall -Wextra -Wpedantic to catch bugs before runtime."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "// Terminal commands for GCC/Clang:\n// 1. Compile and link with warnings enabled:\n//    g++ -Wall -Wextra -std=c++17 main.cpp -o main\n// 2. Run executable:\n//    ./main"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m01-quiz-01",
+            "question": "Which stage of the C++ build process produces an 'undefined reference to main' error?",
+            "options": [
+              "The Linker stage, when combining object files into an executable",
+              "The Preprocessor stage, while processing header includes",
+              "The Assembly stage, while emitting machine instructions",
+              "The Text Editor, before compilation starts"
+            ],
+            "correctAnswer": 0,
+            "explanation": "The linker searches for entry points and external symbols; if main() cannot be resolved during link time, the linker emits an 'undefined reference' error."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -4219,5 +4300,427 @@
       "_sourceFile": "college-programming-cpp.json",
       "_moduleTitle": "Introduction to C++"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m01-getting-started-c-environment",
+    "title": "Module Assessment: Getting Started & C++ Environment",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "msa-cpp-m01-q1",
+          "question": "Who created the C++ programming language at Bell Labs in 1979?",
+          "options": [
+            "Dennis Ritchie",
+            "Bjarne Stroustrup",
+            "James Gosling",
+            "Ken Thompson"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Bjarne Stroustrup designed C++ (originally called \"C with Classes\") at Bell Labs beginning in 1979.",
+          "tags": [
+            "C++ History",
+            "Language Origins"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m01-q2",
+          "question": "What is the purpose of `std::endl` compared to emitting `'\\n'` in C++?",
+          "options": [
+            "std::endl only works with strings",
+            "std::endl prints a newline character AND explicitly flushes the output stream buffer",
+            "std::endl is faster than '\\n'",
+            "std::endl terminates the program"
+          ],
+          "correctAnswer": 1,
+          "explanation": "std::endl inserts a newline and calls stream.flush(). For high-performance I/O, prefer '\\n' to avoid excessive flushing.",
+          "tags": [
+            "I/O Streams",
+            "std::endl"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m01-q3",
+          "question": "What compiler flag enables modern C++20 features in GCC/Clang?",
+          "options": [
+            "-std=c++20",
+            "-O20",
+            "-cpp20",
+            "--enable-modern"
+          ],
+          "correctAnswer": 0,
+          "explanation": "-std=c++20 instructs the compiler to conform to the ISO C++20 standard.",
+          "tags": [
+            "Toolchain",
+            "C++ Standards"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m01-q4",
+          "question": "What does the standard namespace qualifier `std::` signify?",
+          "options": [
+            "A pointer to standard memory",
+            "The standard C++ library namespace enclosing standard types like vector, string, and cout",
+            "A static keyword",
+            "The CPU architecture identifier"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Namespaces in C++ prevent symbol naming collisions. The standard library symbols reside within namespace std.",
+          "tags": [
+            "Namespaces",
+            "Standard Library"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m01-q5",
+          "question": "Why is `using namespace std;` considered poor practice in header files (`.h`/`.hpp`)?",
+          "options": [
+            "It causes syntax errors in C++11",
+            "It pollutes the global namespace of any translation unit that includes the header, creating subtle naming collisions",
+            "It slows down program execution",
+            "Headers cannot include namespaces"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Placing using namespace std in headers forces all symbols into the global namespace of all including files, causing collisions.",
+          "tags": [
+            "Best Practices",
+            "Namespaces"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m01-q6",
+          "question": "What stream object in C++ is connected to standard error and is UNBUFFERED by default?",
+          "options": [
+            "std::cout",
+            "std::cin",
+            "std::cerr",
+            "std::clog"
+          ],
+          "correctAnswer": 2,
+          "explanation": "std::cerr writes to standard error unbuffered, ensuring error messages appear immediately even if the program crashes.",
+          "tags": [
+            "Streams",
+            "std::cerr"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m01-q7",
+          "question": "What header file must be included to use `std::cin` and `std::cout`?",
+          "options": [
+            "<stdio.h>",
+            "<iostream>",
+            "<stream.h>",
+            "<conio.h>"
+          ],
+          "correctAnswer": 1,
+          "explanation": "<iostream> declares the standard input/output stream objects for C++.",
+          "tags": [
+            "Headers",
+            "iostream"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m01-q8",
+          "question": "What is the return type of `main()` in standard conforming C++?",
+          "options": [
+            "void",
+            "int",
+            "bool",
+            "double"
+          ],
+          "correctAnswer": 1,
+          "explanation": "ISO C++ requires main() to return int. If execution reaches the end of main without a return statement, return 0 is implicit.",
+          "tags": [
+            "main Function",
+            "Language Standards"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m01-q9",
+          "question": "What does the statement `std::ios_base::sync_with_stdio(false);` do in competitive C++?",
+          "options": [
+            "Disables standard input completely",
+            "Synchronizes C++ streams with C stdio for safe mixing",
+            "Disables synchronization between C++ streams and C stdio buffers, drastically speeding up I/O",
+            "Enables multithreaded I/O"
+          ],
+          "correctAnswer": 2,
+          "explanation": "Disabling sync_with_stdio decouples C++ iostream buffers from C stdio buffers, enabling high-throughput I/O in competitive programming.",
+          "tags": [
+            "Fast I/O",
+            "Performance"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m01-q10",
+          "question": "Which of the following describes the difference between `#include <vector>` and `#include \"my_header.h\"` in C++?",
+          "options": [
+            "Angle brackets `<>` search system standard library paths; quotes `\"\"` search current directory first before system paths",
+            "No difference",
+            "Quotes are for C only",
+            "Angle brackets are for templates only"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Angle brackets search standard/system library directories; quotes search local project directories first.",
+          "tags": [
+            "Preprocessor",
+            "Include Directives"
+          ]
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.1",
+          "questionId": "Q0.1",
+          "title": "Print Formatted Welcome Message",
+          "difficulty": "Beginner",
+          "problemStatement": "Print the following output:\nLet's learn 'C' together with \"SEED\" Team",
+          "description": "Print the following output:\nLet's learn 'C' together with \"SEED\" Team",
+          "constraints": "String length <= 100",
+          "inputFormat": "none",
+          "outputFormat": "None",
+          "sampleTestCases": [
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Input '' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"Let's learn 'C' together with \\\"SEED\\\" Team\\n\";\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    printf(\"Let's learn 'C' together with \\\"SEED\\\" Team\\n\");\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.2",
+          "questionId": "Q0.2",
+          "title": "Print Newline Escape Sequence",
+          "difficulty": "Beginner",
+          "problemStatement": "Print the following output:\n\\n",
+          "description": "Print the following output:\n\\n",
+          "constraints": "Output length == 2 characters",
+          "inputFormat": "None",
+          "outputFormat": "\\n",
+          "sampleTestCases": [
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Input '' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"\\\\n\\n\";\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    printf(\"\\\\n\\n\");\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.3",
+          "questionId": "Q0.3",
+          "title": "Print Percent Symbols",
+          "difficulty": "Beginner",
+          "problemStatement": "Print the following output:\n%%",
+          "description": "Print the following output:\n%%",
+          "constraints": "Output length == 2 characters",
+          "inputFormat": "none",
+          "outputFormat": "%%",
+          "sampleTestCases": [
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Input '' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"%%\\n\";\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    printf(\"%%%%\\n\");\n    return 0;\n}\n"
+          }
+        }
+      ]
+    }
+  }
 }

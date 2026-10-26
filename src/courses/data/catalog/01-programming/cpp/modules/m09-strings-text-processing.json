@@ -5555,7 +5555,34 @@
       "description": "Study concepts and solve targeted engineering problems for Free String Problems.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 45,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-CPP-M09-T07-1",
+          "title": "std::string Class Architecture and Zero-Copy std::string_view",
+          "content": "### std::string vs C-Style Strings in C++\n\nC++ replaces dangerous raw `char*` buffers with `std::string` (defined in `<string>`):\n- **Automatic Memory:** Resizes dynamically; no buffer overflows.\n- **Embedded Nulls:** Can safely hold any characters, including `'\\0'`.\n- **Small String Optimization (SSO):** Strings under 15–22 bytes avoid heap allocation entirely, storing characters directly in the string object on the stack!\n\n### `std::string_view` (C++17 Zero-Copy String Passing):\nPassing `const std::string &` requires an actual `std::string` object. In C++17, **`std::string_view`** represents a non-owning read-only view (`pointer + length`), allowing zero-copy substring slicing and passing without any heap allocations:\n\n```cpp\nvoid process(std::string_view sv) { // Zero copies for string literals, char[], or std::string!\n    std::cout << sv.substr(0, 4) << \"\\n\";\n}\n```",
+          "callout": {
+            "type": "TIP",
+            "title": "Adopt std::string_view for Parameters",
+            "text": "Use `std::string_view` for read-only function parameters in C++17. It accepts string literals, `char[]`, and `std::string` with zero allocations."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <string>\n#include <string_view>\n\nvoid printPrefix(std::string_view text) {\n    std::cout << \"Prefix: \" << text.substr(0, 4) << \"\\n\";\n}\n\nint main() {\n    std::string s = \"SEED-IT Platform\";\n    printPrefix(s);\n    printPrefix(\"Programming\"); // Zero allocations!\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CPP-M09-T07-1",
+            "question": "What optimization allows `std::string` to store short strings without allocating heap memory?",
+            "options": [
+              "Small String Optimization (SSO)",
+              "Virtual memory paging",
+              "Copy on write",
+              "String compression"
+            ],
+            "correctAnswer": 0,
+            "explanation": "SSO stores strings shorter than the internal buffer size (typically 15-22 chars) directly inside the string object on the stack."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -8101,7 +8128,34 @@
       "description": "Study concepts and solve targeted engineering problems for Premium String Problems.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 45,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-CPP-M09-T08-1",
+          "title": "String Algorithms: Palindromes, Anagrams, and Frequency Maps",
+          "content": "### Palindrome and Anagram Algorithms in C++\n\n- **Palindrome Checking with Two Pointers:**\n  ```cpp\n  bool isPalindrome(const std::string &s) {\n      int l = 0, r = s.length() - 1;\n      while (l < r) {\n          if (s[l++] != s[r--]) return false;\n      }\n      return true;\n  }\n  ```\n\n- **Anagram Verification in $O(N)$:**\n  ```cpp\n  bool isAnagram(const std::string &s1, const std::string &s2) {\n      if (s1.length() != s2.length()) return false;\n      int freq[26] = {0};\n      for (char c : s1) freq[c - 'a']++;\n      for (char c : s2) {\n          if (--freq[c - 'a'] < 0) return false;\n      }\n      return true;\n  }\n  ```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Two-Pointer Technique",
+            "text": "Two-pointer scanning allows checking string palindromes and reversing words in $O(N)$ time with $O(1)$ auxiliary space."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <string>\n#include <algorithm>\n\nint main() {\n    std::string text = \"radar\";\n    std::string rev = text;\n    std::reverse(rev.begin(), rev.end());\n    std::cout << text << \" is palindrome? \" << (text == rev ? \"YES\" : \"NO\") << \"\\n\";\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CPP-M09-T08-1",
+            "question": "What is the time complexity of checking if two strings of length $N$ are anagrams using an array frequency counter?",
+            "options": [
+              "O(N log N)",
+              "O(N)",
+              "O(N^2)",
+              "O(1)"
+            ],
+            "correctAnswer": 1,
+            "explanation": "A single pass over both strings with a fixed-size frequency array takes linear O(N) time and O(1) extra space."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -12005,14 +12059,14 @@
           "checkpoint": {
             "checkpointId": "cp-STCV201",
             "question": "How is a character at index i accessed in a C++ string S?",
-            "options": "Use S[i], with zero-based indexing.",
-            "correctAnswer": [
+            "options": [
               "S(i)",
               "S[i]",
               "S{i}",
               "char(S,i)"
             ],
-            "explanation": 1
+            "correctAnswer": 1,
+            "explanation": "Use S[i], with zero-based indexing."
           }
         }
       ],
@@ -12201,7 +12255,34 @@
       "description": "Study concepts and solve targeted engineering problems for String operations part-2.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 20,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-CPP-M09-T10-1",
+          "title": "String Conversions (stoi, to_string) and String Searching",
+          "content": "### String Numeric Conversions in C++\n\nThe `<string>` library provides type conversions:\n- **`std::to_string(value)`:** Converts integers and floating point numbers to `std::string`.\n- **`std::stoi(str)`:** Converts string to `int` (throws `std::invalid_argument` or `std::out_of_range`).\n- **`std::stod(str)`:** Converts string to `double`.\n\n### Substring Search with `find()`:\n- `str.find(\"target\")` returns the index of the first occurrence, or `std::string::npos` if not found.\n\n```cpp\nif (str.find(\"key\") != std::string::npos) {\n    // Substring found!\n}\n```",
+          "callout": {
+            "type": "TIP",
+            "title": "Check against std::string::npos",
+            "text": "Always compare the result of `str.find()` against `std::string::npos` (which represents \"not found\")."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <string>\n\nint main() {\n    std::string strNum = \"42\";\n    int val = std::stoi(strNum);\n    std::string backToStr = std::to_string(val * 10);\n    \n    std::cout << \"Integer: \" << val << \", Multiplied: \" << backToStr << \"\\n\";\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CPP-M09-T10-1",
+            "question": "What special constant is returned by `std::string::find` when the searched substring is not found?",
+            "options": [
+              "-1",
+              "0",
+              "std::string::npos",
+              "NULL"
+            ],
+            "correctAnswer": 2,
+            "explanation": "std::string::npos (a static constant defined as size_t(-1)) represents an invalid index indicating not found."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -12451,14 +12532,14 @@
           "checkpoint": {
             "checkpointId": "cp-STCV214",
             "question": "What is the minimum paint count to make all balloons the same colour?",
-            "options": "Paint every balloon having the less frequent colour.",
-            "correctAnswer": [
+            "options": [
               "max(countA,countB)",
               "countA+countB",
               "min(countA,countB)",
               "n"
             ],
-            "explanation": 2
+            "correctAnswer": 2,
+            "explanation": "Paint every balloon having the less frequent colour."
           }
         }
       ],
@@ -12641,5 +12722,442 @@
       "_sourceFile": "cpp-beginner-v2-p2.json",
       "_moduleTitle": "Basic string operations"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m09-strings-text-processing",
+    "title": "Module Assessment: Strings & Text Processing",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "msa-cpp-m09-q1",
+          "question": "How do you obtain the raw null-terminated C-style string pointer from a `std::string` object?",
+          "options": [
+            "str.c_str()",
+            "str.to_c()",
+            "str.raw()",
+            "(char*)str"
+          ],
+          "correctAnswer": 0,
+          "explanation": "str.c_str() returns a const char* pointer to a null-terminated character array representing the string.",
+          "tags": [
+            "std::string",
+            "c_str"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m09-q2",
+          "question": "What happens when `std::stoi(\"abc\")` is executed?",
+          "options": [
+            "Returns 0",
+            "Throws `std::invalid_argument` exception",
+            "Returns -1",
+            "Crashes with segmentation fault"
+          ],
+          "correctAnswer": 1,
+          "explanation": "std::stoi throws std::invalid_argument if no valid numerical conversion could be performed.",
+          "tags": [
+            "Exception Handling",
+            "std::stoi"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m09-q3",
+          "question": "What is the purpose of `std::string_view` introduced in C++17?",
+          "options": [
+            "A mutable string container",
+            "A non-owning, lightweight view of a character sequence (pointer + length) enabling zero-copy string slicing",
+            "An encrypted string",
+            "A wide-character string"
+          ],
+          "correctAnswer": 1,
+          "explanation": "std::string_view allows functions to accept and slice strings without performing heap allocations or copying characters.",
+          "tags": [
+            "C++17",
+            "std::string_view"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m09-q4",
+          "question": "Can two `std::string` objects be compared directly using equality operator `==` in C++?",
+          "options": [
+            "Yes, operator== is overloaded to perform lexicographical character comparison",
+            "No, requires strcmp",
+            "Only if lengths are identical",
+            "Only in C++20"
+          ],
+          "correctAnswer": 0,
+          "explanation": "std::string overloads operator== to compare string contents rather than memory addresses.",
+          "tags": [
+            "Operators",
+            "String Equality"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m09-q5",
+          "question": "What is the time complexity of `str.length()` or `str.size()` on a `std::string`?",
+          "options": [
+            "O(N) like strlen",
+            "O(1) constant time",
+            "O(log N)",
+            "O(N^2)"
+          ],
+          "correctAnswer": 1,
+          "explanation": "std::string stores its length explicitly as a member variable, returning size() in O(1) time.",
+          "tags": [
+            "Complexity",
+            "std::string"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m09-q6",
+          "question": "What does `str.substr(2, 4)` do in C++?",
+          "options": [
+            "Extracts substring starting at index 2 up to index 4",
+            "Extracts substring starting at index 2 of length 4",
+            "Removes characters 2 through 4",
+            "Reverses 4 characters from 2"
+          ],
+          "correctAnswer": 1,
+          "explanation": "substr(pos, count) takes the starting index and the character count as its arguments.",
+          "tags": [
+            "std::string",
+            "substr"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m09-q7",
+          "question": "What method is used to append a character to the end of a `std::string`?",
+          "options": [
+            "push_back()",
+            "append_char()",
+            "add()",
+            "insert_last()"
+          ],
+          "correctAnswer": 0,
+          "explanation": "std::string supports push_back(char c) to append a character to the end in O(1) amortized time.",
+          "tags": [
+            "std::string",
+            "push_back"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m09-q8",
+          "question": "What does `str.pop_back()` do on a non-empty `std::string`?",
+          "options": [
+            "Removes the first character",
+            "Removes the last character, reducing length by 1",
+            "Clears string",
+            "Returns last character"
+          ],
+          "correctAnswer": 1,
+          "explanation": "pop_back() deletes the trailing character of the string.",
+          "tags": [
+            "std::string",
+            "pop_back"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m09-q9",
+          "question": "Which method removes all characters from a `std::string` making it empty?",
+          "options": [
+            "clear()",
+            "erase_all()",
+            "reset()",
+            "destroy()"
+          ],
+          "correctAnswer": 0,
+          "explanation": "clear() sets string size to 0.",
+          "tags": [
+            "std::string",
+            "clear"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m09-q10",
+          "question": "What is the result of concatenating `std::string a = \"Hello\";` and `std::string b = \" World\";` with `a + b`?",
+          "options": [
+            "A new std::string containing \"Hello World\"",
+            "Pointer error",
+            "Modifies a in-place",
+            "Compiler error"
+          ],
+          "correctAnswer": 0,
+          "explanation": "operator+ returns a newly allocated std::string containing the concatenated characters.",
+          "tags": [
+            "Concatenation",
+            "Operator Overloading"
+          ]
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.252",
+          "questionId": "Q0.252",
+          "title": "Read and Print String",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept a string as input and print it.",
+          "description": "Write a program to accept a string as input and print it.",
+          "constraints": "1 <= Length(S) <= 1000",
+          "inputFormat": "String",
+          "outputFormat": "String",
+          "sampleTestCases": [
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "Welcome to the World of C Programming",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "Welcome to the World of C Programming",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "Write a program to accept a string as input and print it.",
+              "output": "Write a program to accept a string as input and print it.",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "Hello123 WOrld",
+              "output": "Hello123 WOrld",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "SEED",
+              "output": "SEED",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "Welcome to the World of C Programming",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "Write a program to accept a string as input and print it.",
+              "output": "Write a program to accept a string as input and print it.",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "Hello123 WOrld",
+              "output": "Hello123 WOrld",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "SEED",
+              "output": "SEED",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\n#include <string>\nusing namespace std;\nint main() {\n    string s; if (getline(cin, s)) cout << s << \"\\n\";\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\nint main() {\n    char s[1005];\n    if (fgets(s, sizeof(s), stdin)) printf(\"%s\", s);\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.255",
+          "questionId": "Q0.255",
+          "title": "Length of String",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept a string as input and print the length of the string.",
+          "description": "Write a program to accept a string as input and print the length of the string.",
+          "constraints": "1 <= Length(S) <= 1000",
+          "inputFormat": "String",
+          "outputFormat": "Integer",
+          "sampleTestCases": [
+            {
+              "input": "Hello World",
+              "output": "11",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "37",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "Hello World",
+              "output": "11",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "37",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "SEED",
+              "output": "4",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "Test Case",
+              "output": "9",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "123",
+              "output": "3",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "Hello World",
+              "output": "11",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "37",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "SEED",
+              "output": "4",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "Test Case",
+              "output": "9",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "123",
+              "output": "3",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\n#include <string>\nusing namespace std;\nint main() {\n    string s; if (getline(cin, s)) {\n        while (!s.empty() && (s.back() == '\\r' || s.back() == '\\n')) s.pop_back();\n        cout << s.length() << \"\\n\";\n    }\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n#include <string.h>\nint main() {\n    char s[1005];\n    if (fgets(s, sizeof(s), stdin)) {\n        int len = strlen(s);\n        while (len > 0 && (s[len - 1] == '\\n' || s[len - 1] == '\\r')) len--;\n        printf(\"%d\\n\", len);\n    }\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.258",
+          "questionId": "Q0.258",
+          "title": "Copy String to Another String",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept a string as input, copy the contents of the first string to a second string and print the second string.",
+          "description": "Write a program to accept a string as input, copy the contents of the first string to a second string and print the second string.",
+          "constraints": "1 <= Length(S) <= 1000",
+          "inputFormat": "String",
+          "outputFormat": "String",
+          "sampleTestCases": [
+            {
+              "input": "Hello",
+              "output": "Hello",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "Hello",
+              "output": "Hello",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "abcdef",
+              "output": "abcdef",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "SEED",
+              "output": "SEED",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "Write a program to accept a string as input, copy the contents of the first string to a second string and print the second string.",
+              "output": "Write a program to accept a string as input, copy the contents of the first string to a second string and print the second string.",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "Hello",
+              "output": "Hello",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "abcdef",
+              "output": "abcdef",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "SEED",
+              "output": "SEED",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "Write a program to accept a string as input, copy the contents of the first string to a second string and print the second string.",
+              "output": "Write a program to accept a string as input, copy the contents of the first string to a second string and print the second string.",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\n#include <string>\nusing namespace std;\nint main() {\n    string s1, s2;\n    if (getline(cin, s1)) {\n        while (!s1.empty() && (s1.back() == '\\r' || s1.back() == '\\n')) s1.pop_back();\n        s2 = s1;\n        cout << s2 << \"\\n\";\n    }\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n#include <string.h>\nint main() {\n    char s1[1005], s2[1005];\n    if (fgets(s1, sizeof(s1), stdin)) {\n        int len = strlen(s1);\n        while (len > 0 && (s1[len - 1] == '\\n' || s1[len - 1] == '\\r')) s1[--len] = '\\0';\n        strcpy(s2, s1);\n        printf(\"%s\\n\", s2);\n    }\n    return 0;\n}\n"
+          }
+        }
+      ]
+    }
+  }
 }

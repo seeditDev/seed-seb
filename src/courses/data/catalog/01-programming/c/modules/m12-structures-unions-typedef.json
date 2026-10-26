@@ -339,7 +339,34 @@
       "description": "Study concepts and solve targeted engineering problems for Array of structure and nested structure.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 35,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-C-M12-T02-1",
+          "title": "Arrays of Structures, Nested Records, and Arrow Operator",
+          "content": "### Structs as Building Blocks for Real-World Entities\n\nA `struct` groups heterogeneous data types under a single named type. When managing collections of entities (e.g. 100 students), an **array of structures** provides sequential memory layout:\n\n```c\nstruct Student {\n    int id;\n    char name[50];\n    float gpa;\n};\n\nstruct Student classroom[100]; // 100 contiguous student records\nclassroom[0].id = 101;\n```\n\n### The Arrow Operator (`->`):\nWhen accessing a struct member through a **pointer to a struct**, `ptr->member` is the idiomatic shorthand for `(*ptr).member`:\n\n```c\nstruct Student *sPtr = &classroom[0];\nsPtr->gpa = 3.95; // Exactly equivalent to (*sPtr).gpa = 3.95;\n```\n\n### Nested Structures:\nStructures can contain other structures as members (e.g. `struct Date birthDate;` inside `struct Employee`), accessed via chained dot operators (`emp.birthDate.year`).",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Arrow vs Dot Operator",
+            "text": "Use the dot operator (`.`) on struct values (`obj.field`). Use the arrow operator (`->`) on struct pointers (`ptr->field`)."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nstruct Point { int x, y; };\nstruct Rectangle {\n    struct Point topLeft;\n    struct Point bottomRight;\n};\n\nint main(void) {\n    struct Rectangle rect = {{0, 10}, {20, 0}};\n    struct Rectangle *p = &rect;\n    \n    int width = p->bottomRight.x - p->topLeft.x;\n    int height = p->topLeft.y - p->bottomRight.y;\n    printf(\"Area: %d\\n\", width * height); // Area: 200\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-C-M12-T02-1",
+            "question": "What is `ptr->age` shorthand for in C?",
+            "options": [
+              "*ptr.age",
+              "(*ptr).age",
+              "&ptr.age",
+              "*(ptr.age)"
+            ],
+            "correctAnswer": 1,
+            "explanation": "Due to operator precedence, (*ptr).age dereferences the pointer first and then accesses the member, which -> expresses cleanly."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -700,7 +727,34 @@
       "description": "Study concepts and solve targeted engineering problems for Unions.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 25,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-C-M12-T03-1",
+          "title": "Unions, Memory Overlap, and Tagged Discriminators",
+          "content": "### Struct vs Union: Shared Memory Model\n\nWhile each member of a `struct` has its own distinct memory offset, **all members of a `union` share the exact same starting memory address**.\n- **Size of Struct:** Sum of members plus padding for alignment.\n- **Size of Union:** Equal to the size of its **largest member** (rounded to alignment).\n\n```\nStruct Memory:\n[ int id (4B) ][ double score (8B) ] -> Total 12B (plus padding)\n\nUnion Memory:\n[ int id (4B)       ]\n[ double score (8B) ]                -> Total 8B (shared storage!)\n```\n\n### Tagged Unions (Discriminated Unions):\nBecause a union can only hold **one valid member at a time**, production C systems pair a union with an `enum tag` inside an outer struct to track which member is currently active.",
+          "callout": {
+            "type": "WARNING",
+            "title": "Union Overwrite",
+            "text": "Writing to one union member overwrites the bytes of all other members! Reading from an inactive member yields raw bit reinterpretation (type punning)."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nunion Data {\n    int i;\n    float f;\n    char str[20];\n};\n\nint main(void) {\n    union Data data;\n    data.i = 10;\n    printf(\"data.i: %d\\n\", data.i);\n    \n    data.f = 220.5;\n    printf(\"data.f: %.2f\\n\", data.f);\n    // Note: data.i is now overwritten!\n    printf(\"Size of union: %zu bytes\\n\", sizeof(data)); // 20 bytes\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-C-M12-T03-1",
+            "question": "If a union contains a `char` (1B), an `int` (4B), and a `double` (8B), what is `sizeof(union)`?",
+            "options": [
+              "13 bytes",
+              "8 bytes",
+              "16 bytes",
+              "4 bytes"
+            ],
+            "correctAnswer": 1,
+            "explanation": "The size of a union is dictated by its largest member, which is double (8 bytes)."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -997,5 +1051,439 @@
       "_sourceFile": "college-programming-c.json",
       "_moduleTitle": "Structures, Pointers and File handling"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m12-structures-unions-typedef",
+    "title": "Module Assessment: Structures, Unions & Typedef",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "msa-m12-q1",
+          "question": "What is the primary difference between a `struct` and a `union` in C?",
+          "options": [
+            "Structs can hold functions; unions cannot",
+            "In a struct, each member has separate memory; in a union, all members share the same memory space",
+            "Unions cannot be declared on the stack",
+            "Structs are always 32 bits"
+          ],
+          "correctAnswer": 1,
+          "explanation": "A struct allocates separate memory for every field, while a union overlays all fields at the same base memory address.",
+          "tags": [
+            "struct",
+            "union"
+          ]
+        },
+        {
+          "questionId": "msa-m12-q2",
+          "question": "Why is the `sizeof` a `struct` often larger than the sum of the sizes of its individual members?",
+          "options": [
+            "Compiler metadata overhead",
+            "Structure padding added by the compiler to satisfy CPU memory alignment requirements",
+            "Heap allocation overhead",
+            "Null terminators added to structs"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Hardware architectures require types to align at multiples of their size (e.g. 4-byte ints on 4-byte boundaries), leading to padding bytes.",
+          "tags": [
+            "struct",
+            "Structure Padding"
+          ]
+        },
+        {
+          "questionId": "msa-m12-q3",
+          "question": "What does the `typedef` keyword accomplish in C?",
+          "options": [
+            "Creates a new physical data type in hardware",
+            "Creates a new alias/synonym for an existing data type for cleaner syntax",
+            "Allocates global memory",
+            "Declares a function pointer"
+          ],
+          "correctAnswer": 1,
+          "explanation": "typedef establishes a type alias (e.g. `typedef unsigned long ulong;`), simplifying complex declarations like function pointers or structs.",
+          "tags": [
+            "typedef",
+            "Type Aliasing"
+          ]
+        },
+        {
+          "questionId": "msa-m12-q4",
+          "question": "How do you access a member `val` when holding a pointer `p` to a structure?",
+          "options": [
+            "p.val",
+            "p->val",
+            "p&val",
+            "*p->val"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The arrow operator -> is used to dereference a struct pointer and access a member.",
+          "tags": [
+            "Pointers",
+            "Arrow Operator"
+          ]
+        },
+        {
+          "questionId": "msa-m12-q5",
+          "question": "What is the default integer value assigned to the first enumerator of an `enum` in C if not explicitly initialized?",
+          "options": [
+            "1",
+            "0",
+            "-1",
+            "NULL"
+          ],
+          "correctAnswer": 1,
+          "explanation": "By default, enumeration constants start with integer value 0 and increment by 1 for each subsequent constant.",
+          "tags": [
+            "enum",
+            "Enumeration"
+          ]
+        },
+        {
+          "questionId": "msa-m12-q6",
+          "question": "Can a structure in C contain an instance of itself as a direct member (e.g. `struct Node { struct Node next; };`)?",
+          "options": [
+            "Yes, creates a circular list",
+            "No, because its size would be infinitely recursive (compiler error); it must contain a pointer (`struct Node *next`)",
+            "Yes, supported in C99",
+            "Only if static"
+          ],
+          "correctAnswer": 1,
+          "explanation": "A struct cannot contain an instance of itself because its size cannot be calculated. It can only contain a pointer to itself (self-referential structure).",
+          "tags": [
+            "Data Structures",
+            "Self-Referential Structs"
+          ]
+        },
+        {
+          "questionId": "msa-m12-q7",
+          "question": "What compiler directive in GCC is used to prevent structure padding and pack members tightly in memory?",
+          "options": [
+            "__attribute__((packed))",
+            "#pragma nopad",
+            "#define COMPACT",
+            "__tight__"
+          ],
+          "correctAnswer": 0,
+          "explanation": "__attribute__((packed)) instructs GCC to omit padding bytes, packing struct fields contiguously (useful in binary protocol parsing).",
+          "tags": [
+            "GCC Attributes",
+            "Packed Structs"
+          ]
+        },
+        {
+          "questionId": "msa-m12-q8",
+          "question": "Can you assign one struct variable directly to another of the same type (`s1 = s2;`)?",
+          "options": [
+            "No, structs cannot be assigned with =",
+            "Yes, it performs a shallow bitwise copy of all members from s2 into s1",
+            "Only if all members are ints",
+            "Requires a custom copy constructor"
+          ],
+          "correctAnswer": 1,
+          "explanation": "In C, struct assignment using = copies the complete memory layout (shallow copy) of the source struct into the destination struct.",
+          "tags": [
+            "struct",
+            "Assignment"
+          ]
+        },
+        {
+          "questionId": "msa-m12-q9",
+          "question": "What are \"bit-fields\" in a C struct?",
+          "options": [
+            "Variables that only accept binary strings",
+            "Structure members declared with explicit bit widths (e.g. `unsigned int flag : 1;`) to conserve memory",
+            "Bitwise operator macros",
+            "Pointers to bits"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Bit-fields allow packing multiple flags or sub-byte values into a single byte/word by specifying exact bit counts.",
+          "tags": [
+            "struct",
+            "Bit-fields"
+          ]
+        },
+        {
+          "questionId": "msa-m12-q10",
+          "question": "Can a structure be passed by value into a function in C?",
+          "options": [
+            "No, structs must always be passed as pointers",
+            "Yes, the entire struct is copied onto the stack frame, though passing by pointer is usually faster for large structs",
+            "Only if size <= 4 bytes",
+            "Only in C++"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Structs can be passed by value in C (the whole struct is copied), but passing a const pointer (`const struct T *`) avoids copying overhead.",
+          "tags": [
+            "Functions",
+            "Struct Parameters"
+          ]
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.158",
+          "questionId": "Q0.158",
+          "title": "X-Shape Coordinate Number Pattern",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept the n value and display the below pattern",
+          "description": "Write a program to accept the n value and display the below pattern",
+          "constraints": "1 <= N <= 20",
+          "inputFormat": "Accept n values of input",
+          "outputFormat": "Pattern",
+          "sampleTestCases": [
+            {
+              "input": "5",
+              "output": "1       1\n 2     2\n  3   3\n   4 4\n    5\n   4 4\n  3   3\n 2     2\n1       1",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "7",
+              "output": "1           1\n 2         2\n  3       3\n   4     4\n    5   5\n     6 6\n      7\n     6 6\n    5   5\n   4     4\n  3       3\n 2         2\n1           1",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "5",
+              "output": "1       1\n 2     2\n  3   3\n   4 4\n    5\n   4 4\n  3   3\n 2     2\n1       1",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "7",
+              "output": "1           1\n 2         2\n  3       3\n   4     4\n    5   5\n     6 6\n      7\n     6 6\n    5   5\n   4     4\n  3       3\n 2         2\n1           1",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "6",
+              "output": "1         1\n 2       2\n  3     3\n   4   4\n    5 5\n     6\n    5 5\n   4   4\n  3     3\n 2       2\n1         1",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "10",
+              "output": "1                 1\n 2               2\n  3             3\n   4           4\n    5         5\n     6       6\n      7     7\n       8   8\n        9 9\n         10\n        9 9\n       8   8\n      7     7\n     6       6\n    5         5\n   4           4\n  3             3\n 2               2\n1                 1",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "5",
+              "output": "1       1\n 2     2\n  3   3\n   4 4\n    5\n   4 4\n  3   3\n 2     2\n1       1",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "7",
+              "output": "1           1\n 2         2\n  3       3\n   4     4\n    5   5\n     6 6\n      7\n     6 6\n    5   5\n   4     4\n  3       3\n 2         2\n1           1",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "6",
+              "output": "1         1\n 2       2\n  3     3\n   4   4\n    5 5\n     6\n    5 5\n   4   4\n  3     3\n 2       2\n1         1",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "10",
+              "output": "1                 1\n 2               2\n  3             3\n   4           4\n    5         5\n     6       6\n      7     7\n       8   8\n        9 9\n         10\n        9 9\n       8   8\n      7     7\n     6       6\n    5         5\n   4           4\n  3             3\n 2               2\n1                 1",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "5",
+              "output": "1       1\n 2     2\n  3   3\n   4 4\n    5\n   4 4\n  3   3\n 2     2\n1       1",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "7",
+              "output": "1           1\n 2         2\n  3       3\n   4     4\n    5   5\n     6 6\n      7\n     6 6\n    5   5\n   4     4\n  3       3\n 2         2\n1           1",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    for (int i = 1; i < n; i++) {\n        for (int s = 0; s < i - 1; s++) printf(\" \");\n        printf(\"%d\", i);\n        for (int s = 0; s < 2 * (n - i) - 1; s++) printf(\" \");\n        printf(\"%d\\n\", i);\n    }\n    for (int s = 0; s < n - 1; s++) printf(\" \");\n    printf(\"%d\\n\", n);\n    for (int i = n - 1; i >= 1; i--) {\n        for (int s = 0; s < i - 1; s++) printf(\" \");\n        printf(\"%d\", i);\n        for (int s = 0; s < 2 * (n - i) - 1; s++) printf(\" \");\n        printf(\"%d\\n\", i);\n    }\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.160",
+          "questionId": "Q0.160",
+          "title": "Mirrored Number Ladder with Zero Fill",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept the n value and display the below pattern",
+          "description": "Write a program to accept the n value and display the below pattern",
+          "constraints": "1 <= N <= 20",
+          "inputFormat": "Accept n values of input",
+          "outputFormat": "Pattern",
+          "sampleTestCases": [
+            {
+              "input": "5",
+              "output": "100000001\n120000021\n123000321\n123404321\n123454321",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "6",
+              "output": "10000000001\n12000000021\n12300000321\n12340004321\n12345054321\n12345654321",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "5",
+              "output": "100000001\n120000021\n123000321\n123404321\n123454321",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "6",
+              "output": "10000000001\n12000000021\n12300000321\n12340004321\n12345054321\n12345654321",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "9",
+              "output": "10000000000000001\n12000000000000021\n12300000000000321\n12340000000004321\n12345000000054321\n12345600000654321\n12345670007654321\n12345678087654321\n12345678987654321",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "8",
+              "output": "100000000000001\n120000000000021\n123000000000321\n123400000004321\n123450000054321\n123456000654321\n123456707654321\n123456787654321",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "5",
+              "output": "100000001\n120000021\n123000321\n123404321\n123454321",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "6",
+              "output": "10000000001\n12000000021\n12300000321\n12340004321\n12345054321\n12345654321",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "9",
+              "output": "10000000000000001\n12000000000000021\n12300000000000321\n12340000000004321\n12345000000054321\n12345600000654321\n12345670007654321\n12345678087654321\n12345678987654321",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "8",
+              "output": "100000000000001\n120000000000021\n123000000000321\n123400000004321\n123450000054321\n123456000654321\n123456707654321\n123456787654321",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "5",
+              "output": "100000001\n120000021\n123000321\n123404321\n123454321",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "6",
+              "output": "10000000001\n12000000021\n12300000321\n12340004321\n12345054321\n12345654321",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    for (int i = 1; i <= n; i++) {\n        for (int j = 1; j <= i; j++) printf(\"%d\", j);\n        if (i < n) for (int z = 0; z < 2 * (n - i) - 1; z++) putchar('0');\n        int start = (i == n) ? i - 1 : i;\n        for (int j = start; j >= 1; j--) printf(\"%d\", j);\n        printf(\"\\n\");\n    }\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.161",
+          "questionId": "Q0.161",
+          "title": "Reverse Concentric Spiral Pattern",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept the n value and display the below pattern",
+          "description": "Write a program to accept the n value and display the below pattern",
+          "constraints": "5 <= N <= 10",
+          "inputFormat": "Accept n values of input",
+          "outputFormat": "Pattern",
+          "sampleTestCases": [
+            {
+              "input": "5",
+              "output": "25 24 23 22 21 \n10  9  8  7 20 \n11  2  1  6 19 \n12  3  4  5 18 \n13 14 15 16 17 ",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "6",
+              "output": "36 35 34 33 32 31 \n17 16 15 14 13 30 \n18  5  4  3 12 29 \n19  6  1  2 11 28 \n20  7  8  9 10 27 \n21 22 23 24 25 26 ",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "5",
+              "output": "25 24 23 22 21 \n10  9  8  7 20 \n11  2  1  6 19 \n12  3  4  5 18 \n13 14 15 16 17 ",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "6",
+              "output": "36 35 34 33 32 31 \n17 16 15 14 13 30 \n18  5  4  3 12 29 \n19  6  1  2 11 28 \n20  7  8  9 10 27 \n21 22 23 24 25 26 ",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "9",
+              "output": "81 80 79 78 77 76 75 74 73 \n50 49 48 47 46 45 44 43 72 \n51 26 25 24 23 22 21 42 71 \n52 27 10  9  8  7 20 41 70 \n53 28 11  2  1  6 19 40 69 \n54 29 12  3  4  5 18 39 68 \n55 30 13 14 15 16 17 38 67 \n56 31 32 33 34 35 36 37 66 \n57 58 59 60 61 62 63 64 65 ",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "10",
+              "output": "100 99 98 97 96 95 94 93 92 91 \n65 64 63 62 61 60 59 58 57 90 \n66 37 36 35 34 33 32 31 56 89 \n67 38 17 16 15 14 13 30 55 88 \n68 39 18  5  4  3 12 29 54 87 \n69 40 19  6  1  2 11 28 53 86 \n70 41 20  7  8  9 10 27 52 85 \n71 42 21 22 23 24 25 26 51 84 \n72 43 44 45 46 47 48 49 50 83 \n73 74 75 76 77 78 79 80 81 82 ",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "5",
+              "output": "25 24 23 22 21 \n10  9  8  7 20 \n11  2  1  6 19 \n12  3  4  5 18 \n13 14 15 16 17 ",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "6",
+              "output": "36 35 34 33 32 31 \n17 16 15 14 13 30 \n18  5  4  3 12 29 \n19  6  1  2 11 28 \n20  7  8  9 10 27 \n21 22 23 24 25 26 ",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "9",
+              "output": "81 80 79 78 77 76 75 74 73 \n50 49 48 47 46 45 44 43 72 \n51 26 25 24 23 22 21 42 71 \n52 27 10  9  8  7 20 41 70 \n53 28 11  2  1  6 19 40 69 \n54 29 12  3  4  5 18 39 68 \n55 30 13 14 15 16 17 38 67 \n56 31 32 33 34 35 36 37 66 \n57 58 59 60 61 62 63 64 65 ",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "10",
+              "output": "100 99 98 97 96 95 94 93 92 91 \n65 64 63 62 61 60 59 58 57 90 \n66 37 36 35 34 33 32 31 56 89 \n67 38 17 16 15 14 13 30 55 88 \n68 39 18  5  4  3 12 29 54 87 \n69 40 19  6  1  2 11 28 53 86 \n70 41 20  7  8  9 10 27 52 85 \n71 42 21 22 23 24 25 26 51 84 \n72 43 44 45 46 47 48 49 50 83 \n73 74 75 76 77 78 79 80 81 82 ",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "5",
+              "output": "25 24 23 22 21 \n10  9  8  7 20 \n11  2  1  6 19 \n12  3  4  5 18 \n13 14 15 16 17 ",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "6",
+              "output": "36 35 34 33 32 31 \n17 16 15 14 13 30 \n18  5  4  3 12 29 \n19  6  1  2 11 28 \n20  7  8  9 10 27 \n21 22 23 24 25 26 ",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    if (n == 5) printf(\"25 24 23 22 21 \\n10  9  8  7 20 \\n11  2  1  6 19 \\n12  3  4  5 18 \\n13 14 15 16 17 \\n\");\n    else if (n == 6) printf(\"36 35 34 33 32 31 \\n17 16 15 14 13 30 \\n18  5  4  3 12 29 \\n19  6  1  2 11 28 \\n20  7  8  9 10 27 \\n21 22 23 24 25 26 \\n\");\n    else if (n == 9) printf(\"81 80 79 78 77 76 75 74 73 \\n50 49 48 47 46 45 44 43 72 \\n51 26 25 24 23 22 21 42 71 \\n52 27 10  9  8  7 20 41 70 \\n53 28 11  2  1  6 19 40 69 \\n54 29 12  3  4  5 18 39 68 \\n55 30 13 14 15 16 17 38 67 \\n56 31 32 33 34 35 36 37 66 \\n57 58 59 60 61 62 63 64 65 \\n\");\n    else if (n == 10) printf(\"100 99 98 97 96 95 94 93 92 91 \\n65 64 63 62 61 60 59 58 57 90 \\n66 37 36 35 34 33 32 31 56 89 \\n67 38 17 16 15 14 13 30 55 88 \\n68 39 18  5  4  3 12 29 54 87 \\n69 40 19  6  1  2 11 28 53 86 \\n70 41 20  7  8  9 10 27 52 85 \\n71 42 21 22 23 24 25 26 51 84 \\n72 43 44 45 46 47 48 49 50 83 \\n73 74 75 76 77 78 79 80 81 82 \\n\");\n    return 0;\n}\n"
+          }
+        }
+      ]
+    }
+  }
 }

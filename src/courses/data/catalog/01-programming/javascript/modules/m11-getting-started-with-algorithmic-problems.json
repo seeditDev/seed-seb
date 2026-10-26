@@ -10,7 +10,112 @@
       "description": "Study concepts and solve targeted engineering problems for What are test cases?.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 20,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-js-m11-t01-p1",
+          "title": "Anatomy of Algorithmic Test Cases (Input, Output, Time Limits)",
+          "content": "# Anatomy of an Algorithmic Test Case\n\nIn competitive programming and technical assessments, test cases evaluate program correctness and efficiency:\n\n### Components of a Test Case\n1. **Standard Input**: The raw data supplied to `stdin` that your program must parse.\n2. **Expected Output**: The exact formatted string your program must produce on `stdout`.\n3. **Time Limit**: The maximum allowable CPU time (typically 1.0 to 2.0 seconds in Node.js).\n4. **Memory Limit**: Maximum heap/RAM allocation (e.g. 256MB to 512MB).\n\n### Sample vs Hidden Test Cases\n- **Sample Test Cases**: Publicly visible in the problem description to demonstrate input/output formats.\n- **Hidden Test Cases**: Executed automatically upon submission to test edge cases, scalability, and algorithm efficiency without revealing outputs.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Exact Formatting Matters",
+            "text": "Online grading systems compare program output against expected output character-by-character. Trailing spaces or missing newlines can trigger 'Presentation Error' or 'Wrong Answer'."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "function verifyTestCase(input, expectedOutput, solutionFn) {\n  const result = solutionFn(input);\n  const passed = String(result).trim() === String(expectedOutput).trim();\n  console.log(`Test Passed: ${passed} | Output: ${result}`);\n}\n\nverifyTestCase([2, 7, 11, 15], 9, (arr) => arr[0] + arr[1]);"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m11-t01-p1",
+            "question": "Why do automated assessment platforms use hidden test cases in addition to sample test cases?",
+            "options": [
+              "To conserve server disk space",
+              "To verify the algorithm handles edge cases, large inputs, and avoid hardcoded outputs",
+              "Because sample cases are only for Python",
+              "Hidden cases test network bandwidth"
+            ],
+            "correctAnswer": 1,
+            "explanation": "Hidden test cases verify correctness across diverse edge cases, scale constraints, and ensure the solution is generic rather than hardcoded."
+          }
+        },
+        {
+          "pageId": "p-js-m11-t01-p2",
+          "title": "Edge Cases and Boundary Conditions in Problem Solving",
+          "content": "# Identifying Edge Cases\n\nAn **edge case** is a problem scenario that occurs at an extreme (maximum or minimum) operating boundary.\n\n### Universal Edge Cases in Programming\n- **Empty Collections**: Arrays of size 0 (`[]`), empty strings (`\"\"`).\n- **Single Element**: An array with exactly 1 element (`[42]`).\n- **All Identical Elements**: Arrays where every item is equal (`[5, 5, 5, 5]`).\n- **Zero and Negatives**: `0`, negative integers, negative decimals.\n- **Maximum Values**: Integer values approaching `Number.MAX_SAFE_INTEGER` (`2^53 - 1`).\n- **Sorted / Reverse-Sorted**: Arrays already in ascending or descending order (which can trigger O(N^2) worst cases in un-optimized QuickSort).",
+          "callout": {
+            "type": "TIP",
+            "title": "Mental Checklist",
+            "text": "Before writing code, ask yourself: 'What should my program do if input is 0? If input is empty? If input contains all duplicates?'"
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "function findMax(arr) {\n  if (!arr || arr.length === 0) return null; // Handle empty edge case\n  let max = arr[0];\n  for (let i = 1; i < arr.length; i++) {\n    if (arr[i] > max) max = arr[i];\n  }\n  return max;\n}\n\nconsole.log(\"Empty array:\", findMax([])); // null\nconsole.log(\"All negative:\", findMax([-10, -5, -20])); // -5"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m11-t01-p2",
+            "question": "Which of the following is a critical boundary edge case for an array search algorithm?",
+            "options": [
+              "An array with 5 random positive numbers",
+              "An empty array [] or an array with a single element",
+              "An array printed in color",
+              "An array defined with let"
+            ],
+            "correctAnswer": 1,
+            "explanation": "Empty arrays and single-element arrays are boundary edge cases that frequently cause index out-of-bounds or null reference errors."
+          }
+        },
+        {
+          "pageId": "p-js-m11-t01-p3",
+          "title": "Identifying Tricky Inputs (Zero, Negatives, Large Numbers)",
+          "content": "# Handling Tricky JavaScript Number Edge Cases\n\nJavaScript's Number type is an IEEE 754 64-bit float, which introduces specific numeric caveats:\n\n### 1. Integer Precision Limits\n- Safe integers range from `-(2^53 - 1)` to `2^53 - 1` (`Number.MAX_SAFE_INTEGER` = `9007199254740991`).\n- Integers beyond this limit lose precision. Use **`BigInt`** (e.g. `12345678901234567890n`) when problem constraints exceed `10^15`.\n\n### 2. Floating-Point Inaccuracies\n- `0.1 + 0.2 === 0.3` evaluates to `false` (`0.30000000000000004`).\n- Use `Number.EPSILON` or round with `.toFixed()` for float comparisons.\n\n### 3. Division by Zero\n- In JavaScript, `10 / 0` yields `Infinity`, not an exception. `0 / 0` yields `NaN`.",
+          "callout": {
+            "type": "WARNING",
+            "title": "BigInt Rules",
+            "text": "BigInt values cannot be mixed directly with Numbers in arithmetic operations without explicit conversion: BigInt(num) + bigIntVal."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "console.log(\"0.1 + 0.2 === 0.3:\", 0.1 + 0.2 === 0.3); // false\nconsole.log(\"With epsilon check:\", Math.abs((0.1 + 0.2) - 0.3) < Number.EPSILON); // true\n\nconst big = 9007199254740991n + 5n;\nconsole.log(\"BigInt arithmetic:\", big.toString());"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m11-t01-p3",
+            "question": "What data type should you use in JavaScript when problem constraints require manipulating integers larger than 2^53 - 1?",
+            "options": [
+              "Number",
+              "Float64",
+              "BigInt",
+              "Long"
+            ],
+            "correctAnswer": 2,
+            "explanation": "BigInt provides arbitrary-precision integers beyond Number.MAX_SAFE_INTEGER."
+          }
+        },
+        {
+          "pageId": "p-js-m11-t01-p4",
+          "title": "Validating Correctness with Custom Test Inputs",
+          "content": "# Testing Solutions Locally\n\nBefore submitting code on an assessment, always test against custom inputs:\n\n### Test Suite Structure\nCreate a small test harness array containing sample inputs and edge cases:\n\n```javascript\nconst testCases = [\n  { input: [1, 2, 3], expected: 6 },\n  { input: [], expected: 0 },\n  { input: [-5, 5], expected: 0 },\n  { input: [1000], expected: 1000 }\n];\n\nfor (const { input, expected } of testCases) {\n  const result = solve(input);\n  console.assert(result === expected, `Failed for input ${input}: got ${result}, expected ${expected}`);\n}\n```",
+          "callout": {
+            "type": "TIP",
+            "title": "Test-Driven Problem Solving",
+            "text": "Writing 3-4 small custom test cases before coding clarifies input expectations and guarantees your logic handles tricky edge cases."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "function solve(nums) {\n  return nums.reduce((sum, n) => sum + n, 0);\n}\n\nconst tests = [\n  { in: [1, 2, 3], exp: 6 },\n  { in: [-2, 2], exp: 0 },\n  { in: [], exp: 0 }\n];\n\ntests.forEach((t, i) => {\n  const actual = solve(t.in);\n  console.log(`Test ${i + 1}: ${actual === t.exp ? \"PASS\" : \"FAIL\"}`);\n});"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m11-t01-p4",
+            "question": "What is the primary benefit of testing code with console.assert() during local development?",
+            "options": [
+              "It compiles the code to C++",
+              "It logs an error message only when the test condition evaluates to false",
+              "It disables all other console logs",
+              "It speeds up V8 execution"
+            ],
+            "correctAnswer": 1,
+            "explanation": "console.assert(assertion, message) writes to console only if the assertion evaluates to false, providing clean automated testing."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -262,7 +367,112 @@
       "description": "Study concepts and solve targeted engineering problems for Review problems.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 20,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-js-m11-t03-p1",
+          "title": "Systematic Problem-Solving Strategy: Read, Model, and Plan",
+          "content": "# Systematic Problem-Solving Framework\n\nWhen tackling algorithmic questions under time constraints, apply this structured 4-step framework:\n\n### 1. Understand and Clarify (2-3 Minutes)\n- Read the problem statement thoroughly twice.\n- Note input constraints (e.g. `N <= 10^5` implies an `O(N)` or `O(N log N)` solution; `O(N^2)` will TLE).\n- Validate your understanding against sample test cases by hand.\n\n### 2. Model the Problem (3-5 Minutes)\n- What mathematical or algorithmic pattern applies? (Two Pointers, Hash Map, Sliding Window, Greedy, Binary Search?)\n\n### 3. Plan Pseudocode (2-3 Minutes)\n- Outline step-by-step logic before coding to avoid messy refactoring.\n\n### 4. Implement and Verify (10-15 Minutes)\n- Write clean, modular code. Test boundary conditions before final submission.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Constraint Analysis",
+            "text": "Always check N: If N <= 100, O(N^3) passes. If N <= 1,000, O(N^2) passes. If N <= 10^5, aim for O(N log N) or O(N). If N <= 10^9, aim for O(log N) or O(1)."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Two Sum Problem: Given array and target, find two indices whose values sum to target\nfunction twoSum(nums, target) {\n  const map = new Map(); // O(N) time, O(N) space\n  for (let i = 0; i < nums.length; i++) {\n    const complement = target - nums[i];\n    if (map.has(complement)) {\n      return [map.get(complement), i];\n    }\n    map.set(nums[i], i);\n  }\n  return [];\n}\n\nconsole.log(\"Two sum result:\", twoSum([2, 7, 11, 15], 9)); // [0, 1]"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m11-t03-p1",
+            "question": "If an array size constraint is N <= 100,000 (10^5), which time complexity will likely pass within a 1-second limit?",
+            "options": [
+              "O(N^2)",
+              "O(N!)",
+              "O(N log N) or O(N)",
+              "O(2^N)"
+            ],
+            "correctAnswer": 2,
+            "explanation": "In 1 second, modern CPUs execute roughly 10^7 - 10^8 operations. For N = 10^5, N log N is ~1.7 x 10^6 operations (well within 1 second), while N^2 is 10^10 operations (Time Limit Exceeded)."
+          }
+        },
+        {
+          "pageId": "p-js-m11-t03-p2",
+          "title": "Choosing Optimal Data Structures in JavaScript",
+          "content": "# Choosing the Right JavaScript Data Structure\n\nSelecting the right data structure directly impacts algorithmic complexity:\n\n### 1. Array\n- **Access by index**: `O(1)`\n- **Push / Pop at end**: `O(1)`\n- **Shift / Unshift at start**: `O(N)` (Requires element shifting!)\n- **Search**: `O(N)`\n\n### 2. Map & Set\n- **Map**: Key-value lookup in `O(1)` average time. Keys can be any type (including objects).\n- **Set**: Unique elements lookup in `O(1)` average time (`set.has(x)`). Eliminates duplicates instantly.\n\n### 3. Plain Object (`{}`)\n- Fast `O(1)` string/symbol key lookup, but has prototype overhead and only string/symbol keys.",
+          "callout": {
+            "type": "TIP",
+            "title": "Map vs Plain Object",
+            "text": "Use Map when keys are frequently added and removed, or when keys are non-strings. Map also preserves insertion order and has a convenient .size property."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Deduplicating an array in O(N) using Set\nconst rawList = [1, 2, 2, 3, 4, 4, 5];\nconst uniqueList = [...new Set(rawList)];\nconsole.log(\"Unique elements:\", uniqueList); // [1, 2, 3, 4, 5]"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m11-t03-p2",
+            "question": "What is the average time complexity for searching an element in a JavaScript Set using set.has(val)?",
+            "options": [
+              "O(N)",
+              "O(log N)",
+              "O(1)",
+              "O(N^2)"
+            ],
+            "correctAnswer": 2,
+            "explanation": "JavaScript Sets are implemented using hash tables internally, providing O(1) average lookup time."
+          }
+        },
+        {
+          "pageId": "p-js-m11-t03-p3",
+          "title": "Time and Space Complexity Basics for Coding Interviews",
+          "content": "# Big-O Complexity Fundamentals\n\nBig-O notation describes how execution time or memory consumption grows relative to input size `N`:\n\n### Common Complexities (Fastest to Slowest)\n1. **`O(1)` (Constant)**: Array index lookup, hash map get/set.\n2. **`O(log N)` (Logarithmic)**: Binary search, dividing search space in half.\n3. **`O(N)` (Linear)**: Single pass through an array or string.\n4. **`O(N log N)` (Linearithmic)**: Efficient sorting algorithms (e.g. `Array.prototype.sort()`, MergeSort, TimSort).\n5. **`O(N^2)` (Quadratic)**: Nested loops over an array.\n6. **`O(2^N)` (Exponential)**: Naive recursive tree calculations (e.g. unmemoized Fibonacci).\n\n### Space Complexity\nMeasures additional auxiliary memory allocated beyond the input itself. Reusing existing arrays achieves `O(1)` auxiliary space.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Time-Space Tradeoff",
+            "text": "Often you can reduce time complexity (e.g. from O(N^2) to O(N)) by trading space: using a Map/Set to store seen values."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Binary Search: O(log N) Time, O(1) Space\nfunction binarySearch(arr, target) {\n  let left = 0, right = arr.length - 1;\n  while (left <= right) {\n    const mid = Math.floor((left + right) / 2);\n    if (arr[mid] === target) return mid;\n    if (arr[mid] < target) left = mid + 1;\n    else right = mid - 1;\n  }\n  return -1;\n}\n\nconsole.log(\"Found at index:\", binarySearch([10, 20, 30, 40, 50], 30)); // 2"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m11-t03-p3",
+            "question": "What is the time complexity of searching an element in a sorted array of size N using Binary Search?",
+            "options": [
+              "O(N)",
+              "O(1)",
+              "O(log N)",
+              "O(N log N)"
+            ],
+            "correctAnswer": 2,
+            "explanation": "Binary search repeatedly divides the search interval in half, yielding O(log N) logarithmic time complexity."
+          }
+        },
+        {
+          "pageId": "p-js-m11-t03-p4",
+          "title": "Step-by-Step Problem Walkthrough and Dry-Running",
+          "content": "# Dry-Running Your Code on Paper\n\nDry-running is the process of mentally or manually tracing code execution line-by-line with sample values:\n\n### How to Dry-Run Effectively\n1. **Create a Variable State Table**: Columns for loop index, variables, and conditions.\n2. **Trace Step 0 (Initial State)**: Record initial parameter and pointer values.\n3. **Execute Iteration 1**: Update variable values exactly as code dictates.\n4. **Track Loop Termination**: Confirm the loop stops exactly when expected without off-by-one errors.\n5. **Check Return Value**: Ensure the returned value matches expected output.",
+          "callout": {
+            "type": "TIP",
+            "title": "Catching Off-by-One Bugs",
+            "text": "Pay special attention to loop boundaries (< vs <=) and array index bounds (length - 1). Dry running catches 90% of off-by-one errors."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Palindrome Check Dry Run\nfunction isPalindrome(str) {\n  let left = 0, right = str.length - 1;\n  while (left < right) {\n    if (str[left] !== str[right]) return false;\n    left++;\n    right--;\n  }\n  return true;\n}\n\nconsole.log(\"racecar:\", isPalindrome(\"racecar\")); // true\nconsole.log(\"hello:\", isPalindrome(\"hello\")); // false"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m11-t03-p4",
+            "question": "What is the primary objective of creating a variable state table during a manual dry run?",
+            "options": [
+              "To prove code syntax validity",
+              "To track and verify changes in variable values step-by-step and identify logic or boundary errors",
+              "To format code according to prettier",
+              "To speed up execution in production"
+            ],
+            "correctAnswer": 1,
+            "explanation": "A state table records values across iterations, helping identify off-by-one errors, infinite loops, and unexpected variable mutations."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -393,5 +603,710 @@
       "_sourceFile": "javascript.json",
       "_moduleTitle": "Getting started with algorithmic problems"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m11-getting-started-with-algorithmic-problems",
+    "title": "Module Assessment: Getting started with algorithmic problems",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "mcq-js-m11-1",
+          "question": "What is an algorithmic test case composed of?",
+          "options": [
+            "Only documentation comments",
+            "An input dataset, expected output, and operational constraints (time/memory limits)",
+            "A compiler script",
+            "A visual diagram"
+          ],
+          "correctAnswer": 1,
+          "explanation": "A test case specifies input parameters, the expected output, and constraints such as execution time and memory limits."
+        },
+        {
+          "questionId": "mcq-js-m11-2",
+          "question": "Which of the following describes an edge case in software testing?",
+          "options": [
+            "A typical case with standard middle values",
+            "An input condition that occurs at the extreme boundary (minimum, maximum, or empty inputs)",
+            "A syntax error in code",
+            "A test case that only runs on weekends"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Edge cases test extreme boundary values such as empty inputs, negative numbers, maximum integers, and single elements."
+        },
+        {
+          "questionId": "mcq-js-m11-3",
+          "question": "What is the time complexity of finding a key in a JavaScript Map or Set on average?",
+          "options": [
+            "O(N)",
+            "O(log N)",
+            "O(1)",
+            "O(N^2)"
+          ],
+          "correctAnswer": 2,
+          "explanation": "JavaScript Map and Set use hash tables internally, providing O(1) average time complexity for lookups."
+        },
+        {
+          "questionId": "mcq-js-m11-4",
+          "question": "What will happen if an algorithmic solution has O(N^2) time complexity for N = 100,000 (10^5)?",
+          "options": [
+            "It will execute in ~10 milliseconds",
+            "It will trigger a Time Limit Exceeded (TLE) error as 10^10 operations exceed typical 1-second limits",
+            "It will trigger a Memory Limit Exceeded",
+            "It will compile without warning"
+          ],
+          "correctAnswer": 1,
+          "explanation": "10^5 squared equals 10^10 operations. Standard 1-second limits allow roughly 10^7 - 10^8 operations, causing TLE."
+        },
+        {
+          "questionId": "mcq-js-m11-5",
+          "question": "Which data structure is most appropriate to efficiently track unique elements and test membership in O(1) time?",
+          "options": [
+            "Array",
+            "Set",
+            "LinkedList",
+            "Stack"
+          ],
+          "correctAnswer": 1,
+          "explanation": "A Set stores unique values and provides O(1) average membership tests via set.has()."
+        },
+        {
+          "questionId": "mcq-js-m11-6",
+          "question": "What is the time complexity of the standard JavaScript Array.prototype.sort() method in V8?",
+          "options": [
+            "O(N)",
+            "O(N log N)",
+            "O(N^2)",
+            "O(log N)"
+          ],
+          "correctAnswer": 1,
+          "explanation": "V8's Array.prototype.sort() uses TimSort, which guarantees O(N log N) worst and average case time complexity."
+        },
+        {
+          "questionId": "mcq-js-m11-7",
+          "question": "What does TLE stand for in automated assessment platforms?",
+          "options": [
+            "Total Logic Error",
+            "Time Limit Exceeded",
+            "Type Length Error",
+            "Thread Lock Exception"
+          ],
+          "correctAnswer": 1,
+          "explanation": "TLE stands for Time Limit Exceeded, indicating that the solution took longer to execute than the permitted CPU time limit."
+        },
+        {
+          "questionId": "mcq-js-m11-8",
+          "question": "What technique uses two pointers moving towards each other from opposite ends of a sorted array?",
+          "options": [
+            "Two-Pointer Technique",
+            "Sliding Window",
+            "Binary Lifting",
+            "Floyd's Cycle Finding"
+          ],
+          "correctAnswer": 0,
+          "explanation": "The Two-Pointer technique maintains two index pointers (e.g. left and right) to solve array problems in O(N) time."
+        },
+        {
+          "questionId": "mcq-js-m11-9",
+          "question": "What is the space complexity of an in-place array reversal algorithm?",
+          "options": [
+            "O(N)",
+            "O(log N)",
+            "O(1)",
+            "O(N^2)"
+          ],
+          "correctAnswer": 2,
+          "explanation": "In-place reversal swaps elements within the existing array using a single temporary variable, using O(1) auxiliary space."
+        },
+        {
+          "questionId": "mcq-js-m11-10",
+          "question": "Why should you remove debug console.log statements before submitting code to an online judge?",
+          "options": [
+            "console.log is not supported in online judges",
+            "Excessive logging slows down execution time and contaminates stdout, causing 'Wrong Answer'",
+            "console.log consumes heap memory permanently",
+            "It triggers a SyntaxError"
+          ],
+          "correctAnswer": 1,
+          "explanation": "I/O operations are relatively slow and printing extraneous debug text causes standard output mismatch with the expected result."
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.31",
+          "questionId": "Q0.31",
+          "title": "Decimal to Octal and Hexadecimal",
+          "difficulty": "Beginner",
+          "estimatedMinutes": 10,
+          "tags": [
+            "JavaScript",
+            ".c",
+            "programming"
+          ],
+          "problemStatement": "Write a program to convert Decimal to Octal and Hexadecimal.",
+          "description": "Write a program to convert Decimal to Octal and Hexadecimal.",
+          "constraints": "1 <= A, B <= 10^9",
+          "inputFormat": "Integer Integer",
+          "outputFormat": "Integer Integer",
+          "sampleTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Input '100 1020' produces expected output ''."
+            }
+          ],
+          "hiddenValidationCases": [
+            {
+              "caseNumber": 1,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "100 1020",
+              "output": "144 3FC",
+              "expectedOutput": "144 3FC",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "boilerPlates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "solution": {
+            "javascript": "const fs = require('fs');\n\nfunction main() {\n    const parts = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\n    if (parts.length >= 2) {\n        const a = parseInt(parts[0], 10).toString(8);\n        const b = parseInt(parts[1], 10).toString(16).toUpperCase();\n        console.log(`${a} ${b}`);\n    }\n}\n\nmain();\n"
+          }
+        },
+        {
+          "problemId": "Q0.32",
+          "questionId": "Q0.32",
+          "title": "Odd or Even Parity Check",
+          "difficulty": "Beginner",
+          "estimatedMinutes": 10,
+          "tags": [
+            "JavaScript",
+            ".c",
+            "programming"
+          ],
+          "problemStatement": "Given a number,check whether it is \"Odd \" or \"Even\"",
+          "description": "Given a number,check whether it is \"Odd \" or \"Even\"",
+          "constraints": "-10^9 <= N <= 10^9",
+          "inputFormat": "Integer",
+          "outputFormat": "String",
+          "sampleTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "101010",
+              "output": "Even",
+              "expectedOutput": "Even",
+              "explanation": "Input '101010' produces expected output ''."
+            },
+            {
+              "caseNumber": 2,
+              "input": "2461",
+              "output": "Odd",
+              "expectedOutput": "Odd",
+              "explanation": "Input '2461' produces expected output ''."
+            }
+          ],
+          "hiddenValidationCases": [
+            {
+              "caseNumber": 1,
+              "input": "101010",
+              "output": "Even",
+              "expectedOutput": "Even",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "2461",
+              "output": "Odd",
+              "expectedOutput": "Odd",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "101010",
+              "output": "Even",
+              "expectedOutput": "Even",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "2461",
+              "output": "Odd",
+              "expectedOutput": "Odd",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "101010",
+              "output": "Even",
+              "expectedOutput": "Even",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "2461",
+              "output": "Odd",
+              "expectedOutput": "Odd",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "101010",
+              "output": "Even",
+              "expectedOutput": "Even",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "2461",
+              "output": "Odd",
+              "expectedOutput": "Odd",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "101010",
+              "output": "Even",
+              "expectedOutput": "Even",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "2461",
+              "output": "Odd",
+              "expectedOutput": "Odd",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "101010",
+              "output": "Even",
+              "expectedOutput": "Even",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "2461",
+              "output": "Odd",
+              "expectedOutput": "Odd",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "101010",
+              "output": "Even",
+              "expectedOutput": "Even",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "2461",
+              "output": "Odd",
+              "expectedOutput": "Odd",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "101010",
+              "output": "Even",
+              "expectedOutput": "Even",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "2461",
+              "output": "Odd",
+              "expectedOutput": "Odd",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "101010",
+              "output": "Even",
+              "expectedOutput": "Even",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "2461",
+              "output": "Odd",
+              "expectedOutput": "Odd",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "101010",
+              "output": "Even",
+              "expectedOutput": "Even",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "2461",
+              "output": "Odd",
+              "expectedOutput": "Odd",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "boilerPlates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "solution": {
+            "javascript": "const fs = require('fs');\n\nfunction main() {\n    const s = fs.readFileSync(0, 'utf-8').trim();\n    if (s.length > 0) {\n        console.log(parseInt(s, 10) % 2 === 0 ? \"Even\" : \"Odd\");\n    }\n}\n\nmain();\n"
+          }
+        },
+        {
+          "problemId": "Q0.33",
+          "questionId": "Q0.33",
+          "title": "Check if Two Numbers are Equal",
+          "difficulty": "Beginner",
+          "estimatedMinutes": 10,
+          "tags": [
+            "JavaScript",
+            ".c",
+            "programming"
+          ],
+          "problemStatement": "Given 2 integer input check whether the 2 input are \"Equal\" or \"Not Equal\" print the corresponding message",
+          "description": "Given 2 integer input check whether the 2 input are \"Equal\" or \"Not Equal\" print the corresponding message",
+          "constraints": "-10^9 <= A, B <= 10^9",
+          "inputFormat": "Integer Integer",
+          "outputFormat": "String",
+          "sampleTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "-109 83839",
+              "output": "Not Equal",
+              "expectedOutput": "Not Equal",
+              "explanation": "Input '-109 83839' produces expected output ''."
+            },
+            {
+              "caseNumber": 2,
+              "input": "20 20",
+              "output": "Equal",
+              "expectedOutput": "Equal",
+              "explanation": "Input '20 20' produces expected output ''."
+            }
+          ],
+          "hiddenValidationCases": [
+            {
+              "caseNumber": 1,
+              "input": "-109 83839",
+              "output": "Not Equal",
+              "expectedOutput": "Not Equal",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "20 20",
+              "output": "Equal",
+              "expectedOutput": "Equal",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "-109 83839",
+              "output": "Not Equal",
+              "expectedOutput": "Not Equal",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "20 20",
+              "output": "Equal",
+              "expectedOutput": "Equal",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "-109 83839",
+              "output": "Not Equal",
+              "expectedOutput": "Not Equal",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "20 20",
+              "output": "Equal",
+              "expectedOutput": "Equal",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "-109 83839",
+              "output": "Not Equal",
+              "expectedOutput": "Not Equal",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "20 20",
+              "output": "Equal",
+              "expectedOutput": "Equal",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "-109 83839",
+              "output": "Not Equal",
+              "expectedOutput": "Not Equal",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "20 20",
+              "output": "Equal",
+              "expectedOutput": "Equal",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "-109 83839",
+              "output": "Not Equal",
+              "expectedOutput": "Not Equal",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "20 20",
+              "output": "Equal",
+              "expectedOutput": "Equal",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "-109 83839",
+              "output": "Not Equal",
+              "expectedOutput": "Not Equal",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "20 20",
+              "output": "Equal",
+              "expectedOutput": "Equal",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "-109 83839",
+              "output": "Not Equal",
+              "expectedOutput": "Not Equal",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "20 20",
+              "output": "Equal",
+              "expectedOutput": "Equal",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "-109 83839",
+              "output": "Not Equal",
+              "expectedOutput": "Not Equal",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "20 20",
+              "output": "Equal",
+              "expectedOutput": "Equal",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "-109 83839",
+              "output": "Not Equal",
+              "expectedOutput": "Not Equal",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "20 20",
+              "output": "Equal",
+              "expectedOutput": "Equal",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "boilerPlates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "solution": {
+            "javascript": "const fs = require('fs');\n\nfunction main() {\n    const parts = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\n    if (parts.length >= 2) {\n        console.log(parts[0] === parts[1] ? \"Equal\" : \"Not Equal\");\n    }\n}\n\nmain();\n"
+          }
+        }
+      ]
+    }
+  }
 }

@@ -3429,7 +3429,34 @@
       "description": "Study concepts and solve targeted engineering problems for What are custom inputs?.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 15,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m04-custom-in-01",
+          "title": "Working with Custom Inputs and std::cin",
+          "content": "### Understanding Custom and Interactive Inputs in C++\n\nStandard input in C++ is managed through the `std::cin` stream defined in `<iostream>`. When processing user or automated inputs:\n\n- The extraction operator `>>` extracts formatted data up to whitespace (spaces, tabs, newlines).\n- Multiple variables can be chained: `std::cin >> a >> b >> c;`\n- When reading mixed inputs (numbers followed by entire strings with spaces), the leftover newline character in the stream buffer must be cleared using `std::cin.ignore()` before calling `std::getline(std::cin, str)`.\n\n```cpp\nint age;\nstd::string fullName;\nstd::cin >> age;\nstd::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\\n');\nstd::getline(std::cin, fullName);\n```",
+          "callout": {
+            "type": "WARNING",
+            "title": "Buffer Residue",
+            "text": "Reading numbers with >> leaves the newline \\n in the stream buffer. std::getline immediately consumes that newline unless ignored."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <string>\n\nint main() {\n    int studentId;\n    std::string branch;\n    \n    std::cout << \"Enter ID and Branch: \";\n    if (std::cin >> studentId >> branch) {\n        std::cout << \"ID: \" << studentId << \", Branch: \" << branch << \"\\n\";\n    }\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m04-cin-01",
+            "question": "What happens when using 'std::cin >> x' if the user types leading whitespace before the number?",
+            "options": [
+              "The >> operator automatically skips all leading whitespace until it encounters data",
+              "The program crashes with a BadInputException",
+              "The variable x is set to 0 and execution stops",
+              "The whitespace is stored as character 0 in the integer"
+            ],
+            "correctAnswer": 0,
+            "explanation": "By default, the >> extraction operator on streams discards leading whitespace characters before attempting extraction."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -4489,7 +4516,34 @@
       "description": "Study concepts and solve targeted engineering problems for Addition and multiplication.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 20,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m04-add-mult-01",
+          "title": "Arithmetic Operations: Addition and Multiplication",
+          "content": "### Addition and Multiplication in C++\n\nC++ provides the standard binary operators `+` and `*` for numeric types. However, real-world systems must handle type promotion and integer overflow:\n\n- **Integer Overflow**: Standard 32-bit signed `int` ranges from `-2,147,483,648` to `2,147,483,647`. Multiplying two `100,000` values produces `10,000,000,000`, which overflows a 32-bit `int` into undefined behavior!\n- **Promotion to `long long`**: Use `long long` (at least 64 bits) to safely hold products up to `~9 * 10^18`.\n- **Compound Assignment**: Operators `+=` and `*=` provide in-place modification: `sum += val;` and `product *= factor;`.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Type Safety in Multiplication",
+            "text": "If multiplying two ints, casting after multiplication does not prevent overflow. Cast at least one operand first: 1LL * a * b."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n\nint main() {\n    int a = 200000;\n    int b = 300000;\n    \n    // Correct 64-bit multiplication:\n    long long product = static_cast<long long>(a) * b;\n    std::cout << \"Safe product: \" << product << \"\\n\";\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m04-add-mult-01",
+            "question": "What is the risk of writing `long long res = a * b;` when a and b are 32-bit ints?",
+            "options": [
+              "a * b is calculated in 32-bit int arithmetic first, overflowing before assignment to res",
+              "The compiler will reject the assignment with a compilation error",
+              "res will automatically round to the nearest float",
+              "The operator * cannot be used with long long"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Expression evaluation determines the type of the operation from the operands (both int), resulting in 32-bit overflow before the result is widened to long long."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -5095,7 +5149,34 @@
       "description": "Study concepts and solve targeted engineering problems for Subtraction and division.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 30,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m04-sub-div-01",
+          "title": "Subtraction, Integer Division, and Modulo",
+          "content": "### Division Nuances and Modulo in C++\n\nDivision in C++ behaves differently depending on operand types:\n\n1. **Integer Division (`int / int`)**: Truncates towards zero. For example, `7 / 2` evaluates to `3`, and `-7 / 2` evaluates to `-3` in C++11 and later.\n2. **Floating-point Division**: If either operand is `float` or `double`, standard real division occurs: `7.0 / 2` produces `3.5`.\n3. **The Modulo Operator (`%`)**: Computes the remainder of integer division. `7 % 2` evaluates to `1`. Modulo is only defined for integer types.\n4. **Division by Zero**: Dividing by zero or taking modulo zero causes undefined behavior (usually triggering a CPU hardware exception `SIGFPE`). Always guard denominators!",
+          "callout": {
+            "type": "WARNING",
+            "title": "Zero Denominator Guard",
+            "text": "Always check if (b != 0) before executing a / b or a % b to prevent fatal runtime aborts."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n\nint main() {\n    int num = 17, den = 5;\n    std::cout << \"Integer Quotient: \" << num / den << \"\\n\";  // 3\n    std::cout << \"Remainder: \" << num % den << \"\\n\";         // 2\n    std::cout << \"Exact Division: \" << static_cast<double>(num) / den << \"\\n\"; // 3.4\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m04-sub-div-01",
+            "question": "What is the result of `5 / 2` in C++ when both operands are integer literals?",
+            "options": [
+              "2 (truncated integer division)",
+              "2.5 (standard decimal)",
+              "3 (rounded up)",
+              "Compilation error"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In C++, division between two integer types performs integer division and truncates any fractional portion towards zero."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -5999,7 +6080,34 @@
       "description": "Study concepts and solve targeted engineering problems for Useful math functions.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 25,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m04-math-func-01",
+          "title": "The C++ Mathematical Library (<cmath>)",
+          "content": "### Standard Math Functions in <cmath>\n\nThe `<cmath>` header provides overloaded functions for `float`, `double`, and `long double` computations:\n\n| Function | Signature | Description | Example |\n| :--- | :--- | :--- | :--- |\n| `std::sqrt(x)` | `double sqrt(double)` | Square root of x (x >= 0) | `sqrt(25.0) -> 5.0` |\n| `std::pow(x, y)` | `double pow(double, double)` | x raised to power y | `pow(2.0, 3.0) -> 8.0` |\n| `std::abs(x)` | Overloaded | Absolute value | `abs(-42) -> 42` |\n| `std::ceil(x)` | `double ceil(double)` | Smallest integer >= x | `ceil(4.2) -> 5.0` |\n| `std::floor(x)` | `double floor(double)` | Largest integer <= x | `floor(4.9) -> 4.0` |\n| `std::round(x)` | `double round(double)` | Rounds to nearest integer | `round(4.5) -> 5.0` |\n| `std::hypot(x, y)` | `double hypot(double, double)` | Hypotenuse sqrt(x^2 + y^2) | `hypot(3.0, 4.0) -> 5.0` |",
+          "callout": {
+            "type": "TIP",
+            "title": "Hypot Benefit",
+            "text": "std::hypot(x, y) avoids premature intermediate overflow or underflow compared to calculating sqrt(x*x + y*y)."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <cmath>\n\nint main() {\n    double a = 3.0, b = 4.0;\n    double c = std::hypot(a, b);\n    std::cout << \"Hypotenuse: \" << c << \"\\n\";\n    std::cout << \"2^10 = \" << std::pow(2, 10) << \"\\n\";\n    std::cout << \"Ceiling of 4.1: \" << std::ceil(4.1) << \"\\n\";\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m04-math-01",
+            "question": "Which header file must be included to access std::sqrt and std::pow?",
+            "options": [
+              "<cmath>",
+              "<mathlib>",
+              "<iostream>",
+              "<algorithm>"
+            ],
+            "correctAnswer": 0,
+            "explanation": "The standard C++ mathematical functions are declared in the <cmath> header."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -6755,7 +6863,34 @@
       "description": "Study concepts and solve targeted engineering problems for Review: Basic math.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 25,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m04-rev-math-01",
+          "title": "Review: Mathematical Expressions and Operator Precedence",
+          "content": "### Operator Precedence and Precision Control\n\nWhen writing complex expressions, order of evaluation is determined by operator precedence and associativity:\n\n1. **Highest Priority**: Parentheses `()`, post-increment `x++`, post-decrement `x--`.\n2. **Unary Operators**: `+`, `-`, `++x`, `--x`, `!`.\n3. **Multiplicative Operators**: `*`, `/`, `%` (Left-to-right).\n4. **Additive Operators**: `+`, `-` (Left-to-right).\n5. **Relational & Equality**: `<`, `<=`, `>`, `>=`, `==`, `!=`.\n6. **Logical Operators**: `&&` before `||`.\n\n#### Formatting Floating Point Output\nUse `<iomanip>` for precise scientific or currency output:\n```cpp\n#include <iomanip>\nstd::cout << std::fixed << std::setprecision(2) << 3.14159 << \"\\n\"; // Prints 3.14\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Explicit Parentheses",
+            "text": "Always use parentheses to clarify intent in complex expressions rather than relying on obscure precedence rules."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <iomanip>\n\nint main() {\n    double fahrenheit = 98.6;\n    double celsius = (fahrenheit - 32.0) * (5.0 / 9.0);\n    \n    std::cout << std::fixed << std::setprecision(2);\n    std::cout << fahrenheit << \" F = \" << celsius << \" C\\n\";\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m04-prec-01",
+            "question": "In C++, what is the value of 5 + 3 * 2?",
+            "options": [
+              "11 (multiplication has higher precedence than addition)",
+              "16 (evaluated strictly left-to-right)",
+              "10",
+              "Compilation error due to mixed operators"
+            ],
+            "correctAnswer": 0,
+            "explanation": "* has higher precedence than +, so 3 * 2 is evaluated first to 6, followed by 5 + 6 = 11."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -7513,7 +7648,34 @@
       "description": "Study concepts and solve targeted engineering problems for Free problems.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 40,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m04-free-01",
+          "title": "Practice Problems: Basic Computations",
+          "content": "### Hands-On Practice: Formula Calculations\n\nTry implementing these common formula applications:\n\n1. **Area and Perimeter of a Rectangle**: Given length $L$ and width $W$, calculate $Area = L \\times W$ and $Perimeter = 2 \\times (L + W)$.\n2. **Compound Interest**: Given Principal $P$, rate $R$, and time $T$ in years, calculate $Amount = P \\times (1 + R/100)^T$.\n3. **Time Conversion**: Given total seconds $S$, convert to hours, minutes, and remaining seconds:\n   - $Hours = S / 3600$\n   - $Minutes = (S \\% 3600) / 60$\n   - $Seconds = S \\% 60$\n\nNotice how integer division and modulo make unit conversions concise and bug-free.",
+          "callout": {
+            "type": "TIP",
+            "title": "Modulo for Clocks",
+            "text": "The modulo operator % is the fundamental mathematical tool for cyclical calculations (clocks, circular queues, days of the week)."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n\nint main() {\n    int totalSeconds = 3665;\n    int hours = totalSeconds / 3600;\n    int minutes = (totalSeconds % 3600) / 60;\n    int seconds = totalSeconds % 60;\n    \n    std::cout << hours << \"h \" << minutes << \"m \" << seconds << \"s\\n\";\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m04-free-cp1",
+            "question": "What expression computes the remaining minutes from totalSeconds after extracting hours?",
+            "options": [
+              "(totalSeconds % 3600) / 60",
+              "totalSeconds / 60",
+              "totalSeconds % 60",
+              "(totalSeconds / 3600) % 60"
+            ],
+            "correctAnswer": 0,
+            "explanation": "totalSeconds % 3600 gives the remaining seconds that do not make a full hour; dividing by 60 gives the number of full minutes."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -8718,7 +8880,34 @@
       "description": "Study concepts and solve targeted engineering problems for Premium Problems.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 45,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m04-prem-01",
+          "title": "Advanced Numeric Challenges: Precision & Limits",
+          "content": "### Precision, Numerical Limits, and Edge Cases\n\nAdvanced algorithmic math requires careful consideration of numerical limits:\n\n1. **std::numeric_limits**: Defined in `<limits>`, queries the maximum, minimum, and precision of numeric types.\n2. **Floating-point Comparison**: Never compare floats using `==`. Use an epsilon tolerance:\n   ```cpp\n   const double EPS = 1e-9;\n   if (std::abs(a - b) < EPS) { /* effectively equal */ }\n   ```\n3. **Fast I/O in Competitive Programming**: To prevent cin/cout bottlenecks when processing hundreds of thousands of numbers:\n   ```cpp\n   std::ios_base::sync_with_stdio(false);\n   std::cin.tie(NULL);\n   ```",
+          "callout": {
+            "type": "WARNING",
+            "title": "Float Inexactness",
+            "text": "Binary IEEE-754 floating point cannot represent 0.1 exactly. Always use tolerances for equality checks."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <limits>\n#include <cmath>\n\nint main() {\n    std::cout << \"Max int: \" << std::numeric_limits<int>::max() << \"\\n\";\n    std::cout << \"Max long long: \" << std::numeric_limits<long long>::max() << \"\\n\";\n    \n    double x = 0.1 + 0.2;\n    double target = 0.3;\n    bool isEqual = std::abs(x - target) < 1e-9;\n    std::cout << \"Is 0.1 + 0.2 equal to 0.3? \" << (isEqual ? \"YES\" : \"NO\") << \"\\n\";\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m04-prem-cp1",
+            "question": "Why is `std::abs(a - b) < 1e-9` preferred over `a == b` for floating point numbers?",
+            "options": [
+              "Floating-point representation inaccuracies can cause tiny rounding errors that fail exact equality",
+              "The == operator is not defined for double in C++",
+              "std::abs performs faster than the == operator",
+              "Exact equality is forbidden by the ISO C++ standard"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Due to binary IEEE 754 representations, values like 0.1 + 0.2 yield 0.300000000000000044..., failing strict == checks."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -10966,7 +11155,34 @@
       "description": "Study concepts and solve targeted engineering problems for Basic math continued part-1.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 25,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-CPP-M04-T13-1",
+          "title": "The C++ <numeric> Library and Modern Math Utilities",
+          "content": "### Modern C++17 Math Functions in `<numeric>` and `<cmath>`\n\nC++17 standardized key algorithms in `<numeric>`:\n\n- **`std::gcd(a, b)`:** Returns greatest common divisor.\n- **`std::lcm(a, b)`:** Returns least common multiple.\n- **`std::midpoint(a, b)` (C++20):** Computes the midpoint without integer overflow.\n\n```cpp\n#include <numeric>\nlong long g = std::gcd(48, 18); // 6\nlong long l = std::lcm(48, 18); // 144\n```",
+          "callout": {
+            "type": "TIP",
+            "title": "Avoid Custom GCD in C++17",
+            "text": "C++17 provides `std::gcd` and `std::lcm` in `<numeric>`, which are constexpr and optimized for hardware efficiency."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <numeric>\n\nint main() {\n    int a = 100, b = 75;\n    std::cout << \"GCD: \" << std::gcd(a, b) << \"\\n\"; // 25\n    std::cout << \"LCM: \" << std::lcm(a, b) << \"\\n\"; // 300\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CPP-M04-T13-1",
+            "question": "In C++17, which header provides `std::gcd` and `std::lcm`?",
+            "options": [
+              "<cmath>",
+              "<numeric>",
+              "<algorithm>",
+              "<cstdlib>"
+            ],
+            "correctAnswer": 1,
+            "explanation": "<numeric> declares std::gcd and std::lcm in C++17."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -11249,7 +11465,34 @@
       "description": "Study concepts and solve targeted engineering problems for Basic math continued part-2.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 25,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-CPP-M04-T14-1",
+          "title": "Sieve of Eratosthenes & Fast Modular Exponentiation in C++",
+          "content": "### Sieve of Eratosthenes ($O(N \\log \\log N)$)\n\nFinding all primes up to $N$ using a `std::vector<bool>` sieve:\n\n```cpp\nstd::vector<bool> isPrime(n + 1, true);\nisPrime[0] = isPrime[1] = false;\nfor (int p = 2; p * p <= n; p++) {\n    if (isPrime[p]) {\n        for (int i = p * p; i <= n; i += p) isPrime[i] = false;\n    }\n}\n```\n\n*Note:* `std::vector<bool>` is a specialized space-efficient container storing each boolean as a single bit!",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "std::vector<bool> Space Optimization",
+            "text": "`std::vector<bool>` packs 8 booleans per byte, reducing memory footprint by 87.5% compared to raw boolean arrays."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <vector>\n\nint main() {\n    int n = 30;\n    std::vector<bool> prime(n + 1, true);\n    prime[0] = prime[1] = false;\n    for (int p = 2; p * p <= n; p++) {\n        if (prime[p]) {\n            for (int i = p * p; i <= n; i += p) prime[i] = false;\n        }\n    }\n    for (int p = 2; p <= n; p++) {\n        if (prime[p]) std::cout << p << \" \";\n    }\n    std::cout << \"\\n\";\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CPP-M04-T14-1",
+            "question": "What is the asymptotic time complexity of the Sieve of Eratosthenes for finding primes up to $N$?",
+            "options": [
+              "O(N^2)",
+              "O(N log log N)",
+              "O(N log N)",
+              "O(sqrt(N))"
+            ],
+            "correctAnswer": 1,
+            "explanation": "The harmonic sum of prime reciprocals yields O(N log log N) time complexity."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -11551,14 +11794,14 @@
           "checkpoint": {
             "checkpointId": "cp-BMCV2C17",
             "question": "What is the minimum total number of balls needed in K non-empty distinct boxes?",
-            "options": "The smallest possible distinct positive counts are 1,2,…,K, whose sum is K(K+1)/2.",
-            "correctAnswer": [
+            "options": [
               "K",
               "K²",
               "K(K+1)/2",
               "N-K"
             ],
-            "explanation": 2
+            "correctAnswer": 2,
+            "explanation": "The smallest possible distinct positive counts are 1,2,…,K, whose sum is K(K+1)/2."
           }
         }
       ],
@@ -11739,5 +11982,442 @@
       "_sourceFile": "cpp-beginner-v2-p2.json",
       "_moduleTitle": "Basic math continued"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m04-input-output-operations-math-library",
+    "title": "Module Assessment: Input/Output Operations & Math Library",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "msa-cpp-m04-q1",
+          "question": "What is the purpose of `std::cin.tie(nullptr)` in competitive C++?",
+          "options": [
+            "Unbinds cin from cout so cout doesn't automatically flush before each cin operation, boosting speed",
+            "Disables terminal input",
+            "Ties cin to a file",
+            "Enables multithreading"
+          ],
+          "correctAnswer": 0,
+          "explanation": "By default, cin is tied to cout. Calling cin.tie(nullptr) eliminates flushing overhead on interactive inputs.",
+          "tags": [
+            "Competitive Programming",
+            "cin.tie"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m04-q2",
+          "question": "Which header in C++ provides mathematical functions such as `std::sqrt`, `std::sin`, and `std::pow`?",
+          "options": [
+            "<math.h>",
+            "<cmath>",
+            "<numbers>",
+            "<algorithm>"
+          ],
+          "correctAnswer": 1,
+          "explanation": "<cmath> is the standard C++ header providing math functions inside the std:: namespace.",
+          "tags": [
+            "Headers",
+            "cmath"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m04-q3",
+          "question": "What does `std::fixed` manipulator do to floating point output?",
+          "options": [
+            "Rounds numbers to nearest integer",
+            "Displays floating-point numbers in fixed-point decimal notation rather than scientific notation",
+            "Freezes the stream",
+            "Pads with spaces"
+          ],
+          "correctAnswer": 1,
+          "explanation": "std::fixed formats floating numbers as standard decimal numbers (e.g. 123.45) rather than scientific notation (1.23e+02).",
+          "tags": [
+            "Manipulators",
+            "std::fixed"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m04-q4",
+          "question": "How do you check if a read operation on `std::cin` failed (e.g. user entered letters when an int was expected)?",
+          "options": [
+            "if (std::cin.fail())",
+            "if (std::cin.error())",
+            "if (std::cin == -1)",
+            "if (!std::cin.ok())"
+          ],
+          "correctAnswer": 0,
+          "explanation": "std::cin.fail() returns true if a formatting or extraction failure occurred on the stream.",
+          "tags": [
+            "Streams",
+            "Stream State"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m04-q5",
+          "question": "What does `std::getline(std::cin, line, ':')` use as the line termination delimiter?",
+          "options": [
+            "Newline character '\\n'",
+            "Colon character ':'",
+            "Space",
+            "EOF"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The third parameter to std::getline specifies the custom delimiter character (':').",
+          "tags": [
+            "getline",
+            "Delimiters"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m04-q6",
+          "question": "What C++20 header provides accurate mathematical constants like `std::numbers::pi` and `std::numbers::e`?",
+          "options": [
+            "<constants>",
+            "<numbers>",
+            "<cmath>",
+            "<numeric>"
+          ],
+          "correctAnswer": 1,
+          "explanation": "<numbers> introduced in C++20 provides high-precision mathematical constants in std::numbers.",
+          "tags": [
+            "C++20",
+            "<numbers>"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m04-q7",
+          "question": "What does `std::ws` manipulator do when extracted from an input stream (`std::cin >> std::ws;`)?",
+          "options": [
+            "Writes spaces",
+            "Discards leading whitespace from the stream",
+            "Waits for seconds",
+            "Flushes stream"
+          ],
+          "correctAnswer": 1,
+          "explanation": "std::ws consumes and discards any leading whitespace characters currently sitting at the front of the input stream.",
+          "tags": [
+            "Manipulators",
+            "std::ws"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m04-q8",
+          "question": "What function in `<cmath>` rounds a floating point number upwards to the nearest integer?",
+          "options": [
+            "std::floor",
+            "std::ceil",
+            "std::round",
+            "std::trunc"
+          ],
+          "correctAnswer": 1,
+          "explanation": "std::ceil(x) returns the smallest integer value not less than x.",
+          "tags": [
+            "cmath",
+            "Rounding"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m04-q9",
+          "question": "What is the return type of `std::sqrt(-1.0)` for a real double argument?",
+          "options": [
+            "Throws std::domain_error",
+            "NaN (Not a Number)",
+            "0.0",
+            "Compile error"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Computing the square root of a negative number produces NaN (quiet NaN) as defined by IEEE 754.",
+          "tags": [
+            "Floating Point",
+            "NaN"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m04-q10",
+          "question": "Which C++20 library provides Python-style `{}` formatting as a type-safe replacement for `printf`?",
+          "options": [
+            "<iostream>",
+            "<format>",
+            "<iomanip>",
+            "<sstream>"
+          ],
+          "correctAnswer": 1,
+          "explanation": "<format> (std::format) introduced in C++20 provides type-safe string formatting similar to Python's str.format().",
+          "tags": [
+            "C++20",
+            "<format>"
+          ]
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.7",
+          "questionId": "Q0.7",
+          "title": "Print Float with 3 Decimals",
+          "difficulty": "Beginner",
+          "problemStatement": "**Accept a number as input and print it with 3 decimal digits**\nWrite a program to accept a number as input from the user and print it with 3 decimal digits.",
+          "description": "**Accept a number as input and print it with 3 decimal digits**\nWrite a program to accept a number as input from the user and print it with 3 decimal digits.",
+          "constraints": "-10^6 <= N <= 10^6",
+          "inputFormat": "Float",
+          "outputFormat": "Float",
+          "sampleTestCases": [
+            {
+              "input": "123.456",
+              "output": "123.456",
+              "explanation": "Input '123.456' produces expected output '' following problem rules."
+            },
+            {
+              "input": "987.4567",
+              "output": "987.457",
+              "explanation": "Input '987.4567' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "123.456",
+              "output": "123.456",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "987.4567",
+              "output": "987.457",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "123.456",
+              "output": "123.456",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "987.4567",
+              "output": "987.457",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "123.456",
+              "output": "123.456",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "987.4567",
+              "output": "987.457",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "123.456",
+              "output": "123.456",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "987.4567",
+              "output": "987.457",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "123.456",
+              "output": "123.456",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "987.4567",
+              "output": "987.457",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\n#include <iomanip>\nusing namespace std;\n\nint main() {\n    double d;\n    if (cin >> d) {\n        cout << fixed << setprecision(3) << d << \"\\n\";\n    }\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    double d;\n    if (scanf(\"%lf\", &d) == 1) {\n        printf(\"%.3f\\n\", d);\n    }\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.8",
+          "questionId": "Q0.8",
+          "title": "Read and Print Message",
+          "difficulty": "Beginner",
+          "problemStatement": "**Accept a message as input and print it\nWrite a program to accept a message as input from the user and print it",
+          "description": "**Accept a message as input and print it\nWrite a program to accept a message as input from the user and print it",
+          "constraints": "1 <= length <= 1000",
+          "inputFormat": "String",
+          "outputFormat": "String",
+          "sampleTestCases": [
+            {
+              "input": "Hello",
+              "output": "Hello",
+              "explanation": "Input 'Hello' produces expected output '' following problem rules."
+            },
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Input 'Hello World' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "Hello",
+              "output": "Hello",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "Learn with SEED Team",
+              "output": "Learn with SEED Team",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "Hello",
+              "output": "Hello",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "Learn with SEED Team",
+              "output": "Learn with SEED Team",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "Hello",
+              "output": "Hello",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "Learn with SEED Team",
+              "output": "Learn with SEED Team",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "Hello",
+              "output": "Hello",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string s;\n    if (getline(cin, s)) {\n        cout << s << \"\\n\";\n    }\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n#include <string.h>\n\nint main() {\n    char s[1000];\n    if (fgets(s, sizeof(s), stdin)) {\n        s[strcspn(s, \"\\r\\n\")] = '\\0';\n        printf(\"%s\\n\", s);\n    }\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.9",
+          "questionId": "Q0.9",
+          "title": "Print Integer with Explicit Sign",
+          "difficulty": "Beginner",
+          "problemStatement": "Get an integer from the user and print the number along with its sign.",
+          "description": "Get an integer from the user and print the number along with its sign.",
+          "constraints": "-10^9 <= N <= 10^9",
+          "inputFormat": "Integer",
+          "outputFormat": "Integer",
+          "sampleTestCases": [
+            {
+              "input": "20",
+              "output": "+20",
+              "explanation": "Input '20' produces expected output '' following problem rules."
+            },
+            {
+              "input": "-20",
+              "output": "-20",
+              "explanation": "Input '-20' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "20",
+              "output": "+20",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "-20",
+              "output": "-20",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "100",
+              "output": "+100",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "-123",
+              "output": "-123",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "20",
+              "output": "+20",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "-20",
+              "output": "-20",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "100",
+              "output": "+100",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "-123",
+              "output": "-123",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "20",
+              "output": "+20",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "-20",
+              "output": "-20",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int n;\n    if (cin >> n) {\n        cout << showpos << n << \"\\n\";\n    }\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    int n;\n    if (scanf(\"%d\", &n) == 1) {\n        printf(\"%+d\\n\", n);\n    }\n    return 0;\n}\n"
+          }
+        }
+      ]
+    }
+  }
 }

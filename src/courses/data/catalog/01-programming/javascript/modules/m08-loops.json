@@ -150,7 +150,112 @@
       "description": "Study concepts and solve targeted engineering problems for For loops.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 25,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-js-m08-t02-p1",
+          "title": "The Standard 3-Part for Loop Syntax",
+          "content": "# The Classical for Loop\n\nThe standard `for` loop in JavaScript consists of three optional expressions enclosed in parentheses and separated by semicolons:\n\n```javascript\nfor (initialization; condition; afterthought) {\n  // Code block to be executed\n}\n```\n\n### Loop Stages\n1. **Initialization**: Executed once before loop execution begins (e.g. `let i = 0`). Using `let` ensures block-scoped loop counters.\n2. **Condition**: Evaluated before each iteration. If truthy, the loop block runs. If falsy, iteration ends.\n3. **Afterthought**: Evaluated at the end of each iteration (e.g. `i++` or `i += 2`).",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Block-Scoped Loop Variable",
+            "text": "Always declare the counter using 'let i = 0' instead of 'var i = 0'. With let, each iteration receives a fresh binding, avoiding closure bugs in asynchronous callbacks."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "for (let i = 1; i <= 5; i++) {\n  console.log(\"Iteration number:\", i);\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m08-t02-p1",
+            "question": "Why should you use 'let' instead of 'var' when declaring loop counter variables in a for loop?",
+            "options": [
+              "var cannot be incremented",
+              "let creates a new block-scoped variable binding for each loop iteration",
+              "let makes the loop run 10x faster",
+              "var causes a SyntaxError in modern JavaScript"
+            ],
+            "correctAnswer": 1,
+            "explanation": "let creates a block-scoped binding per iteration, preventing variable leakage and asynchronous callback capture bugs."
+          }
+        },
+        {
+          "pageId": "p-js-m08-t02-p2",
+          "title": "Iterating Arrays and Collections with for...of",
+          "content": "# The for...of Loop in ES6\n\nThe `for...of` statement creates a loop iterating over **iterable objects** (including Array, Map, Set, String, and arguments).\n\n```javascript\nconst items = ['pen', 'pencil', 'notebook'];\nfor (const item of items) {\n  console.log(item);\n}\n```\n\n### Benefits of for...of\n- Directly accesses values without index tracking.\n- Supports `break`, `continue`, and early `return`.\n- Works seamlessly with async/await in asynchronous loops (`for await...of`).\n- To access both index and value, use `array.entries()`: `for (const [index, val] of items.entries())`.",
+          "callout": {
+            "type": "TIP",
+            "title": "for...of vs forEach",
+            "text": "Use for...of when you need the ability to break early from the loop or await asynchronous promises."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const scores = [88, 92, 79, 95];\nlet total = 0;\n\nfor (const score of scores) {\n  total += score;\n}\nconsole.log(\"Total:\", total);\nconsole.log(\"Average:\", total / scores.length);"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m08-t02-p2",
+            "question": "Which loop statement is specifically designed to iterate over iterable values like Arrays, Sets, and Strings directly?",
+            "options": [
+              "for...in",
+              "for...of",
+              "while...do",
+              "loop...until"
+            ],
+            "correctAnswer": 1,
+            "explanation": "for...of iterates directly over the values of iterable objects such as Arrays, Sets, and Maps."
+          }
+        },
+        {
+          "pageId": "p-js-m08-t02-p3",
+          "title": "Iterating Object Properties with for...in",
+          "content": "# The for...in Loop\n\nThe `for...in` statement iterates over all **enumerable string properties** of an object (including inherited prototype properties).\n\n```javascript\nconst student = {\n  name: 'Alex',\n  grade: 'A',\n  year: 2026\n};\n\nfor (const key in student) {\n  console.log(`${key}: ${student[key]}`);\n}\n```\n\n### Important Rules for for...in\n- Do **NOT** use `for...in` to iterate through arrays where index order matters.\n- Use `Object.hasOwn(obj, key)` to check that the property belongs directly to the instance rather than its prototype chain.",
+          "callout": {
+            "type": "WARNING",
+            "title": "Avoid for...in for Arrays",
+            "text": "for...in iterates over arbitrary enumerable property names in non-guaranteed order. Use for...of or forEach for arrays."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const car = {\n  brand: \"Tesla\",\n  model: \"Model 3\",\n  year: 2024\n};\n\nfor (const prop in car) {\n  if (Object.hasOwn(car, prop)) {\n    console.log(`${prop} -> ${car[prop]}`);\n  }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m08-t02-p3",
+            "question": "What does for...in iterate over when applied to a JavaScript object?",
+            "options": [
+              "The values of the object",
+              "The enumerable keys/property names of the object",
+              "Only numeric indices",
+              "Private class fields"
+            ],
+            "correctAnswer": 1,
+            "explanation": "for...in iterates over the enumerable property keys (names) of an object."
+          }
+        },
+        {
+          "pageId": "p-js-m08-t02-p4",
+          "title": "Controlling Iteration Flow with break and continue",
+          "content": "# Loop Control Statements: break and continue\n\nJavaScript provides two essential keywords to control loop execution:\n\n### 1. break\nImmediately terminates the innermost loop or switch statement and transfers execution to the statement immediately following the terminated loop.\n```javascript\nfor (let i = 0; i < 10; i++) {\n  if (i === 5) break; // Exits loop when i reaches 5\n}\n```\n\n### 2. continue\nSkips the rest of the current loop iteration and advances execution directly to the next iteration (evaluating the afterthought/condition).\n```javascript\nfor (let i = 0; i < 6; i++) {\n  if (i % 2 === 0) continue; // Skips even numbers\n  console.log(i); // Prints 1, 3, 5\n}\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Labeled Statements",
+            "text": "You can label outer loops (e.g. outerLoop: for (...)) and call 'break outerLoop;' to break directly out of deeply nested loops."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "console.log(\"Finding first multiple of 7 > 20:\");\nfor (let n = 21; n < 50; n++) {\n  if (n % 7 === 0) {\n    console.log(\"Found:\", n);\n    break;\n  }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m08-t02-p4",
+            "question": "Which statement immediately halts the current iteration and jumps to the next iteration of the loop?",
+            "options": [
+              "skip",
+              "break",
+              "continue",
+              "pass"
+            ],
+            "correctAnswer": 2,
+            "explanation": "continue skips the remainder of the current loop iteration and proceeds to evaluate the next cycle."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -595,5 +700,703 @@
       "_sourceFile": "javascript.json",
       "_moduleTitle": "Loops"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m08-loops",
+    "title": "Module Assessment: Loops",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "mcq-js-m08-1",
+          "question": "Which loop guarantees that its body will execute at least once before testing the condition?",
+          "options": [
+            "for loop",
+            "while loop",
+            "do...while loop",
+            "for...of loop"
+          ],
+          "correctAnswer": 2,
+          "explanation": "A do...while loop executes its code block first, and then evaluates the condition at the end of each iteration."
+        },
+        {
+          "questionId": "mcq-js-m08-2",
+          "question": "What is printed by: for (let i = 0; i < 3; i++) { } console.log(typeof i);?",
+          "options": [
+            "'number'",
+            "'undefined'",
+            "'object'",
+            "ReferenceError is thrown"
+          ],
+          "correctAnswer": 3,
+          "explanation": "Because i was declared with let inside the for statement, it is block-scoped to the loop; accessing it outside throws a ReferenceError."
+        },
+        {
+          "questionId": "mcq-js-m08-3",
+          "question": "Which keyword immediately exits a loop completely?",
+          "options": [
+            "exit",
+            "stop",
+            "break",
+            "continue"
+          ],
+          "correctAnswer": 2,
+          "explanation": "break terminates the currently executing loop and resumes code immediately following it."
+        },
+        {
+          "questionId": "mcq-js-m08-4",
+          "question": "What statement is used to skip the rest of the current loop iteration and move directly to the next?",
+          "options": [
+            "pass",
+            "next",
+            "continue",
+            "skip"
+          ],
+          "correctAnswer": 2,
+          "explanation": "continue skips the rest of the current loop body and proceeds to the next iteration."
+        },
+        {
+          "questionId": "mcq-js-m08-5",
+          "question": "What is the primary difference between for...in and for...of?",
+          "options": [
+            "for...in iterates over property keys; for...of iterates over collection values",
+            "for...of iterates over property keys; for...in iterates over values",
+            "for...in works only on arrays; for...of works only on objects",
+            "There is no difference"
+          ],
+          "correctAnswer": 0,
+          "explanation": "for...in iterates over enumerable keys of an object, while for...of iterates over the values of an iterable."
+        },
+        {
+          "questionId": "mcq-js-m08-6",
+          "question": "What happens if the condition in a while loop never evaluates to false?",
+          "options": [
+            "The browser engine terminates it automatically after 100 runs",
+            "An infinite loop occurs, freezing the JavaScript execution thread",
+            "A StackOverflowError is thrown immediately",
+            "It converts into a setTimeout callback"
+          ],
+          "correctAnswer": 1,
+          "explanation": "A while loop whose condition remains permanently true creates an infinite loop that blocks the single-threaded event loop."
+        },
+        {
+          "questionId": "mcq-js-m08-7",
+          "question": "How many times does the loop execute: for (let i = 5; i > 0; i -= 2)?",
+          "options": [
+            "2 times",
+            "3 times (i = 5, 3, 1)",
+            "5 times",
+            "Infinite"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The values of i will be 5, 3, and 1 (3 times). When decremented next, i becomes -1 which violates i > 0."
+        },
+        {
+          "questionId": "mcq-js-m08-8",
+          "question": "Can for...of iterate over a JavaScript Set or Map directly?",
+          "options": [
+            "Yes, because both Set and Map implement the Symbol.iterator iterable protocol",
+            "No, they must first be converted with Array.from()",
+            "Only Set is iterable, Map is not",
+            "Only Map is iterable, Set is not"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Set and Map are built-in iterables and can be iterated directly with for...of."
+        },
+        {
+          "questionId": "mcq-js-m08-9",
+          "question": "What is a labeled statement in JavaScript loop control?",
+          "options": [
+            "A statement with a console comment",
+            "An identifier prefix before a loop that allows break or continue to target specific nested loops",
+            "A loop with strict typing",
+            "A loop initialized with const"
+          ],
+          "correctAnswer": 1,
+          "explanation": "A label identifier (labelName: loop) allows break labelName to exit multiple levels of nested loops."
+        },
+        {
+          "questionId": "mcq-js-m08-10",
+          "question": "What does the loop for (const char of 'SEED') do?",
+          "options": [
+            "Throws a TypeError because strings are not arrays",
+            "Iterates over each character: 'S', 'E', 'E', 'D'",
+            "Only prints 'SEED' once",
+            "Iterates over indices 0, 1, 2, 3"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Strings are iterable, so for...of yields each individual character sequence in order."
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.22",
+          "questionId": "Q0.22",
+          "title": "Print Float in Scientific Notation",
+          "difficulty": "Beginner",
+          "estimatedMinutes": 10,
+          "tags": [
+            "JavaScript",
+            ".c",
+            "programming"
+          ],
+          "problemStatement": "Accept a float value as input and print the same in Exponential Form",
+          "description": "Accept a float value as input and print the same in Exponential Form",
+          "constraints": "10^-6 <= float_val <= 10^9",
+          "inputFormat": "Float",
+          "outputFormat": "Exponential form",
+          "sampleTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Input '1234.567' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenValidationCases": [
+            {
+              "caseNumber": 1,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "1234.567",
+              "output": "1.234567e+03",
+              "expectedOutput": "1.234567e+03",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "boilerPlates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "solution": {
+            "javascript": "const fs = require('fs');\n\nfunction main() {\n    const s = fs.readFileSync(0, 'utf-8').trim();\n    if (s.length > 0) {\n        const val = parseFloat(s);\n        const expStr = val.toExponential(6);\n        const [m, e] = expStr.split('e');\n        const sign = e[0];\n        const exp = e.slice(1).padStart(2, '0');\n        console.log(m + 'e' + sign + exp);\n    }\n}\n\nmain();\n"
+          }
+        },
+        {
+          "problemId": "Q0.23",
+          "questionId": "Q0.23",
+          "title": "Size of Integer in Bytes",
+          "difficulty": "Beginner",
+          "estimatedMinutes": 10,
+          "tags": [
+            "JavaScript",
+            ".c",
+            "programming"
+          ],
+          "problemStatement": "Calculate the number of bytes allocated for the given integer variable using the sizeof() operator",
+          "description": "Calculate the number of bytes allocated for the given integer variable using the sizeof() operator",
+          "constraints": "Input integer in 32-bit range",
+          "inputFormat": "Integer",
+          "outputFormat": "Integer",
+          "sampleTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Input '12' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenValidationCases": [
+            {
+              "caseNumber": 1,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "12",
+              "output": "4",
+              "expectedOutput": "4",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "boilerPlates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "solution": {
+            "javascript": "function main() {\n    console.log(4);\n}\n\nmain();\n"
+          }
+        },
+        {
+          "problemId": "Q0.24",
+          "questionId": "Q0.24",
+          "title": "Maximum of Two Numbers using Ternary",
+          "difficulty": "Beginner",
+          "estimatedMinutes": 10,
+          "tags": [
+            "JavaScript",
+            ".c",
+            "programming"
+          ],
+          "problemStatement": "Find the maximum of two inputs using ternary operator.",
+          "description": "Find the maximum of two inputs using ternary operator.",
+          "constraints": "-10^9 <= A, B <= 10^9",
+          "inputFormat": "Integer Integer",
+          "outputFormat": "Integer",
+          "sampleTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "120 98",
+              "output": "120",
+              "expectedOutput": "120",
+              "explanation": "Input '120 98' produces expected output '' following problem rules."
+            },
+            {
+              "caseNumber": 2,
+              "input": "12 34",
+              "output": "34",
+              "expectedOutput": "34",
+              "explanation": "Input '12 34' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenValidationCases": [
+            {
+              "caseNumber": 1,
+              "input": "120 98",
+              "output": "120",
+              "expectedOutput": "120",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "12 34",
+              "output": "34",
+              "expectedOutput": "34",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "-123 -1",
+              "output": "-1",
+              "expectedOutput": "-1",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "120 98",
+              "output": "120",
+              "expectedOutput": "120",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "12 34",
+              "output": "34",
+              "expectedOutput": "34",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "-123 -1",
+              "output": "-1",
+              "expectedOutput": "-1",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "120 98",
+              "output": "120",
+              "expectedOutput": "120",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "12 34",
+              "output": "34",
+              "expectedOutput": "34",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "-123 -1",
+              "output": "-1",
+              "expectedOutput": "-1",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "120 98",
+              "output": "120",
+              "expectedOutput": "120",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "120 98",
+              "output": "120",
+              "expectedOutput": "120",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "12 34",
+              "output": "34",
+              "expectedOutput": "34",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "-123 -1",
+              "output": "-1",
+              "expectedOutput": "-1",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "120 98",
+              "output": "120",
+              "expectedOutput": "120",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "12 34",
+              "output": "34",
+              "expectedOutput": "34",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "-123 -1",
+              "output": "-1",
+              "expectedOutput": "-1",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "120 98",
+              "output": "120",
+              "expectedOutput": "120",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "12 34",
+              "output": "34",
+              "expectedOutput": "34",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "-123 -1",
+              "output": "-1",
+              "expectedOutput": "-1",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "120 98",
+              "output": "120",
+              "expectedOutput": "120",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "boilerPlates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "solution": {
+            "javascript": "const fs = require('fs');\n\nfunction main() {\n    const parts = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\n    if (parts.length >= 2) {\n        const a = parseInt(parts[0], 10);\n        const b = parseInt(parts[1], 10);\n        console.log(a > b ? a : b);\n    }\n}\n\nmain();\n"
+          }
+        }
+      ]
+    }
+  }
 }

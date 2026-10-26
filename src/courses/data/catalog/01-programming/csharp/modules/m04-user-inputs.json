@@ -259,7 +259,34 @@
       "description": "Study concepts and solve targeted engineering problems for Practice Problems.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 25,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cs-m04-in-01",
+          "title": "Practice: Reading and Parsing Console Inputs",
+          "content": "### Reading and Converting User Input in C#\n\nStandard console input in C# is obtained through the `Console.ReadLine()` method:\n\n1. **Return Type**: `Console.ReadLine()` always returns a `string` (or `null` if end of stream is reached).\n2. **Type Conversion**:\n   - `int.Parse(str)`: Converts string to integer, but throws `FormatException` if input contains letters.\n   - `Convert.ToInt32(str)`: Handles `null` gracefully by returning 0, but still throws on non-numeric text.\n   - **Safe Parsing with `int.TryParse`**: The industry best practice for user input validation:\n     ```csharp\n     if (int.TryParse(Console.ReadLine(), out int age))\n     {\n         Console.WriteLine($\"Valid age: {age}\");\n     }\n     else\n     {\n         Console.WriteLine(\"Invalid numeric input!\");\n     }\n     ```\n3. **Reading Multiple Values**: Split input lines using `Console.ReadLine().Split(' ')`.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Safe Parsing Pattern",
+            "text": "Always use int.TryParse or double.TryParse when reading from the console to avoid uncaught FormatException crashes."
+          },
+          "codeCard": {
+            "language": "csharp",
+            "code": "using System;\n\nclass Program\n{\n    static void Main()\n    {\n        Console.Write(\"Enter your birth year: \");\n        string input = Console.ReadLine();\n        \n        if (int.TryParse(input, out int year))\n        {\n            int age = DateTime.Now.Year - year;\n            Console.WriteLine($\"You are {age} years old.\");\n        }\n        else\n        {\n            Console.WriteLine(\"Please enter a valid four-digit year.\");\n        }\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cs-m04-in-cp1",
+            "question": "What is the primary advantage of int.TryParse over int.Parse when processing user input?",
+            "options": [
+              "It returns a boolean indicating success and does not throw an exception on invalid format",
+              "It can parse floating-point numbers directly into integers",
+              "It reads directly from disk files instead of console",
+              "It executes in parallel threads"
+            ],
+            "correctAnswer": 0,
+            "explanation": "int.TryParse returns false if parsing fails instead of throwing a costly FormatException, making it robust against bad user input."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -531,5 +558,414 @@
       "_sourceFile": "c-sharp.json",
       "_moduleTitle": "User Inputs"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m04-user-inputs",
+    "title": "Module Assessment: User Inputs",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "cs-m04-q01",
+          "question": "What data type does Console.ReadLine() return in C#?",
+          "options": [
+            "string (or string? in nullable reference types)",
+            "object",
+            "char[]",
+            "dynamic"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Console.ReadLine() reads the next line of characters from the standard input stream and returns it as a string."
+        },
+        {
+          "questionId": "cs-m04-q02",
+          "question": "What exception is thrown by int.Parse(\"abc\")?",
+          "options": [
+            "FormatException",
+            "NullReferenceException",
+            "IndexOutOfRangeException",
+            "OverflowException"
+          ],
+          "correctAnswer": 0,
+          "explanation": "When the input string does not contain a recognizable integer representation, int.Parse throws a System.FormatException."
+        },
+        {
+          "questionId": "cs-m04-q03",
+          "question": "How does Convert.ToInt32(null) behave compared to int.Parse(null)?",
+          "options": [
+            "Convert.ToInt32(null) returns 0, while int.Parse(null) throws ArgumentNullException",
+            "Both return 0",
+            "Both throw FormatException",
+            "Convert.ToInt32(null) returns -1"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Convert.ToInt32 handles null arguments by returning 0, whereas int.Parse throws an ArgumentNullException."
+        },
+        {
+          "questionId": "cs-m04-q04",
+          "question": "What method reads a single key press from the user without requiring them to press Enter?",
+          "options": [
+            "Console.ReadKey()",
+            "Console.Read()",
+            "Console.ReadLine()",
+            "Console.GetKey()"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Console.ReadKey() intercepts the next key pressed by the user and returns a ConsoleKeyInfo object without waiting for Enter."
+        },
+        {
+          "questionId": "cs-m04-q05",
+          "question": "If user inputs multiple space-separated numbers on one line, how can you parse them into an array of integers?",
+          "options": [
+            "Array.ConvertAll(Console.ReadLine().Split(' '), int.Parse)",
+            "Console.ReadLine().ToIntArray()",
+            "int.Parse(Console.ReadLine())",
+            "Console.ReadIntegers()"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Splitting the line with .Split(' ') and converting each element via Array.ConvertAll(..., int.Parse) or LINQ .Select(int.Parse) is the standard idiomatic technique."
+        },
+        {
+          "questionId": "cs-m04-q06",
+          "question": "What does the `out` parameter in `int.TryParse(input, out int result)` signify?",
+          "options": [
+            "It passes the variable by reference as an output target for the parsed result",
+            "It marks the variable as obsolete",
+            "It writes the variable directly to standard output",
+            "It deallocates the variable"
+          ],
+          "correctAnswer": 0,
+          "explanation": "The out modifier passes an argument by reference, requiring the callee method to assign a value to it before returning."
+        },
+        {
+          "questionId": "cs-m04-q07",
+          "question": "Which property changes the text color displayed in the console window in C#?",
+          "options": [
+            "Console.ForegroundColor",
+            "Console.TextColor",
+            "Console.FontColor",
+            "Console.Style"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Console.ForegroundColor sets the ConsoleColor used for foreground text printed to standard output."
+        },
+        {
+          "questionId": "cs-m04-q08",
+          "question": "Which method clears the console buffer and display area?",
+          "options": [
+            "Console.Clear()",
+            "Console.Reset()",
+            "Console.Clean()",
+            "Console.Flush()"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Console.Clear() clears the console buffer and corresponding display window."
+        },
+        {
+          "questionId": "cs-m04-q09",
+          "question": "What does Console.Read() return when reading from standard input?",
+          "options": [
+            "The integer ASCII/Unicode value of the next character, or -1 if no more characters are available",
+            "A single char",
+            "A string",
+            "A boolean"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Console.Read() reads the next character from the input stream and returns its integer representation, or -1 at EOF."
+        },
+        {
+          "questionId": "cs-m04-q10",
+          "question": "Which stream is used to print error diagnostic messages in C#?",
+          "options": [
+            "Console.Error.WriteLine()",
+            "Console.Log.WriteLine()",
+            "Console.Fail.WriteLine()",
+            "Console.Warn.WriteLine()"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Console.Error represents the standard error output stream, allowing errors to be routed separately from standard output."
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.8",
+          "questionId": "Q0.8",
+          "title": "Read and Print Message",
+          "difficulty": "Beginner",
+          "problemStatement": "**Accept a message as input and print it\nWrite a program to accept a message as input from the user and print it",
+          "description": "**Accept a message as input and print it\nWrite a program to accept a message as input from the user and print it",
+          "constraints": "1 <= length <= 1000",
+          "inputFormat": "String",
+          "outputFormat": "String",
+          "sampleTestCases": [
+            {
+              "input": "Hello",
+              "output": "Hello",
+              "explanation": "Input 'Hello' produces expected output '' following problem rules."
+            },
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Input 'Hello World' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "Hello",
+              "output": "Hello",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "Learn with SEED Team",
+              "output": "Learn with SEED Team",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "Hello",
+              "output": "Hello",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "Learn with SEED Team",
+              "output": "Learn with SEED Team",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "Hello",
+              "output": "Hello",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "Learn with SEED Team",
+              "output": "Learn with SEED Team",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "Hello",
+              "output": "Hello",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "csharp": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "cs": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "c#": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "csharp": "",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextLine()) {\n            System.out.println(sc.nextLine());\n        }\n    }\n}\n",
+            "cpp": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string s;\n    if (getline(cin, s)) {\n        cout << s << \"\\n\";\n    }\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.9",
+          "questionId": "Q0.9",
+          "title": "Print Integer with Explicit Sign",
+          "difficulty": "Beginner",
+          "problemStatement": "Get an integer from the user and print the number along with its sign.",
+          "description": "Get an integer from the user and print the number along with its sign.",
+          "constraints": "-10^9 <= N <= 10^9",
+          "inputFormat": "Integer",
+          "outputFormat": "Integer",
+          "sampleTestCases": [
+            {
+              "input": "20",
+              "output": "+20",
+              "explanation": "Input '20' produces expected output '' following problem rules."
+            },
+            {
+              "input": "-20",
+              "output": "-20",
+              "explanation": "Input '-20' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "20",
+              "output": "+20",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "-20",
+              "output": "-20",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "100",
+              "output": "+100",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "-123",
+              "output": "-123",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "20",
+              "output": "+20",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "-20",
+              "output": "-20",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "100",
+              "output": "+100",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "-123",
+              "output": "-123",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "20",
+              "output": "+20",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "-20",
+              "output": "-20",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "csharp": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "cs": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "c#": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "csharp": "",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            System.out.printf(\"%+d\\n\", n);\n        }\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int n;\n    if (cin >> n) {\n        cout << showpos << n << \"\\n\";\n    }\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.14",
+          "questionId": "Q0.14",
+          "title": "ASCII Code to Character",
+          "difficulty": "Beginner",
+          "problemStatement": "**Print ASCII Value**\nWrite a program to accept a Integer as input from the user and print its corresponding Character value.",
+          "description": "**Print ASCII Value**\nWrite a program to accept a Integer as input from the user and print its corresponding Character value.",
+          "constraints": "32 <= ASCII <= 126",
+          "inputFormat": "Integer",
+          "outputFormat": "Character",
+          "sampleTestCases": [
+            {
+              "input": "65",
+              "output": "A",
+              "explanation": "Input '65' produces expected output '' following problem rules."
+            },
+            {
+              "input": "122",
+              "output": "z",
+              "explanation": "Input '122' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "65",
+              "output": "A",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "122",
+              "output": "z",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "90",
+              "output": "Z",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "97",
+              "output": "a",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "65",
+              "output": "A",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "122",
+              "output": "z",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "90",
+              "output": "Z",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "97",
+              "output": "a",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "65",
+              "output": "A",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "122",
+              "output": "z",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "csharp": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "cs": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "c#": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "csharp": "",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            System.out.println((char)sc.nextInt());\n        }\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int n;\n    if (cin >> n) {\n        cout << (char)n << \"\\n\";\n    }\n    return 0;\n}\n"
+          }
+        }
+      ]
+    }
+  }
 }

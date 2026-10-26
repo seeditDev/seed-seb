@@ -10,7 +10,34 @@
       "description": "Study concepts and solve targeted engineering problems for Addition and multiplication.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 20,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cs-m10-add-mult-01",
+          "title": "Addition, Multiplication, and Integer Limits in C#",
+          "content": "### Binary Arithmetic and Overflow Prevention\n\n1. **Addition (`+`) and Multiplication (`*`)**:\n   - Standard 32-bit signed `int` handles values up to $2,147,483,647$.\n   - Multiplying two large numbers (e.g. $100,000 \\times 100,000 = 10^{10}$) causes silent integer overflow unless computed in 64-bit precision.\n2. **Type Promotion**:\n   To avoid overflow when multiplying integers, promote at least one operand to `long`:\n   ```csharp\n   int a = 100000, b = 100000;\n   long safeProduct = (long)a * b; // Evaluates in 64-bit long arithmetic\n   ```\n3. **Compound Assignment**:\n   `sum += val;` and `product *= factor;` provide readable in-place updates.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Promotion Precedence",
+            "text": "long p = (long)a * b evaluates multiplication in 64-bit. long p = a * b calculates 32-bit overflow before widening!"
+          },
+          "codeCard": {
+            "language": "csharp",
+            "code": "using System;\n\nclass Program\n{\n    static void Main()\n    {\n        int a = 200000;\n        int b = 300000;\n        long safeProduct = (long)a * b;\n        Console.WriteLine($\"Safe 64-bit Product: {safeProduct}\");\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cs-m10-am-cp1",
+            "question": "Why does `long res = a * b;` fail to prevent overflow when a and b are both 32-bit integers?",
+            "options": [
+              "Because a * b is evaluated using 32-bit integer arithmetic first, overflowing before assignment to res",
+              "Because long cannot store numbers larger than int",
+              "Because C# rejects assigning int to long",
+              "Because the operator * only works on floats"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In C#, arithmetic operations evaluate in the type of their operands (both int). The 32-bit overflow occurs before the result is widened to long."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -259,7 +286,34 @@
       "description": "Study concepts and solve targeted engineering problems for Subtraction and division.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 30,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cs-m10-sub-div-01",
+          "title": "Subtraction, Integer Division, and Modulo in C#",
+          "content": "### Division and Modulo Mechanics\n\n1. **Integer Division (`/`)**:\n   - When both operands are integers, division truncates towards zero: `7 / 2` evaluates to `3`, and `-7 / 2` evaluates to `-3`.\n2. **Floating-Point Division**:\n   - If either operand is a `double` or `float`, exact real division is performed: `7.0 / 2` evaluates to `3.5`.\n3. **Modulo Operator (`%`)**:\n   - Computes the remainder after integer division: `17 % 5` evaluates to `2`.\n4. **DivideByZeroException**:\n   - Dividing integers by zero throws `System.DivideByZeroException`. Always validate that denominators are non-zero!",
+          "callout": {
+            "type": "WARNING",
+            "title": "Guarding Denominators",
+            "text": "Always check if (denominator != 0) before executing / or % to avoid fatal DivideByZeroException crashes."
+          },
+          "codeCard": {
+            "language": "csharp",
+            "code": "using System;\n\nclass Program\n{\n    static void Main()\n    {\n        int num = 17, den = 5;\n        Console.WriteLine($\"Quotient: {num / den}\");                 // 3\n        Console.WriteLine($\"Remainder: {num % den}\");                // 2\n        Console.WriteLine($\"Exact: {(double)num / den}\");            // 3.4\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cs-m10-sd-cp1",
+            "question": "What is the result of evaluating `5 / 2` in C# where both operands are integer literals?",
+            "options": [
+              "2 (truncated integer division)",
+              "2.5",
+              "3",
+              "DivideByZeroException"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Division between two integer types in C# truncates the fractional portion towards zero, yielding 2."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -626,7 +680,34 @@
       "description": "Study concepts and solve targeted engineering problems for Useful math functions.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 25,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cs-m10-funcs-01",
+          "title": "The System.Math Class in C#",
+          "content": "### Core Functions in System.Math\n\nThe `System.Math` static class provides comprehensive mathematical utilities:\n\n| Method | Description | Example |\n| :--- | :--- | :--- |\n| `Math.Sqrt(x)` | Square root of x | `Math.Sqrt(25.0) -> 5.0` |\n| `Math.Pow(x, y)` | x raised to power y | `Math.Pow(2, 3) -> 8.0` |\n| `Math.Abs(x)` | Absolute value | `Math.Abs(-42) -> 42` |\n| `Math.Ceiling(x)` | Smallest integer >= x | `Math.Ceiling(4.1) -> 5.0` |\n| `Math.Floor(x)` | Largest integer <= x | `Math.Floor(4.9) -> 4.0` |\n| `Math.Round(x)` | Rounds to nearest value | `Math.Round(4.5) -> 4.0` (Banker's rounding) |\n| `Math.Clamp(x, min, max)` | Clamps x to [min, max] | `Math.Clamp(15, 0, 10) -> 10` |\n| `Math.Max(a, b)` | Larger of two values | `Math.Max(10, 20) -> 20` |",
+          "callout": {
+            "type": "TIP",
+            "title": "Math.Clamp",
+            "text": "Math.Clamp(val, min, max) keeps values within a range in a single readable call, replacing nested if-else checks."
+          },
+          "codeCard": {
+            "language": "csharp",
+            "code": "using System;\n\nclass Program\n{\n    static void Main()\n    {\n        Console.WriteLine($\"Sqrt(49): {Math.Sqrt(49)}\");\n        Console.WriteLine($\"2^10: {Math.Pow(2, 10)}\");\n        Console.WriteLine($\"Ceiling(3.2): {Math.Ceiling(3.2)}\");\n        Console.WriteLine($\"Floor(3.8): {Math.Floor(3.8)}\");\n        Console.WriteLine($\"Clamped: {Math.Clamp(125, 0, 100)}\");\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cs-m10-mf-cp1",
+            "question": "What is the return type of `Math.Sqrt(16)` in C#?",
+            "options": [
+              "double",
+              "int",
+              "float",
+              "decimal"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Math.Sqrt takes a double and returns a double (4.0)."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -934,7 +1015,34 @@
       "description": "Study concepts and solve targeted engineering problems for Bonus practice problems.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 20,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cs-m10-bonus-01",
+          "title": "Practice: Geometric and Numerical Problems in C#",
+          "content": "### Hands-on Math Applications\n\n1. **Area and Circumference of a Circle**:\n   ```csharp\n   double area = Math.PI * radius * radius;\n   double circumference = 2 * Math.PI * radius;\n   ```\n2. **Hypotenuse of a Right Triangle**:\n   ```csharp\n   double c = Math.Sqrt(a * a + b * b);\n   ```\n3. **Cyclical Arithmetic with Modulo**:\n   - Days of the week: `(currentDay + daysAhead) % 7`\n   - Clock time arithmetic: `(currentHour + hoursPassed) % 24`",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Math.PI Constant",
+            "text": "System.Math.PI provides double precision (3.1415926535897931) for accurate geometry calculations."
+          },
+          "codeCard": {
+            "language": "csharp",
+            "code": "using System;\n\nclass Program\n{\n    static void Main()\n    {\n        double r = 5.0;\n        double area = Math.PI * r * r;\n        Console.WriteLine($\"Area of circle with radius {r}: {area:F2}\");\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cs-m10-bp-cp1",
+            "question": "What expression computes the area of a circle with radius r using C# Math constants?",
+            "options": [
+              "Math.PI * r * r",
+              "Math.PI * 2 * r",
+              "Math.Pow(Math.PI, r)",
+              "Math.Sqrt(Math.PI * r)"
+            ],
+            "correctAnswer": 0,
+            "explanation": "The area of a circle is pi * r^2, represented in C# as Math.PI * r * r or Math.PI * Math.Pow(r, 2)."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -1385,5 +1493,414 @@
       "_sourceFile": "c-sharp-beginner-part-1.json",
       "_moduleTitle": "Basic Math"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m10-basic-math",
+    "title": "Module Assessment: Basic Math",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "cs-m10-q01",
+          "question": "What exception is thrown when an integer division by zero occurs in C#?",
+          "options": [
+            "DivideByZeroException",
+            "ArithmeticException",
+            "NullReferenceException",
+            "OverflowException"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Attempting to divide an integral type by zero throws a System.DivideByZeroException."
+        },
+        {
+          "questionId": "cs-m10-q02",
+          "question": "What is the result of dividing a floating-point number by zero in C# (e.g., `5.0 / 0.0`)?",
+          "options": [
+            "double.PositiveInfinity",
+            "DivideByZeroException",
+            "0.0",
+            "NaN"
+          ],
+          "correctAnswer": 0,
+          "explanation": "According to IEEE 754 floating-point standards, floating-point division by zero produces PositiveInfinity, NegativeInfinity, or NaN without throwing an exception."
+        },
+        {
+          "questionId": "cs-m10-q03",
+          "question": "What rounding rule does `Math.Round()` use by default in C#?",
+          "options": [
+            "Banker's rounding (round to nearest even number)",
+            "Always round away from zero",
+            "Always round towards zero (truncate)",
+            "Always round up"
+          ],
+          "correctAnswer": 0,
+          "explanation": "By default, Math.Round uses MidpointRounding.ToEven (Banker's rounding), rounding midpoint values (like 2.5) to the nearest even number (2.0)."
+        },
+        {
+          "questionId": "cs-m10-q04",
+          "question": "What does `Math.Ceiling(4.1)` evaluate to?",
+          "options": [
+            "5.0",
+            "4.0",
+            "4.5",
+            "4"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Math.Ceiling returns the smallest integral value that is greater than or equal to the specified number."
+        },
+        {
+          "questionId": "cs-m10-q05",
+          "question": "What does `Math.Floor(4.9)` evaluate to?",
+          "options": [
+            "4.0",
+            "5.0",
+            "4.5",
+            "5"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Math.Floor returns the largest integral value that is less than or equal to the specified number."
+        },
+        {
+          "questionId": "cs-m10-q06",
+          "question": "Why should equality checks between floating-point numbers (`a == b`) be avoided?",
+          "options": [
+            "Binary floating-point representation cannot represent many decimal fractions exactly, causing tiny rounding errors",
+            "The == operator is illegal for floats",
+            "It makes the program run on a single core",
+            "Floats cannot be compared"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Due to binary IEEE 754 precision limits, numbers like 0.1 + 0.2 yield 0.30000000000000004. Tolerance checks (Math.Abs(a - b) < 1e-9) should always be used."
+        },
+        {
+          "questionId": "cs-m10-q07",
+          "question": "What is the result of `Math.Clamp(15, 0, 10)` in C#?",
+          "options": [
+            "10 (clamped to upper bound)",
+            "15",
+            "0",
+            "5"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Math.Clamp(value, min, max) restricts value within the range [min, max]. Since 15 > 10, it returns 10."
+        },
+        {
+          "questionId": "cs-m10-q08",
+          "question": "What will `Math.Abs(int.MinValue)` evaluate to in default unchecked context?",
+          "options": [
+            "It throws an OverflowException or returns int.MinValue because the positive equivalent exceeds int.MaxValue",
+            "int.MaxValue",
+            "0",
+            "-1"
+          ],
+          "correctAnswer": 0,
+          "explanation": "int.MinValue is -2,147,483,648 while int.MaxValue is +2,147,483,647. The absolute value cannot fit into a 32-bit signed int, throwing OverflowException in checked context."
+        },
+        {
+          "questionId": "cs-m10-q09",
+          "question": "Which constant in System.Math represents the ratio of the circumference of a circle to its diameter?",
+          "options": [
+            "Math.PI",
+            "Math.E",
+            "Math.Tau",
+            "Math.Phi"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Math.PI specifies the mathematical constant pi (approx 3.1415926535897931)."
+        },
+        {
+          "questionId": "cs-m10-q10",
+          "question": "What is the output of `14 % 5` in C#?",
+          "options": [
+            "4",
+            "2",
+            "2.8",
+            "1"
+          ],
+          "correctAnswer": 0,
+          "explanation": "14 divided by 5 equals 2 with a remainder of 4 (5 * 2 + 4 = 14)."
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.181",
+          "questionId": "Q0.181",
+          "title": "Check Palindrome Number",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to check whether the given number is palindrome number or not.",
+          "description": "Write a program to check whether the given number is palindrome number or not.",
+          "constraints": "1 <= N <= 10^100",
+          "inputFormat": "INteger",
+          "outputFormat": "Print Yes if it is palindrome number or print No",
+          "sampleTestCases": [
+            {
+              "input": "1111",
+              "output": "Yes",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "1234231",
+              "output": "No",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "1111",
+              "output": "Yes",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "1234231",
+              "output": "No",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "121",
+              "output": "Yes",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "67856",
+              "output": "No",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "101",
+              "output": "Yes",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "1111",
+              "output": "Yes",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "1234231",
+              "output": "No",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "121",
+              "output": "Yes",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "67856",
+              "output": "No",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "101",
+              "output": "Yes",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "csharp": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "cs": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "c#": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "csharp": "",
+            "java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNext()) {\n            String s = sc.next();\n            String rev = new StringBuilder(s).reverse().toString();\n            System.out.println(s.equals(rev) ? \"Yes\" : \"No\");\n        }\n    }\n}\n",
+            "cpp": "#include <iostream>\n#include <string>\n#include <algorithm>\nusing namespace std;\nint main() {\n    string s; if (!(cin >> s)) return 0;\n    string rev = s; reverse(rev.begin(), rev.end());\n    cout << (s == rev ? \"Yes\" : \"No\") << \"\\n\";\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.62",
+          "questionId": "Q0.62",
+          "title": "Integer Division Without Division Operator",
+          "difficulty": "Beginner",
+          "problemStatement": "Divide the given two numbers and print the quotient without using / operator.",
+          "description": "Divide the given two numbers and print the quotient without using / operator.",
+          "constraints": "1 <= A, B <= 10^9",
+          "inputFormat": "Integer Integer",
+          "outputFormat": "Integer",
+          "sampleTestCases": [
+            {
+              "input": "10 2",
+              "output": "5",
+              "explanation": "Input produces the corresponding formatted output according to problem rules."
+            },
+            {
+              "input": "13 3",
+              "output": "4",
+              "explanation": "Input produces the corresponding formatted output according to problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "10 2",
+              "output": "5",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "13 3",
+              "output": "4",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "10 2",
+              "output": "5",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "13 3",
+              "output": "4",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "10 2",
+              "output": "5",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "13 3",
+              "output": "4",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "10 2",
+              "output": "5",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "13 3",
+              "output": "4",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "10 2",
+              "output": "5",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "13 3",
+              "output": "4",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "csharp": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "cs": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "c#": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "csharp": "",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextLong()) {\n            long a = sc.nextLong(), b = sc.nextLong();\n            long q = 0;\n            while (a >= b) {\n                a -= b;\n                q++;\n            }\n            System.out.println(q);\n        }\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    long long a, b;\n    if (cin >> a >> b) {\n        long long q = 0;\n        while (a >= b) {\n            a -= b;\n            q++;\n        }\n        cout << q << \"\\n\";\n    }\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.221",
+          "questionId": "Q0.221",
+          "title": "Compute Array Remainders by Divisor",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to print remainder values when divided by the given value into all elements of the array",
+          "description": "Write a program to print remainder values when divided by the given value into all elements of the array",
+          "constraints": "1 <= N <= 10^5, 1 <= K <= 10^9",
+          "inputFormat": "The first line has an integer N denotes the size of the array.\n\nThe second line contains N values separated by space.\n\nThe third line contains the divisor value.",
+          "outputFormat": "Print the remainder values of all elements when divided by divisor.",
+          "sampleTestCases": [
+            {
+              "input": "10\n13 24 268 156 268 230 33 267 137 253\n4",
+              "output": "1 0 0 0 0 2 1 3 1 1",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "10\n13 24 268 156 268 230 33 267 137 253\n4",
+              "output": "1 0 0 0 0 2 1 3 1 1",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "10\n13 24 268 156 268 230 33 267 137 253\n4",
+              "output": "1 0 0 0 0 2 1 3 1 1",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "10\n13 24 268 156 268 230 33 267 137 253\n4",
+              "output": "1 0 0 0 0 2 1 3 1 1",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "100\n1358 11236 15661 28404 44769 38833 48351 12241 9209 36019 52429 33272 841 16610 27669 11929 22747 34337 26751 46521 14040 31215 42323 50124 8306 55638 34207 393 24016 31885 54118 4374 15114 25137 19963 38367 36265 44938 44938 12877 15524 25795 41439 15377 3637 12019 37634 33157 25265 52350 9967 28975 16681 47849 47552 38254 50445 43041 54990 33694 21298 34898 20213 30280 10137 50921 37608 43504 21320 13876 54177 50320 47214 26231 21441 50901 24610 2738 15221 44471 17393 15518 46156 16040 22485 52026 32638 21428 33367 33358 27680 39940 30339 4044 50705 2883 21409 23495 46676 31519\n100",
+              "output": "58 36 61 4 69 33 51 41 9 19 29 72 41 10 69 29 47 37 51 21 40 15 23 24 6 38 7 93 16 85 18 74 14 37 63 67 65 38 38 77 24 95 39 77 37 19 34 57 65 50 67 75 81 49 52 54 45 41 90 94 98 98 13 80 37 21 8 4 20 76 77 20 14 31 41 1 10 38 21 71 93 18 56 40 85 26 38 28 67 58 80 40 39 44 5 83 9 95 76 19",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "5\n285764030 109031840 483477202 55013142 172205890\n4567",
+              "output": "2273 3849 881 3627 2588",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "100\n100 218 354 508 680 870 1078 1304 1548 1810 2090 2388 2704 3038 3390 3760 4148 4554 4978 5420 5880 6358 6854 7368 7900 8450 9018 9604 10208 10830 11470 12128 12804 13498 14210 14940 15688 16454 17238 18040 18860 19698 20554 21428 22320 23230 24158 25104 26068 27050 28050 29068 30104 31158 32230 33320 34428 35554 36698 37860 39040 40238 41454 42688 43940 45210 46498 47804 49128 50470 51830 53208 54604 56018 57450 58900 60368 61854 63358 64880 66420 67978 69554 71148 72760 74390 76038 77704 79388 81090 82810 84548 86304 88078 89870 91680 93508 95354 97218 99100\n20",
+              "output": "0 18 14 8 0 10 18 4 8 10 10 8 4 18 10 0 8 14 18 0 0 18 14 8 0 10 18 4 8 10 10 8 4 18 10 0 8 14 18 0 0 18 14 8 0 10 18 4 8 10 10 8 4 18 10 0 8 14 18 0 0 18 14 8 0 10 18 4 8 10 10 8 4 18 10 0 8 14 18 0 0 18 14 8 0 10 18 4 8 10 10 8 4 18 10 0 8 14 18 0",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "10\n13 24 268 156 268 230 33 267 137 253\n4",
+              "output": "1 0 0 0 0 2 1 3 1 1",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "10\n13 24 268 156 268 230 33 267 137 253\n4",
+              "output": "1 0 0 0 0 2 1 3 1 1",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "100\n1358 11236 15661 28404 44769 38833 48351 12241 9209 36019 52429 33272 841 16610 27669 11929 22747 34337 26751 46521 14040 31215 42323 50124 8306 55638 34207 393 24016 31885 54118 4374 15114 25137 19963 38367 36265 44938 44938 12877 15524 25795 41439 15377 3637 12019 37634 33157 25265 52350 9967 28975 16681 47849 47552 38254 50445 43041 54990 33694 21298 34898 20213 30280 10137 50921 37608 43504 21320 13876 54177 50320 47214 26231 21441 50901 24610 2738 15221 44471 17393 15518 46156 16040 22485 52026 32638 21428 33367 33358 27680 39940 30339 4044 50705 2883 21409 23495 46676 31519\n100",
+              "output": "58 36 61 4 69 33 51 41 9 19 29 72 41 10 69 29 47 37 51 21 40 15 23 24 6 38 7 93 16 85 18 74 14 37 63 67 65 38 38 77 24 95 39 77 37 19 34 57 65 50 67 75 81 49 52 54 45 41 90 94 98 98 13 80 37 21 8 4 20 76 77 20 14 31 41 1 10 38 21 71 93 18 56 40 85 26 38 28 67 58 80 40 39 44 5 83 9 95 76 19",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "5\n285764030 109031840 483477202 55013142 172205890\n4567",
+              "output": "2273 3849 881 3627 2588",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "100\n100 218 354 508 680 870 1078 1304 1548 1810 2090 2388 2704 3038 3390 3760 4148 4554 4978 5420 5880 6358 6854 7368 7900 8450 9018 9604 10208 10830 11470 12128 12804 13498 14210 14940 15688 16454 17238 18040 18860 19698 20554 21428 22320 23230 24158 25104 26068 27050 28050 29068 30104 31158 32230 33320 34428 35554 36698 37860 39040 40238 41454 42688 43940 45210 46498 47804 49128 50470 51830 53208 54604 56018 57450 58900 60368 61854 63358 64880 66420 67978 69554 71148 72760 74390 76038 77704 79388 81090 82810 84548 86304 88078 89870 91680 93508 95354 97218 99100\n20",
+              "output": "0 18 14 8 0 10 18 4 8 10 10 8 4 18 10 0 8 14 18 0 0 18 14 8 0 10 18 4 8 10 10 8 4 18 10 0 8 14 18 0 0 18 14 8 0 10 18 4 8 10 10 8 4 18 10 0 8 14 18 0 0 18 14 8 0 10 18 4 8 10 10 8 4 18 10 0 8 14 18 0 0 18 14 8 0 10 18 4 8 10 10 8 4 18 10 0 8 14 18 0",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "csharp": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "cs": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "c#": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "csharp": "",
+            "java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            long[] a = new long[n];\n            for (int i = 0; i < n; i++) a[i] = sc.nextLong();\n            long k = sc.nextLong();\n            StringBuilder sb = new StringBuilder();\n            for (int i = 0; i < n; i++) {\n                if (i > 0) sb.append(\" \");\n                sb.append(a[i] % k);\n            }\n            System.out.println(sb.toString());\n        }\n    }\n}\n",
+            "cpp": "#include <iostream>\n#include <vector>\nusing namespace std;\nint main() {\n    int n; if (!(cin >> n)) return 0;\n    vector<long long> a(n);\n    for (int i = 0; i < n; i++) cin >> a[i];\n    long long k; cin >> k;\n    for (int i = 0; i < n; i++) {\n        if (i > 0) cout << \" \";\n        cout << (a[i] % k);\n    }\n    cout << \"\\n\";\n    return 0;\n}\n"
+          }
+        }
+      ]
+    }
+  }
 }

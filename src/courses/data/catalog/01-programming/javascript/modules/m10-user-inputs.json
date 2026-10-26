@@ -245,7 +245,112 @@
       "description": "Study concepts and solve targeted engineering problems for Practice problems.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 25,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-js-m10-t02-p1",
+          "title": "Standard Input in Node.js with fs.readFileSync(0)",
+          "content": "# Synchronous Standard Input in Node.js\n\nIn competitive programming and coding assessment platforms (like HackerRank, LeetCode, and SEED-IT), reading the entire input synchronously from standard input (`stdin`, file descriptor `0`) is the fastest and most reliable approach:\n\n```javascript\nconst fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8');\n```\n\n### How It Works\n- `0` represents the standard input stream file descriptor in Unix and Windows.\n- `'utf-8'` specifies string encoding rather than a raw buffer.\n- It reads all input up to EOF (End-of-File) into memory in a single fast operation.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "File Descriptor 0",
+            "text": "Using fs.readFileSync(0, 'utf-8') avoids asynchronous event buffering overhead and guarantees all test input is present before execution proceeds."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const fs = require('fs');\n\nfunction readAllInput() {\n  // In online judges, fd 0 contains all test input\n  const rawInput = \"10 20\\nHello World\\n\"; // Simulated stdin\n  const lines = rawInput.trim().split('\\n');\n  console.log(\"Lines read:\", lines.length);\n  console.log(\"Line 1:\", lines[0]);\n}\n\nreadAllInput();"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m10-t02-p1",
+            "question": "Which file descriptor number represents standard input (stdin) in fs.readFileSync()?",
+            "options": [
+              "0",
+              "1",
+              "2",
+              "-1"
+            ],
+            "correctAnswer": 0,
+            "explanation": "File descriptor 0 is standard input (stdin). 1 is stdout, and 2 is stderr."
+          }
+        },
+        {
+          "pageId": "p-js-m10-t02-p2",
+          "title": "Parsing Line-by-Line Input with the readline Module",
+          "content": "# Stream Input with Node.js readline\n\nFor interactive command-line applications or streaming very large datasets that cannot fit entirely in memory, Node.js provides the `readline` module:\n\n```javascript\nconst readline = require('readline');\n\nconst rl = readline.createInterface({\n  input: process.stdin,\n  output: process.stdout\n});\n\nrl.on('line', (line) => {\n  console.log(`Received: ${line}`);\n});\n\nrl.on('close', () => {\n  console.log('Finished processing input.');\n});\n```\n\n### Key Events\n- **`line`**: Emitted whenever the input stream receives an end-of-line character (`\\n` or `\\r\\n`).\n- **`close`**: Emitted when `process.stdin` receives EOF.",
+          "callout": {
+            "type": "TIP",
+            "title": "When to Use readline vs readFileSync",
+            "text": "Use readline for interactive CLI prompts and memory-constrained streams. Use readFileSync(0) for competitive programming problem solving."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const readline = require('readline');\n// Example structure for line-by-line reading\nconsole.log(\"readline module enables event-driven streaming of stdin lines.\");"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m10-t02-p2",
+            "question": "Which event does the readline interface emit whenever a new line is entered?",
+            "options": [
+              "'data'",
+              "'line'",
+              "'input'",
+              "'next'"
+            ],
+            "correctAnswer": 1,
+            "explanation": "The readline interface emits the 'line' event whenever the input stream receives an end-of-line marker."
+          }
+        },
+        {
+          "pageId": "p-js-m10-t02-p3",
+          "title": "Processing Numeric and Multi-Line Problem Inputs",
+          "content": "# Parsing Numbers and Multi-Line Arrays\n\nOnline judges typically format inputs as space-separated tokens or multiple lines:\n\n### Common Patterns\n\n1. **Two Integers on One Line**: `\"15 25\"`\n```javascript\nconst [a, b] = line.trim().split(/\\s+/).map(Number);\n```\n\n2. **Array of Numbers Following Size N**:\n```javascript\nconst lines = input.trim().split('\\n');\nconst n = parseInt(lines[0], 10);\nconst arr = lines[1].trim().split(/\\s+/).map(Number);\n```\n\n3. **Fast Tokenizer for Mixed Tokens**:\n```javascript\nconst tokens = input.trim().split(/\\s+/);\nlet ptr = 0;\nconst nextToken = () => tokens[ptr++];\nconst nextInt = () => parseInt(tokens[ptr++], 10);\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Using /\\s+/ for Splitting",
+            "text": "Always split with the regex /\\s+/ instead of ' '. This handles multiple consecutive spaces, tabs, and Windows carriage returns (\\r\\n) cleanly."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const sampleInput = \"  42   99  105\\n 200 \";\nconst numbers = sampleInput.trim().split(/\\s+/).map(Number);\nconsole.log(\"Parsed numbers:\", numbers);\nconst sum = numbers.reduce((acc, val) => acc + val, 0);\nconsole.log(\"Sum:\", sum);"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m10-t02-p3",
+            "question": "Why is split(/\\s+/) preferred over split(' ') when parsing competitive programming inputs?",
+            "options": [
+              "It is 100x faster in V8",
+              "It correctly handles multiple consecutive spaces, tabs, and newlines without creating empty string tokens",
+              "split(' ') does not support ASCII numbers",
+              "Regex splitting is mandatory in strict mode"
+            ],
+            "correctAnswer": 1,
+            "explanation": "The regular expression /\\s+/ matches one or more consecutive whitespace characters (including tabs and newlines), avoiding accidental empty tokens."
+          }
+        },
+        {
+          "pageId": "p-js-m10-t02-p4",
+          "title": "Handling Input Delimiters, Whitespace, and Stream EOF",
+          "content": "# Defensive Input Handling and Edge Cases\n\nReal-world inputs frequently contain trailing blank lines, carriage returns from Windows systems (`\\r`), or leading whitespace:\n\n### Best Practices\n- **Always `.trim()` raw input**: Strips trailing newlines that might produce empty array items when calling `.split('\\n')`.\n- **Handle Empty Lines**: Filter out blank lines using `.filter(Boolean)` or `.filter(line => line.length > 0)`.\n- **Radix in parseInt**: Always specify radix 10: `parseInt(val, 10)` to prevent unexpected octal parsing.\n\n```javascript\nconst cleanLines = input.trim().split('\\n').map(l => l.trim()).filter(Boolean);\n```",
+          "callout": {
+            "type": "WARNING",
+            "title": "Watch Out for \\r (Carriage Return)",
+            "text": "Windows-encoded inputs contain \\r\\n. Calling split('\\n') can leave trailing \\r on lines. Using line.trim() removes \\r cleanly."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const raw = \"Line 1\\r\\nLine 2\\r\\n\\r\\n\";\nconst cleaned = raw.split('\\n').map(l => l.trim()).filter(Boolean);\nconsole.log(\"Sanitized lines:\", cleaned);"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-js-m10-t02-p4",
+            "question": "Why should you always supply radix 10 when calling parseInt(str, 10)?",
+            "options": [
+              "To ensure numbers are always parsed in base 10 (decimal), avoiding historical octal/hex misinterpretations",
+              "Because parseInt throws an exception without a second argument",
+              "To enforce floating point precision",
+              "To convert negative numbers to positive"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Passing radix 10 explicitly guarantees base-10 decimal conversion, preventing strings with leading zeros from being parsed as octal."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -401,5 +506,717 @@
       "_sourceFile": "javascript.json",
       "_moduleTitle": "User Inputs"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m10-user-inputs",
+    "title": "Module Assessment: User Inputs",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "mcq-js-m10-1",
+          "question": "Which synchronous Node.js function reads the entirety of standard input from file descriptor 0?",
+          "options": [
+            "fs.readSync()",
+            "fs.readFileSync(0, 'utf-8')",
+            "process.stdin.readSync()",
+            "input.readAll()"
+          ],
+          "correctAnswer": 1,
+          "explanation": "fs.readFileSync(0, 'utf-8') reads all data from standard input (fd 0) as a UTF-8 string synchronously."
+        },
+        {
+          "questionId": "mcq-js-m10-2",
+          "question": "Which Node.js core module provides a streaming interface for reading data line-by-line?",
+          "options": [
+            "streamReader",
+            "readline",
+            "buffer",
+            "inout"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The readline module provides an interface for reading data from a Readable stream line by line."
+        },
+        {
+          "questionId": "mcq-js-m10-3",
+          "question": "How do you split a space-separated string of numbers '10 20 30' into an array of number primitives?",
+          "options": [
+            "str.split(' ').map(Number)",
+            "str.toNumberArray()",
+            "Number(str.split(' '))",
+            "Array.fromNumbers(str)"
+          ],
+          "correctAnswer": 0,
+          "explanation": "str.split(' ').map(Number) splits into substring tokens and passes each token to Number constructor."
+        },
+        {
+          "questionId": "mcq-js-m10-4",
+          "question": "What does the second argument (radix) in parseInt(str, radix) specify?",
+          "options": [
+            "The number of decimal digits",
+            "The mathematical base of the number system (e.g. 10 for decimal, 16 for hexadecimal)",
+            "The maximum integer size",
+            "The rounding precision"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The radix parameter specifies the base of the numeral system to be used."
+        },
+        {
+          "questionId": "mcq-js-m10-5",
+          "question": "What does trim() do before splitting an input string?",
+          "options": [
+            "Converts text to lowercase",
+            "Removes leading and trailing whitespace characters including newlines",
+            "Deletes all spaces throughout the entire string",
+            "Counts the number of lines"
+          ],
+          "correctAnswer": 1,
+          "explanation": "trim() strips leading and trailing whitespace, preventing extra empty tokens from trailing newlines."
+        },
+        {
+          "questionId": "mcq-js-m10-6",
+          "question": "What does parseInt('100px', 10) return?",
+          "options": [
+            "NaN",
+            "100",
+            "TypeError",
+            "undefined"
+          ],
+          "correctAnswer": 1,
+          "explanation": "parseInt parses leading valid numeric characters until encountering an invalid character ('p'), returning 100."
+        },
+        {
+          "questionId": "mcq-js-m10-7",
+          "question": "What does Number('100px') return in contrast to parseInt?",
+          "options": [
+            "100",
+            "NaN",
+            "TypeError",
+            "0"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Number('100px') requires the entire string to be numeric; if non-numeric characters exist, it returns NaN."
+        },
+        {
+          "questionId": "mcq-js-m10-8",
+          "question": "How can you read arguments passed to a Node.js script via command-line (e.g. node app.js foo bar)?",
+          "options": [
+            "process.stdin",
+            "process.argv",
+            "process.env",
+            "console.arguments"
+          ],
+          "correctAnswer": 1,
+          "explanation": "process.argv is an array containing the command-line arguments passed when launching the Node.js process."
+        },
+        {
+          "questionId": "mcq-js-m10-9",
+          "question": "In browser JavaScript, which function prompts the user to enter text via a modal dialog?",
+          "options": [
+            "alert()",
+            "confirm()",
+            "prompt()",
+            "input()"
+          ],
+          "correctAnswer": 2,
+          "explanation": "prompt() displays a browser modal dialog asking the user to enter text, returning the string or null if cancelled."
+        },
+        {
+          "questionId": "mcq-js-m10-10",
+          "question": "What is the result of Number(null) and Number(undefined)?",
+          "options": [
+            "0 and NaN",
+            "NaN and NaN",
+            "0 and 0",
+            "null and undefined"
+          ],
+          "correctAnswer": 0,
+          "explanation": "In JavaScript type conversion, Number(null) evaluates to 0, whereas Number(undefined) evaluates to NaN."
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.28",
+          "questionId": "Q0.28",
+          "title": "Maximum of Three Numbers using Ternary",
+          "difficulty": "Beginner",
+          "estimatedMinutes": 10,
+          "tags": [
+            "JavaScript",
+            ".c",
+            "programming"
+          ],
+          "problemStatement": "Write a Program to find max of three nos using Ternary Operator",
+          "description": "Write a Program to find max of three nos using Ternary Operator",
+          "constraints": "-10^9 <= A, B, C <= 10^9",
+          "inputFormat": "Integer Integer Integer",
+          "outputFormat": "Integer",
+          "sampleTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "12 10 11",
+              "output": "12",
+              "expectedOutput": "12",
+              "explanation": "Input '12 10 11' produces expected output '' following problem rules."
+            },
+            {
+              "caseNumber": 2,
+              "input": "10 400 100",
+              "output": "400",
+              "expectedOutput": "400",
+              "explanation": "Input '10 400 100' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenValidationCases": [
+            {
+              "caseNumber": 1,
+              "input": "12 10 11",
+              "output": "12",
+              "expectedOutput": "12",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "10 400 100",
+              "output": "400",
+              "expectedOutput": "400",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "-1 0 -123",
+              "output": "0",
+              "expectedOutput": "0",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "12 10 11",
+              "output": "12",
+              "expectedOutput": "12",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "10 400 100",
+              "output": "400",
+              "expectedOutput": "400",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "-1 0 -123",
+              "output": "0",
+              "expectedOutput": "0",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "12 10 11",
+              "output": "12",
+              "expectedOutput": "12",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "10 400 100",
+              "output": "400",
+              "expectedOutput": "400",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "-1 0 -123",
+              "output": "0",
+              "expectedOutput": "0",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "12 10 11",
+              "output": "12",
+              "expectedOutput": "12",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "12 10 11",
+              "output": "12",
+              "expectedOutput": "12",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "10 400 100",
+              "output": "400",
+              "expectedOutput": "400",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "-1 0 -123",
+              "output": "0",
+              "expectedOutput": "0",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "12 10 11",
+              "output": "12",
+              "expectedOutput": "12",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "10 400 100",
+              "output": "400",
+              "expectedOutput": "400",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "-1 0 -123",
+              "output": "0",
+              "expectedOutput": "0",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "12 10 11",
+              "output": "12",
+              "expectedOutput": "12",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "10 400 100",
+              "output": "400",
+              "expectedOutput": "400",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "-1 0 -123",
+              "output": "0",
+              "expectedOutput": "0",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "12 10 11",
+              "output": "12",
+              "expectedOutput": "12",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "boilerPlates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "solution": {
+            "javascript": "const fs = require('fs');\n\nfunction main() {\n    const parts = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\n    if (parts.length >= 3) {\n        const a = parseInt(parts[0], 10);\n        const b = parseInt(parts[1], 10);\n        const c = parseInt(parts[2], 10);\n        const max = a > b ? (a > c ? a : c) : (b > c ? b : c);\n        console.log(max);\n    }\n}\n\nmain();\n"
+          }
+        },
+        {
+          "problemId": "Q0.29",
+          "questionId": "Q0.29",
+          "title": "Sort Three Integers",
+          "difficulty": "Beginner",
+          "estimatedMinutes": 10,
+          "tags": [
+            "JavaScript",
+            ".c",
+            "programming"
+          ],
+          "problemStatement": "Write a program to take 3 integers inputs and print it in ascending order.",
+          "description": "Write a program to take 3 integers inputs and print it in ascending order.",
+          "constraints": "-10^9 <= A, B, C <= 10^9",
+          "inputFormat": "Integer Integer Integer",
+          "outputFormat": "Integer Integer Integer",
+          "sampleTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "11 12 10",
+              "output": "10 11 12",
+              "expectedOutput": "10 11 12",
+              "explanation": "Input '11 12 10' produces expected output '' following problem rules."
+            },
+            {
+              "caseNumber": 2,
+              "input": "10 9 8",
+              "output": "8 9 10",
+              "expectedOutput": "8 9 10",
+              "explanation": "Input '10 9 8' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenValidationCases": [
+            {
+              "caseNumber": 1,
+              "input": "11 12 10",
+              "output": "10 11 12",
+              "expectedOutput": "10 11 12",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "10 9 8",
+              "output": "8 9 10",
+              "expectedOutput": "8 9 10",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "1 0 123",
+              "output": "0 1 123",
+              "expectedOutput": "0 1 123",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "11 12 10",
+              "output": "10 11 12",
+              "expectedOutput": "10 11 12",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "10 9 8",
+              "output": "8 9 10",
+              "expectedOutput": "8 9 10",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "1 0 123",
+              "output": "0 1 123",
+              "expectedOutput": "0 1 123",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "11 12 10",
+              "output": "10 11 12",
+              "expectedOutput": "10 11 12",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "10 9 8",
+              "output": "8 9 10",
+              "expectedOutput": "8 9 10",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "1 0 123",
+              "output": "0 1 123",
+              "expectedOutput": "0 1 123",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "11 12 10",
+              "output": "10 11 12",
+              "expectedOutput": "10 11 12",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "11 12 10",
+              "output": "10 11 12",
+              "expectedOutput": "10 11 12",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "10 9 8",
+              "output": "8 9 10",
+              "expectedOutput": "8 9 10",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "1 0 123",
+              "output": "0 1 123",
+              "expectedOutput": "0 1 123",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "11 12 10",
+              "output": "10 11 12",
+              "expectedOutput": "10 11 12",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "10 9 8",
+              "output": "8 9 10",
+              "expectedOutput": "8 9 10",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "1 0 123",
+              "output": "0 1 123",
+              "expectedOutput": "0 1 123",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "11 12 10",
+              "output": "10 11 12",
+              "expectedOutput": "10 11 12",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "10 9 8",
+              "output": "8 9 10",
+              "expectedOutput": "8 9 10",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "1 0 123",
+              "output": "0 1 123",
+              "expectedOutput": "0 1 123",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "11 12 10",
+              "output": "10 11 12",
+              "expectedOutput": "10 11 12",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "boilerPlates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "solution": {
+            "javascript": "const fs = require('fs');\n\nfunction main() {\n    const parts = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\n    if (parts.length >= 3) {\n        const nums = parts.slice(0, 3).map(Number).sort((x, y) => x - y);\n        console.log(nums.join(' '));\n    }\n}\n\nmain();\n"
+          }
+        },
+        {
+          "problemId": "Q0.30",
+          "questionId": "Q0.30",
+          "title": "Sort Four Integers",
+          "difficulty": "Beginner",
+          "estimatedMinutes": 10,
+          "tags": [
+            "JavaScript",
+            ".c",
+            "programming"
+          ],
+          "problemStatement": "Write a program to take 4 integers inputs and print it in ascending order",
+          "description": "Write a program to take 4 integers inputs and print it in ascending order",
+          "constraints": "-10^9 <= A, B, C, D <= 10^9",
+          "inputFormat": "Integer Integer Integer Integer",
+          "outputFormat": "Integer Integer Integer Integer",
+          "sampleTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "10 30 40 20",
+              "output": "10 20 30 40",
+              "expectedOutput": "10 20 30 40",
+              "explanation": "Input '10 30 40 20' produces expected output '' following problem rules."
+            },
+            {
+              "caseNumber": 2,
+              "input": "54 23 90 1",
+              "output": "1 23 54 90",
+              "expectedOutput": "1 23 54 90",
+              "explanation": "Input '54 23 90 1' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenValidationCases": [
+            {
+              "caseNumber": 1,
+              "input": "10 30 40 20",
+              "output": "10 20 30 40",
+              "expectedOutput": "10 20 30 40",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "54 23 90 1",
+              "output": "1 23 54 90",
+              "expectedOutput": "1 23 54 90",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "10 30 40 20",
+              "output": "10 20 30 40",
+              "expectedOutput": "10 20 30 40",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "54 23 90 1",
+              "output": "1 23 54 90",
+              "expectedOutput": "1 23 54 90",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "10 30 40 20",
+              "output": "10 20 30 40",
+              "expectedOutput": "10 20 30 40",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "54 23 90 1",
+              "output": "1 23 54 90",
+              "expectedOutput": "1 23 54 90",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "10 30 40 20",
+              "output": "10 20 30 40",
+              "expectedOutput": "10 20 30 40",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "54 23 90 1",
+              "output": "1 23 54 90",
+              "expectedOutput": "1 23 54 90",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "10 30 40 20",
+              "output": "10 20 30 40",
+              "expectedOutput": "10 20 30 40",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "54 23 90 1",
+              "output": "1 23 54 90",
+              "expectedOutput": "1 23 54 90",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "caseNumber": 1,
+              "input": "10 30 40 20",
+              "output": "10 20 30 40",
+              "expectedOutput": "10 20 30 40",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "caseNumber": 2,
+              "input": "54 23 90 1",
+              "output": "1 23 54 90",
+              "expectedOutput": "1 23 54 90",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "caseNumber": 3,
+              "input": "10 30 40 20",
+              "output": "10 20 30 40",
+              "expectedOutput": "10 20 30 40",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "caseNumber": 4,
+              "input": "54 23 90 1",
+              "output": "1 23 54 90",
+              "expectedOutput": "1 23 54 90",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "caseNumber": 5,
+              "input": "10 30 40 20",
+              "output": "10 20 30 40",
+              "expectedOutput": "10 20 30 40",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "caseNumber": 6,
+              "input": "54 23 90 1",
+              "output": "1 23 54 90",
+              "expectedOutput": "1 23 54 90",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "caseNumber": 7,
+              "input": "10 30 40 20",
+              "output": "10 20 30 40",
+              "expectedOutput": "10 20 30 40",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "caseNumber": 8,
+              "input": "54 23 90 1",
+              "output": "1 23 54 90",
+              "expectedOutput": "1 23 54 90",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "caseNumber": 9,
+              "input": "10 30 40 20",
+              "output": "10 20 30 40",
+              "expectedOutput": "10 20 30 40",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "caseNumber": 10,
+              "input": "54 23 90 1",
+              "output": "1 23 54 90",
+              "expectedOutput": "1 23 54 90",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "boilerPlates": {
+            "javascript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "js": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n",
+            "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
+          },
+          "solution": {
+            "javascript": "const fs = require('fs');\n\nfunction main() {\n    const parts = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\n    if (parts.length >= 4) {\n        const nums = parts.slice(0, 4).map(Number).sort((x, y) => x - y);\n        console.log(nums.join(' '));\n    }\n}\n\nmain();\n"
+          }
+        }
+      ]
+    }
+  }
 }

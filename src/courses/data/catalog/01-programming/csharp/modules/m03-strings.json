@@ -10,7 +10,34 @@
       "description": "Study concepts and solve targeted engineering problems for Introduction to Strings.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 25,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cs-m03-str-01",
+          "title": "String Immutability and Interpolation in C#",
+          "content": "### Understanding System.String in C#\n\nIn C#, the `string` keyword is an alias for `System.String`. Key properties of strings include:\n\n1. **Immutability**: Once created, a `string` object cannot be modified. Any method that appears to modify a string (such as `.ToUpper()` or `.Replace()`) returns a brand new string instance.\n2. **String Interpolation (`$\"\")**: Introduced in C# 6, prefixing a string with `$` allows embedding expressions directly inside curly braces: `$\"Hello, {name}! Today is {DateTime.Now:d}\"`.\n3. **Verbatim Strings (`@\"\"`)**: Prefixing a string with `@` disables escape sequence processing and preserves multiline formatting. Ideal for file paths: `@\"C:\\Projects\\App\\data.txt\"`.\n4. **System.Text.StringBuilder**: When concatenating strings inside loops, using repeated `+` creates $O(N^2)$ transient heap allocations. `StringBuilder` allocates an internal expandable buffer for efficient $O(1)$ amortized appends.",
+          "callout": {
+            "type": "TIP",
+            "title": "Verbatim Paths",
+            "text": "Use verbatim strings (@\"C:\\folder\\file\") so you do not need to double every backslash in Windows file paths."
+          },
+          "codeCard": {
+            "language": "csharp",
+            "code": "using System;\nusing System.Text;\n\nclass Program\n{\n    static void Main()\n    {\n        string name = \"Alice\";\n        int age = 25;\n        // String interpolation\n        Console.WriteLine($\"User: {name}, Age: {age}\");\n\n        // StringBuilder for loops\n        StringBuilder sb = new StringBuilder();\n        for (int i = 1; i <= 5; i++)\n        {\n            sb.Append(i).Append(\" \");\n        }\n        Console.WriteLine(sb.ToString());\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cs-m03-str-cp1",
+            "question": "Why does calling `myString.ToUpper();` without assigning the result not change `myString`?",
+            "options": [
+              "Because strings in C# are immutable; ToUpper() returns a new string rather than modifying the original",
+              "Because ToUpper() only works on character arrays",
+              "Because strings can only be modified inside a lock statement",
+              "Because the method is asynchronous"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Strings in C# are immutable. Any operation that alters text returns a newly allocated string without altering the source string."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -609,5 +636,414 @@
       "_sourceFile": "c-sharp.json",
       "_moduleTitle": "Strings"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m03-strings",
+    "title": "Module Assessment: Strings",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "cs-m03-q01",
+          "question": "What does string immutability mean in C#?",
+          "options": [
+            "The contents of a string object on the heap cannot be altered after creation",
+            "A string variable cannot be reassigned to point to another string",
+            "Strings can only contain ASCII characters",
+            "Strings cannot be compared using =="
+          ],
+          "correctAnswer": 0,
+          "explanation": "String immutability means the character data inside a string instance on the managed heap is read-only. Any modification creates a new string object."
+        },
+        {
+          "questionId": "cs-m03-q02",
+          "question": "How do you escape curly braces in an interpolated string `$\"...\"`?",
+          "options": [
+            "By doubling them: {{ and }}",
+            "By using a backslash: \\{ and \\}",
+            "By using a tilde: ~{ and ~}",
+            "Curly braces cannot be escaped"
+          ],
+          "correctAnswer": 0,
+          "explanation": "In C# interpolated strings, double curly braces ({{ and }}) output literal { and } characters without triggering interpolation."
+        },
+        {
+          "questionId": "cs-m03-q03",
+          "question": "When should System.Text.StringBuilder be used instead of string concatenation with the '+' operator?",
+          "options": [
+            "When performing a large or unknown number of string modifications inside loops",
+            "Only when writing to disk files",
+            "When the string length is under 10 characters",
+            "Only in multi-threaded code"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Using '+' inside loops creates numerous intermediate temporary string objects on the heap, degrading performance and increasing GC pressure. StringBuilder modifies an in-place buffer."
+        },
+        {
+          "questionId": "cs-m03-q04",
+          "question": "Which static method checks if a string is null, empty, or consists only of whitespace characters?",
+          "options": [
+            "string.IsNullOrWhiteSpace(str)",
+            "string.IsNullOrEmpty(str)",
+            "string.IsEmpty(str)",
+            "string.IsBlank(str)"
+          ],
+          "correctAnswer": 0,
+          "explanation": "string.IsNullOrWhiteSpace() returns true if the string is null, string.Empty, or contains only white-space characters like spaces and tabs."
+        },
+        {
+          "questionId": "cs-m03-q05",
+          "question": "What is the return value of `\"Programming\".Substring(3, 4)` in C#?",
+          "options": [
+            "\"gram\" (starting at index 3 with length 4)",
+            "\"Prog\"",
+            "\"ogram\"",
+            "\"ramm\""
+          ],
+          "correctAnswer": 0,
+          "explanation": "In C#, Substring(startIndex, length) starts at index 3 ('g') and takes 4 characters ('g', 'r', 'a', 'm')."
+        },
+        {
+          "questionId": "cs-m03-q06",
+          "question": "How does the `==` operator behave when comparing two string variables in C#?",
+          "options": [
+            "It compares the sequential character values (value equality)",
+            "It compares the memory addresses (reference equality)",
+            "It produces a compile-time error",
+            "It compares only the string lengths"
+          ],
+          "correctAnswer": 0,
+          "explanation": "C# overloads the == operator for string to perform ordinal value comparison, checking whether both strings contain identical characters in the same sequence."
+        },
+        {
+          "questionId": "cs-m03-q07",
+          "question": "Which method splits a delimited string into an array of substrings?",
+          "options": [
+            "str.Split(',')",
+            "str.Divide(',')",
+            "str.Tokenize(',')",
+            "str.ToArray(',')"
+          ],
+          "correctAnswer": 0,
+          "explanation": "The Split() method breaks a string into an array of substrings based on specified delimiter characters or strings."
+        },
+        {
+          "questionId": "cs-m03-q08",
+          "question": "What does the verbatim string literal `@\"C:\\Users\\Data\"` prevent?",
+          "options": [
+            "It prevents backslashes from being interpreted as escape sequences",
+            "It prevents the string from being stored in memory",
+            "It prevents uppercase characters",
+            "It prevents string concatenation"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Verbatim strings prefix @ disable escape sequence evaluation, treating characters literally."
+        },
+        {
+          "questionId": "cs-m03-q09",
+          "question": "Which property returns the total number of characters in a C# string?",
+          "options": [
+            "Length",
+            "Count",
+            "Size",
+            "GetLength()"
+          ],
+          "correctAnswer": 0,
+          "explanation": "The Length property (e.g. str.Length) returns the number of Char objects in the current String."
+        },
+        {
+          "questionId": "cs-m03-q10",
+          "question": "How do you access the first character of a string `str` in C#?",
+          "options": [
+            "str[0]",
+            "str.CharAt(0)",
+            "str(0)",
+            "str.First"
+          ],
+          "correctAnswer": 0,
+          "explanation": "C# strings support indexer notation: str[0] returns the char at 0-indexed position 0."
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.252",
+          "questionId": "Q0.252",
+          "title": "Read and Print String",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept a string as input and print it.",
+          "description": "Write a program to accept a string as input and print it.",
+          "constraints": "1 <= Length(S) <= 1000",
+          "inputFormat": "String",
+          "outputFormat": "String",
+          "sampleTestCases": [
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "Welcome to the World of C Programming",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "Welcome to the World of C Programming",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "Write a program to accept a string as input and print it.",
+              "output": "Write a program to accept a string as input and print it.",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "Hello123 WOrld",
+              "output": "Hello123 WOrld",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "SEED",
+              "output": "SEED",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "Welcome to the World of C Programming",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "Write a program to accept a string as input and print it.",
+              "output": "Write a program to accept a string as input and print it.",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "Hello123 WOrld",
+              "output": "Hello123 WOrld",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "SEED",
+              "output": "SEED",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "csharp": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "cs": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "c#": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "csharp": "",
+            "java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextLine()) System.out.println(sc.nextLine());\n    }\n}\n",
+            "cpp": "#include <iostream>\n#include <string>\nusing namespace std;\nint main() {\n    string s; if (getline(cin, s)) cout << s << \"\\n\";\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.255",
+          "questionId": "Q0.255",
+          "title": "Length of String",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept a string as input and print the length of the string.",
+          "description": "Write a program to accept a string as input and print the length of the string.",
+          "constraints": "1 <= Length(S) <= 1000",
+          "inputFormat": "String",
+          "outputFormat": "Integer",
+          "sampleTestCases": [
+            {
+              "input": "Hello World",
+              "output": "11",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "37",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "Hello World",
+              "output": "11",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "37",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "SEED",
+              "output": "4",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "Test Case",
+              "output": "9",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "123",
+              "output": "3",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "Hello World",
+              "output": "11",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "37",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "SEED",
+              "output": "4",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "Test Case",
+              "output": "9",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "123",
+              "output": "3",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "csharp": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "cs": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "c#": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "csharp": "",
+            "java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextLine()) {\n            String s = sc.nextLine().replaceAll(\"[\\r\\n]\", \"\");\n            System.out.println(s.length());\n        }\n    }\n}\n",
+            "cpp": "#include <iostream>\n#include <string>\nusing namespace std;\nint main() {\n    string s; if (getline(cin, s)) {\n        while (!s.empty() && (s.back() == '\\r' || s.back() == '\\n')) s.pop_back();\n        cout << s.length() << \"\\n\";\n    }\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.256",
+          "questionId": "Q0.256",
+          "title": "Reverse a String",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept a string as input and print the reversed string.",
+          "description": "Write a program to accept a string as input and print the reversed string.",
+          "constraints": "1 <= Length(S) <= 1000",
+          "inputFormat": "String",
+          "outputFormat": "String",
+          "sampleTestCases": [
+            {
+              "input": "Hello World",
+              "output": "dlroW olleH",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "abcde",
+              "output": "edcba",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "Hello World",
+              "output": "dlroW olleH",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "abcde",
+              "output": "edcba",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "SEED",
+              "output": "DEES",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "Test Case",
+              "output": "esaC tseT",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "Me Coder!!!",
+              "output": "!!!redoC eM",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "Hello World",
+              "output": "dlroW olleH",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "abcde",
+              "output": "edcba",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "SEED",
+              "output": "DEES",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "Test Case",
+              "output": "esaC tseT",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "Me Coder!!!",
+              "output": "!!!redoC eM",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "csharp": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "cs": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "c#": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "csharp": "",
+            "java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextLine()) {\n            String s = sc.nextLine().replaceAll(\"[\\r\\n]\", \"\");\n            System.out.println(new StringBuilder(s).reverse().toString());\n        }\n    }\n}\n",
+            "cpp": "#include <iostream>\n#include <string>\n#include <algorithm>\nusing namespace std;\nint main() {\n    string s; if (getline(cin, s)) {\n        while (!s.empty() && (s.back() == '\\r' || s.back() == '\\n')) s.pop_back();\n        reverse(s.begin(), s.end());\n        cout << s << \"\\n\";\n    }\n    return 0;\n}\n"
+          }
+        }
+      ]
+    }
+  }
 }

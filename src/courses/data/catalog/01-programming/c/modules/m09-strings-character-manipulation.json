@@ -875,7 +875,34 @@
       "description": "Study and practice String operations part-2 with focused C problems and verification-oriented exercises.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 20,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-C-M09-T03-1",
+          "title": "String Algorithms: strcmp, strcat, and Palindrome/Anagram Checks",
+          "content": "### String Comparison & Concatenation Internals\n\nIn C, strings cannot be compared using `==` (which only compares pointer addresses). We use `strcmp()` from `<string.h>`:\n- Returns `0` if strings are identical.\n- Returns negative if `str1 < str2` lexicographically.\n- Returns positive if `str1 > str2` lexicographically.\n\n### Custom `strcmp` Implementation:\n```c\nint my_strcmp(const char *s1, const char *s2) {\n    while (*s1 && (*s1 == *s2)) {\n        s1++;\n        s2++;\n    }\n    return *(const unsigned char *)s1 - *(const unsigned char *)s2;\n}\n```\n\n### Checking for Anagrams using Frequency Counts:\nTwo strings are anagrams if they contain the exact same characters in any order. Count character frequencies in a 256-element array:\n```c\nint count[256] = {0};\nfor (int i = 0; s1[i]; i++) count[(unsigned char)s1[i]]++;\nfor (int i = 0; s2[i]; i++) count[(unsigned char)s2[i]]--;\n// Check if all counts return to zero\n```",
+          "callout": {
+            "type": "TIP",
+            "title": "Avoid == on Strings",
+            "text": "`str1 == str2` only checks whether two pointers point to the exact same memory address, not whether their text contents are equal!"
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n#include <string.h>\n\nint isPalindrome(const char *s) {\n    int l = 0, r = strlen(s) - 1;\n    while (l < r) {\n        if (s[l++] != s[r--]) return 0;\n    }\n    return 1;\n}\n\nint main(void) {\n    printf(\"racecar: %s\\n\", isPalindrome(\"racecar\") ? \"YES\" : \"NO\");\n    printf(\"seed: %s\\n\", isPalindrome(\"seed\") ? \"YES\" : \"NO\");\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-C-M09-T03-1",
+            "question": "What does `strcmp(\"apple\", \"banana\")` return in C?",
+            "options": [
+              "0",
+              "A negative integer",
+              "A positive integer",
+              "1"
+            ],
+            "correctAnswer": 1,
+            "explanation": "Because 'a' (ASCII 97) is less than 'b' (ASCII 98), strcmp returns a negative value."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -1805,5 +1832,439 @@
       "_sourceFile": "college-programming-c.json",
       "_moduleTitle": "Arrays, Strings & Sorting"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m09-strings-character-manipulation",
+    "title": "Module Assessment: Strings & Character Manipulation",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "msa-m09-q1",
+          "question": "What character marks the end of every valid C string in memory?",
+          "options": [
+            "\\n (newline)",
+            "\\0 (null terminator)",
+            "EOF",
+            "Space"
+          ],
+          "correctAnswer": 1,
+          "explanation": "C strings are null-terminated character sequences ending with the ASCII 0 character, written as '\\0'.",
+          "tags": [
+            "Strings",
+            "Null Terminator"
+          ]
+        },
+        {
+          "questionId": "msa-m09-q2",
+          "question": "How many bytes of storage are required to store the string literal `\"Hello\"` in C?",
+          "options": [
+            "5 bytes",
+            "6 bytes (5 characters + 1 null terminator)",
+            "8 bytes",
+            "4 bytes"
+          ],
+          "correctAnswer": 1,
+          "explanation": "\"Hello\" consists of 5 alphabetic characters plus the terminating '\\0', requiring 6 bytes.",
+          "tags": [
+            "Strings",
+            "Storage Size"
+          ]
+        },
+        {
+          "questionId": "msa-m09-q3",
+          "question": "Why is `gets()` considered dangerously unsafe and deprecated/removed in modern C standards?",
+          "options": [
+            "It cannot read uppercase letters",
+            "It does not perform buffer length checking, causing unavoidable buffer overflow vulnerabilities",
+            "It is too slow",
+            "It requires root permissions"
+          ],
+          "correctAnswer": 1,
+          "explanation": "gets() cannot know the size of the target buffer, making buffer overflows trivial to trigger. fgets() should always be used instead.",
+          "tags": [
+            "Security",
+            "gets vs fgets"
+          ]
+        },
+        {
+          "questionId": "msa-m09-q4",
+          "question": "What does `strlen(\"SEED-IT\")` return?",
+          "options": [
+            "8",
+            "7",
+            "6",
+            "14"
+          ],
+          "correctAnswer": 1,
+          "explanation": "strlen counts the number of characters before the null terminator. \"SEED-IT\" contains 7 characters.",
+          "tags": [
+            "strlen",
+            "String Length"
+          ]
+        },
+        {
+          "questionId": "msa-m09-q5",
+          "question": "Where are string literals like `char *p = \"Hello\";` typically stored in compiled binary memory?",
+          "options": [
+            "On the runtime heap",
+            "In read-only data segment (.rodata); modifying *p causes a crash",
+            "On the local stack frame",
+            "In CPU registers"
+          ],
+          "correctAnswer": 1,
+          "explanation": "String literals are placed in read-only memory (.rodata). Writing p[0] = 'h' invokes undefined behavior / segmentation fault.",
+          "tags": [
+            "Memory",
+            "String Literals"
+          ]
+        },
+        {
+          "questionId": "msa-m09-q6",
+          "question": "What function in `<string.h>` concatenates string `src` to the end of `dest`?",
+          "options": [
+            "strcat(dest, src)",
+            "append(dest, src)",
+            "concat(dest, src)",
+            "strjoin(dest, src)"
+          ],
+          "correctAnswer": 0,
+          "explanation": "strcat appends a copy of src onto dest and appends a null terminator, assuming dest has sufficient capacity.",
+          "tags": [
+            "strcat",
+            "String Manipulation"
+          ]
+        },
+        {
+          "questionId": "msa-m09-q7",
+          "question": "What does `char str[10] = \"Hello\";` allow that `char *str = \"Hello\";` does not?",
+          "options": [
+            "Modifying characters in str (e.g. str[0] = 'h')",
+            "Passing str to printf",
+            "Computing strlen",
+            "Accessing str[1]"
+          ],
+          "correctAnswer": 0,
+          "explanation": "char str[10] allocates a mutable array on the stack, whereas char *str points to read-only string literal memory.",
+          "tags": [
+            "Arrays vs Pointers",
+            "Mutability"
+          ]
+        },
+        {
+          "questionId": "msa-m09-q8",
+          "question": "Which header file provides character classification and conversion functions like `isalpha()`, `isdigit()`, and `tolower()` in C?",
+          "options": [
+            "<string.h>",
+            "<ctype.h>",
+            "<stdlib.h>",
+            "<locale.h>"
+          ],
+          "correctAnswer": 1,
+          "explanation": "<ctype.h> provides functions to test and transform individual ASCII character values.",
+          "tags": [
+            "ctype.h",
+            "Character Classification"
+          ]
+        },
+        {
+          "questionId": "msa-m09-q9",
+          "question": "What does `strcpy(dest, src)` do if the buffer `dest` is smaller than `src`?",
+          "options": [
+            "Safely truncates the string",
+            "Throws an exception",
+            "Buffer overflow resulting in undefined behavior",
+            "Returns NULL"
+          ],
+          "correctAnswer": 2,
+          "explanation": "strcpy does not check destination buffer capacity, corrupting memory if src exceeds dest size. Use strncpy or strlcpy.",
+          "tags": [
+            "strcpy",
+            "Buffer Overflow"
+          ]
+        },
+        {
+          "questionId": "msa-m09-q10",
+          "question": "What is the return value of `strcmp(\"apple\", \"apple\")`?",
+          "options": [
+            "1",
+            "0",
+            "true",
+            "-1"
+          ],
+          "correctAnswer": 1,
+          "explanation": "strcmp returns 0 when both strings are identical character-by-character up to the null terminator.",
+          "tags": [
+            "strcmp",
+            "Equality"
+          ]
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.252",
+          "questionId": "Q0.252",
+          "title": "Read and Print String",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept a string as input and print it.",
+          "description": "Write a program to accept a string as input and print it.",
+          "constraints": "1 <= Length(S) <= 1000",
+          "inputFormat": "String",
+          "outputFormat": "String",
+          "sampleTestCases": [
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "Welcome to the World of C Programming",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "Welcome to the World of C Programming",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "Write a program to accept a string as input and print it.",
+              "output": "Write a program to accept a string as input and print it.",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "Hello123 WOrld",
+              "output": "Hello123 WOrld",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "SEED",
+              "output": "SEED",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "Welcome to the World of C Programming",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "Write a program to accept a string as input and print it.",
+              "output": "Write a program to accept a string as input and print it.",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "Hello123 WOrld",
+              "output": "Hello123 WOrld",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "SEED",
+              "output": "SEED",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\nint main() {\n    char s[1005];\n    if (fgets(s, sizeof(s), stdin)) printf(\"%s\", s);\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.255",
+          "questionId": "Q0.255",
+          "title": "Length of String",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept a string as input and print the length of the string.",
+          "description": "Write a program to accept a string as input and print the length of the string.",
+          "constraints": "1 <= Length(S) <= 1000",
+          "inputFormat": "String",
+          "outputFormat": "Integer",
+          "sampleTestCases": [
+            {
+              "input": "Hello World",
+              "output": "11",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "37",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "Hello World",
+              "output": "11",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "37",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "SEED",
+              "output": "4",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "Test Case",
+              "output": "9",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "123",
+              "output": "3",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "Hello World",
+              "output": "11",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "Welcome to the World of C Programming",
+              "output": "37",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "SEED",
+              "output": "4",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "Test Case",
+              "output": "9",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "123",
+              "output": "3",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\n#include <string.h>\nint main() {\n    char s[1005];\n    if (fgets(s, sizeof(s), stdin)) {\n        int len = strlen(s);\n        while (len > 0 && (s[len - 1] == '\\n' || s[len - 1] == '\\r')) len--;\n        printf(\"%d\\n\", len);\n    }\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.258",
+          "questionId": "Q0.258",
+          "title": "Copy String to Another String",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept a string as input, copy the contents of the first string to a second string and print the second string.",
+          "description": "Write a program to accept a string as input, copy the contents of the first string to a second string and print the second string.",
+          "constraints": "1 <= Length(S) <= 1000",
+          "inputFormat": "String",
+          "outputFormat": "String",
+          "sampleTestCases": [
+            {
+              "input": "Hello",
+              "output": "Hello",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "Hello",
+              "output": "Hello",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "abcdef",
+              "output": "abcdef",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "SEED",
+              "output": "SEED",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "Write a program to accept a string as input, copy the contents of the first string to a second string and print the second string.",
+              "output": "Write a program to accept a string as input, copy the contents of the first string to a second string and print the second string.",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "Hello",
+              "output": "Hello",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "Hello World",
+              "output": "Hello World",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "abcdef",
+              "output": "abcdef",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "SEED",
+              "output": "SEED",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "Write a program to accept a string as input, copy the contents of the first string to a second string and print the second string.",
+              "output": "Write a program to accept a string as input, copy the contents of the first string to a second string and print the second string.",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\n#include <string.h>\nint main() {\n    char s1[1005], s2[1005];\n    if (fgets(s1, sizeof(s1), stdin)) {\n        int len = strlen(s1);\n        while (len > 0 && (s1[len - 1] == '\\n' || s1[len - 1] == '\\r')) s1[--len] = '\\0';\n        strcpy(s2, s1);\n        printf(\"%s\\n\", s2);\n    }\n    return 0;\n}\n"
+          }
+        }
+      ]
+    }
+  }
 }

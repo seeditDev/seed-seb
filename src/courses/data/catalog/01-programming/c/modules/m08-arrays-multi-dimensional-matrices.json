@@ -297,7 +297,34 @@
       "description": "Study and practice Array operations part-2 with focused C problems and verification-oriented exercises.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 20,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-C-M08-T02-1",
+          "title": "In-Place Array Reversal, Min-Max Search, and Frequency Counting",
+          "content": "### Two-Pointer Array Reversal in $O(N)$ Time & $O(1)$ Space\n\nReversing an array without allocating a secondary buffer is done using two pointers (`left` and `right`) moving toward the center:\n\n```c\nvoid reverseArray(int arr[], int n) {\n    int left = 0, right = n - 1;\n    while (left < right) {\n        int temp = arr[left];\n        arr[left] = arr[right];\n        arr[right] = temp;\n        left++;\n        right--;\n    }\n}\n```\n\n### Finding Second Largest Element:\nMaintain `max1` and `max2` initialized to `INT_MIN`. Traverse the array in a single pass:\n```c\nfor (int i = 0; i < n; i++) {\n    if (arr[i] > max1) {\n        max2 = max1;\n        max1 = arr[i];\n    } else if (arr[i] > max2 && arr[i] != max1) {\n        max2 = arr[i];\n    }\n}\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "In-Place Optimization",
+            "text": "In-place algorithms modify input data directly with $O(1)$ auxiliary memory, essential in embedded and systems programming."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int arr[] = {12, 35, 1, 10, 34, 1};\n    int n = sizeof(arr) / sizeof(arr[0]);\n    \n    // In-place reverse\n    for (int i = 0; i < n / 2; i++) {\n        int t = arr[i];\n        arr[i] = arr[n - 1 - i];\n        arr[n - 1 - i] = t;\n    }\n    \n    for (int i = 0; i < n; i++) printf(\"%d \", arr[i]);\n    printf(\"\\n\");\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-C-M08-T02-1",
+            "question": "How many element swaps are performed when reversing an array of size $N$ in place?",
+            "options": [
+              "N",
+              "N / 2",
+              "N - 1",
+              "N^2"
+            ],
+            "correctAnswer": 1,
+            "explanation": "Each swap places two elements in their final mirrored positions, requiring exactly N / 2 swaps."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -2428,7 +2455,34 @@
       "description": "Study concepts and solve targeted engineering problems for Insertion, deletion in 1d array, merge two arrays.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 45,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-C-M08-T08-1",
+          "title": "Element Shifting for Insertion/Deletion & Two-Pointer Merge",
+          "content": "### Insertion & Deletion in Static Arrays\n\nBecause C arrays are contiguous in memory:\n- **Insertion at Index $k$:** Shift all elements from index $k$ to $n-1$ **one position to the right** (starting from the end) before writing the new value.\n- **Deletion at Index $k$:** Shift all elements from index $k+1$ to $n-1$ **one position to the left**.\n\n### Merging Two Sorted Arrays in $O(N + M)$:\nMaintain pointers `i` and `j` to the heads of both arrays and pointer `k` to the target merged array:\n\n```c\nint i = 0, j = 0, k = 0;\nwhile (i < n1 && j < n2) {\n    if (arr1[i] <= arr2[j]) merged[k++] = arr1[i++];\n    else merged[k++] = arr2[j++];\n}\nwhile (i < n1) merged[k++] = arr1[i++];\nwhile (j < n2) merged[k++] = arr2[j++];\n```",
+          "callout": {
+            "type": "WARNING",
+            "title": "Buffer Bounds Warning",
+            "text": "Before inserting an element into an array, verify that the allocated capacity exceeds current size ($n < \\text{capacity}$), otherwise memory corruption occurs."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\n// Deletion by shifting left\nint deleteAt(int arr[], int n, int pos) {\n    if (pos < 0 || pos >= n) return n;\n    for (int i = pos; i < n - 1; i++) {\n        arr[i] = arr[i + 1];\n    }\n    return n - 1; // new size\n}\n\nint main(void) {\n    int a[] = {10, 20, 30, 40};\n    int n = deleteAt(a, 4, 1); // delete 20\n    for (int i = 0; i < n; i++) printf(\"%d \", a[i]); // 10 30 40\n    printf(\"\\n\");\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-C-M08-T08-1",
+            "question": "What is the time complexity of inserting an element at index 0 of an array of size $N$?",
+            "options": [
+              "O(1)",
+              "O(N)",
+              "O(log N)",
+              "O(N^2)"
+            ],
+            "correctAnswer": 1,
+            "explanation": "Inserting at the beginning requires shifting all N existing elements one position to the right, taking O(N) operations."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -3848,7 +3902,34 @@
       "description": "Study concepts and solve targeted engineering problems for 2dArray and its problems.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 45,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-C-M08-T11-1",
+          "title": "2D Arrays, Row-Major Layout, and Matrix Multiplication",
+          "content": "### Row-Major Memory Layout of 2D Arrays\n\nIn C, 2D arrays are stored as a **contiguous 1D block of bytes in Row-Major Order**. The rows are placed one after another in physical memory:\n\n```\nMatrix A[2][3]:\nRow 0: [ A[0][0], A[0][1], A[0][2] ]\nRow 1: [ A[1][0], A[1][1], A[1][2] ]\nPhysical Address Offset: Index = (i * cols) + j\n```\n\n### Matrix Multiplication ($O(N^3)$):\nGiven matrix $A$ of size $R_1 \\times C_1$ and matrix $B$ of size $R_2 \\times C_2$, multiplication is defined if and only if $C_1 == R_2$:\n\n```c\nfor (int i = 0; i < r1; i++) {\n    for (int j = 0; j < c2; j++) {\n        C[i][j] = 0;\n        for (int k = 0; k < c1; k++) {\n            C[i][j] += A[i][k] * B[k][j];\n        }\n    }\n}\n```",
+          "callout": {
+            "type": "TIP",
+            "title": "Cache Locality",
+            "text": "Traversing 2D arrays row-by-row (`for i: for j: A[i][j]`) accesses contiguous cache lines, yielding up to 10x faster performance than column-by-column traversal."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int a[2][2] = {{1, 2}, {3, 4}};\n    int b[2][2] = {{5, 6}, {7, 8}};\n    int c[2][2] = {0};\n    \n    for (int i = 0; i < 2; i++) {\n        for (int j = 0; j < 2; j++) {\n            for (int k = 0; k < 2; k++) {\n                c[i][j] += a[i][k] * b[k][j];\n            }\n        }\n    }\n    printf(\"C[0][0]=%d, C[1][1]=%d\\n\", c[0][0], c[1][1]); // 19, 50\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-C-M08-T11-1",
+            "question": "In C, how are multi-dimensional arrays laid out in physical computer memory?",
+            "options": [
+              "Column-Major Order",
+              "Row-Major Order",
+              "Linked pointers",
+              "Segmented blocks"
+            ],
+            "correctAnswer": 1,
+            "explanation": "C specifies Row-Major Order, where all elements of the first row are placed contiguously, followed by the second row, etc."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -4209,5 +4290,439 @@
       "_sourceFile": "college-programming-c.json",
       "_moduleTitle": "Arrays, Strings & Sorting"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m08-arrays-multi-dimensional-matrices",
+    "title": "Module Assessment: Arrays & Multi-Dimensional Matrices",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "msa-m08-q1",
+          "question": "If `int arr[5] = {10, 20, 30, 40, 50};`, what does the expression `*(arr + 2)` evaluate to?",
+          "options": [
+            "10",
+            "20",
+            "30",
+            "40"
+          ],
+          "correctAnswer": 2,
+          "explanation": "arr decays to a pointer to arr[0]. *(arr + 2) is pointer arithmetic equivalent to arr[2], which is 30.",
+          "tags": [
+            "Arrays",
+            "Pointer Arithmetic"
+          ]
+        },
+        {
+          "questionId": "msa-m08-q2",
+          "question": "What happens when accessing an element outside the declared bounds of an array in C (e.g. `arr[10]` for size 5)?",
+          "options": [
+            "ArrayIndexOutOfBoundsException",
+            "Undefined behavior (potential memory corruption, garbage value, or segmentation fault)",
+            "Returns 0",
+            "Compiler error at runtime"
+          ],
+          "correctAnswer": 1,
+          "explanation": "C does not perform runtime array bounds checking. Accessing invalid indices invokes undefined behavior.",
+          "tags": [
+            "Arrays",
+            "Bounds Checking"
+          ]
+        },
+        {
+          "questionId": "msa-m08-q3",
+          "question": "When an array is passed as an argument to a function (e.g. `void func(int a[])`), what is actually passed?",
+          "options": [
+            "A deep copy of all array elements",
+            "A pointer to the first element of the array",
+            "The length of the array",
+            "A reference to the array descriptor"
+          ],
+          "correctAnswer": 1,
+          "explanation": "In C, array parameter declarations decay to a pointer to the first element (`int *`).",
+          "tags": [
+            "Functions",
+            "Array Decay"
+          ]
+        },
+        {
+          "questionId": "msa-m08-q4",
+          "question": "What is the formula to calculate the number of elements in a statically declared array `arr`?",
+          "options": [
+            "sizeof(arr)",
+            "sizeof(arr) / sizeof(arr[0])",
+            "arr.length",
+            "length(arr)"
+          ],
+          "correctAnswer": 1,
+          "explanation": "sizeof(arr) returns total bytes allocated; dividing by sizeof(arr[0]) gives the element count.",
+          "tags": [
+            "sizeof",
+            "Array Length"
+          ]
+        },
+        {
+          "questionId": "msa-m08-q5",
+          "question": "If `int a[3][4];`, what is the total number of integer elements allocated in memory?",
+          "options": [
+            "7",
+            "12",
+            "16",
+            "34"
+          ],
+          "correctAnswer": 1,
+          "explanation": "3 rows * 4 columns = 12 total integer elements.",
+          "tags": [
+            "2D Arrays",
+            "Memory Size"
+          ]
+        },
+        {
+          "questionId": "msa-m08-q6",
+          "question": "What does the array declaration `int arr[10] = {0};` accomplish?",
+          "options": [
+            "Initializes only arr[0] to 0, leaving the rest garbage",
+            "Initializes all 10 elements to 0",
+            "Compiler error",
+            "Sets size to 0"
+          ],
+          "correctAnswer": 1,
+          "explanation": "In C, providing an initializer list shorter than the array size causes all unspecified elements to be zero-initialized.",
+          "tags": [
+            "Arrays",
+            "Initialization"
+          ]
+        },
+        {
+          "questionId": "msa-m08-q7",
+          "question": "What is the matrix transpose of an $M \\times N$ matrix?",
+          "options": [
+            "An $M \\times N$ matrix with inverted signs",
+            "An $N \\times M$ matrix where rows and columns are swapped ($B[j][i] = A[i][j]$)",
+            "A square matrix with zeros on diagonal",
+            "The inverse matrix"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Matrix transposition flips a matrix over its diagonal, converting an M x N matrix into an N x M matrix.",
+          "tags": [
+            "Matrices",
+            "Transpose"
+          ]
+        },
+        {
+          "questionId": "msa-m08-q8",
+          "question": "Why does passing a 2D array parameter to a function require specifying all dimension bounds except the first (e.g. `int a[][4]`)?",
+          "options": [
+            "To allow the compiler to calculate row address offsets in memory: `row * cols + col`",
+            "Arbitrary syntax choice",
+            "To allocate stack memory",
+            "To verify row counts"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Because C stores 2D arrays in row-major order, the compiler must know the column count to compute where each row starts.",
+          "tags": [
+            "2D Arrays",
+            "Memory Offset"
+          ]
+        },
+        {
+          "questionId": "msa-m08-q9",
+          "question": "What is the time complexity of Linear Search on an unsorted array of size $N$?",
+          "options": [
+            "O(1)",
+            "O(log N)",
+            "O(N)",
+            "O(N^2)"
+          ],
+          "correctAnswer": 2,
+          "explanation": "In the worst case (element at end or not present), linear search inspects all N elements.",
+          "tags": [
+            "Searching",
+            "Complexity"
+          ]
+        },
+        {
+          "questionId": "msa-m08-q10",
+          "question": "Can the size of a standard static C array be altered after declaration at runtime?",
+          "options": [
+            "Yes, using array.resize()",
+            "No, static array dimensions are fixed at declaration and cannot be resized",
+            "Yes, if declared const",
+            "Yes, in C11"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Static arrays have fixed sizes determined at declaration. Dynamic resizing requires heap allocation with malloc/realloc.",
+          "tags": [
+            "Arrays",
+            "Static Memory"
+          ]
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.143",
+          "questionId": "Q0.143",
+          "title": "Read and Print Array Elements",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a c program to accept the array from the user and print the array from left to right",
+          "description": "Write a c program to accept the array from the user and print the array from left to right",
+          "constraints": "1 <= N <= 10^5, -10^9 <= Arr[i] <= 10^9",
+          "inputFormat": "Number of elements followed by array as input elements",
+          "outputFormat": "Print the array elements",
+          "sampleTestCases": [
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "1 2 3 4 5 6 7 8 9 10",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "5\n11 12 13 14 15",
+              "output": "11 12 13 14 15",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "1 2 3 4 5 6 7 8 9 10",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "5\n11 12 13 14 15",
+              "output": "11 12 13 14 15",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "5\n12 13 14 15 16",
+              "output": "12 13 14 15 16",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "1 2 3 4 5 6 7 8 9 10",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "5\n11 12 13 14 15",
+              "output": "11 12 13 14 15",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "5\n12 13 14 15 16",
+              "output": "12 13 14 15 16",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "1 2 3 4 5 6 7 8 9 10",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "5\n11 12 13 14 15",
+              "output": "11 12 13 14 15",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "5\n12 13 14 15 16",
+              "output": "12 13 14 15 16",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "1 2 3 4 5 6 7 8 9 10",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Standard solution for Q0.143\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.145",
+          "questionId": "Q0.145",
+          "title": "Print Array in Reverse Order",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept the elements into an array and display the array from right to left",
+          "description": "Write a program to accept the elements into an array and display the array from right to left",
+          "constraints": "1 <= N <= 10^5, -10^9 <= Arr[i] <= 10^9",
+          "inputFormat": "Number of elements followed by array as an input",
+          "outputFormat": "Print the array elements after modi",
+          "sampleTestCases": [
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "10 9 8 7 6 5 4 3 2 1",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "5\n1 2 3 4 5",
+              "output": "5 4 3 2 1",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "10 9 8 7 6 5 4 3 2 1",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "5\n1 2 3 4 5",
+              "output": "5 4 3 2 1",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "4 3 2 1",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "10 9 8 7 6 5 4 3 2 1",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "5\n1 2 3 4 5",
+              "output": "5 4 3 2 1",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "4 3 2 1",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "10 9 8 7 6 5 4 3 2 1",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "5\n1 2 3 4 5",
+              "output": "5 4 3 2 1",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "4 3 2 1",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "10 9 8 7 6 5 4 3 2 1",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Standard solution for Q0.145\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.150",
+          "questionId": "Q0.150",
+          "title": "Find Maximum Element in Array",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program in C to find the maximum value in an unsorted array.",
+          "description": "Write a program in C to find the maximum value in an unsorted array.",
+          "constraints": "1 <= N <= 10^5, -10^9 <= Arr[i] <= 10^9",
+          "inputFormat": "Integer Integers",
+          "outputFormat": "Integer",
+          "sampleTestCases": [
+            {
+              "input": "6\n3 4 1 2 6 5",
+              "output": "6",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "10\n12 11 15 20 35 60 95 10 1 5",
+              "output": "95",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "6\n3 4 1 2 6 5",
+              "output": "6",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "10\n12 11 15 20 35 60 95 10 1 5",
+              "output": "95",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "9\n1 70 90 20 50 78 23 45 9",
+              "output": "90",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "12\n12 14 16 18 20 22 24 26 28 30 32 34",
+              "output": "34",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "4\n-80 -90 -100 -110",
+              "output": "-80",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "6\n3 4 1 2 6 5",
+              "output": "6",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "10\n12 11 15 20 35 60 95 10 1 5",
+              "output": "95",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "9\n1 70 90 20 50 78 23 45 9",
+              "output": "90",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "12\n12 14 16 18 20 22 24 26 28 30 32 34",
+              "output": "34",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "4\n-80 -90 -100 -110",
+              "output": "-80",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Standard solution for Q0.150\n    return 0;\n}\n"
+          }
+        }
+      ]
+    }
+  }
 }

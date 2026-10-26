@@ -1824,7 +1824,34 @@
       "description": "Study concepts and solve targeted engineering problems for Conditional statements part-1.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 25,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-C-M05-T03-1",
+          "title": "if and if-else Flow Mechanics in C",
+          "content": "### The Mechanics of `if` and `if-else` in C\n\nConditional branching enables programs to make decisions based on runtime state. In C, any expression inside an `if (...)` evaluates to either **true** (any non-zero value) or **false** (zero).\n\n```\n          [ Condition Evaluated ]\n                 /     \\\n         Non-Zero       Zero (0)\n         (True)         (False)\n           /               \\\n    [ If-Block Runs ]   [ Else-Block Runs ]\n           \\               /\n          [ Next Statements ]\n```\n\n### The Critical `= vs ==` Trap:\n- `if (x == 5)` tests if `x` equals 5.\n- `if (x = 5)` assigns 5 to `x` and evaluates to 5 (which is non-zero, hence always true!).\n- **Defensive Habit:** Use \"Yoda conditions\" (`if (5 == x)`) where accidental assignment causes a compile error.",
+          "callout": {
+            "type": "WARNING",
+            "title": "Assignment Inside if",
+            "text": "Accidentally typing `if (x = 0)` will assign 0 to `x` and evaluate to false, skipping the block entirely."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int score = 75;\n    \n    if (score >= 50) {\n        printf(\"Passed\\n\");\n    } else {\n        printf(\"Failed\\n\");\n    }\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-C-M05-T03-1",
+            "question": "What will `if (-5)` evaluate to in C?",
+            "options": [
+              "False (because it is negative)",
+              "True (because it is non-zero)",
+              "Compiler error",
+              "Undefined behavior"
+            ],
+            "correctAnswer": 1,
+            "explanation": "In C, any non-zero value (-5, 1, 42) is treated as boolean true; only 0 is false."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -2127,7 +2154,34 @@
       "description": "Study concepts and solve targeted engineering problems for Conditional statements part-2.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 25,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-C-M05-T04-1",
+          "title": "The else-if Ladder, Nested Conditions, and Logic Compounding",
+          "content": "### Multi-Branch Decision Making with `else if`\n\nWhen evaluating multiple mutually exclusive conditions, use an `else if` ladder. Conditions are checked sequentially from top to bottom; the first branch that evaluates to true executes, and all subsequent branches are skipped.\n\n### Dangling Else Problem:\nIn C, an `else` binds to the **nearest preceding unmatched `if`** within the same block scope, unless braces `{}` are used:\n\n```c\n// Misleading indentation!\nif (a > 0)\n    if (b > 0)\n        printf(\"Both positive\");\nelse\n    printf(\"Which if does this belong to?\"); // Binds to (b > 0)!\n```\n\n**Always use curly braces `{}`** around every control block to eliminate ambiguity.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Braces for Safety",
+            "text": "Always enclose conditional bodies in `{}` even for single statements to avoid dangling-else bugs."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int marks = 85;\n    \n    if (marks >= 90) {\n        printf(\"Grade A\\n\");\n    } else if (marks >= 80) {\n        printf(\"Grade B\\n\");\n    } else if (marks >= 70) {\n        printf(\"Grade C\\n\");\n    } else {\n        printf(\"Grade F\\n\");\n    }\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-C-M05-T04-1",
+            "question": "In nested `if` statements without braces, which `if` does an `else` associate with?",
+            "options": [
+              "The first `if`",
+              "The nearest preceding unmatched `if`",
+              "The compiler issues an error",
+              "The outer `if`"
+            ],
+            "correctAnswer": 1,
+            "explanation": "In C grammar, an else always pairs with the closest preceding unmatched if in the same compound statement."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -2724,7 +2778,34 @@
       "description": "Study concepts and solve targeted engineering problems for Review: Conditional statements.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 25,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-C-M05-T05-1",
+          "title": "switch-case Architecture, Fallthrough, and Ternary Branching",
+          "content": "### The `switch-case` Selection Construct\n\nThe `switch` statement tests an **integral expression** against constant integral labels. The compiler frequently optimizes switch statements into jump tables ($O(1)$ dispatch).\n\n### Crucial `switch` Rules:\n1. The controlling expression must evaluate to an **integer type** (`int`, `char`, `enum`). Floats/doubles and strings cannot be used in a switch.\n2. **The `break` Statement:** Terminates the switch statement. If omitted, execution **falls through** to the subsequent case unconditionally!\n3. **Fallthrough Intent:** Sometimes intentional, but modern compilers require `/* fallthrough */` comments or `[[fallthrough]]` attribute in C23.\n4. **`default` Case:** Executes if no case label matches.",
+          "callout": {
+            "type": "TIP",
+            "title": "Fallthrough Prevention",
+            "text": "Always include `break;` at the end of each case block unless deliberate fallthrough is required."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    char op = '+';\n    int a = 10, b = 5;\n    \n    switch (op) {\n        case '+':\n            printf(\"Result: %d\\n\", a + b);\n            break;\n        case '-':\n            printf(\"Result: %d\\n\", a - b);\n            break;\n        case '*':\n            printf(\"Result: %d\\n\", a * b);\n            break;\n        default:\n            printf(\"Unknown operator\\n\");\n            break;\n    }\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-C-M05-T05-1",
+            "question": "What data type is NOT allowed as the controlling expression in a C `switch` statement?",
+            "options": [
+              "char",
+              "int",
+              "double",
+              "enum"
+            ],
+            "correctAnswer": 2,
+            "explanation": "The controlling expression of a switch must be an integer type. Floating point types (float, double) and strings are illegal in C switch statements."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -4425,5 +4506,439 @@
       "_sourceFile": "college-programming-c.json",
       "_moduleTitle": "Conditional statements and Loops"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m05-control-flow-conditional-statements",
+    "title": "Module Assessment: Control Flow: Conditional Statements",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "msa-m05-q1",
+          "question": "What is printed by `int a = 0; if (a = 5) printf(\"Yes\"); else printf(\"No\");`?",
+          "options": [
+            "No",
+            "Yes",
+            "Compiler Error",
+            "0"
+          ],
+          "correctAnswer": 1,
+          "explanation": "a = 5 is an assignment returning 5 (non-zero/true). Hence the if-branch executes and prints \"Yes\".",
+          "tags": [
+            "Conditional",
+            "Assignment Trap"
+          ]
+        },
+        {
+          "questionId": "msa-m05-q2",
+          "question": "What happens if the `break` statement is omitted in a matching `switch` case?",
+          "options": [
+            "Compiler error",
+            "The switch statement terminates immediately",
+            "Execution falls through into the next case statement unconditionally",
+            "The default branch executes next"
+          ],
+          "correctAnswer": 2,
+          "explanation": "Without a break statement, control flows directly into the code of the next case label (known as fallthrough).",
+          "tags": [
+            "switch",
+            "Fallthrough"
+          ]
+        },
+        {
+          "questionId": "msa-m05-q3",
+          "question": "Which of the following expressions correctly tests if `x` lies in the range [10, 20] inclusive?",
+          "options": [
+            "10 <= x <= 20",
+            "x >= 10 && x <= 20",
+            "x >= 10 || x <= 20",
+            "10 <= x && <= 20"
+          ],
+          "correctAnswer": 1,
+          "explanation": "In C, chaining comparisons like 10 <= x <= 20 does not work as in math (10 <= x yields 0 or 1, which is always <= 20). Compound logic requires x >= 10 && x <= 20.",
+          "tags": [
+            "Relational",
+            "Logical AND"
+          ]
+        },
+        {
+          "questionId": "msa-m05-q4",
+          "question": "Can case labels in a C `switch` statement be variables (e.g. `case x:`)?",
+          "options": [
+            "Yes, any variable is allowed",
+            "No, case labels must be compile-time integer constants",
+            "Only if the variable is a pointer",
+            "Only with -O3 optimization"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Case expressions must be compile-time integer constant expressions.",
+          "tags": [
+            "switch",
+            "Case Constants"
+          ]
+        },
+        {
+          "questionId": "msa-m05-q5",
+          "question": "What is the value of `result` in `int result = (10 > 20) ? 100 : 200;`?",
+          "options": [
+            "100",
+            "200",
+            "1",
+            "0"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Since (10 > 20) is false (0), the ternary operator evaluates and yields the false-expression: 200.",
+          "tags": [
+            "Ternary Operator",
+            "Control Flow"
+          ]
+        },
+        {
+          "questionId": "msa-m05-q6",
+          "question": "What will be output by: `int x = 2; switch(x) { case 1: printf(\"1\"); case 2: printf(\"2\"); case 3: printf(\"3\"); break; }`?",
+          "options": [
+            "2",
+            "23",
+            "123",
+            "3"
+          ],
+          "correctAnswer": 1,
+          "explanation": "case 2 matches and prints \"2\". Because there is no break, it falls through to case 3, prints \"3\", and hits break, resulting in \"23\".",
+          "tags": [
+            "switch",
+            "Fallthrough"
+          ]
+        },
+        {
+          "questionId": "msa-m05-q7",
+          "question": "Is the `default` label mandatory in a C `switch` statement?",
+          "options": [
+            "Yes, omitting it causes a compiler error",
+            "No, it is optional",
+            "Only if more than 3 cases exist",
+            "Only in C99"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The default label is optional. If omitted and no case matches, execution simply exits the switch.",
+          "tags": [
+            "switch",
+            "default"
+          ]
+        },
+        {
+          "questionId": "msa-m05-q8",
+          "question": "How does C evaluate: `if (a == 0 && b / a > 1)`?",
+          "options": [
+            "Crashes with divide by zero",
+            "Safely evaluates: if a == 0 is true, the second operand is checked and crashes",
+            "Short-circuits safely if a is not 0; but crashes if a is 0 because the right side divides by zero",
+            "Compiler rejects at build time"
+          ],
+          "correctAnswer": 2,
+          "explanation": "When a == 0 is true, && evaluates the right operand b / a, causing a division-by-zero crash. The proper safe check is a != 0 && b / a > 1.",
+          "tags": [
+            "Short Circuit",
+            "Defensive Logic"
+          ]
+        },
+        {
+          "questionId": "msa-m05-q9",
+          "question": "What is the purpose of the `goto` statement in C, and what is the primary recommended use case in systems code?",
+          "options": [
+            "To replace all while loops",
+            "Centralized resource cleanup and error handling in functions with multiple exit points",
+            "To jump between different functions",
+            "To call library routines"
+          ],
+          "correctAnswer": 1,
+          "explanation": "In standard Linux/kernel C programming, goto is used for centralized clean-up (freeing allocated resources, closing files) upon error.",
+          "tags": [
+            "Control Flow",
+            "goto"
+          ]
+        },
+        {
+          "questionId": "msa-m05-q10",
+          "question": "Can two case labels have identical values in the same `switch` statement in C?",
+          "options": [
+            "Yes, both will execute",
+            "No, duplicate case values cause a compilation error",
+            "Yes, only the first executes",
+            "Allowed in C11 onwards"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The C standard prohibits duplicate case values within the same switch block; it results in a compile-time error.",
+          "tags": [
+            "switch",
+            "Compiler Rules"
+          ]
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.10",
+          "questionId": "Q0.10",
+          "title": "Check Odd or Even Number",
+          "difficulty": "Beginner",
+          "problemStatement": "Given a number,check whether it is \"Odd \" or \"Even\":",
+          "description": "Given a number,check whether it is \"Odd \" or \"Even\":",
+          "constraints": "-10^9 <= N <= 10^9",
+          "inputFormat": "Integer",
+          "outputFormat": "String",
+          "sampleTestCases": [
+            {
+              "input": "12",
+              "output": "Even",
+              "explanation": "Input '12' produces expected output '' following problem rules."
+            },
+            {
+              "input": "9",
+              "output": "Odd",
+              "explanation": "Input '9' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "12",
+              "output": "Even",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "9",
+              "output": "Odd",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "124",
+              "output": "Even",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "135",
+              "output": "Odd",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "12",
+              "output": "Even",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "9",
+              "output": "Odd",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "124",
+              "output": "Even",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "135",
+              "output": "Odd",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "12",
+              "output": "Even",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "9",
+              "output": "Odd",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\n\nint main() {\n    int n;\n    if (scanf(\"%d\", &n) == 1) {\n        printf(\"%s\\n\", (n % 2 == 0) ? \"Even\" : \"Odd\");\n    }\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.32",
+          "questionId": "Q0.32",
+          "title": "Odd or Even Parity Check",
+          "difficulty": "Beginner",
+          "problemStatement": "Given a number,check whether it is \"Odd \" or \"Even\"",
+          "description": "Given a number,check whether it is \"Odd \" or \"Even\"",
+          "constraints": "-10^9 <= N <= 10^9",
+          "inputFormat": "Integer",
+          "outputFormat": "String",
+          "sampleTestCases": [
+            {
+              "input": "101010",
+              "output": "Even",
+              "explanation": "Input '101010' produces expected output ''."
+            },
+            {
+              "input": "2461",
+              "output": "Odd",
+              "explanation": "Input '2461' produces expected output ''."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "101010",
+              "output": "Even",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "2461",
+              "output": "Odd",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "101010",
+              "output": "Even",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "2461",
+              "output": "Odd",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "101010",
+              "output": "Even",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "2461",
+              "output": "Odd",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "101010",
+              "output": "Even",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "2461",
+              "output": "Odd",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "101010",
+              "output": "Even",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "2461",
+              "output": "Odd",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\n\nint main() {\n    int n;\n    if (scanf(\"%d\", &n) == 1) {\n        printf(\"%s\\n\", (n % 2 == 0) ? \"Even\" : \"Odd\");\n    }\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.35",
+          "questionId": "Q0.35",
+          "title": "Check Divisibility by 3",
+          "difficulty": "Beginner",
+          "problemStatement": "Given an integer value, check the given input is divisible by 3. If it is divisible print the message \"The number is divisible by 3\".if it is not divisible print the message \"The number is not\ndivisible by 3 and gives a remainder _\".",
+          "description": "Given an integer value, check the given input is divisible by 3. If it is divisible print the message \"The number is divisible by 3\".if it is not divisible print the message \"The number is not\ndivisible by 3 and gives a remainder _\".",
+          "constraints": "1 <= N <= 10^9",
+          "inputFormat": "Integer",
+          "outputFormat": "String",
+          "sampleTestCases": [
+            {
+              "input": "465",
+              "output": "The number is divisible by 3",
+              "explanation": "Input '465' produces expected output ''."
+            },
+            {
+              "input": "31",
+              "output": "The number is not divisible by 3 and gives a remainder 1",
+              "explanation": "Input '31' produces expected output ''."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "465",
+              "output": "The number is divisible by 3",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "31",
+              "output": "The number is not divisible by 3 and gives a remainder 1",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "465",
+              "output": "The number is divisible by 3",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "31",
+              "output": "The number is not divisible by 3 and gives a remainder 1",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "465",
+              "output": "The number is divisible by 3",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "31",
+              "output": "The number is not divisible by 3 and gives a remainder 1",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "465",
+              "output": "The number is divisible by 3",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "31",
+              "output": "The number is not divisible by 3 and gives a remainder 1",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "465",
+              "output": "The number is divisible by 3",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "31",
+              "output": "The number is not divisible by 3 and gives a remainder 1",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\n\nint main() {\n    int n;\n    if (scanf(\"%d\", &n) == 1) {\n        int rem = n % 3;\n        if (rem == 0) {\n            printf(\"The number is divisible by 3\\n\");\n        } else {\n            printf(\"The number is not divisible by 3 and gives a remainder %d\\n\", rem);\n        }\n    }\n    return 0;\n}\n"
+          }
+        }
+      ]
+    }
+  }
 }

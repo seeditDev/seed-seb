@@ -10,7 +10,34 @@
       "description": "Study concepts and solve targeted engineering problems for Practice.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 35,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-C-M15-T01-1",
+          "title": "Algorithmic Engineering, Edge Case Auditing, and GDB Debugging",
+          "content": "### Production Problem-Solving Methodology in C\n\nWhen implementing real-world systems software and solving capstone engineering problems in C:\n\n1. **State Invariants:** Explicitly verify pre-conditions and post-conditions at the start and end of every algorithmic function using `assert()` from `<assert.h>`.\n2. **Defensive Bounds Verification:** Ensure all buffer indices are checked against capacity before write operations (`if (idx >= capacity) return ERR_OVERFLOW;`).\n3. **Memory Ownership Protocol:** Clearly document which function is responsible for allocating (`malloc`) and freeing (`free`) shared structures to eliminate leaks.\n4. **Asymptotic Complexity Target:** Benchmark your solution to guarantee optimal time complexity ($O(N \\log N)$ for sorting, $O(\\log N)$ for searching) and $O(1)$ auxiliary memory where possible.\n\n### Debugging with GDB:\n- Compile with `-g -Wall -Wextra` to retain symbol tables.\n- Use `valgrind --leak-check=full ./program` to catch memory leaks, uninitialized variable reads, and invalid heap reads/writes.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Valgrind Memory Audit",
+            "text": "Always test capstone C projects with Valgrind or AddressSanitizer (`-fsanitize=address`) to eliminate zero-day memory bugs."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n#include <assert.h>\n\n// Binary search with invariant assertion\nint binarySearch(const int arr[], int n, int target) {\n    assert(n >= 0); // Precondition: non-negative size\n    int left = 0, right = n - 1;\n    while (left <= right) {\n        int mid = left + (right - left) / 2; // Prevents integer overflow\n        if (arr[mid] == target) return mid;\n        if (arr[mid] < target) left = mid + 1;\n        else right = mid - 1;\n    }\n    return -1; // Not found\n}\n\nint main(void) {\n    int a[] = {2, 5, 8, 12, 16, 23, 38, 56, 72, 91};\n    int idx = binarySearch(a, 10, 23);\n    printf(\"Target 23 found at index: %d\\n\", idx); // index 5\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-C-M15-T01-1",
+            "question": "Why is `mid = left + (right - left) / 2` preferred over `mid = (left + right) / 2` in binary search?",
+            "options": [
+              "It executes faster in hardware",
+              "It prevents integer overflow when `left + right` exceeds INT_MAX for large arrays",
+              "It rounds towards zero",
+              "It is required by C syntax"
+            ],
+            "correctAnswer": 1,
+            "explanation": "When left and right are large positive integers (e.g. 1.5 billion), left + right exceeds 2^31 - 1 and overflows to a negative number."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -2496,5 +2523,439 @@
       "_sourceFile": "c-beginner-v2-p2.json",
       "_moduleTitle": "Debug Algorithmic Problems"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m15-algorithmic-problem-solving-c-projects",
+    "title": "Module Assessment: Algorithmic Problem Solving & C Projects",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "msa-m15-q1",
+          "question": "What is the worst-case time complexity of QuickSort on an already-sorted array when using naive first-element pivot selection?",
+          "options": [
+            "O(N log N)",
+            "O(N^2)",
+            "O(N)",
+            "O(log N)"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Naive pivot selection on sorted input creates completely unbalanced partitions (1 and N-1), degrading QuickSort to O(N^2).",
+          "tags": [
+            "Algorithms",
+            "QuickSort"
+          ]
+        },
+        {
+          "questionId": "msa-m15-q2",
+          "question": "Which sorting algorithm provides guaranteed $O(N \\log N)$ worst-case time complexity and is stable?",
+          "options": [
+            "QuickSort",
+            "MergeSort",
+            "HeapSort",
+            "SelectionSort"
+          ],
+          "correctAnswer": 1,
+          "explanation": "MergeSort divides the array recursively and merges sorted halves, guaranteeing O(N log N) time in best, average, and worst cases while preserving relative order of equal keys.",
+          "tags": [
+            "Sorting",
+            "MergeSort"
+          ]
+        },
+        {
+          "questionId": "msa-m15-q3",
+          "question": "What tool is commonly used on Linux/Unix to detect memory leaks, buffer overruns, and use-after-free bugs in compiled C code?",
+          "options": [
+            "GDB",
+            "Valgrind",
+            "Make",
+            "Git"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Valgrind (specifically the Memcheck tool) runs programs in a simulated CPU to monitor all heap allocations and byte accesses for memory bugs.",
+          "tags": [
+            "Debugging",
+            "Valgrind"
+          ]
+        },
+        {
+          "questionId": "msa-m15-q4",
+          "question": "What GCC flag enables AddressSanitizer (ASan) for blazing-fast runtime memory error detection?",
+          "options": [
+            "-O3",
+            "-fsanitize=address",
+            "-Wall",
+            "-g3"
+          ],
+          "correctAnswer": 1,
+          "explanation": "-fsanitize=address instruments code with shadow memory checks that instantly catch out-of-bounds accesses and use-after-free crashes.",
+          "tags": [
+            "GCC Toolchain",
+            "AddressSanitizer"
+          ]
+        },
+        {
+          "questionId": "msa-m15-q5",
+          "question": "What is the time complexity of searching for an element in a balanced Binary Search Tree (BST) of $N$ nodes?",
+          "options": [
+            "O(1)",
+            "O(log N)",
+            "O(N)",
+            "O(N^2)"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Each comparison in a balanced BST cuts the remaining search space in half, yielding O(log N) search complexity.",
+          "tags": [
+            "Data Structures",
+            "BST"
+          ]
+        },
+        {
+          "questionId": "msa-m15-q6",
+          "question": "What is the purpose of the `assert()` macro defined in `<assert.h>`?",
+          "options": [
+            "Prints text to standard error without stopping",
+            "Terminates the program with an error message if the evaluated expression is false (0) during debugging",
+            "Converts types",
+            "Allocates heap memory"
+          ],
+          "correctAnswer": 1,
+          "explanation": "assert() tests program invariants; if the condition evaluates to false, it aborts the process and prints file and line numbers.",
+          "tags": [
+            "Defensive Programming",
+            "assert"
+          ]
+        },
+        {
+          "questionId": "msa-m15-q7",
+          "question": "How can all `assert()` checks be disabled in production release builds to maximize execution speed?",
+          "options": [
+            "Define NDEBUG before including <assert.h>",
+            "Pass -O0",
+            "Delete <assert.h>",
+            "Use -Wall"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Defining the macro NDEBUG (e.g. via gcc -DNDEBUG) causes assert() statements to compile into no-ops (empty statements).",
+          "tags": [
+            "C Preprocessor",
+            "NDEBUG"
+          ]
+        },
+        {
+          "questionId": "msa-m15-q8",
+          "question": "In software architecture, what is \"modular programming\" in C?",
+          "options": [
+            "Writing the entire application in a single 10,000-line main.c file",
+            "Separating independent functionality into distinct `.c` implementation files with clean interface `.h` header files",
+            "Using only while loops",
+            "Avoiding pointers"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Modular design separates interfaces (.h) from implementations (.c), promoting encapsulation, code reuse, and independent unit testing.",
+          "tags": [
+            "Architecture",
+            "Modular C"
+          ]
+        },
+        {
+          "questionId": "msa-m15-q9",
+          "question": "What does the standard C library function `qsort()` from `<stdlib.h>` take as its fourth argument?",
+          "options": [
+            "The array size",
+            "A pointer to a comparator function `int (*compar)(const void *, const void *)`",
+            "The pivot index",
+            "A temporary array"
+          ],
+          "correctAnswer": 1,
+          "explanation": "qsort uses a function pointer to a comparator function that returns negative, 0, or positive to determine element order.",
+          "tags": [
+            "qsort",
+            "Function Pointers"
+          ]
+        },
+        {
+          "questionId": "msa-m15-q10",
+          "question": "What is the memory footprint and time complexity of Binary Search on an array of size $N$ implemented iteratively?",
+          "options": [
+            "O(N) time and O(N) space",
+            "O(log N) time and O(1) auxiliary space",
+            "O(N log N) time and O(1) space",
+            "O(1) time and O(log N) space"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Iterative binary search repeatedly halves the search interval using only pointers/indices, requiring O(log N) time and O(1) auxiliary space.",
+          "tags": [
+            "Complexity",
+            "Binary Search"
+          ]
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.295",
+          "questionId": "Q0.295",
+          "title": "Sum of Unique Elements in Array",
+          "difficulty": "Beginner",
+          "problemStatement": "You are given a function,\nint SumUniqueElements(int* arr, int length);\nint SumUniqueElements(int* arr, int length);\nstatic int SumUniqueElements(int[] arr){}\nstatic int SumUniqueElements(int[] arr){}\ndef SumUniqueElements(arr):\nThe function accepts an integer array 'arr' of size 'length' as input. Implement the function such that\nit returns the sum of unique (non-duplicate) elements in the array.\nNote:\nReturn 0 if no unique element is found.\nComputed values lie within integer range.",
+          "description": "You are given a function,\nint SumUniqueElements(int* arr, int length);\nint SumUniqueElements(int* arr, int length);\nstatic int SumUniqueElements(int[] arr){}\nstatic int SumUniqueElements(int[] arr){}\ndef SumUniqueElements(arr):\nThe function accepts an integer array 'arr' of size 'length' as input. Implement the function such that\nit returns the sum of unique (non-duplicate) elements in the array.\nNote:\nReturn 0 if no unique element is found.\nComputed values lie within integer range.",
+          "constraints": "1 <= N <= 10^5",
+          "inputFormat": "8\n2 5 4 7 9 2 4 8",
+          "outputFormat": "29",
+          "sampleTestCases": [
+            {
+              "input": "8\n2 5 4 7 9 2 4 8",
+              "output": "29",
+              "explanation": "Example demonstrating Sum elements that appear exactly once in the array."
+            },
+            {
+              "input": "6\n10 12 22 10 12 98",
+              "output": "120",
+              "explanation": "Example demonstrating Sum elements that appear exactly once in the array."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "8\n2 5 4 7 9 2 4 8",
+              "output": "29",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "6\n10 12 22 10 12 98",
+              "output": "120",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "5\n1 2 3 2 1",
+              "output": "3",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "6\n1 2 3 1 2 3",
+              "output": "0",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "8\n2 5 4 7 9 2 4 8",
+              "output": "29",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "6\n10 12 22 10 12 98",
+              "output": "120",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "5\n1 2 3 2 1",
+              "output": "3",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "6\n1 2 3 1 2 3",
+              "output": "0",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "8\n2 5 4 7 9 2 4 8",
+              "output": "29",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "6\n10 12 22 10 12 98",
+              "output": "120",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\n#include <stdlib.h>\nint cmp(const void *a, const void *b) { return (*(int*)a - *(int*)b); }\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    int *arr = (int*)malloc(n * sizeof(int));\n    for (int i = 0; i < n; i++) scanf(\"%d\", &arr[i]);\n    qsort(arr, n, sizeof(int), cmp);\n    long long sum = 0;\n    for (int i = 0; i < n; i++) {\n        int is_uniq = 1;\n        if (i > 0 && arr[i] == arr[i-1]) is_uniq = 0;\n        if (i < n - 1 && arr[i] == arr[i+1]) is_uniq = 0;\n        if (is_uniq) sum += arr[i];\n    }\n    printf(\"%lld\\n\", sum);\n    free(arr);\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.300",
+          "questionId": "Q0.300",
+          "title": "Minimum Element and its Index",
+          "difficulty": "Beginner",
+          "problemStatement": "You are given a function,\nvoid MinInArray(int arr[], int length);\nvoid MinInArray(int arr[], int length);\nstatic void MinInArray(int[] arr){}\nstatic void MinInArray(int[] arr){}\ndef MinInArray(arr):\nThe function accepts an integer array 'arr' of size 'length' as its argument. Implement the function\nto find the minimum element of the array and print the minimum element and its index to the\nstandard output (STDOUT). The minimum element and its index should be printed in separate lines.\nNote:\nArray index starts with 0\nMinimum element and its index should be separated by a line in the output\nAssume there is only 1 minimum element in the array\nPrint exactly what is asked, do not print any additional greeting messages",
+          "description": "You are given a function,\nvoid MinInArray(int arr[], int length);\nvoid MinInArray(int arr[], int length);\nstatic void MinInArray(int[] arr){}\nstatic void MinInArray(int[] arr){}\ndef MinInArray(arr):\nThe function accepts an integer array 'arr' of size 'length' as its argument. Implement the function\nto find the minimum element of the array and print the minimum element and its index to the\nstandard output (STDOUT). The minimum element and its index should be printed in separate lines.\nNote:\nArray index starts with 0\nMinimum element and its index should be separated by a line in the output\nAssume there is only 1 minimum element in the array\nPrint exactly what is asked, do not print any additional greeting messages",
+          "constraints": "1 <= N <= 10^5",
+          "inputFormat": "23 45 82 27 66 12 78 13 71 86",
+          "outputFormat": "12\n5",
+          "sampleTestCases": [
+            {
+              "input": "10\n23 45 82 27 66 12 78 13 71 86",
+              "output": "12\n5",
+              "explanation": "Example demonstrating Find minimum element and its 0-based index in the array."
+            },
+            {
+              "input": "8\n1 9 11 144 6 7 112 95",
+              "output": "1\n0",
+              "explanation": "Example demonstrating Find minimum element and its 0-based index in the array."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "10\n23 45 82 27 66 12 78 13 71 86",
+              "output": "12\n5",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "8\n1 9 11 144 6 7 112 95",
+              "output": "1\n0",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "5\n5 4 3 2 1",
+              "output": "1\n4",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "7\n10 21 17 31 7 55 9",
+              "output": "7\n4",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "10\n23 45 82 27 66 12 78 13 71 86",
+              "output": "12\n5",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "8\n1 9 11 144 6 7 112 95",
+              "output": "1\n0",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "5\n5 4 3 2 1",
+              "output": "1\n4",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "7\n10 21 17 31 7 55 9",
+              "output": "7\n4",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "10\n23 45 82 27 66 12 78 13 71 86",
+              "output": "12\n5",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "8\n1 9 11 144 6 7 112 95",
+              "output": "1\n0",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    long long min_val = 2e18; int min_idx = 0;\n    for (int i = 0; i < n; i++) {\n        long long val; scanf(\"%lld\", &val);\n        if (i == 0 || val < min_val) { min_val = val; min_idx = i; }\n    }\n    printf(\"%lld\\n%d\\n\", min_val, min_idx);\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.306",
+          "questionId": "Q0.306",
+          "title": "Rearrange Array with Alternating Parity",
+          "difficulty": "Beginner",
+          "problemStatement": "You are given a function:\nint* ReArrangeArrayElements(int* arr, int length);\nint* ReArrangeArrayElements(int* arr, int length);\nstatic int[] ReArrangeArrayElements(int[] arr){}\nstatic int[] ReArrangeArrayElements(int[] arr){}\ndef ReArrangeArrayElements(arr):\nThe function accepts an array of integers and its length as input. Implement the function so that it\nreturns the array after re-arranging it such that even numbers occupy even indices and odd\nnumbers occupy odd indices.\nNote:\n1. The relative ordering of even numbers should not change among themselves.\n2. The relative ordering of odd numbers should not change among themselves.\n3. The re-arrangement is to be done in-place i.e. you cannot use another array.\n4. The 0th index of the re-arranged array should contain an even number.\nAssumption: You may assume that the array is of even length and half the numbers are even and\nhalf are odd.",
+          "description": "You are given a function:\nint* ReArrangeArrayElements(int* arr, int length);\nint* ReArrangeArrayElements(int* arr, int length);\nstatic int[] ReArrangeArrayElements(int[] arr){}\nstatic int[] ReArrangeArrayElements(int[] arr){}\ndef ReArrangeArrayElements(arr):\nThe function accepts an array of integers and its length as input. Implement the function so that it\nreturns the array after re-arranging it such that even numbers occupy even indices and odd\nnumbers occupy odd indices.\nNote:\n1. The relative ordering of even numbers should not change among themselves.\n2. The relative ordering of odd numbers should not change among themselves.\n3. The re-arrangement is to be done in-place i.e. you cannot use another array.\n4. The 0th index of the re-arranged array should contain an even number.\nAssumption: You may assume that the array is of even length and half the numbers are even and\nhalf are odd.",
+          "constraints": "1 <= N <= 10^5, N is even",
+          "inputFormat": "14 24 63 264 327 585 1 3 572 896",
+          "outputFormat": "14 63 24 327 264 585 572 1 896 3",
+          "sampleTestCases": [
+            {
+              "input": "10\n14 24 63 264 327 585 1 3 572 896",
+              "output": "14 63 24 327 264 585 572 1 896 3",
+              "explanation": "Example demonstrating Rearrange array so even elements occupy even indices and odd elements occupy odd indices."
+            },
+            {
+              "input": "12\n10 4 6 26 32 58 1 3 57 89 93 105",
+              "output": "10 1 4 3 6 57 26 89 32 93 58 105",
+              "explanation": "Example demonstrating Rearrange array so even elements occupy even indices and odd elements occupy odd indices."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "10\n14 24 63 264 327 585 1 3 572 896",
+              "output": "14 63 24 327 264 585 572 1 896 3",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "12\n10 4 6 26 32 58 1 3 57 89 93 105",
+              "output": "10 1 4 3 6 57 26 89 32 93 58 105",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "6\n2 1 4 3 6 5",
+              "output": "2 1 4 3 6 5",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "8\n2 4 6 8 1 3 5 7",
+              "output": "2 1 4 3 6 5 8 7",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "10\n14 24 63 264 327 585 1 3 572 896",
+              "output": "14 63 24 327 264 585 572 1 896 3",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "12\n10 4 6 26 32 58 1 3 57 89 93 105",
+              "output": "10 1 4 3 6 57 26 89 32 93 58 105",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "6\n2 1 4 3 6 5",
+              "output": "2 1 4 3 6 5",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "8\n2 4 6 8 1 3 5 7",
+              "output": "2 1 4 3 6 5 8 7",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "10\n14 24 63 264 327 585 1 3 572 896",
+              "output": "14 63 24 327 264 585 572 1 896 3",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "12\n10 4 6 26 32 58 1 3 57 89 93 105",
+              "output": "10 1 4 3 6 57 26 89 32 93 58 105",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\n#include <stdlib.h>\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    int *arr = (int*)malloc(n * sizeof(int));\n    int *evens = (int*)malloc(n * sizeof(int)); int e = 0;\n    int *odds = (int*)malloc(n * sizeof(int)); int o = 0;\n    for (int i = 0; i < n; i++) {\n        scanf(\"%d\", &arr[i]);\n        if (arr[i] % 2 == 0) evens[e++] = arr[i];\n        else odds[o++] = arr[i];\n    }\n    int first = 1;\n    for (int i = 0; i < e && i < o; i++) {\n        if (!first) putchar(' ');\n        printf(\"%d %d\", evens[i], odds[i]);\n        first = 0;\n    }\n    putchar('\\n');\n    free(arr); free(evens); free(odds);\n    return 0;\n}\n"
+          }
+        }
+      ]
+    }
+  }
 }

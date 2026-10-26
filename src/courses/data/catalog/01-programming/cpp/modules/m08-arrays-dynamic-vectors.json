@@ -7819,7 +7819,34 @@
       "description": "Study concepts and solve targeted engineering problems for Insertion, deletion in 1d array, merge two arrays.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 35,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m08-ops-merge-01",
+          "title": "Array Operations: Insert, Delete, and Merge",
+          "content": "### Dynamic Operations on Linear Arrays\n\nManipulating elements within static and dynamic sequences requires element shifting:\n\n1. **Insertion at Index $k$**:\n   - Shift all elements from index $k$ up to $N-1$ one position to the right.\n   - Place the new element at index $k$, increment size.\n   - Time Complexity: $O(N)$ due to shifting.\n\n2. **Deletion at Index $k$**:\n   - Shift all elements from index $k+1$ down to $N-1$ one position to the left.\n   - Decrement size.\n   - Time Complexity: $O(N)$.\n\n3. **Merging Two Sorted Arrays (Two Pointers)**:\n   - Maintain pointers $i$ and $j$ at the beginnings of array $A$ and $B$.\n   - Compare $A[i]$ and $B[j]$, append the smaller element into output array $C$, and advance pointer.\n   - Once one array finishes, copy remaining elements.\n   - Total Time Complexity: $O(N + M)$.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Two-Pointer Merging",
+            "text": "The linear O(N + M) merge procedure forms the foundational core of Merge Sort."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <vector>\n\nstd::vector<int> mergeSorted(const std::vector<int>& a, const std::vector<int>& b) {\n    std::vector<int> res;\n    size_t i = 0, j = 0;\n    while (i < a.size() && j < b.size()) {\n        if (a[i] <= b[j]) res.push_back(a[i++]);\n        else res.push_back(b[j++]);\n    }\n    while (i < a.size()) res.push_back(a[i++]);\n    while (j < b.size()) res.push_back(b[j++]);\n    return res;\n}\n\nint main() {\n    std::vector<int> a = {1, 3, 5};\n    std::vector<int> b = {2, 4, 6};\n    auto merged = mergeSorted(a, b);\n    for (int v : merged) std::cout << v << \" \";\n    std::cout << \"\\n\";\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m08-ops-cp1",
+            "question": "What is the time complexity of merging two sorted arrays of lengths N and M into a new sorted array?",
+            "options": [
+              "O(N + M) linear time",
+              "O((N + M) log(N + M))",
+              "O(N * M)",
+              "O(1) constant time"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Using two pointers, each element from both arrays is inspected and appended exactly once in O(N + M) time."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -8840,7 +8867,34 @@
       "description": "Study concepts and solve targeted engineering problems for 2dArray and its problems.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 45,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m08-2d-mat-01",
+          "title": "Two-Dimensional Arrays: Matrices and Matrix Traversals",
+          "content": "### Two-Dimensional Arrays and Memory Layout\n\nIn C++, 2D arrays are stored in contiguous memory in **Row-Major Order** (row 0 elements, then row 1 elements, etc.):\n\n```cpp\nint matrix[R][C];\n// Element (i, j) is located at offset: (i * C + j) * sizeof(int)\n```\n\n#### Standard Matrix Algorithms\n1. **Row Sums & Column Sums**: Iterating with nested loops. Iterating row-by-row (outer loop $i$, inner loop $j$) is CPU cache-friendly.\n2. **Matrix Transpose**: Swapping $matrix[i][j]$ with $matrix[j][i]$ for $i < j$ in a square matrix.\n3. **Diagonal Sums**: Primary diagonal elements satisfy $i == j$. Secondary diagonal elements satisfy $i + j == N - 1$.",
+          "callout": {
+            "type": "TIP",
+            "title": "Cache Locality",
+            "text": "Always iterate nested loops as for (int i = 0; i < R; ++i) for (int j = 0; j < C; ++j) to access consecutive memory addresses sequentially."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n\nint main() {\n    const int N = 3;\n    int mat[N][N] = {\n        {1, 2, 3},\n        {4, 5, 6},\n        {7, 8, 9}\n    };\n    \n    int primaryDiag = 0, secondaryDiag = 0;\n    for (int i = 0; i < N; ++i) {\n        primaryDiag += mat[i][i];\n        secondaryDiag += mat[i][N - 1 - i];\n    }\n    \n    std::cout << \"Primary Diagonal Sum: \" << primaryDiag << \"\\n\";     // 15\n    std::cout << \"Secondary Diagonal Sum: \" << secondaryDiag << \"\\n\"; // 15\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m08-2d-cp1",
+            "question": "Why is traversing a 2D array row-by-row significantly faster than column-by-column in C++?",
+            "options": [
+              "Row-by-row matches the row-major memory layout, maximizing CPU cache line hits",
+              "C++ compilers reject column traversals with syntax warnings",
+              "Column indices require floating point operations",
+              "Row-by-row traversal automatically executes in parallel"
+            ],
+            "correctAnswer": 0,
+            "explanation": "C++ stores 2D arrays contiguously in row-major order. Accessing elements sequentially along rows maximizes CPU L1/L2 cache locality."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -9276,14 +9330,14 @@
           "checkpoint": {
             "checkpointId": "cp-AOCV201",
             "question": "What does a[3] refer to in a C++ array?",
-            "options": "The fourth element, because C++ array indexing starts at 0.",
-            "correctAnswer": [
+            "options": [
               "The fourth element.",
               "The third element.",
               "The first element.",
               "The array length."
             ],
-            "explanation": 0
+            "correctAnswer": 0,
+            "explanation": "The fourth element, because C++ array indexing starts at 0."
           }
         }
       ],
@@ -9526,7 +9580,34 @@
       "description": "Study concepts and solve targeted engineering problems for Array operations part-2.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 20,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-CPP-M08-T17-1",
+          "title": "std::vector Memory Architecture, Capacity, and Emplace Semantics",
+          "content": "### std::vector: Contiguous Dynamic Array\n\nIn C++, `std::vector` (defined in `<vector>`) is the standard default container for contiguous sequential data. Unlike raw C arrays, a vector dynamically manages its own heap memory.\n\n### Size vs Capacity:\n- **`size()`:** Number of elements currently held in the vector.\n- **`capacity()`:** Number of elements the vector can hold **before reallocation is required**.\n- When `size() == capacity()` and a new element is added, `std::vector` allocates a new memory block (typically $1.5\\times$ or $2\\times$ larger), copies/moves existing elements, and frees old storage.\n\n### `push_back()` vs `emplace_back()`:\n- `push_back(obj)`: Creates or copies an existing object into the container.\n- `emplace_back(args...)`: Constructs the object **in-place directly inside the vector's memory**, eliminating unnecessary copy and move operations.",
+          "callout": {
+            "type": "TIP",
+            "title": "Use vector::reserve() to Prevent Reallocations",
+            "text": "If you know you will store $N$ elements, call `vec.reserve(N);` beforehand to allocate capacity in a single operation, boosting performance by 3–5x."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <vector>\n\nint main() {\n    std::vector<int> nums;\n    nums.reserve(100); // Allocates capacity for 100 ints upfront\n    \n    for (int i = 1; i <= 5; ++i) {\n        nums.push_back(i * 10);\n    }\n    \n    std::cout << \"Size: \" << nums.size() << \", Capacity: \" << nums.capacity() << \"\\n\";\n    for (int val : nums) std::cout << val << \" \";\n    std::cout << \"\\n\";\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CPP-M08-T17-1",
+            "question": "What is the primary performance benefit of `std::vector::emplace_back` over `push_back`?",
+            "options": [
+              "It constructs elements in-place directly in the container memory, avoiding extra copy/move operations",
+              "It sorts the vector automatically",
+              "It runs on a separate thread",
+              "It limits the vector to 32 elements"
+            ],
+            "correctAnswer": 0,
+            "explanation": "emplace_back forwards its arguments directly to the value_type constructor in-place, eliminating temporary objects."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -9777,14 +9858,14 @@
           "checkpoint": {
             "checkpointId": "cp-AOCV216",
             "question": "What does counting changes between adjacent frames determine?",
-            "options": "The number of runs of equal adjacent values, which is the minimum size after allowed deletions.",
-            "correctAnswer": [
+            "options": [
               "The number of distinct values only.",
               "The number of runs of equal adjacent values.",
               "The maximum frame value.",
               "The sum of all frames."
             ],
-            "explanation": 1
+            "correctAnswer": 1,
+            "explanation": "The number of runs of equal adjacent values, which is the minimum size after allowed deletions."
           }
         }
       ],
@@ -9969,5 +10050,442 @@
       "_sourceFile": "cpp-beginner-v2-p2.json",
       "_moduleTitle": "Array Operations"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m08-arrays-dynamic-vectors",
+    "title": "Module Assessment: Arrays & Dynamic Vectors",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "msa-cpp-m08-q1",
+          "question": "How are elements of a `std::vector` laid out in physical computer memory?",
+          "options": [
+            "In a linked list across random heap pages",
+            "In a strictly contiguous memory buffer, enabling pointer arithmetic and cache locality",
+            "In a hash table",
+            "In a binary tree"
+          ],
+          "correctAnswer": 1,
+          "explanation": "ISO C++ guarantees that std::vector storage is strictly contiguous in memory (like a C array).",
+          "tags": [
+            "std::vector",
+            "Memory Layout"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m08-q2",
+          "question": "What is the amortized time complexity of appending an element to a `std::vector` using `push_back()`?",
+          "options": [
+            "O(N)",
+            "O(1) amortized",
+            "O(log N)",
+            "O(N^2)"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Geometric growth (doubling capacity) ensures that resizing costs amortize to O(1) per insertion over many operations.",
+          "tags": [
+            "Complexity",
+            "std::vector"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m08-q3",
+          "question": "What is the difference between `vec.resize(n)` and `vec.reserve(n)` in C++?",
+          "options": [
+            "resize alters the actual size (element count) and initializes elements; reserve only increases internal buffer capacity without changing size",
+            "reserve alters size; resize alters capacity",
+            "They are identical",
+            "resize only works on strings"
+          ],
+          "correctAnswer": 0,
+          "explanation": "reserve(n) allocates storage for future elements without creating them; resize(n) creates or destroys elements to match size n.",
+          "tags": [
+            "std::vector",
+            "reserve vs resize"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m08-q4",
+          "question": "What happens when accessing a `std::vector` using `vec.at(i)` vs `vec[i]` with an out-of-range index `i`?",
+          "options": [
+            "vec.at(i) throws `std::out_of_range` exception; vec[i] performs unchecked access leading to undefined behavior",
+            "Both throw exceptions",
+            "Both crash silently",
+            "vec[i] resizes automatically"
+          ],
+          "correctAnswer": 0,
+          "explanation": "vec.at(i) enforces runtime bounds checking and throws std::out_of_range if index is invalid; operator[] is unchecked for speed.",
+          "tags": [
+            "std::vector",
+            "Bounds Checking"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m08-q5",
+          "question": "What is \"iterator invalidation\" in `std::vector`?",
+          "options": [
+            "Deleting the vector variable",
+            "Existing pointers or iterators into the vector become invalid (dangling) when a reallocation moves memory to a new address",
+            "Converting iterators to integers",
+            "Accessing past end"
+          ],
+          "correctAnswer": 1,
+          "explanation": "When vector capacity is exceeded during an insertion, memory is reallocated at a new address, invalidating all old iterators and references.",
+          "tags": [
+            "Iterators",
+            "Iterator Invalidation"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m08-q6",
+          "question": "What modern C++ container in `<array>` provides a fixed-size array with STL iterator support and zero heap overhead?",
+          "options": [
+            "std::vector",
+            "std::array",
+            "std::list",
+            "std::deque"
+          ],
+          "correctAnswer": 1,
+          "explanation": "std::array<T, N> is a lightweight wrapper over a static C array with no heap overhead, knowing its size and supporting STL algorithms.",
+          "tags": [
+            "STL",
+            "std::array"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m08-q7",
+          "question": "What algorithm from `<algorithm>` reverses elements of a vector in-place?",
+          "options": [
+            "std::reverse(vec.begin(), vec.end())",
+            "vec.invert()",
+            "std::sort_reverse(vec)",
+            "vec.reverse()"
+          ],
+          "correctAnswer": 0,
+          "explanation": "std::reverse(first, last) reverses elements in-place using two-pointer swapping.",
+          "tags": [
+            "Algorithms",
+            "std::reverse"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m08-q8",
+          "question": "How do you completely clear both the elements AND release excess capacity of a vector `v` in C++11?",
+          "options": [
+            "v.clear(); v.shrink_to_fit();",
+            "v.empty();",
+            "delete v;",
+            "v.capacity(0);"
+          ],
+          "correctAnswer": 0,
+          "explanation": "clear() removes elements (size=0); shrink_to_fit() requests the container to deallocate unused buffer capacity.",
+          "tags": [
+            "Memory Management",
+            "shrink_to_fit"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m08-q9",
+          "question": "What does `vec.pop_back()` do to a non-empty `std::vector`?",
+          "options": [
+            "Removes the last element and destroys it, decrementing size by 1",
+            "Returns the last element and keeps it",
+            "Deallocates all capacity",
+            "Removes the first element"
+          ],
+          "correctAnswer": 0,
+          "explanation": "pop_back() removes and destroys the trailing element in O(1) time without changing overall capacity.",
+          "tags": [
+            "std::vector",
+            "pop_back"
+          ]
+        },
+        {
+          "questionId": "msa-cpp-m08-q10",
+          "question": "What is the space-efficient specialization of `std::vector` that stores 1 bit per element?",
+          "options": [
+            "std::vector<char>",
+            "std::vector<bool>",
+            "std::bitset_vector",
+            "std::vector<int8_t>"
+          ],
+          "correctAnswer": 1,
+          "explanation": "std::vector<bool> is a space-optimized specialization packing individual bits into words.",
+          "tags": [
+            "std::vector",
+            "vector<bool>"
+          ]
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.143",
+          "questionId": "Q0.143",
+          "title": "Read and Print Array Elements",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a c program to accept the array from the user and print the array from left to right",
+          "description": "Write a c program to accept the array from the user and print the array from left to right",
+          "constraints": "1 <= N <= 10^5, -10^9 <= Arr[i] <= 10^9",
+          "inputFormat": "Number of elements followed by array as input elements",
+          "outputFormat": "Print the array elements",
+          "sampleTestCases": [
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "1 2 3 4 5 6 7 8 9 10",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "5\n11 12 13 14 15",
+              "output": "11 12 13 14 15",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "1 2 3 4 5 6 7 8 9 10",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "5\n11 12 13 14 15",
+              "output": "11 12 13 14 15",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "5\n12 13 14 15 16",
+              "output": "12 13 14 15 16",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "1 2 3 4 5 6 7 8 9 10",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "5\n11 12 13 14 15",
+              "output": "11 12 13 14 15",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "5\n12 13 14 15 16",
+              "output": "12 13 14 15 16",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "1 2 3 4 5 6 7 8 9 10",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "5\n11 12 13 14 15",
+              "output": "11 12 13 14 15",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "5\n12 13 14 15 16",
+              "output": "12 13 14 15 16",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "1 2 3 4 5 6 7 8 9 10",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Standard solution for Q0.143\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Standard solution for Q0.143\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.145",
+          "questionId": "Q0.145",
+          "title": "Print Array in Reverse Order",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept the elements into an array and display the array from right to left",
+          "description": "Write a program to accept the elements into an array and display the array from right to left",
+          "constraints": "1 <= N <= 10^5, -10^9 <= Arr[i] <= 10^9",
+          "inputFormat": "Number of elements followed by array as an input",
+          "outputFormat": "Print the array elements after modi",
+          "sampleTestCases": [
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "10 9 8 7 6 5 4 3 2 1",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "5\n1 2 3 4 5",
+              "output": "5 4 3 2 1",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "10 9 8 7 6 5 4 3 2 1",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "5\n1 2 3 4 5",
+              "output": "5 4 3 2 1",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "4 3 2 1",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "10 9 8 7 6 5 4 3 2 1",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "5\n1 2 3 4 5",
+              "output": "5 4 3 2 1",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "4 3 2 1",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "10 9 8 7 6 5 4 3 2 1",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "5\n1 2 3 4 5",
+              "output": "5 4 3 2 1",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "4 3 2 1",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "10\n1 2 3 4 5 6 7 8 9 10",
+              "output": "10 9 8 7 6 5 4 3 2 1",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Standard solution for Q0.145\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Standard solution for Q0.145\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.150",
+          "questionId": "Q0.150",
+          "title": "Find Maximum Element in Array",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program in C to find the maximum value in an unsorted array.",
+          "description": "Write a program in C to find the maximum value in an unsorted array.",
+          "constraints": "1 <= N <= 10^5, -10^9 <= Arr[i] <= 10^9",
+          "inputFormat": "Integer Integers",
+          "outputFormat": "Integer",
+          "sampleTestCases": [
+            {
+              "input": "6\n3 4 1 2 6 5",
+              "output": "6",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "10\n12 11 15 20 35 60 95 10 1 5",
+              "output": "95",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "6\n3 4 1 2 6 5",
+              "output": "6",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "10\n12 11 15 20 35 60 95 10 1 5",
+              "output": "95",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "9\n1 70 90 20 50 78 23 45 9",
+              "output": "90",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "12\n12 14 16 18 20 22 24 26 28 30 32 34",
+              "output": "34",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "4\n-80 -90 -100 -110",
+              "output": "-80",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "6\n3 4 1 2 6 5",
+              "output": "6",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "10\n12 11 15 20 35 60 95 10 1 5",
+              "output": "95",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "9\n1 70 90 20 50 78 23 45 9",
+              "output": "90",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "12\n12 14 16 18 20 22 24 26 28 30 32 34",
+              "output": "34",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "4\n-80 -90 -100 -110",
+              "output": "-80",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Standard solution for Q0.150\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Standard solution for Q0.150\n    return 0;\n}\n"
+          }
+        }
+      ]
+    }
+  }
 }

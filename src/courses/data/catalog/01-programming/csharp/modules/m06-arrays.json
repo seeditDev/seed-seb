@@ -10,7 +10,34 @@
       "description": "Study concepts and solve targeted engineering problems for Introduction to Arrays.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 25,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cs-m06-arr-01",
+          "title": "Array Allocation, Indexing, and System.Array in C#",
+          "content": "### Array Mechanics in C#\n\nIn C#, arrays are reference types derived from `System.Array` and allocated on the managed heap:\n\n1. **Declaration and Allocation**:\n   ```csharp\n   int[] numbers = new int[5]; // Allocates contiguous storage for 5 integers initialized to 0\n   int[] primes = { 2, 3, 5, 7, 11 }; // Collection initializer\n   ```\n2. **Fixed Size & Bounds Checking**:\n   - An array's length is immutable once allocated (accessible via `numbers.Length`).\n   - Accessing an index $< 0$ or $\\ge Length$ throws `IndexOutOfRangeException` at runtime.\n3. **Modern C# 8+ Indices and Ranges**:\n   - `^1` references the last element (`Length - 1`).\n   - `numbers[1..4]` creates a sliced sub-array from index 1 up to index 4 (exclusive).\n4. **System.Array Methods**:\n   - `Array.Sort(arr)`: Sorts in ascending order in $O(N \\log N)$ time.\n   - `Array.Reverse(arr)`: Inverts elements in-place.\n   - `Array.IndexOf(arr, val)`: Linear search returning index or -1.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Heap Allocation",
+            "text": "All C# arrays are objects stored on the managed heap. Passing an array to a method passes a reference, allowing in-place modifications."
+          },
+          "codeCard": {
+            "language": "csharp",
+            "code": "using System;\n\nclass Program\n{\n    static void Main()\n    {\n        int[] scores = { 85, 92, 78, 95, 88 };\n        Array.Sort(scores);\n\n        Console.WriteLine($\"Sorted min: {scores[0]}, max: {scores[^1]}\");\n        Console.WriteLine($\"Total elements: {scores.Length}\");\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cs-m06-arr-cp1",
+            "question": "What occurs if you attempt to access `arr[arr.Length]` in C#?",
+            "options": [
+              "An IndexOutOfRangeException is thrown at runtime",
+              "It returns 0",
+              "It returns null",
+              "The array automatically resizes"
+            ],
+            "correctAnswer": 0,
+            "explanation": "C# array indices run from 0 to Length - 1. Accessing index Length exceeds valid bounds and triggers an IndexOutOfRangeException."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -392,5 +419,414 @@
       "_sourceFile": "c-sharp.json",
       "_moduleTitle": "Arrays"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m06-arrays",
+    "title": "Module Assessment: Arrays",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "cs-m06-q01",
+          "question": "Where are array elements stored in memory in C#?",
+          "options": [
+            "On the managed heap (arrays are reference types)",
+            "Strictly on the thread stack",
+            "In CPU registers",
+            "On secondary disk storage"
+          ],
+          "correctAnswer": 0,
+          "explanation": "In C#, all arrays (even arrays of value types like int[]) are reference types allocated on the managed heap."
+        },
+        {
+          "questionId": "cs-m06-q02",
+          "question": "What is the difference between a 2D rectangular array `int[,]` and a jagged array `int[][]` in C#?",
+          "options": [
+            "`int[,]` is a single contiguous matrix with uniform row lengths, while `int[][]` is an array of separate array objects with potentially differing row lengths",
+            "`int[,]` can only store strings",
+            "`int[][]` cannot be resized",
+            "There is no difference"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Rectangular arrays (int[,]) are single contiguous blocks with fixed dimensions. Jagged arrays (int[][]) are arrays of independent array objects ('array of arrays') where rows can vary in size."
+        },
+        {
+          "questionId": "cs-m06-q03",
+          "question": "Which property returns the total number of elements in a C# array?",
+          "options": [
+            "Length",
+            "Count",
+            "Size",
+            "Capacity"
+          ],
+          "correctAnswer": 0,
+          "explanation": "The Length property of System.Array returns the total number of elements across all dimensions of the array."
+        },
+        {
+          "questionId": "cs-m06-q04",
+          "question": "What does the C# 8 index operator `^1` represent when indexing an array `arr[^1]`?",
+          "options": [
+            "The last element of the array (equivalent to arr[arr.Length - 1])",
+            "The first element",
+            "Bitwise XOR with 1",
+            "The element at index -1"
+          ],
+          "correctAnswer": 0,
+          "explanation": "The ^ (from-end) index operator measures offset from the end of a collection. ^1 points to the last element."
+        },
+        {
+          "questionId": "cs-m06-q05",
+          "question": "What algorithm does System.Array.Sort() employ in the .NET runtime?",
+          "options": [
+            "IntroSort (QuickSort, HeapSort, and InsertionSort hybrid) running in O(N log N) time",
+            "BubbleSort running in O(N^2)",
+            "SelectionSort",
+            "MergeSort requiring O(N) extra space"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Array.Sort uses IntroSort: it starts with QuickSort, switches to HeapSort if recursion exceeds log N depth, and uses InsertionSort for small partitions."
+        },
+        {
+          "questionId": "cs-m06-q06",
+          "question": "What does the `params` keyword in a method parameter `void Print(params int[] numbers)` allow?",
+          "options": [
+            "Callers can pass a comma-separated list of arguments or an existing array directly",
+            "The array cannot be modified",
+            "The parameter is optional and defaults to null",
+            "The method executes on background threads"
+          ],
+          "correctAnswer": 0,
+          "explanation": "The params keyword allows passing a variable number of comma-separated arguments of the specified type without explicitly constructing an array."
+        },
+        {
+          "questionId": "cs-m06-q07",
+          "question": "When an array is passed as an argument to a method in C#, how is it passed by default?",
+          "options": [
+            "By value of the reference (the method receives a copy of the reference pointing to the same heap array)",
+            "A complete deep copy of all elements is created",
+            "By read-only pointer",
+            "As an immutable span"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Reference types in C# are passed by value of reference: the method receives a copy of the pointer, allowing mutations to array elements to affect the caller's array."
+        },
+        {
+          "questionId": "cs-m06-q08",
+          "question": "What is the default value of elements in a freshly allocated `bool[] flags = new bool[5];`?",
+          "options": [
+            "false",
+            "true",
+            "null",
+            "undefined"
+          ],
+          "correctAnswer": 0,
+          "explanation": "When an array is allocated on the heap, all elements are automatically initialized to their default values (0 for numerics, false for booleans, null for references)."
+        },
+        {
+          "questionId": "cs-m06-q09",
+          "question": "Which method in System.Array copies a section of one array to another with specified length?",
+          "options": [
+            "Array.Copy(source, target, length)",
+            "Array.Transfer(source, target)",
+            "Array.Move(source, target)",
+            "Array.Slice(source, target)"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Array.Copy copies a range of elements from one Array starting at the specified source index and pastes them to another Array."
+        },
+        {
+          "questionId": "cs-m06-q10",
+          "question": "What is the time complexity of accessing an element in an array by its index in C#?",
+          "options": [
+            "O(1) constant time",
+            "O(N) linear time",
+            "O(log N)",
+            "O(N^2)"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Because array memory is contiguous and elements have uniform size, accessing an element at index i is a direct memory address calculation in O(1) constant time."
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.212",
+          "questionId": "Q0.212",
+          "title": "Count Zeros and Ones in Binary Array",
+          "difficulty": "Beginner",
+          "problemStatement": "Complete the code snippet below to count the number of 0s and 1s in an array that are in random order. You may assume that the array consists of only 0s and 1s.",
+          "description": "Complete the code snippet below to count the number of 0s and 1s in an array that are in random order. You may assume that the array consists of only 0s and 1s.",
+          "constraints": "1 <= N <= 10^5",
+          "inputFormat": "Integer Integers",
+          "outputFormat": "Integers",
+          "sampleTestCases": [
+            {
+              "input": "6\n0 0 1 1 1 1",
+              "output": "0:2\n1:4",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "30\n0 0 0 0 0 1 0 0 1 0 1 0 0 0 1 1 1 1 1 1 1 1 0 1 0 0 0 1 1 1",
+              "output": "0:15\n1:15",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "6\n0 0 1 1 1 1",
+              "output": "0:2\n1:4",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "30\n0 0 0 0 0 1 0 0 1 0 1 0 0 0 1 1 1 1 1 1 1 1 0 1 0 0 0 1 1 1",
+              "output": "0:15\n1:15",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "30\n1 0 1 1 1 1 1 1 0 0 0 0 1 1 1 1 1 1 0 0 0 1 1 1 1 0 0 0 0 1",
+              "output": "0:12\n1:18",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "12\n1 1 1 1 1 1 1 1 1 1 1 1",
+              "output": "0:0\n1:12",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "9\n0 0 0 0 0 0 0 0 0",
+              "output": "0:9\n1:0",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "6\n0 0 1 1 1 1",
+              "output": "0:2\n1:4",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "30\n0 0 0 0 0 1 0 0 1 0 1 0 0 0 1 1 1 1 1 1 1 1 0 1 0 0 0 1 1 1",
+              "output": "0:15\n1:15",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "30\n1 0 1 1 1 1 1 1 0 0 0 0 1 1 1 1 1 1 0 0 0 1 1 1 1 0 0 0 0 1",
+              "output": "0:12\n1:18",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "12\n1 1 1 1 1 1 1 1 1 1 1 1",
+              "output": "0:0\n1:12",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "9\n0 0 0 0 0 0 0 0 0",
+              "output": "0:9\n1:0",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "csharp": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "cs": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "c#": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "csharp": "",
+            "java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            int c0 = 0, c1 = 0;\n            for (int i = 0; i < n; i++) {\n                int x = sc.nextInt();\n                if (x == 0) c0++; else if (x == 1) c1++;\n            }\n            System.out.println(\"0:\" + c0 + \"\\n1:\" + c1);\n        }\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\nint main() {\n    int n; if (!(cin >> n)) return 0;\n    int c0 = 0, c1 = 0;\n    for (int i = 0; i < n; i++) {\n        int x; cin >> x;\n        if (x == 0) c0++; else if (x == 1) c1++;\n    }\n    cout << \"0:\" << c0 << \"\\n1:\" << c1 << \"\\n\";\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.213",
+          "questionId": "Q0.213",
+          "title": "Count Elements Less Than Key",
+          "difficulty": "Beginner",
+          "problemStatement": "Complete the code snippet below to print the count of the elements in an array whose values are lesser than a key element in an unsorted array.",
+          "description": "Complete the code snippet below to print the count of the elements in an array whose values are lesser than a key element in an unsorted array.",
+          "constraints": "1 <= N <= 10^5",
+          "inputFormat": "Integer Integers Integer",
+          "outputFormat": "Integer",
+          "sampleTestCases": [
+            {
+              "input": "6\n3 4 1 2 6 5 \n3",
+              "output": "2",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "10\n10 20 30 40 50 60 70 80 90 100\n55",
+              "output": "5",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "6\n3 4 1 2 6 5 \n3",
+              "output": "2",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "10\n10 20 30 40 50 60 70 80 90 100\n55",
+              "output": "5",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "9\n15 70 90 20 50 78 23 45 9\n90",
+              "output": "8",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "12\n12 14 16 18 20 22 24 26 28 30 32 34\n35",
+              "output": "12",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "4\n-80 -90 -100 -110\n0",
+              "output": "4",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "6\n3 4 1 2 6 5 \n3",
+              "output": "2",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "10\n10 20 30 40 50 60 70 80 90 100\n55",
+              "output": "5",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "9\n15 70 90 20 50 78 23 45 9\n90",
+              "output": "8",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "12\n12 14 16 18 20 22 24 26 28 30 32 34\n35",
+              "output": "12",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "4\n-80 -90 -100 -110\n0",
+              "output": "4",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "csharp": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "cs": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "c#": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "csharp": "",
+            "java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            long[] a = new long[n];\n            for (int i = 0; i < n; i++) a[i] = sc.nextLong();\n            long k = sc.nextLong();\n            int count = 0;\n            for (long x : a) if (x < k) count++;\n            System.out.println(count);\n        }\n    }\n}\n",
+            "cpp": "#include <iostream>\n#include <vector>\nusing namespace std;\nint main() {\n    int n; if (!(cin >> n)) return 0;\n    vector<long long> a(n);\n    for (int i = 0; i < n; i++) cin >> a[i];\n    long long k; cin >> k;\n    int count = 0;\n    for (long long x : a) if (x < k) count++;\n    cout << count << \"\\n\";\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.220",
+          "questionId": "Q0.220",
+          "title": "Replace First and Last Elements",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to replace the value of the first and last element in an array with the given replace values.",
+          "description": "Write a program to replace the value of the first and last element in an array with the given replace values.",
+          "constraints": "1 <= N <= 10^5",
+          "inputFormat": "The first line has an integer N denotes the size of the array.\n\n The second line contains N values separated by space\n\n The third line contains two replace values for first and last element separated by space.",
+          "outputFormat": "Array of integers",
+          "sampleTestCases": [
+            {
+              "input": "5\n-72 -339 -226 -45 -218\n-999 -1111",
+              "output": "-999 -339 -226 -45 -1111",
+              "explanation": "Input produces the expected output following problem rules."
+            },
+            {
+              "input": "200\n957821523 999876156 554321484 862174988 736307900 778008471 601321381 212317983 54533691 600788925 893353152 174224809 633906087 42471902 646890586 3717952 569504980 34398406 254342782 196285239 140506101 531364994 125566798 273964083 155757000 184897490 310081965 347175859 323177020 384492458 398703429 149139200 294921070 424103929 686746079 455898649 985061142 35110622 519402955 287927762 473120372 511396798 341024746 385713656 737823768 319373080 562670362 30252096 853655674 650306267 268128645 953986481 165690564 605540170 604925500 262883307 52080111 220292689 338736582 632112577 217726887 422520586 425120448 158922220 174027778 48514157 76301375 915116517 39725551 327607241 866964841 506153373 677982606 344871024 873371605 63033994 125445107 710205214 691821112 933421044 223035205 890526013 528974583 28806661 808800550 121914464 339610254 333215812 506887948 412576575 780645264 195896430 661965687 210425080 771323606 184522859 137781326 653264950 548482417 328296210 89406840 997214292 436557060 768154105 195511456 239272576 684379440 8667932 477695090 109253686 611548797 599477463 16412724 286341844 897727321 596250375 596731661 901630637 799564204 798086781 774606604 346487584 983996057 294502953 203848166 930017242 668395116 825570429 955924036 457620897 726862224 318551613 509406520 289704051 476673636 872903106 256922949 818432202 677596861 644135477 208454795 120829205 46447980 169600792 440153076 942621331 176064630 674947470 703549547 327878085 93886744 784845132 168265463 808621777 847472052 675137416 472396912 591530448 944173072 404262966 374760337 733513823 872368285 541150920 935681848 909792856 708308398 748214649 849007298 41233624 667019901 316783936 505628193 671553855 914964432 808824293 367199285 909567026 73248512 232572256 887025130 790490215 619879568 770339818 544429812 583164439 844186509 978759352 729298201 497467776 140111376 883057243 930994448 324701629 316085251 266207205 711775412 998671943 84138517 942828846\n33333333 999999999",
+              "output": "33333333 999876156 554321484 862174988 736307900 778008471 601321381 212317983 54533691 600788925 893353152 174224809 633906087 42471902 646890586 3717952 569504980 34398406 254342782 196285239 140506101 531364994 125566798 273964083 155757000 184897490 310081965 347175859 323177020 384492458 398703429 149139200 294921070 424103929 686746079 455898649 985061142 35110622 519402955 287927762 473120372 511396798 341024746 385713656 737823768 319373080 562670362 30252096 853655674 650306267 268128645 953986481 165690564 605540170 604925500 262883307 52080111 220292689 338736582 632112577 217726887 422520586 425120448 158922220 174027778 48514157 76301375 915116517 39725551 327607241 866964841 506153373 677982606 344871024 873371605 63033994 125445107 710205214 691821112 933421044 223035205 890526013 528974583 28806661 808800550 121914464 339610254 333215812 506887948 412576575 780645264 195896430 661965687 210425080 771323606 184522859 137781326 653264950 548482417 328296210 89406840 997214292 436557060 768154105 195511456 239272576 684379440 8667932 477695090 109253686 611548797 599477463 16412724 286341844 897727321 596250375 596731661 901630637 799564204 798086781 774606604 346487584 983996057 294502953 203848166 930017242 668395116 825570429 955924036 457620897 726862224 318551613 509406520 289704051 476673636 872903106 256922949 818432202 677596861 644135477 208454795 120829205 46447980 169600792 440153076 942621331 176064630 674947470 703549547 327878085 93886744 784845132 168265463 808621777 847472052 675137416 472396912 591530448 944173072 404262966 374760337 733513823 872368285 541150920 935681848 909792856 708308398 748214649 849007298 41233624 667019901 316783936 505628193 671553855 914964432 808824293 367199285 909567026 73248512 232572256 887025130 790490215 619879568 770339818 544429812 583164439 844186509 978759352 729298201 497467776 140111376 883057243 930994448 324701629 316085251 266207205 711775412 998671943 84138517 999999999",
+              "explanation": "Input produces the expected output following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "5\n-72 -339 -226 -45 -218\n-999 -1111",
+              "output": "-999 -339 -226 -45 -1111",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "200\n957821523 999876156 554321484 862174988 736307900 778008471 601321381 212317983 54533691 600788925 893353152 174224809 633906087 42471902 646890586 3717952 569504980 34398406 254342782 196285239 140506101 531364994 125566798 273964083 155757000 184897490 310081965 347175859 323177020 384492458 398703429 149139200 294921070 424103929 686746079 455898649 985061142 35110622 519402955 287927762 473120372 511396798 341024746 385713656 737823768 319373080 562670362 30252096 853655674 650306267 268128645 953986481 165690564 605540170 604925500 262883307 52080111 220292689 338736582 632112577 217726887 422520586 425120448 158922220 174027778 48514157 76301375 915116517 39725551 327607241 866964841 506153373 677982606 344871024 873371605 63033994 125445107 710205214 691821112 933421044 223035205 890526013 528974583 28806661 808800550 121914464 339610254 333215812 506887948 412576575 780645264 195896430 661965687 210425080 771323606 184522859 137781326 653264950 548482417 328296210 89406840 997214292 436557060 768154105 195511456 239272576 684379440 8667932 477695090 109253686 611548797 599477463 16412724 286341844 897727321 596250375 596731661 901630637 799564204 798086781 774606604 346487584 983996057 294502953 203848166 930017242 668395116 825570429 955924036 457620897 726862224 318551613 509406520 289704051 476673636 872903106 256922949 818432202 677596861 644135477 208454795 120829205 46447980 169600792 440153076 942621331 176064630 674947470 703549547 327878085 93886744 784845132 168265463 808621777 847472052 675137416 472396912 591530448 944173072 404262966 374760337 733513823 872368285 541150920 935681848 909792856 708308398 748214649 849007298 41233624 667019901 316783936 505628193 671553855 914964432 808824293 367199285 909567026 73248512 232572256 887025130 790490215 619879568 770339818 544429812 583164439 844186509 978759352 729298201 497467776 140111376 883057243 930994448 324701629 316085251 266207205 711775412 998671943 84138517 942828846\n33333333 999999999",
+              "output": "33333333 999876156 554321484 862174988 736307900 778008471 601321381 212317983 54533691 600788925 893353152 174224809 633906087 42471902 646890586 3717952 569504980 34398406 254342782 196285239 140506101 531364994 125566798 273964083 155757000 184897490 310081965 347175859 323177020 384492458 398703429 149139200 294921070 424103929 686746079 455898649 985061142 35110622 519402955 287927762 473120372 511396798 341024746 385713656 737823768 319373080 562670362 30252096 853655674 650306267 268128645 953986481 165690564 605540170 604925500 262883307 52080111 220292689 338736582 632112577 217726887 422520586 425120448 158922220 174027778 48514157 76301375 915116517 39725551 327607241 866964841 506153373 677982606 344871024 873371605 63033994 125445107 710205214 691821112 933421044 223035205 890526013 528974583 28806661 808800550 121914464 339610254 333215812 506887948 412576575 780645264 195896430 661965687 210425080 771323606 184522859 137781326 653264950 548482417 328296210 89406840 997214292 436557060 768154105 195511456 239272576 684379440 8667932 477695090 109253686 611548797 599477463 16412724 286341844 897727321 596250375 596731661 901630637 799564204 798086781 774606604 346487584 983996057 294502953 203848166 930017242 668395116 825570429 955924036 457620897 726862224 318551613 509406520 289704051 476673636 872903106 256922949 818432202 677596861 644135477 208454795 120829205 46447980 169600792 440153076 942621331 176064630 674947470 703549547 327878085 93886744 784845132 168265463 808621777 847472052 675137416 472396912 591530448 944173072 404262966 374760337 733513823 872368285 541150920 935681848 909792856 708308398 748214649 849007298 41233624 667019901 316783936 505628193 671553855 914964432 808824293 367199285 909567026 73248512 232572256 887025130 790490215 619879568 770339818 544429812 583164439 844186509 978759352 729298201 497467776 140111376 883057243 930994448 324701629 316085251 266207205 711775412 998671943 84138517 999999999",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "20\n974625858408 265423638243 723872786917 440576560771 417407213172 544414758339 520095889740 251061122579 298797337954 626712570617 322012624129 480770761861 268324567426 570675312227 203250039325 657777992096 794686429132 879348118453 832526678959 941900491508\n12345 890123",
+              "output": "12345 265423638243 723872786917 440576560771 417407213172 544414758339 520095889740 251061122579 298797337954 626712570617 322012624129 480770761861 268324567426 570675312227 203250039325 657777992096 794686429132 879348118453 832526678959 890123",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "20\n388 607 896 788 608 356 174 410 599 421 449 635 31 706 837 338 308 179 724 643\n999 111",
+              "output": "999 607 896 788 608 356 174 410 599 421 449 635 31 706 837 338 308 179 724 111",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "5\n-72 -339 -226 -45 -218\n-999 -1111",
+              "output": "-999 -339 -226 -45 -1111",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "200\n957821523 999876156 554321484 862174988 736307900 778008471 601321381 212317983 54533691 600788925 893353152 174224809 633906087 42471902 646890586 3717952 569504980 34398406 254342782 196285239 140506101 531364994 125566798 273964083 155757000 184897490 310081965 347175859 323177020 384492458 398703429 149139200 294921070 424103929 686746079 455898649 985061142 35110622 519402955 287927762 473120372 511396798 341024746 385713656 737823768 319373080 562670362 30252096 853655674 650306267 268128645 953986481 165690564 605540170 604925500 262883307 52080111 220292689 338736582 632112577 217726887 422520586 425120448 158922220 174027778 48514157 76301375 915116517 39725551 327607241 866964841 506153373 677982606 344871024 873371605 63033994 125445107 710205214 691821112 933421044 223035205 890526013 528974583 28806661 808800550 121914464 339610254 333215812 506887948 412576575 780645264 195896430 661965687 210425080 771323606 184522859 137781326 653264950 548482417 328296210 89406840 997214292 436557060 768154105 195511456 239272576 684379440 8667932 477695090 109253686 611548797 599477463 16412724 286341844 897727321 596250375 596731661 901630637 799564204 798086781 774606604 346487584 983996057 294502953 203848166 930017242 668395116 825570429 955924036 457620897 726862224 318551613 509406520 289704051 476673636 872903106 256922949 818432202 677596861 644135477 208454795 120829205 46447980 169600792 440153076 942621331 176064630 674947470 703549547 327878085 93886744 784845132 168265463 808621777 847472052 675137416 472396912 591530448 944173072 404262966 374760337 733513823 872368285 541150920 935681848 909792856 708308398 748214649 849007298 41233624 667019901 316783936 505628193 671553855 914964432 808824293 367199285 909567026 73248512 232572256 887025130 790490215 619879568 770339818 544429812 583164439 844186509 978759352 729298201 497467776 140111376 883057243 930994448 324701629 316085251 266207205 711775412 998671943 84138517 942828846\n33333333 999999999",
+              "output": "33333333 999876156 554321484 862174988 736307900 778008471 601321381 212317983 54533691 600788925 893353152 174224809 633906087 42471902 646890586 3717952 569504980 34398406 254342782 196285239 140506101 531364994 125566798 273964083 155757000 184897490 310081965 347175859 323177020 384492458 398703429 149139200 294921070 424103929 686746079 455898649 985061142 35110622 519402955 287927762 473120372 511396798 341024746 385713656 737823768 319373080 562670362 30252096 853655674 650306267 268128645 953986481 165690564 605540170 604925500 262883307 52080111 220292689 338736582 632112577 217726887 422520586 425120448 158922220 174027778 48514157 76301375 915116517 39725551 327607241 866964841 506153373 677982606 344871024 873371605 63033994 125445107 710205214 691821112 933421044 223035205 890526013 528974583 28806661 808800550 121914464 339610254 333215812 506887948 412576575 780645264 195896430 661965687 210425080 771323606 184522859 137781326 653264950 548482417 328296210 89406840 997214292 436557060 768154105 195511456 239272576 684379440 8667932 477695090 109253686 611548797 599477463 16412724 286341844 897727321 596250375 596731661 901630637 799564204 798086781 774606604 346487584 983996057 294502953 203848166 930017242 668395116 825570429 955924036 457620897 726862224 318551613 509406520 289704051 476673636 872903106 256922949 818432202 677596861 644135477 208454795 120829205 46447980 169600792 440153076 942621331 176064630 674947470 703549547 327878085 93886744 784845132 168265463 808621777 847472052 675137416 472396912 591530448 944173072 404262966 374760337 733513823 872368285 541150920 935681848 909792856 708308398 748214649 849007298 41233624 667019901 316783936 505628193 671553855 914964432 808824293 367199285 909567026 73248512 232572256 887025130 790490215 619879568 770339818 544429812 583164439 844186509 978759352 729298201 497467776 140111376 883057243 930994448 324701629 316085251 266207205 711775412 998671943 84138517 999999999",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "20\n974625858408 265423638243 723872786917 440576560771 417407213172 544414758339 520095889740 251061122579 298797337954 626712570617 322012624129 480770761861 268324567426 570675312227 203250039325 657777992096 794686429132 879348118453 832526678959 941900491508\n12345 890123",
+              "output": "12345 265423638243 723872786917 440576560771 417407213172 544414758339 520095889740 251061122579 298797337954 626712570617 322012624129 480770761861 268324567426 570675312227 203250039325 657777992096 794686429132 879348118453 832526678959 890123",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "20\n388 607 896 788 608 356 174 410 599 421 449 635 31 706 837 338 308 179 724 643\n999 111",
+              "output": "999 607 896 788 608 356 174 410 599 421 449 635 31 706 837 338 308 179 724 111",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "5\n-72 -339 -226 -45 -218\n-999 -1111",
+              "output": "-999 -339 -226 -45 -1111",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "200\n957821523 999876156 554321484 862174988 736307900 778008471 601321381 212317983 54533691 600788925 893353152 174224809 633906087 42471902 646890586 3717952 569504980 34398406 254342782 196285239 140506101 531364994 125566798 273964083 155757000 184897490 310081965 347175859 323177020 384492458 398703429 149139200 294921070 424103929 686746079 455898649 985061142 35110622 519402955 287927762 473120372 511396798 341024746 385713656 737823768 319373080 562670362 30252096 853655674 650306267 268128645 953986481 165690564 605540170 604925500 262883307 52080111 220292689 338736582 632112577 217726887 422520586 425120448 158922220 174027778 48514157 76301375 915116517 39725551 327607241 866964841 506153373 677982606 344871024 873371605 63033994 125445107 710205214 691821112 933421044 223035205 890526013 528974583 28806661 808800550 121914464 339610254 333215812 506887948 412576575 780645264 195896430 661965687 210425080 771323606 184522859 137781326 653264950 548482417 328296210 89406840 997214292 436557060 768154105 195511456 239272576 684379440 8667932 477695090 109253686 611548797 599477463 16412724 286341844 897727321 596250375 596731661 901630637 799564204 798086781 774606604 346487584 983996057 294502953 203848166 930017242 668395116 825570429 955924036 457620897 726862224 318551613 509406520 289704051 476673636 872903106 256922949 818432202 677596861 644135477 208454795 120829205 46447980 169600792 440153076 942621331 176064630 674947470 703549547 327878085 93886744 784845132 168265463 808621777 847472052 675137416 472396912 591530448 944173072 404262966 374760337 733513823 872368285 541150920 935681848 909792856 708308398 748214649 849007298 41233624 667019901 316783936 505628193 671553855 914964432 808824293 367199285 909567026 73248512 232572256 887025130 790490215 619879568 770339818 544429812 583164439 844186509 978759352 729298201 497467776 140111376 883057243 930994448 324701629 316085251 266207205 711775412 998671943 84138517 942828846\n33333333 999999999",
+              "output": "33333333 999876156 554321484 862174988 736307900 778008471 601321381 212317983 54533691 600788925 893353152 174224809 633906087 42471902 646890586 3717952 569504980 34398406 254342782 196285239 140506101 531364994 125566798 273964083 155757000 184897490 310081965 347175859 323177020 384492458 398703429 149139200 294921070 424103929 686746079 455898649 985061142 35110622 519402955 287927762 473120372 511396798 341024746 385713656 737823768 319373080 562670362 30252096 853655674 650306267 268128645 953986481 165690564 605540170 604925500 262883307 52080111 220292689 338736582 632112577 217726887 422520586 425120448 158922220 174027778 48514157 76301375 915116517 39725551 327607241 866964841 506153373 677982606 344871024 873371605 63033994 125445107 710205214 691821112 933421044 223035205 890526013 528974583 28806661 808800550 121914464 339610254 333215812 506887948 412576575 780645264 195896430 661965687 210425080 771323606 184522859 137781326 653264950 548482417 328296210 89406840 997214292 436557060 768154105 195511456 239272576 684379440 8667932 477695090 109253686 611548797 599477463 16412724 286341844 897727321 596250375 596731661 901630637 799564204 798086781 774606604 346487584 983996057 294502953 203848166 930017242 668395116 825570429 955924036 457620897 726862224 318551613 509406520 289704051 476673636 872903106 256922949 818432202 677596861 644135477 208454795 120829205 46447980 169600792 440153076 942621331 176064630 674947470 703549547 327878085 93886744 784845132 168265463 808621777 847472052 675137416 472396912 591530448 944173072 404262966 374760337 733513823 872368285 541150920 935681848 909792856 708308398 748214649 849007298 41233624 667019901 316783936 505628193 671553855 914964432 808824293 367199285 909567026 73248512 232572256 887025130 790490215 619879568 770339818 544429812 583164439 844186509 978759352 729298201 497467776 140111376 883057243 930994448 324701629 316085251 266207205 711775412 998671943 84138517 999999999",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "csharp": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "cs": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "c#": "using System;\n\nclass Program\n{\n    static void Main(string[] args)\n    {\n        // Write your C# solution here\n    }\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "csharp": "",
+            "java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            long[] a = new long[n];\n            for (int i = 0; i < n; i++) a[i] = sc.nextLong();\n            long r1 = sc.nextLong(), r2 = sc.nextLong();\n            a[0] = r1; a[n - 1] = r2;\n            StringBuilder sb = new StringBuilder();\n            for (int i = 0; i < n; i++) {\n                if (i > 0) sb.append(\" \");\n                sb.append(a[i]);\n            }\n            System.out.println(sb.toString());\n        }\n    }\n}\n",
+            "cpp": "#include <iostream>\n#include <vector>\nusing namespace std;\nint main() {\n    int n; if (!(cin >> n)) return 0;\n    vector<long long> a(n);\n    for (int i = 0; i < n; i++) cin >> a[i];\n    long long r1, r2; cin >> r1 >> r2;\n    a.front() = r1; a.back() = r2;\n    for (int i = 0; i < n; i++) {\n        if (i > 0) cout << \" \";\n        cout << a[i];\n    }\n    cout << \"\\n\";\n    return 0;\n}\n"
+          }
+        }
+      ]
+    }
+  }
 }

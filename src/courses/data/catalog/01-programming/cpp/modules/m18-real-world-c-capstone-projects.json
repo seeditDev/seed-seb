@@ -10,7 +10,34 @@
       "description": "Study concepts and solve targeted engineering problems for Todo List Application.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 40,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m18-todo-01",
+          "title": "Capstone: CLI Todo List Manager Architecture",
+          "content": "### Building a Robust CLI Todo Application\n\nA professional C++ console application requires clean architectural separation:\n\n1. **Data Model (`Task` struct/class)**:\n   - Holds `id`, `description`, `isCompleted`, and `priority`.\n2. **Application Manager (`TodoList` class)**:\n   - Encapsulates `std::vector<Task>`.\n   - Methods for CRUD operations: `addTask()`, `removeTask(id)`, `markCompleted(id)`, and `listTasks()`.\n3. **Persistence Layer**:\n   - Serialization: Writes tasks to a delimited text file using `std::ofstream`.\n   - Deserialization: Parses records on startup using `std::ifstream` and `std::getline`.\n4. **Interactive Command Loop**:\n   - Handles menu display, numeric input validation, and user feedback.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Separation of Concerns",
+            "text": "Keep the Task data model, file persistence methods, and terminal user interaction in distinct functions and classes."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <vector>\n#include <string>\n\nstruct Task {\n    int id;\n    std::string title;\n    bool completed = false;\n};\n\nclass TodoList {\n    std::vector<Task> tasks;\n    int nextId = 1;\npublic:\n    void add(const std::string& title) {\n        tasks.push_back({nextId++, title, false});\n    }\n    void display() const {\n        for (const auto& t : tasks) {\n            std::cout << \"[\" << (t.completed ? \"X\" : \" \") << \"] \"\n                      << t.id << \". \" << t.title << \"\\n\";\n        }\n    }\n};\n\nint main() {\n    TodoList todo;\n    todo.add(\"Setup C++ project\");\n    todo.add(\"Implement persistence\");\n    todo.display();\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m18-todo-cp1",
+            "question": "Which C++ stream class is used to serialize and write task data to a disk file?",
+            "options": [
+              "std::ofstream",
+              "std::ifstream",
+              "std::cin",
+              "std::stringstream only"
+            ],
+            "correctAnswer": 0,
+            "explanation": "std::ofstream (output file stream) provides methods for opening and writing data out to files on disk."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -689,7 +716,34 @@
       "description": "Study concepts and solve targeted engineering problems for Contact Manager.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 45,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m18-contact-01",
+          "title": "Capstone: Address Book and Contact Manager",
+          "content": "### Structuring an In-Memory Contact Book\n\nA contact manager introduces searching, sorting, and validation:\n\n1. **Data Model (`Contact` class)**:\n   - Stores `name`, `phone`, and `email`.\n   - Includes email/phone format validation functions.\n2. **Sorting by Name**:\n   - Use `std::sort` with a custom lambda to sort contacts case-insensitively:\n   ```cpp\n   std::sort(contacts.begin(), contacts.end(), [](const Contact& a, const Contact& b) {\n       return a.getName() < b.getName();\n   });\n   ```\n3. **Search Operations**:\n   - Prefix and substring matching using `std::string::find`.\n4. **CSV Export/Import**:\n   - Comma-Separated Values format simplifies reading/writing records.",
+          "callout": {
+            "type": "TIP",
+            "title": "Custom Comparators",
+            "text": "Passing a lambda comparator to std::sort allows dynamic sorting by name, creation date, or phone number without modifying the class."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n\nstruct Contact {\n    std::string name;\n    std::string phone;\n};\n\nint main() {\n    std::vector<Contact> book = {\n        {\"Charlie\", \"555-0102\"},\n        {\"Alice\", \"555-0100\"},\n        {\"Bob\", \"555-0101\"}\n    };\n    \n    // Sort alphabetically by name\n    std::sort(book.begin(), book.end(), [](const Contact& a, const Contact& b) {\n        return a.name < b.name;\n    });\n    \n    for (const auto& c : book) {\n        std::cout << c.name << \": \" << c.phone << \"\\n\";\n    }\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m18-cnt-cp1",
+            "question": "How does std::sort know how to order custom Contact objects?",
+            "options": [
+              "Through a custom comparator lambda or an overloaded operator<",
+              "It inspects private fields automatically using reflection",
+              "By sorting memory addresses",
+              "Custom objects cannot be sorted with std::sort"
+            ],
+            "correctAnswer": 0,
+            "explanation": "std::sort requires either an overloaded operator< on the element type or a callable comparator function/lambda providing strict weak ordering."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -1233,7 +1287,34 @@
       "description": "Study concepts and solve targeted engineering problems for Word Counter.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 40,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m18-word-01",
+          "title": "Capstone: High-Performance Text Word Frequency Counter",
+          "content": "### Building a File Word Frequency Analyzer\n\nText processing in C++ showcases string manipulation and associative containers:\n\n1. **File Reading & Tokenization**:\n   - Read files token-by-token with `std::ifstream` and extraction operator `>>`, or line-by-line with `std::getline`.\n   - Tokenize lines using `std::stringstream`.\n2. **Sanitization and Case Normalization**:\n   - Strip punctuation using `std::ispunct` and convert all characters to lowercase using `std::tolower`.\n3. **Frequency Aggregation**:\n   - Count occurrences using `std::unordered_map<std::string, int> freqMap` in $O(1)$ average time per word: `freqMap[word]++;`.\n4. **Top-K Ranking**:\n   - Transfer pairs into a `std::vector<std::pair<std::string, int>>` and sort by frequency in descending order.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Top-K Sorting",
+            "text": "To get the top 10 most frequent words, copy the map into a vector and use std::partial_sort or std::sort by value."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <sstream>\n#include <string>\n#include <unordered_map>\n\nint main() {\n    std::string text = \"the quick brown fox jumps over the lazy dog the dog was ready\";\n    std::stringstream ss(text);\n    std::string word;\n    std::unordered_map<std::string, int> counts;\n    \n    while (ss >> word) {\n        counts[word]++;\n    }\n    \n    std::cout << \"Frequency of 'the': \" << counts[\"the\"] << \"\\n\"; // 3\n    std::cout << \"Frequency of 'dog': \" << counts[\"dog\"] << \"\\n\"; // 2\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m18-word-cp1",
+            "question": "Why is `std::unordered_map` faster than `std::map` for counting word occurrences in large texts?",
+            "options": [
+              "std::unordered_map uses a hash table with O(1) average lookup/update, whereas std::map uses a tree with O(log N)",
+              "std::unordered_map uses less total memory on disk",
+              "std::map cannot store strings as keys",
+              "std::unordered_map processes files concurrently"
+            ],
+            "correctAnswer": 0,
+            "explanation": "std::unordered_map is hash-based with O(1) expected time per insertion/lookup, making word counting much faster than std::map which performs O(log N) tree balancing."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -1718,7 +1799,34 @@
       "description": "Study concepts and solve targeted engineering problems for Inventory Management System.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 45,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m18-inv-01",
+          "title": "Capstone: Object-Oriented Inventory Management System",
+          "content": "### OOP Design Patterns in Inventory Systems\n\nA full inventory manager implements class hierarchies and smart pointers:\n\n1. **Abstract Base Class (`Product`)**:\n   - Encapsulates `id`, `name`, `price`, and `quantity`.\n   - Declares a virtual destructor: `virtual ~Product() = default;`.\n   - Declares pure virtual methods like `virtual double calculateValue() const = 0;`.\n2. **Derived Classes**:\n   - `PerishableProduct`: Adds `expiryDate` and discount logic for nearing expiration.\n   - `ElectronicProduct`: Adds `warrantyMonths` and insurance surcharge.\n3. **Polymorphic Container**:\n   - Store items safely using modern smart pointers: `std::vector<std::unique_ptr<Product>> inventory`.\n   - Prevents memory leaks and handles polymorphic cleanup automatically via RAII.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Smart Pointers for Polymorphism",
+            "text": "std::vector<std::unique_ptr<Base>> is the modern, idiomatic C++ container for polymorphic object ownership without manual delete calls."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <vector>\n#include <memory>\n#include <string>\n\nclass Product {\nprotected:\n    std::string name;\n    double price;\npublic:\n    Product(std::string n, double p) : name(n), price(p) {}\n    virtual ~Product() = default;\n    virtual double getValue() const { return price; }\n};\n\nclass DiscountedProduct : public Product {\n    double discountPercent;\npublic:\n    DiscountedProduct(std::string n, double p, double d) \n        : Product(n, p), discountPercent(d) {}\n    double getValue() const override { return price * (1.0 - discountPercent / 100.0); }\n};\n\nint main() {\n    std::vector<std::unique_ptr<Product>> warehouse;\n    warehouse.push_back(std::make_unique<Product>(\"Monitor\", 200.0));\n    warehouse.push_back(std::make_unique<DiscountedProduct>(\"Keyboard\", 50.0, 20.0));\n    \n    for (const auto& item : warehouse) {\n        std::cout << \"Item value: $\" << item->getValue() << \"\\n\";\n    }\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m18-inv-cp1",
+            "question": "Why should polymorphic base classes always declare a virtual destructor?",
+            "options": [
+              "To ensure the derived class destructor is called when deleting an object through a base pointer, avoiding resource leaks",
+              "To prevent the base class from being compiled",
+              "Because C++ requires all destructors to be private",
+              "Virtual destructors enable faster memory allocation"
+            ],
+            "correctAnswer": 0,
+            "explanation": "When deleting through a Base*, a virtual destructor ensures dynamic dispatch invokes the Derived class destructor first, safely cleaning up all derived resources."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -2262,7 +2370,34 @@
       "description": "Study concepts and solve targeted engineering problems for Student Database Manager.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 45,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-cpp-m18-student-01",
+          "title": "Capstone: Student Database Record System",
+          "content": "### Relational Modeling and File Storage in C++\n\nA student database manager brings together structs, file streams, exception handling, and GPA algorithms:\n\n1. **Data Model (`Student` Record)**:\n   - `rollNumber` (unique integer key)\n   - `name` (`std::string`)\n   - `courseGrades` (`std::map<std::string, double>`)\n   - `calculateGPA()`: Computes credit-weighted GPA.\n2. **Database Engine (`StudentDatabase` class)**:\n   - Indexing: `std::unordered_map<int, Student>` for $O(1)$ roll-number lookups.\n   - Roll number collision prevention.\n3. **Exception Safety & Validation**:\n   - Validates that grades fall between 0.0 and 4.0 or 0 and 100, throwing custom `std::invalid_argument` exceptions on bad data.\n4. **CSV Export**:\n   - Generates formatted CSV transcripts for academic reporting.",
+          "callout": {
+            "type": "TIP",
+            "title": "Fast Keyed Lookups",
+            "text": "Using std::unordered_map<int, Student> keyed by roll number turns student record searches into constant time O(1) operations."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <string>\n#include <vector>\n#include <numeric>\n\nclass Student {\n    int rollNo;\n    std::string name;\n    std::vector<double> marks;\npublic:\n    Student(int r, std::string n, std::vector<double> m) \n        : rollNo(r), name(n), marks(m) {}\n    \n    double average() const {\n        if (marks.empty()) return 0.0;\n        double sum = std::accumulate(marks.begin(), marks.end(), 0.0);\n        return sum / marks.size();\n    }\n    \n    void printReport() const {\n        std::cout << \"Student: \" << name << \" [#\" << rollNo << \"] Average: \" << average() << \"\\n\";\n    }\n};\n\nint main() {\n    Student s1(101, \"Jane Doe\", {92.0, 88.5, 95.0});\n    s1.printReport();\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-cpp-m18-std-cp1",
+            "question": "Which standard algorithm computes the sum of elements in a container: `std::accumulate(marks.begin(), marks.end(), 0.0)`?",
+            "options": [
+              "<numeric> std::accumulate",
+              "<algorithm> std::sum",
+              "<cmath> std::total",
+              "<iostream> std::add"
+            ],
+            "correctAnswer": 0,
+            "explanation": "std::accumulate is defined in the <numeric> header and calculates the sum of a range given an initial value."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -3202,5 +3337,402 @@
       "_sourceFile": "cpp-development.json",
       "_moduleTitle": "Intermediate-level projects"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m18-real-world-c-capstone-projects",
+    "title": "Module Assessment: Real-World C++ Capstone Projects",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "m18-q01",
+          "question": "What is RAII (Resource Acquisition Is Initialization) in C++?",
+          "options": [
+            "A programming idiom where resource lifetime is bound to object lifetime; resources are acquired in constructors and released in destructors",
+            "A compiler optimization that pre-allocates all memory at startup",
+            "A design pattern used only for graphical user interfaces",
+            "An automated garbage collector built into C++"
+          ],
+          "correctAnswer": 0,
+          "explanation": "RAII guarantees that resources (memory, file handles, mutex locks) are safely and automatically released when the owning object goes out of scope, even during exceptions."
+        },
+        {
+          "questionId": "m18-q02",
+          "question": "Which smart pointer represents exclusive ownership of a dynamically allocated object?",
+          "options": [
+            "std::unique_ptr",
+            "std::shared_ptr",
+            "std::weak_ptr",
+            "std::auto_ptr (deprecated)"
+          ],
+          "correctAnswer": 0,
+          "explanation": "std::unique_ptr uniquely owns an object. It cannot be copied, only moved, guaranteeing zero reference-counting overhead and deterministic single-owner destruction."
+        },
+        {
+          "questionId": "m18-q03",
+          "question": "What is the primary purpose of separating code into header (.h / .hpp) and source (.cpp) files?",
+          "options": [
+            "Headers declare class interfaces, constants, and function prototypes; sources contain implementation, reducing compile times and circular dependencies",
+            "C++ compilers refuse to compile code in a single file",
+            "Headers are compiled into machine code while source files are interpreted",
+            "To allow source files to be written in Python"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Headers specify interfaces so other compilation units can interact with functions and classes without recompiling their implementations, speeding up build pipelines."
+        },
+        {
+          "questionId": "m18-q04",
+          "question": "Why should `std::make_unique` and `std::make_shared` be preferred over direct `new` expressions?",
+          "options": [
+            "They provide exception safety and prevent memory leaks if an exception is thrown during argument evaluation",
+            "They bypass constructor execution",
+            "They allocate objects in static global memory",
+            "Direct new is forbidden in modern C++"
+          ],
+          "correctAnswer": 0,
+          "explanation": "make_unique/make_shared eliminate naked 'new' calls, guarantee exception safety, and make_shared performs a single combined allocation for both the control block and object."
+        },
+        {
+          "questionId": "m18-q05",
+          "question": "What is the difference between text mode and binary mode when opening files with std::ofstream in C++?",
+          "options": [
+            "Text mode translates newline characters (e.g. \\n to \\r\\n on Windows), while binary mode writes raw bytes unchanged",
+            "Binary mode encrypts the file automatically",
+            "Text mode can only write numbers",
+            "Binary mode does not allow reading"
+          ],
+          "correctAnswer": 0,
+          "explanation": "In text mode, operating systems may translate line endings (e.g., \\n to \\r\\n on Windows). std::ios::binary ensures exact byte-for-byte fidelity without translation."
+        },
+        {
+          "questionId": "m18-q06",
+          "question": "In C++, what makes a class an Abstract Class?",
+          "options": [
+            "Having at least one pure virtual function (`virtual void func() = 0;`)",
+            "Declaring all member variables as private",
+            "Having a constructor with no parameters",
+            "Inheriting from std::exception"
+          ],
+          "correctAnswer": 0,
+          "explanation": "A class with at least one pure virtual function (= 0) is abstract and cannot be directly instantiated; derived classes must implement pure virtual functions to become concrete."
+        },
+        {
+          "questionId": "m18-q07",
+          "question": "What is the 'Strong Exception Guarantee' in C++?",
+          "options": [
+            "If an operation terminates with an exception, the program state remains unmodified (as if the operation was never called)",
+            "The operation is guaranteed never to throw an exception",
+            "The exception will always be logged to standard error",
+            "The program immediately terminates on error"
+          ],
+          "correctAnswer": 0,
+          "explanation": "The Strong Exception Guarantee (commit-or-rollback semantics) ensures that if an exception is thrown, the object or system remains in its original pre-call state."
+        },
+        {
+          "questionId": "m18-q08",
+          "question": "What does CMake command `add_executable(MyApp main.cpp utils.cpp)` do?",
+          "options": [
+            "Defines an executable target named MyApp built from the listed source files",
+            "Runs the program immediately in debug mode",
+            "Installs the executable into /usr/bin",
+            "Downloads external dependencies from GitHub"
+          ],
+          "correctAnswer": 0,
+          "explanation": "In CMake, add_executable defines a target binary that the build system will compile and link from the specified source files."
+        },
+        {
+          "questionId": "m18-q09",
+          "question": "What is the purpose of `std::weak_ptr` in modern C++?",
+          "options": [
+            "To hold a non-owning reference to an object managed by std::shared_ptr, breaking reference cycles that cause memory leaks",
+            "To allocate memory on the stack instead of heap",
+            "To replace raw pointers with slower alternatives",
+            "To grant write-only access to an object"
+          ],
+          "correctAnswer": 0,
+          "explanation": "std::weak_ptr observes an object managed by std::shared_ptr without incrementing its reference count, breaking cyclical reference loops that prevent deletion."
+        },
+        {
+          "questionId": "m18-q10",
+          "question": "Which C++ standard library component is best suited for timing performance benchmarks of code sections?",
+          "options": [
+            "std::chrono::high_resolution_clock",
+            "time(NULL) from <ctime>",
+            "std::this_thread::sleep_for",
+            "std::clock() only"
+          ],
+          "correctAnswer": 0,
+          "explanation": "std::chrono::high_resolution_clock in <chrono> provides the smallest tick period available on the system, ideal for precise execution benchmarking."
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.310",
+          "questionId": "Q0.310",
+          "title": "Alphabet Pattern with Suffix Reflection",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept the n value and display the below pattern",
+          "description": "Write a program to accept the n value and display the below pattern",
+          "constraints": "1 <= N <= 26",
+          "inputFormat": "Accept n values of input",
+          "outputFormat": "Pattern",
+          "sampleTestCases": [
+            {
+              "input": "5",
+              "output": "ABCDE\nABCED\nABEDC\nAEDCB\nEDCBA",
+              "explanation": "Example demonstrating Print N lines of letters where row i has prefix 'A'.. and suffix descending from N-th letter."
+            },
+            {
+              "input": "7",
+              "output": "ABCDEFG\nABCDEGF\nABCDGFE\nABCGFED\nABGFEDC\nAGFEDCB\nGFEDCBA",
+              "explanation": "Example demonstrating Print N lines of letters where row i has prefix 'A'.. and suffix descending from N-th letter."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "5",
+              "output": "ABCDE\nABCED\nABEDC\nAEDCB\nEDCBA",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "7",
+              "output": "ABCDEFG\nABCDEGF\nABCDGFE\nABCGFED\nABGFEDC\nAGFEDCB\nGFEDCBA",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "8",
+              "output": "ABCDEFGH\nABCDEFHG\nABCDEHGF\nABCDHGFE\nABCHGFED\nABHGFEDC\nAHGFEDCB\nHGFEDCBA",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "9",
+              "output": "ABCDEFGHI\nABCDEFGIH\nABCDEFIHG\nABCDEIHGF\nABCDIHGFE\nABCIHGFED\nABIHGFEDC\nAIHGFEDCB\nIHGFEDCBA",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "4",
+              "output": "ABCD\nABDC\nADCB\nDCBA",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "5",
+              "output": "ABCDE\nABCED\nABEDC\nAEDCB\nEDCBA",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "7",
+              "output": "ABCDEFG\nABCDEGF\nABCDGFE\nABCGFED\nABGFEDC\nAGFEDCB\nGFEDCBA",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "8",
+              "output": "ABCDEFGH\nABCDEFHG\nABCDEHGF\nABCDHGFE\nABCHGFED\nABHGFEDC\nAHGFEDCB\nHGFEDCBA",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "9",
+              "output": "ABCDEFGHI\nABCDEFGIH\nABCDEFIHG\nABCDEIHGF\nABCDIHGFE\nABCIHGFED\nABIHGFEDC\nAIHGFEDCB\nIHGFEDCBA",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "4",
+              "output": "ABCD\nABDC\nADCB\nDCBA",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\nusing namespace std;\nint main() {\n    int n; if (cin >> n) {\n        for (int i = 0; i < n; i++) {\n            if (i == 0) {\n                for (int x = 1; x <= n; x++) cout << (char)('A' + x - 1);\n            } else {\n                for (int x = 1; x < n - i; x++) cout << (char)('A' + x - 1);\n                for (int x = n; x >= n - i; x--) cout << (char)('A' + x - 1);\n            }\n            cout << \"\\n\";\n        }\n    }\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    for (int i = 0; i < n; i++) {\n        if (i == 0) {\n            for (int x = 1; x <= n; x++) putchar('A' + x - 1);\n        } else {\n            for (int x = 1; x < n - i; x++) putchar('A' + x - 1);\n            for (int x = n; x >= n - i; x--) putchar('A' + x - 1);\n        }\n        putchar('\\n');\n    }\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.315",
+          "questionId": "Q0.315",
+          "title": "Longest Common Prefix of Two Strings",
+          "difficulty": "Beginner",
+          "problemStatement": "Given two strings S1 and S2, find the longest common prefix between them.\n\nA prefix means:\nStarts from index 0 in both strings.\n\nReturn the prefix string itself.\n\nIf no common prefix, return \"-1\".\n\n✔ Example\n\nInput:\nflower\nflowchart\n\nOutput:\nflow",
+          "description": "Given two strings S1 and S2, find the longest common prefix between them.\n\nA prefix means:\nStarts from index 0 in both strings.\n\nReturn the prefix string itself.\n\nIf no common prefix, return \"-1\".\n\n✔ Example\n\nInput:\nflower\nflowchart\n\nOutput:\nflow",
+          "constraints": "1 <= string length <= 1000",
+          "inputFormat": "String\nString",
+          "outputFormat": "String",
+          "sampleTestCases": [
+            {
+              "input": "flower\nflowchart",
+              "output": "flow",
+              "explanation": "Example demonstrating Find the longest matching prefix of two strings. Print -1 if empty."
+            },
+            {
+              "input": "hello\nhelp",
+              "output": "hel",
+              "explanation": "Example demonstrating Find the longest matching prefix of two strings. Print -1 if empty."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "flower\nflowchart",
+              "output": "flow",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "hello\nhelp",
+              "output": "hel",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "tiger\ntime",
+              "output": "ti",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "apple\nbanana",
+              "output": "-1",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "coding\ncode",
+              "output": "cod",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "flower\nflowchart",
+              "output": "flow",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "hello\nhelp",
+              "output": "hel",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "tiger\ntime",
+              "output": "ti",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "apple\nbanana",
+              "output": "-1",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "coding\ncode",
+              "output": "cod",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\n#include <string>\nusing namespace std;\nint main() {\n    string s1, s2; if (cin >> s1 >> s2) {\n        size_t i = 0;\n        while (i < s1.length() && i < s2.length() && s1[i] == s2[i]) i++;\n        if (i == 0) cout << \"-1\\n\";\n        else cout << s1.substr(0, i) << \"\\n\";\n    }\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n#include <string.h>\nint main() {\n    char s1[1000], s2[1000];\n    if (scanf(\"%s %s\", s1, s2) == 2) {\n        int i = 0;\n        while (s1[i] && s2[i] && s1[i] == s2[i]) i++;\n        if (i == 0) puts(\"-1\");\n        else { s1[i] = '\\0'; puts(s1); }\n    }\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.320",
+          "questionId": "Q0.320",
+          "title": "Contains Duplicate",
+          "difficulty": "Beginner",
+          "problemStatement": "Given an integer array nums, return true if any value appears at least twice, otherwise return false",
+          "description": "Given an integer array nums, return true if any value appears at least twice, otherwise return false",
+          "constraints": "1 <= N <= 10^5",
+          "inputFormat": "n\nnums",
+          "outputFormat": "true / false",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 1",
+              "output": "true",
+              "explanation": "Example demonstrating Check if any value appears at least twice in the array using hash set."
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "false",
+              "explanation": "Example demonstrating Check if any value appears at least twice in the array using hash set."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "4\n1 2 3 1",
+              "output": "true",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "false",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "5\n5 5 5 5 5",
+              "output": "true",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "3\n10 20 30",
+              "output": "false",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "6\n1 2 3 4 5 1",
+              "output": "true",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "4\n1 2 3 1",
+              "output": "true",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "false",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "5\n5 5 5 5 5",
+              "output": "true",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "3\n10 20 30",
+              "output": "false",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "6\n1 2 3 4 5 1",
+              "output": "true",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "cpp": "#include <iostream>\n#include <vector>\n#include <unordered_set>\nusing namespace std;\nint main() {\n    int n; if (cin >> n) {\n        unordered_set<int> st;\n        bool dup = false;\n        for (int i = 0; i < n; i++) {\n            int x; cin >> x;\n            if (st.count(x)) dup = true;\n            st.insert(x);\n        }\n        cout << (dup ? \"true\" : \"false\") << \"\\n\";\n    }\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n#include <stdlib.h>\nint cmp(const void *a, const void *b) { return (*(int*)a - *(int*)b); }\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    int *a = (int*)malloc(n * sizeof(int));\n    for (int i = 0; i < n; i++) scanf(\"%d\", &a[i]);\n    qsort(a, n, sizeof(int), cmp);\n    int dup = 0;\n    for (int i = 1; i < n; i++) if (a[i] == a[i-1]) { dup = 1; break; }\n    puts(dup ? \"true\" : \"false\");\n    free(a);\n    return 0;\n}\n"
+          }
+        }
+      ]
+    }
+  }
 }

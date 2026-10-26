@@ -10,7 +10,34 @@
       "description": "Study concepts and solve targeted engineering problems for Todo List Application.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 40,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-java-m18-todo-01",
+          "title": "Capstone: Enterprise CLI Todo Application Architecture",
+          "content": "### Building a Clean Architecture Todo Application in Java\n\nA professional Java application follows clean separation of concerns:\n\n1. **Data Model (`Task` Record/Class)**:\n   - Holds `UUID id`, `String title`, `boolean completed`, and `Instant createdAt`.\n2. **Service Layer (`TodoListService`)**:\n   - Manages task operations: `addTask()`, `removeTask(UUID id)`, `markCompleted(UUID id)`, and `getPendingTasks()`.\n3. **Persistence Layer**:\n   - Serializes task records to JSON or formatted text using modern Java NIO (`java.nio.file.Files` and `Paths`).\n4. **Console UI Controller**:\n   - An interactive command loop using `Scanner` and ANSI terminal output.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Single Responsibility",
+            "text": "Keep the Task model, the TodoListService business logic, and the Console UI loop in separate classes."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.util.UUID;\n\npublic class TodoApp {\n    public record Task(UUID id, String title, boolean completed) {}\n\n    public static class TaskService {\n        private final List<Task> tasks = new ArrayList<>();\n        \n        public void add(String title) {\n            tasks.add(new Task(UUID.randomUUID(), title, false));\n        }\n        \n        public void printTasks() {\n            tasks.forEach(t -> System.out.printf(\"[%s] %s%n\", \n                t.completed() ? \"X\" : \" \", t.title()));\n        }\n    }\n\n    public static void main(String[] args) {\n        TaskService service = new TaskService();\n        service.add(\"Master Java Generics\");\n        service.add(\"Complete Capstone Project\");\n        service.printTasks();\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-java-m18-todo-cp1",
+            "question": "What is the primary benefit of modeling the Task entity as a Java record (`public record Task(...)`)?",
+            "options": [
+              "It automatically generates immutable fields, canonical constructor, equals(), hashCode(), and toString() methods",
+              "It stores the object in the database automatically",
+              "It executes tasks concurrently on virtual threads",
+              "It compiles without the JDK"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Java records provide a concise syntax for declaring transparent data-carrier classes with built-in immutability, getters, equals, hashCode, and toString."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -557,7 +584,34 @@
       "description": "Study concepts and solve targeted engineering problems for Contact Manager.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 45,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-java-m18-contact-01",
+          "title": "Capstone: Address Book and Contact Manager",
+          "content": "### Structuring an In-Memory Contact Book in Java\n\nA contact manager demonstrates collections, streams, and validation:\n\n1. **Data Model (`Contact` Class)**:\n   - Encapsulates `name`, `phone`, and `email`.\n   - Uses regex pattern matching to validate valid phone and email formats.\n2. **Sorting Contacts**:\n   - Use the Stream API and `Comparator.comparing(Contact::getName, String.CASE_INSENSITIVE_ORDER)`.\n3. **Search Functionality**:\n   - Substring searching using streams: `contacts.stream().filter(c -> c.getName().toLowerCase().contains(query)).toList()`.\n4. **CSV Export**:\n   - Writing records out with `BufferedWriter` and reading back with `Files.lines()`.",
+          "callout": {
+            "type": "TIP",
+            "title": "Streams for Searching",
+            "text": "Stream filtering and method references (Contact::getName) produce expressive, declarative search logic."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\npublic class ContactManager {\n    public record Contact(String name, String phone) {}\n\n    public static void main(String[] args) {\n        List<Contact> contacts = new ArrayList<>(List.of(\n            new Contact(\"Charlie\", \"555-0102\"),\n            new Contact(\"Alice\", \"555-0100\"),\n            new Contact(\"Bob\", \"555-0101\")\n        ));\n\n        // Sort alphabetically by name\n        contacts.sort(Comparator.comparing(Contact::name));\n        contacts.forEach(c -> System.out.println(c.name() + \": \" + c.phone()));\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-java-m18-cnt-cp1",
+            "question": "Which method cleanly sorts a list of contacts alphabetically by name using method references in Java?",
+            "options": [
+              "contacts.sort(Comparator.comparing(Contact::name));",
+              "Collections.sort(contacts, \"name\");",
+              "contacts.orderByName();",
+              "contacts.sortAlphabetical();"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Comparator.comparing with a method reference produces a type-safe comparator for sorting collections."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -849,7 +903,34 @@
       "description": "Study concepts and solve targeted engineering problems for Word Counter.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 40,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-java-m18-word-01",
+          "title": "Capstone: High-Performance Text Word Frequency Analyzer",
+          "content": "### Building a Word Frequency Counter with Maps and Streams\n\nText analysis highlights string parsing and associative container operations:\n\n1. **Input Tokenization**:\n   - Read input lines with `BufferedReader` or `Files.lines(path)`.\n   - Split lines into words using regex delimiters: `line.toLowerCase().split(\"[^a-zA-Z0-9]+\")`.\n2. **Frequency Tallying**:\n   - Accumulate counts in a `Map<String, Integer>` using `map.merge(word, 1, Integer::sum)`.\n3. **Ranking Top-K Words**:\n   - Sort map entries by value in descending order using streams:\n     ```java\n     wordCounts.entrySet().stream()\n         .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())\n         .limit(10)\n         .forEach(e -> System.out.printf(\"%s: %d%n\", e.getKey(), e.getValue()));\n     ```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Map.merge()",
+            "text": "map.merge(key, 1, Integer::sum) inserts 1 if key is missing, or adds 1 if present, in a single atomic map call."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\npublic class WordCounter {\n    public static void main(String[] args) {\n        String text = \"the quick brown fox jumps over the lazy dog the dog was ready\";\n        Map<String, Integer> freq = new HashMap<>();\n\n        for (String word : text.split(\"\\\\s+\")) {\n            freq.merge(word, 1, Integer::sum);\n        }\n\n        System.out.println(\"Frequency of 'the': \" + freq.get(\"the\"));\n        System.out.println(\"Frequency of 'dog': \" + freq.get(\"dog\"));\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-java-m18-word-cp1",
+            "question": "What does `map.merge(word, 1, Integer::sum)` do in Java?",
+            "options": [
+              "Sets count to 1 if word is absent, or applies Integer::sum to increment existing count by 1",
+              "Merges two different Map instances",
+              "Deletes duplicate words from the map",
+              "Sorts the map entries"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Map.merge() associates the given value with the key if not present, or computes a remapped value using the bifunction if already present."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -1110,7 +1191,34 @@
       "description": "Study concepts and solve targeted engineering problems for Inventory Management System.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 45,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-java-m18-inv-01",
+          "title": "Capstone: OOP Warehouse Inventory Management System",
+          "content": "### Enterprise Inventory Architecture with Polymorphism\n\nA full inventory tracking system brings together class hierarchies, interfaces, and collections:\n\n1. **Abstract Base Class (`InventoryItem`)**:\n   - Encapsulates `id`, `name`, `basePrice`, and `quantityInStock`.\n   - Abstract method: `public abstract double calculateTotalValue();`.\n2. **Specialized Subclasses**:\n   - `PerishableItem`: Adds `LocalDate expirationDate` and discount computation for nearing expiration.\n   - `ElectronicItem`: Adds `int warrantyMonths` and insurance surcharge.\n3. **Warehouse Manager**:\n   - Manages `Map<String, InventoryItem> inventory`.\n   - Methods for restock, audit total warehouse valuation, and low-stock alerts.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Polymorphic Valuation",
+            "text": "Invoking calculateTotalValue() dynamically dispatches to PerishableItem or ElectronicItem implementations at runtime."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\npublic class InventorySystem {\n    public static abstract class Item {\n        protected String name;\n        protected double price;\n        public Item(String name, double price) { this.name = name; this.price = price; }\n        public abstract double getValue();\n    }\n\n    public static class DiscountedItem extends Item {\n        private double discount;\n        public DiscountedItem(String name, double price, double discount) {\n            super(name, price);\n            this.discount = discount;\n        }\n        @Override\n        public double getValue() { return price * (1.0 - discount / 100.0); }\n    }\n\n    public static void main(String[] args) {\n        List<Item> warehouse = List.of(\n            new DiscountedItem(\"Keyboard\", 50.0, 10.0)\n        );\n        warehouse.forEach(i -> System.out.println(\"Item Value: $\" + i.getValue()));\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-java-m18-inv-cp1",
+            "question": "Why should the Item class be declared `abstract` in an inventory hierarchy?",
+            "options": [
+              "Because items must be specialized concrete types (like PerishableItem or ElectronicItem) and generic Items should not be directly instantiated",
+              "To prevent subclasses from extending it",
+              "Because Java requires all classes with methods to be abstract",
+              "To make the class run on multiple threads"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Declaring Item abstract prevents creating vague generic items and forces subclasses to implement specific valuation and categorization logic."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -1402,7 +1510,34 @@
       "description": "Study concepts and solve targeted engineering problems for Student Database Manager.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 45,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-java-m18-student-01",
+          "title": "Capstone: Student Information System & GPA Calculator",
+          "content": "### Relational Modeling in an Enterprise Student Database\n\n1. **Data Model (`Student` Record/Class)**:\n   - `long rollNumber` (unique student ID)\n   - `String name`, `String department`\n   - `Map<String, Double> courseScores`\n   - `calculateGPA()`: Computes credit-weighted GPA average.\n2. **Database Engine (`StudentRegistry`)**:\n   - Fast lookups using `Map<Long, Student> registry = new HashMap<>();`.\n   - Filter top performers using Java streams: `registry.values().stream().filter(s -> s.getGPA() >= 3.5).toList()`.\n3. **Validation & Exception Safety**:\n   - Throws `IllegalArgumentException` on duplicate roll numbers or invalid grade inputs.\n4. **CSV Export**:\n   - Exports academic transcripts to formatted CSV files.",
+          "callout": {
+            "type": "TIP",
+            "title": "Keyed Lookups",
+            "text": "Using HashMap<Long, Student> keyed by roll number provides instantaneous O(1) student record retrieval."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\npublic class StudentManager {\n    public static class Student {\n        private long rollNo;\n        private String name;\n        private List<Double> marks;\n\n        public Student(long rollNo, String name, List<Double> marks) {\n            this.rollNo = rollNo;\n            this.name = name;\n            this.marks = marks;\n        }\n\n        public double getAverage() {\n            return marks.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);\n        }\n    }\n\n    public static void main(String[] args) {\n        Student s = new Student(101L, \"Jane Doe\", List.of(90.0, 85.0, 95.0));\n        System.out.println(\"GPA: \" + s.getAverage());\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-java-m18-std-cp1",
+            "question": "Which Java Stream method computes the average of double values: `marks.stream().mapToDouble(Double::doubleValue).average()`?",
+            "options": [
+              "average(), returning an OptionalDouble",
+              "mean()",
+              "calcAvg()",
+              "getAverage()"
+            ],
+            "correctAnswer": 0,
+            "explanation": "DoubleStream.average() computes the arithmetic mean of elements of the stream, returning an OptionalDouble."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -5853,5 +5988,408 @@
       "_sourceFile": "advance-java.json",
       "_moduleTitle": "Error Handling and Exception Handling"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m18-problem-solving-enterprise-java-projects",
+    "title": "Module Assessment: Problem Solving & Enterprise Java Projects",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "java-m18-q01",
+          "question": "What is the primary benefit of the SOLID design principles in enterprise Java applications?",
+          "options": [
+            "To produce modular, maintainable, testable, and loosely coupled code that can accommodate change without breaking existing functionality",
+            "To make Java programs run faster than C++",
+            "To compress compiled JAR files",
+            "To eliminate the need for unit testing"
+          ],
+          "correctAnswer": 0,
+          "explanation": "SOLID principles (Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, Dependency Inversion) guide developers toward maintainable enterprise architectures."
+        },
+        {
+          "questionId": "java-m18-q02",
+          "question": "Which Creational Design Pattern ensures that a class has only one instance while providing a global access point to it?",
+          "options": [
+            "Singleton Pattern",
+            "Factory Method Pattern",
+            "Observer Pattern",
+            "Adapter Pattern"
+          ],
+          "correctAnswer": 0,
+          "explanation": "The Singleton pattern restricts the instantiation of a class to one single instance, typically implemented with a private constructor and a static getter."
+        },
+        {
+          "questionId": "java-m18-q03",
+          "question": "What is Dependency Injection (DI) in enterprise Java frameworks (such as Spring)?",
+          "options": [
+            "A pattern where an object receives its dependencies from an external assembler/container rather than creating them directly with `new`",
+            "Injecting virus protection into Java code",
+            "Downloading third-party JARs at runtime",
+            "Overloading constructors"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Dependency Injection implements Inversion of Control (IoC), injecting configured service objects into dependent classes to promote loose coupling and testability."
+        },
+        {
+          "questionId": "java-m18-q04",
+          "question": "What is the purpose of the Factory Method pattern?",
+          "options": [
+            "Defines an interface for creating objects, but lets subclasses decide which exact class to instantiate",
+            "Automatically generates test cases",
+            "Builds JAR archives in Maven",
+            "Creates database schemas"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Factory Method delegates object creation to specialized factory methods or subclasses, shielding client code from concrete implementation classes."
+        },
+        {
+          "questionId": "java-m18-q05",
+          "question": "Which Java testing framework is the industry standard for writing automated unit tests with annotations like `@Test` and `@BeforeEach`?",
+          "options": [
+            "JUnit (JUnit 5 / Jupiter)",
+            "Log4j",
+            "Maven",
+            "Gradle"
+          ],
+          "correctAnswer": 0,
+          "explanation": "JUnit 5 is the dominant automated unit testing framework in the Java ecosystem."
+        },
+        {
+          "questionId": "java-m18-q06",
+          "question": "What is the purpose of the Builder Design Pattern in Java?",
+          "options": [
+            "Separates the construction of a complex object from its representation, allowing step-by-step construction of objects with many optional parameters",
+            "Compiles source code into bytecodes",
+            "Allocates thread memory",
+            "Generates database indexes"
+          ],
+          "correctAnswer": 0,
+          "explanation": "The Builder pattern provides a clean fluent API for constructing complex objects without telescoping constructor anti-patterns."
+        },
+        {
+          "questionId": "java-m18-q07",
+          "question": "In Maven build configuration (`pom.xml`), what are the three coordinates (GAV) identifying an artifact?",
+          "options": [
+            "groupId, artifactId, and version",
+            "name, package, and class",
+            "url, repository, and author",
+            "javaVersion, jvm, and os"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Maven coordinates uniquely identify dependencies and projects using GroupId, ArtifactId, and Version (GAV)."
+        },
+        {
+          "questionId": "java-m18-q08",
+          "question": "What is the Observer Design Pattern commonly used for?",
+          "options": [
+            "Defining a one-to-many dependency between objects so that when one object changes state, all its dependents are notified automatically (event handling)",
+            "Observing JVM memory usage in real time",
+            "Reading binary files from disk",
+            "Encrypting passwords"
+          ],
+          "correctAnswer": 0,
+          "explanation": "The Observer pattern is the foundation of event-driven architectures and listener patterns in GUI and distributed reactive systems."
+        },
+        {
+          "questionId": "java-m18-q09",
+          "question": "What is the difference between Unit Testing and Integration Testing?",
+          "options": [
+            "Unit testing tests individual methods/classes in complete isolation (using mocks); integration testing verifies that multiple modules or systems work together properly",
+            "Unit testing tests the database only",
+            "Integration testing is performed manually by users",
+            "There is no difference"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Unit tests test components in isolation; integration tests verify interactions across components, databases, network services, and file systems."
+        },
+        {
+          "questionId": "java-m18-q10",
+          "question": "Why should mutable objects NOT be used as keys in a `HashMap`?",
+          "options": [
+            "If the object's fields change, its hashCode changes, making it impossible to locate or retrieve the key from the map (memory leak)",
+            "HashMap throws a ClassCastException",
+            "Mutable objects cannot be stored in collections",
+            "The JVM terminates immediately"
+          ],
+          "correctAnswer": 0,
+          "explanation": "If a key's hashCode changes after being stored in a HashMap, the map searches the wrong bucket on subsequent lookups, effectively losing the entry."
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.85",
+          "questionId": "Q0.85",
+          "title": "Inverted Repeated Number Triangle Pattern",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept the n value and display the below pattern",
+          "description": "Write a program to accept the n value and display the below pattern",
+          "constraints": "1 <= N <= 50",
+          "inputFormat": "Accept n values of input",
+          "outputFormat": "Pattern",
+          "sampleTestCases": [
+            {
+              "input": "5",
+              "output": "11111\n2222\n333\n44\n5",
+              "explanation": "Input produces the corresponding formatted output according to problem rules."
+            },
+            {
+              "input": "4",
+              "output": "1111\n222\n33\n4",
+              "explanation": "Input produces the corresponding formatted output according to problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "5",
+              "output": "11111\n2222\n333\n44\n5",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "4",
+              "output": "1111\n222\n33\n4",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "5",
+              "output": "11111\n2222\n333\n44\n5",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "4",
+              "output": "1111\n222\n33\n4",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "5",
+              "output": "11111\n2222\n333\n44\n5",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "4",
+              "output": "1111\n222\n33\n4",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "5",
+              "output": "11111\n2222\n333\n44\n5",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "4",
+              "output": "1111\n222\n33\n4",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "5",
+              "output": "11111\n2222\n333\n44\n5",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "4",
+              "output": "1111\n222\n33\n4",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+            "csharp": ""
+          },
+          "solution": {
+            "java": "import java.util.Scanner;\npublic class Main{public static void main(String[] args){Scanner sc=new Scanner(System.in);if(sc.hasNextInt()){int n=sc.nextInt();for(int i=1;i<=n;i++){StringBuilder sb=new StringBuilder();for(int j=0;j<n-i+1;j++)sb.append(i);System.out.println(sb);}}}}",
+            "cpp": "#include <iostream>\nusing namespace std;\nint main(){int n;if(cin>>n){for(int i=1;i<=n;i++){for(int j=0;j<n-i+1;j++)cout<<i;cout<<\"\\n\";}}return 0;}",
+            "c": "#include <stdio.h>\nint main() { int n; if(scanf(\"%d\",&n)==1){for(int i=1;i<=n;i++){for(int j=0;j<n-i+1;j++)printf(\"%d\",i);printf(\"\\n\");}}return 0; }"
+          }
+        },
+        {
+          "problemId": "Q0.90",
+          "questionId": "Q0.90",
+          "title": "Repeated N Digit Triangle Pattern",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept the n value and display the below pattern",
+          "description": "Write a program to accept the n value and display the below pattern",
+          "constraints": "1 <= N <= 50",
+          "inputFormat": "Accept n values of input",
+          "outputFormat": "Pattern",
+          "sampleTestCases": [
+            {
+              "input": "5",
+              "output": "5\n55\n555\n5555\n55555",
+              "explanation": "Input produces the corresponding formatted output according to problem rules."
+            },
+            {
+              "input": "4",
+              "output": "4\n44\n444\n4444",
+              "explanation": "Input produces the corresponding formatted output according to problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "5",
+              "output": "5\n55\n555\n5555\n55555",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "4",
+              "output": "4\n44\n444\n4444",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "5",
+              "output": "5\n55\n555\n5555\n55555",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "4",
+              "output": "4\n44\n444\n4444",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "5",
+              "output": "5\n55\n555\n5555\n55555",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "4",
+              "output": "4\n44\n444\n4444",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "5",
+              "output": "5\n55\n555\n5555\n55555",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "4",
+              "output": "4\n44\n444\n4444",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "5",
+              "output": "5\n55\n555\n5555\n55555",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "4",
+              "output": "4\n44\n444\n4444",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+            "csharp": ""
+          },
+          "solution": {
+            "java": "import java.util.Scanner;\npublic class Main{public static void main(String[] args){Scanner sc=new Scanner(System.in);if(sc.hasNextInt()){int n=sc.nextInt();for(int i=1;i<=n;i++){StringBuilder sb=new StringBuilder();for(int j=0;j<i;j++)sb.append(n);System.out.println(sb);}}}}",
+            "cpp": "#include <iostream>\nusing namespace std;\nint main(){int n;if(cin>>n){for(int i=1;i<=n;i++){for(int j=0;j<i;j++)cout<<n;cout<<\"\\n\";}}return 0;}",
+            "c": "#include <stdio.h>\nint main() { int n; if(scanf(\"%d\",&n)==1){for(int i=1;i<=n;i++){for(int j=0;j<i;j++)printf(\"%d\",n);printf(\"\\n\");}}return 0; }"
+          }
+        },
+        {
+          "problemId": "Q0.95",
+          "questionId": "Q0.95",
+          "title": "Inverted Suffix Alphabet Triangle Pattern",
+          "difficulty": "Beginner",
+          "problemStatement": "Write a program to accept the n value and display the below pattern",
+          "description": "Write a program to accept the n value and display the below pattern",
+          "constraints": "1 <= N <= 50",
+          "inputFormat": "Accept n values of input",
+          "outputFormat": "Pattern",
+          "sampleTestCases": [
+            {
+              "input": "5",
+              "output": "ABCDE\nBCDE\nCDE\nDE\nE",
+              "explanation": "Input produces the corresponding formatted output according to problem rules."
+            },
+            {
+              "input": "4",
+              "output": "ABCD\nBCD\nCD\nD",
+              "explanation": "Input produces the corresponding formatted output according to problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "5",
+              "output": "ABCDE\nBCDE\nCDE\nDE\nE",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "4",
+              "output": "ABCD\nBCD\nCD\nD",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "5",
+              "output": "ABCDE\nBCDE\nCDE\nDE\nE",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "4",
+              "output": "ABCD\nBCD\nCD\nD",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "5",
+              "output": "ABCDE\nBCDE\nCDE\nDE\nE",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "4",
+              "output": "ABCD\nBCD\nCD\nD",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "5",
+              "output": "ABCDE\nBCDE\nCDE\nDE\nE",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "4",
+              "output": "ABCD\nBCD\nCD\nD",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "5",
+              "output": "ABCDE\nBCDE\nCDE\nDE\nE",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "4",
+              "output": "ABCD\nBCD\nCD\nD",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+            "csharp": ""
+          },
+          "solution": {
+            "java": "import java.util.Scanner;\npublic class Main{public static void main(String[] args){Scanner sc=new Scanner(System.in);if(sc.hasNextInt()){int n=sc.nextInt();for(int i=1;i<=n;i++){StringBuilder sb=new StringBuilder();for(int j=i-1;j<n;j++)sb.append((char)('A'+j));System.out.println(sb);}}}}",
+            "cpp": "#include <iostream>\nusing namespace std;\nint main(){int n;if(cin>>n){for(int i=1;i<=n;i++){for(int j=i-1;j<n;j++)cout<<(char)('A'+j);cout<<\"\\n\";}}return 0;}",
+            "c": "#include <stdio.h>\nint main() { int n; if(scanf(\"%d\",&n)==1){for(int i=1;i<=n;i++){for(int j=i-1;j<n;j++)putchar('A'+j);putchar('\\n');}}return 0; }"
+          }
+        }
+      ]
+    }
+  }
 }

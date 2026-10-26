@@ -986,7 +986,60 @@
       "description": "Study concepts and solve targeted engineering problems for What are test cases?.",
       "mode": "PRACTICE",
       "readingTimeMinutes": 25,
-      "pages": [],
+      "pages": [
+        {
+          "pageId": "p-C-M01-T04-1",
+          "title": "Understanding Test Cases & Automated Verification",
+          "content": "### What is a Test Case?\n\nIn software engineering and competitive programming, a **test case** is a set of predefined inputs, execution preconditions, and expected outputs developed to verify that a program behaves correctly under specific conditions.\n\nWhen you submit a solution on an automated platform like **SEED-IT**, your compiled C binary is executed in an isolated sandbox environment. The evaluation engine feeds standard input (`stdin`) into your program and captures standard output (`stdout`), comparing it byte-by-byte with the expected answer.\n\n```\n+--------------------+      +--------------------+      +--------------------+\n|   Input (stdin)    | ---> | Your C Program     | ---> | Generated Output   |\n| e.g. \"5 10\"        |      | (Compiled Binary)  |      | e.g. \"15\"          |\n+--------------------+      +--------------------+      +--------------------+\n                                                                  |\n                                                                  v\n                                                        +--------------------+\n                                                        | Expected Output    |\n                                                        | Exact match check! |\n                                                        +--------------------+\n```\n\n### The Anatomy of a Test Case:\n1. **Input Data:** The exact formatted bytes supplied to `stdin` via `scanf` or `fgets`.\n2. **Expected Output:** The exact characters (including spaces and newlines) that your program must emit via `printf`.\n3. **Constraints:** Theoretical boundaries (e.g., $1 \\le N \\le 10^5$, memory limit 256MB, time limit 1.0s).\n4. **Execution Verdicts:**\n   - **AC (Accepted):** Output matches expected output exactly on all test cases within time/memory limits.\n   - **WA (Wrong Answer):** Output deviates from the expected output on at least one byte.\n   - **TLE (Time Limit Exceeded):** Program took longer than the allotted time (indicating an inefficient algorithm or infinite loop).\n   - **RTE (Runtime Error):** Program crashed (e.g. segmentation fault due to illegal pointer dereference or division by zero).\n   - **CE (Compilation Error):** Source code failed GCC syntax checking.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Exact Output Matching",
+            "text": "Automated evaluation judges test cases on an exact character basis. Even a single extra trailing space or missing newline can trigger a Wrong Answer (WA) verdict."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\n// Demonstrating input reading and expected output matching\nint main(void) {\n    int a, b;\n    if (scanf(\"%d %d\", &a, &b) == 2) {\n        printf(\"%d\\n\", a + b);\n    }\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-C-M01-T04-1",
+            "question": "What verdict is returned if a C program runs for 5 seconds when the problem limit is 1.0 second?",
+            "options": [
+              "Wrong Answer (WA)",
+              "Time Limit Exceeded (TLE)",
+              "Runtime Error (RTE)",
+              "Compilation Error (CE)"
+            ],
+            "correctAnswer": 1,
+            "explanation": "When execution duration exceeds the maximum permitted runtime limit, the judge halts the process with Time Limit Exceeded (TLE)."
+          }
+        },
+        {
+          "pageId": "p-C-M01-T04-2",
+          "title": "Sample vs Hidden Test Cases & Edge Cases",
+          "content": "### Sample Test Cases vs Hidden Test Cases\n\nProblems on technical assessment platforms are verified using two distinct tiers of test cases:\n\n1. **Sample Test Cases (Visible):**\n   - Provided openly in the problem statement.\n   - Clarify the input/output format and demonstrate basic requirements.\n   - Used during initial development to ensure the program parses input properly.\n\n2. **Hidden Test Cases (Private):**\n   - Kept private during the assessment to prevent hardcoding or gaming the evaluation.\n   - Designed specifically to stress-test your code against boundary conditions.\n\n### Critical Edge Cases to Always Test in C:\n- **Boundary Limits:** Minimum possible input ($N = 0$, $N = 1$, or negative numbers) and maximum possible input ($N = 10^9$ requiring `long long`).\n- **Empty / Null Input:** Empty strings, zero elements in arrays, single-element collections.\n- **Sign Extremes:** Positive, negative, and zero values.\n- **Precision & Formatting:** Floating point rounding errors (`%.2f` vs `%.6f`).\n- **Buffer Traps:** Newline characters `\\n` left in the input stream when mixing `scanf(\"%d\")` with `fgets()`.",
+          "callout": {
+            "type": "WARNING",
+            "title": "Avoid Hardcoding",
+            "text": "Writing `if (input == sample) return sampleOutput;` will pass the sample case but will fail 100% of hidden test cases!"
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\n// Robust solution handling edge cases (e.g. zero, negative, large inputs)\nint main(void) {\n    long long n;\n    if (scanf(\"%lld\", &n) != 1) return 0;\n    \n    // Edge case: N <= 0\n    if (n <= 0) {\n        printf(\"INVALID\\n\");\n        return 0;\n    }\n    \n    // Normal processing\n    printf(\"%lld\\n\", n * (n + 1) / 2);\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-C-M01-T04-2",
+            "question": "Why are hidden test cases essential in coding assessments?",
+            "options": [
+              "To encrypt the test server database",
+              "To test boundary values and prevent candidates from hardcoding answers to sample cases",
+              "To make the test take longer to execute",
+              "To check if the student has installed GCC locally"
+            ],
+            "correctAnswer": 1,
+            "explanation": "Hidden test cases ensure the candidate has implemented a general, robust algorithm that handles all edge cases rather than hardcoded sample answers."
+          }
+        }
+      ],
       "codeExamples": [],
       "practiceProblems": [
         {
@@ -1803,5 +1856,424 @@
       "_sourceFile": "college-programming-c.json",
       "_moduleTitle": "Introduction to C"
     }
-  ]
+  ],
+  "msa": {
+    "assessmentId": "msa-m01-introduction-to-c-environment-setup",
+    "title": "Module Assessment: Introduction to C & Environment Setup",
+    "durationMinutes": 45,
+    "passPercent": 80,
+    "mcqSection": {
+      "sectionTitle": "Section 1: Conceptual & Technical MCQs",
+      "totalQuestions": 10,
+      "durationMinutes": 20,
+      "passCutoffPercent": 80,
+      "questions": [
+        {
+          "questionId": "msa-m01-q1",
+          "question": "Which stage of the C compilation pipeline is responsible for expanding macros and including header files?",
+          "options": [
+            "Compilation",
+            "Preprocessing",
+            "Assembling",
+            "Linking"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The C Preprocessor (cpp) handles directives beginning with # like #include and #define before syntactic compilation starts.",
+          "tags": [
+            "Compilation Pipeline",
+            "Preprocessor"
+          ]
+        },
+        {
+          "questionId": "msa-m01-q2",
+          "question": "What is the primary role of the Linker in building a C program?",
+          "options": [
+            "Translates C source code into assembly language",
+            "Resolves external symbols, function references, and combines object files into an executable",
+            "Checks syntax and type compatibility",
+            "Executes the main function in memory"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The linker (ld) resolves references between object files (.o) and standard libraries (like libc.a/so) to create the final executable binary.",
+          "tags": [
+            "Compilation Pipeline",
+            "Linker"
+          ]
+        },
+        {
+          "questionId": "msa-m01-q3",
+          "question": "What does returning 0 from the `main()` function in C signify to the operating system?",
+          "options": [
+            "The program encountered a fatal runtime error",
+            "The program completed execution successfully without errors",
+            "The program has zero lines of code",
+            "The program must be restarted immediately"
+          ],
+          "correctAnswer": 1,
+          "explanation": "An exit status code of 0 (or EXIT_SUCCESS) indicates successful termination of the process to the calling environment/OS.",
+          "tags": [
+            "C Syntax",
+            "main Function"
+          ]
+        },
+        {
+          "questionId": "msa-m01-q4",
+          "question": "Which GCC compiler flag is used to enable all common compiler warning messages during build?",
+          "options": [
+            "-O3",
+            "-Wall",
+            "-c",
+            "-E"
+          ],
+          "correctAnswer": 1,
+          "explanation": "-Wall enables all construction warnings that indicate questionable programming habits or potential bugs.",
+          "tags": [
+            "GCC Toolchain",
+            "Compiler Flags"
+          ]
+        },
+        {
+          "questionId": "msa-m01-q5",
+          "question": "Which of the following represents a valid multi-line comment in standard C?",
+          "options": [
+            "// This is a comment //",
+            "/* This is a comment */",
+            "<!-- This is a comment -->",
+            "# This is a comment"
+          ],
+          "correctAnswer": 1,
+          "explanation": "In C, multi-line comments start with /* and end with */. Single-line comments start with // (supported in C99 and later).",
+          "tags": [
+            "Syntax",
+            "Comments"
+          ]
+        },
+        {
+          "questionId": "msa-m01-q6",
+          "question": "What file extension is typically given to an intermediate object file produced by GCC using the `-c` flag?",
+          "options": [
+            ".exe",
+            ".o",
+            ".s",
+            ".i"
+          ],
+          "correctAnswer": 1,
+          "explanation": "GCC compiles source to an object file containing machine code with the .o extension when the -c flag is passed without linking.",
+          "tags": [
+            "GCC Toolchain",
+            "Object Files"
+          ]
+        },
+        {
+          "questionId": "msa-m01-q7",
+          "question": "Why is `#include <stdio.h>` necessary before using `printf()` in standard C?",
+          "options": [
+            "It tells the compiler how to allocate heap memory",
+            "It provides the function prototype and declaration for standard I/O functions",
+            "It contains the compiled binary code of printf",
+            "It executes the main function"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Header files (.h) provide function declarations, prototypes, and macros so the compiler knows argument and return types before linking.",
+          "tags": [
+            "Header Files",
+            "Standard Library"
+          ]
+        },
+        {
+          "questionId": "msa-m01-q8",
+          "question": "In competitive programming and automated grading, why are \"hidden test cases\" used?",
+          "options": [
+            "To test code on different programming languages",
+            "To evaluate edge cases, boundary values, and prevent hardcoding answers to sample cases",
+            "To encrypt the program binary",
+            "To measure network latency"
+          ],
+          "correctAnswer": 1,
+          "explanation": "Hidden test cases rigorously test edge conditions (e.g. min/max inputs, empty strings, zeros) to ensure the algorithm is genuinely correct.",
+          "tags": [
+            "Testing",
+            "Automated Evaluation"
+          ]
+        },
+        {
+          "questionId": "msa-m01-q9",
+          "question": "What is the correct canonical signature of `main` accepting command-line arguments in C?",
+          "options": [
+            "int main(void)",
+            "int main(int argc, char *argv[])",
+            "void main(string args)",
+            "main(int argc)"
+          ],
+          "correctAnswer": 1,
+          "explanation": "According to the C standard, the two conforming signatures for hosted environments are `int main(void)` and `int main(int argc, char *argv[])`.",
+          "tags": [
+            "C Standard",
+            "main Function"
+          ]
+        },
+        {
+          "questionId": "msa-m01-q10",
+          "question": "What will happen if a C source file has no `main()` function and is compiled directly with `gcc program.c`?",
+          "options": [
+            "Compiler error: syntax error",
+            "Linker error: undefined reference to `main`",
+            "Runtime error: segmentation fault",
+            "It successfully creates an executable that does nothing"
+          ],
+          "correctAnswer": 1,
+          "explanation": "The compiler compiles the functions successfully into an object file, but the linker fails because it cannot find the entry point symbol `main`.",
+          "tags": [
+            "Compilation Pipeline",
+            "Linker Errors"
+          ]
+        }
+      ]
+    },
+    "codingSection": {
+      "sectionTitle": "Section 2: Hands-On Coding Challenges",
+      "totalProblems": 3,
+      "durationMinutes": 25,
+      "passCutoffPercent": 100,
+      "problems": [
+        {
+          "problemId": "Q0.1",
+          "questionId": "Q0.1",
+          "title": "Print Formatted Welcome Message",
+          "difficulty": "Beginner",
+          "problemStatement": "Print the following output:\nLet's learn 'C' together with \"SEED\" Team",
+          "description": "Print the following output:\nLet's learn 'C' together with \"SEED\" Team",
+          "constraints": "String length <= 100",
+          "inputFormat": "none",
+          "outputFormat": "None",
+          "sampleTestCases": [
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Input '' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "",
+              "output": "Let's learn 'C' together with \"SEED\" Team",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\n\nint main() {\n    printf(\"Let's learn 'C' together with \\\"SEED\\\" Team\\n\");\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.2",
+          "questionId": "Q0.2",
+          "title": "Print Newline Escape Sequence",
+          "difficulty": "Beginner",
+          "problemStatement": "Print the following output:\n\\n",
+          "description": "Print the following output:\n\\n",
+          "constraints": "Output length == 2 characters",
+          "inputFormat": "None",
+          "outputFormat": "\\n",
+          "sampleTestCases": [
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Input '' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "",
+              "output": "\\n",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\n\nint main() {\n    printf(\"\\\\n\\n\");\n    return 0;\n}\n"
+          }
+        },
+        {
+          "problemId": "Q0.3",
+          "questionId": "Q0.3",
+          "title": "Print Percent Symbols",
+          "difficulty": "Beginner",
+          "problemStatement": "Print the following output:\n%%",
+          "description": "Print the following output:\n%%",
+          "constraints": "Output length == 2 characters",
+          "inputFormat": "none",
+          "outputFormat": "%%",
+          "sampleTestCases": [
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Input '' produces expected output '' following problem rules."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 1"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 2"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 3"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 4"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 5"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 6"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 7"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 8"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 9"
+            },
+            {
+              "input": "",
+              "output": "%%",
+              "explanation": "Verification test case 10"
+            }
+          ],
+          "boilerplates": {
+            "c": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+            "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+            "python": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "solution": {
+            "c": "#include <stdio.h>\n\nint main() {\n    printf(\"%%%%\\n\");\n    return 0;\n}\n"
+          }
+        }
+      ]
+    }
+  }
 }
