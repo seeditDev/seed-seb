@@ -3,6 +3,9 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
+export { AssessmentSessionDO } from "./server/assessmentSessionDO";
+import { handleAssessmentSessionRequest } from "./server/sessionHandler";
+
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
@@ -47,6 +50,13 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      const url = new URL(request.url);
+
+      // Edge Durable Objects Assessment Session API
+      if (url.pathname.startsWith("/api/assessment/session/")) {
+        return await handleAssessmentSessionRequest(request, env);
+      }
+
       const handler = await getServerEntry();
       let response = await handler.fetch(request, env, ctx);
       response = await normalizeCatastrophicSsrResponse(response);
@@ -55,7 +65,6 @@ export default {
       // s-maxage=2592000 (30 days on Cloudflare Edge CDN) prevents burning Worker requests
       // max-age=604800 (7 days on student's browser) gives instant 0ms load times
       // stale-while-revalidate=86400 revalidates in the background if questions are updated
-      const url = new URL(request.url);
       if (
         (url.pathname.startsWith("/seed-contents/") ||
           url.pathname.endsWith(".json") ||

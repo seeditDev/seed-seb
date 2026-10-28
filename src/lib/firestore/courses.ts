@@ -58,6 +58,7 @@ export interface MSASection {
   assessmentId: string;
   duration_minutes: number;
   totalMarks: number;
+  maxScore?: number;
   questionTimer: number;
   allowLanguageSwitch: boolean;
   questionTimerList: string;
@@ -88,6 +89,7 @@ export interface TestDoc {
   sections: MSASection[];
   duration_minutes: number;
   totalMarks: number;
+  maxScore?: number;
   difficulty: "Easy" | "Medium" | "Hard";
   proctored: boolean;
   audioProctored: boolean;
@@ -162,6 +164,27 @@ function mapTest(
   d: Record<string, unknown>,
 ): TestDoc {
   const s = (d["settings"] ?? {}) as Record<string, unknown>;
+  const rawSections = Array.isArray(d["sections"]) ? (d["sections"] as any[]) : [];
+  const sections: MSASection[] = rawSections.map((sec) => {
+    const sMarks = Number(sec.maxScore ?? sec.totalMarks ?? sec.marks ?? 0);
+    return {
+      ...sec,
+      totalMarks: sMarks,
+      maxScore: sMarks,
+      duration_minutes: Number(sec.duration_minutes ?? sec.duration ?? 0),
+    };
+  });
+
+  const sectionsMarks = sections.reduce((sum, sec) => sum + (Number(sec.maxScore || sec.totalMarks || 0) || 0), 0);
+  const explicitMarks = d["maxScore"] ?? d["totalMarks"] ?? d["marks"] ?? d["totalScore"];
+  const resolvedMarks = sectionsMarks > 0
+    ? sectionsMarks
+    : (explicitMarks != null && explicitMarks !== "" ? Number(explicitMarks) : 0);
+
+  const sectionsDuration = sections.reduce((sum, sec) => sum + (Number(sec.duration_minutes) || 0), 0);
+  const explicitDuration = Number(d["duration_minutes"] ?? d["duration"] ?? d["timeLimit"] ?? 0);
+  const resolvedDuration = explicitDuration > 0 ? explicitDuration : (sectionsDuration > 0 ? sectionsDuration : 60);
+
   return {
     id,
     courseId,
@@ -171,9 +194,10 @@ function mapTest(
     type: (d["type"] as TestDoc["type"]) ?? "mcq",
     cdnUrl: String(d["cdnUrl"] ?? ""),
     assessmentId: String(d["assessmentId"] ?? ""),
-    sections: Array.isArray(d["sections"]) ? (d["sections"] as MSASection[]) : [],
-    duration_minutes: Number(d["duration_minutes"] ?? 60),
-    totalMarks: Number(d["totalMarks"] ?? 100),
+    sections,
+    duration_minutes: resolvedDuration,
+    totalMarks: resolvedMarks,
+    maxScore: resolvedMarks,
     difficulty: (d["difficulty"] as TestDoc["difficulty"]) ?? "Medium",
     proctored: Boolean(d["proctored"]),
     audioProctored: Boolean(d["audioProctored"]),

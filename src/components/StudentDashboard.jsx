@@ -1879,13 +1879,51 @@ const StudentDashboard = () => {
             }
           }
 
-          const durMin = t.duration_minutes || t.duration || t.timeLimit || 45;
-          const qCount = t.questionCount || (Array.isArray(t.sections) && t.sections.length > 0
-            ? t.sections.reduce((acc, s) => acc + (s.questionCount || (Array.isArray(s.questions) ? s.questions.length : 0) || (Array.isArray(s.problems) ? s.problems.length : 0)), 0)
-            : 15);
+          const durMin = Number(t.duration_minutes || t.duration || t.timeLimit) ||
+            (Array.isArray(t.sections) && t.sections.length > 0
+              ? t.sections.reduce((acc, s) => acc + Number(s.duration_minutes || s.duration || s.timeLimit || 0), 0)
+              : 0) || 60;
 
-          // All assessments use the unified Assessment runtime (MSA).
-          const isMultiSection = true;
+          const explicitQCount = Number(t.questionCount || t.totalQuestions || 0);
+          const sectionsQCount = Array.isArray(t.sections) && t.sections.length > 0
+            ? t.sections.reduce((acc, s) => acc + Number(s.questionCount || s.totalQuestions || (Array.isArray(s.questions) ? s.questions.length : 0) || (Array.isArray(s.problems) ? s.problems.length : 0) || 0), 0)
+            : 0;
+          const qCount = explicitQCount > 0 ? explicitQCount : (sectionsQCount > 0 ? sectionsQCount : null);
+
+          const explicitMarks = Number(t.maxScore ?? t.totalMarks ?? t.marks ?? t.totalScore ?? 0);
+          const sectionsMarks = Array.isArray(t.sections) && t.sections.length > 0
+            ? t.sections.reduce((acc, s) => acc + Number(s.maxScore ?? s.totalMarks ?? s.marks ?? 0), 0)
+            : 0;
+          const totalMarks = sectionsMarks > 0 ? sectionsMarks : (explicitMarks > 0 ? explicitMarks : 0);
+
+          const isMultiSection = Boolean(t.isMultiSection || t.type === 'MSA' || (Array.isArray(t.sections) && t.sections.length > 1));
+          const type = t.type || (isMultiSection ? 'MSA' : (t.sections?.[0]?.type || 'assessment'));
+
+          const rawDesc = typeof t.description === 'string' ? t.description.trim() : '';
+          const sectionsSummary = Array.isArray(t.sections) && t.sections.length > 0
+            ? `${t.sections.length} Section${t.sections.length > 1 ? 's' : ''}: ${t.sections.map(s => s.name || (s.type || '').toUpperCase()).join(' · ')}`
+            : '';
+          const description = rawDesc || sectionsSummary;
+
+          const premisesProctoring = Boolean(
+            t.premisesProctoring ||
+            t.premisesCameraRequired ||
+            t.proctorConfig?.premisesProctoring ||
+            t.proctorConfig?.premisesCameraRequired ||
+            t.settings?.premisesProctoring ||
+            t.settings?.premisesCameraRequired ||
+            (Array.isArray(t.sections) && t.sections.some(s => s?.premisesCameraRequired || s?.premisesProctoring || s?.proctorConfig?.premisesCameraRequired || s?.proctorConfig?.premisesProctoring))
+          );
+          const audioProctored = Boolean(t.audioProctored || t.proctorConfig?.audioProctored || t.settings?.audioProctored);
+          const isExplicitlyProctored = Boolean(
+            t.proctored === true ||
+            t.proctored === 'true' ||
+            t.proctorConfig?.proctored ||
+            t.settings?.proctored ||
+            premisesProctoring ||
+            audioProctored
+          );
+          const proctored = isExplicitlyProctored;
 
           return {
             // ── identity ──
@@ -1894,13 +1932,13 @@ const StudentDashboard = () => {
             seriesId: t.seriesId,
             // ── display ──
             name: t.name,
-            description: t.description || `Milestone assessment evaluation covering core concepts in ${t.name}.`,
+            description,
             seriesName: (t.isRecruitment || t.tag === 'Recruitment')
               ? (t.recruitmentTag || (t.companyName ? `${t.companyName} • Recruitment` : (t.seriesTitle || 'Corporate Recruitment')))
               : (t.seriesTitle || (t.isGlobal ? 'Global Open Challenges' : (t.courseTitle ? `${t.courseTitle} Evaluations` : 'Assessments'))),
-            seriesDescription: t.description || t.seriesDescription || ((t.isRecruitment || t.tag === 'Recruitment')
+            seriesDescription: rawDesc || t.seriesDescription || ((t.isRecruitment || t.tag === 'Recruitment')
               ? `Official corporate assessment drive for ${t.companyName || 'Corporate Partner'}`
-              : `Comprehensive milestone evaluation and evaluation series for ${t.seriesTitle || t.courseTitle || 'programming tracks'}.`),
+              : `Comprehensive evaluation series for ${t.seriesTitle || t.courseTitle || 'programming tracks'}.`),
             courseTitle: t.courseTitle ?? '',
             seriesKey: (t.courseId && t.seriesId)
               ? `${t.courseId}::${t.seriesId}`
@@ -1912,7 +1950,8 @@ const StudentDashboard = () => {
             companyId: t.companyId || t.recruiterId || '',
             difficulty: t.difficulty || 'Medium',
             // ── engine routing ──
-            type: 'assessment',
+            type,
+            rawType: t.type || type,
             isMultiSection,
             slug: t.assessmentId || t.slug || t.id,
             url: t.cdnUrl ?? '',
@@ -1922,6 +1961,7 @@ const StudentDashboard = () => {
             // ── timing ──
             duration: durMin,
             timeLimit: durMin,
+            duration_minutes: durMin,
             schedule,
             // ── access ──
             passkey: t.passkey ?? '',
@@ -1943,36 +1983,21 @@ const StudentDashboard = () => {
             ),
             guestEnabled: t.guestEnabled,
             // ── proctor ──
-            proctored: t.proctored !== false,
-            audioProctored: Boolean(t.audioProctored),
-            premisesProctoring: Boolean(
-              t.premisesProctoring ||
-              t.premisesCameraRequired ||
-              t.proctorConfig?.premisesProctoring ||
-              t.proctorConfig?.premisesCameraRequired ||
-              t.settings?.premisesProctoring ||
-              t.settings?.premisesCameraRequired ||
-              (t.sections && t.sections.some(s => s?.premisesCameraRequired || s?.premisesProctoring || s?.proctorConfig?.premisesCameraRequired || s?.proctorConfig?.premisesProctoring))
-            ),
-            premisesCameraRequired: Boolean(
-              t.premisesCameraRequired ||
-              t.premisesProctoring ||
-              t.proctorConfig?.premisesCameraRequired ||
-              t.proctorConfig?.premisesProctoring ||
-              t.settings?.premisesCameraRequired ||
-              t.settings?.premisesProctoring ||
-              (t.sections && t.sections.some(s => s?.premisesCameraRequired || s?.premisesProctoring || s?.proctorConfig?.premisesCameraRequired || s?.proctorConfig?.premisesProctoring))
-            ),
+            proctored,
+            audioProctored,
+            premisesProctoring,
+            premisesCameraRequired: premisesProctoring,
             proctorConfig: t.proctorConfig || {
-              premisesCameraRequired: Boolean(t.premisesCameraRequired || t.premisesProctoring || t.settings?.premisesCameraRequired || t.settings?.premisesProctoring),
-              premisesProctoring: Boolean(t.premisesProctoring || t.premisesCameraRequired || t.settings?.premisesProctoring || t.settings?.premisesCameraRequired),
+              premisesCameraRequired: premisesProctoring,
+              premisesProctoring,
             },
-            maxViolations: t.maxViolations ?? 200,
-            maxAudioViolations: t.maxAudioViolations ?? 200,
+            maxViolations: Number(t.maxViolations ?? 5),
+            maxAudioViolations: Number(t.maxAudioViolations ?? 3),
             // ── settings ──
             settings: t.settings,
             display_order: t.display_order ?? 999,
-            totalMarks: t.totalMarks || t.maxScore || 100,
+            totalMarks,
+            maxScore: totalMarks,
             questionCount: qCount,
             // ── initially false, resolved below ──
             completed: false,
@@ -2064,7 +2089,19 @@ const StudentDashboard = () => {
     }
 
     if (filterType !== "All") {
-      filtered = filtered.filter(a => a.type === filterType.toLowerCase());
+      const ft = filterType.toLowerCase();
+      filtered = filtered.filter(a => {
+        const aType = String(a.type || '').toLowerCase();
+        const isMSA = aType === 'msa' || a.isMultiSection || (Array.isArray(a.sections) && a.sections.length > 1);
+        if (ft === 'msa') return isMSA;
+        if (ft === 'coding') {
+          return aType === 'coding' || (Array.isArray(a.sections) && a.sections.some(s => String(s.type || '').toLowerCase() === 'coding'));
+        }
+        if (ft === 'mcq') {
+          return aType === 'mcq' || (Array.isArray(a.sections) && a.sections.some(s => String(s.type || '').toLowerCase() === 'mcq'));
+        }
+        return aType === ft;
+      });
     }
 
     if (filterStatus !== "All") {
@@ -2371,7 +2408,7 @@ const StudentDashboard = () => {
         courseId: assessment.courseId ?? '',
         seriesId: assessment.seriesId ?? '',
         assessmentId: assessment.id ?? '',
-        totalMarks: assessment.maxScore || 100,
+        totalMarks: assessment.totalMarks || assessment.maxScore || 100,
         settings: assessment.settings || {},
         isRecruitment: Boolean(assessment.isRecruitment || assessment.tag === 'Recruitment'),
         recruiterId: assessment.recruiterId || assessment.companyId || (assessment.courseId?.startsWith('recruiter_') ? assessment.courseId.replace('recruiter_', '') : ''),
@@ -3035,14 +3072,14 @@ const StudentDashboard = () => {
                                 fontSize: '13px',
                                 fontWeight: '700',
                                 color: '#ffffff',
-                                backgroundColor: '#15803d',
-                                border: '1px solid #15803d',
+                                backgroundColor: '#10b981',
+                                border: '1px solid #10b981',
                                 borderRadius: '8px',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '6px',
-                                boxShadow: '0 2px 6px rgba(21, 128, 61, 0.25)'
+                                boxShadow: '0 2px 6px rgba(16, 185, 129, 0.25)'
                               }}
                             >
                               Explore Series →
@@ -3078,7 +3115,19 @@ const StudentDashboard = () => {
               assessmentsToShow = assessmentsToShow.filter(a => a.difficulty.toLowerCase() === filterDifficulty.toLowerCase());
             }
             if (filterType !== "All") {
-              assessmentsToShow = assessmentsToShow.filter(a => a.type.toLowerCase() === filterType.toLowerCase());
+              const ft = filterType.toLowerCase();
+              assessmentsToShow = assessmentsToShow.filter(a => {
+                const aType = String(a.type || '').toLowerCase();
+                const isMSA = aType === 'msa' || a.isMultiSection || (Array.isArray(a.sections) && a.sections.length > 1);
+                if (ft === 'msa') return isMSA;
+                if (ft === 'coding') {
+                  return aType === 'coding' || (Array.isArray(a.sections) && a.sections.some(s => String(s.type || '').toLowerCase() === 'coding'));
+                }
+                if (ft === 'mcq') {
+                  return aType === 'mcq' || (Array.isArray(a.sections) && a.sections.some(s => String(s.type || '').toLowerCase() === 'mcq'));
+                }
+                return aType === ft;
+              });
             }
             if (filterStatus !== "All") {
               assessmentsToShow = assessmentsToShow.filter(a => {
@@ -3190,7 +3239,12 @@ const StudentDashboard = () => {
                                 <h3 className="ps-card-title" style={{ margin: 0, fontSize: '16.5px', fontWeight: 700, lineHeight: '1.3' }}>
                                   {a.name}
                                 </h3>
-                                <div style={{ display: 'flex', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+                                <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                                  {(a.isMultiSection || a.type === 'MSA') && (
+                                    <span style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', fontSize: '10px', padding: '2px 7px', borderRadius: '4px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                      📚 MSA
+                                    </span>
+                                  )}
                                   {(a.tag === 'Recruitment' || a.isRecruitment || a.companyName || a.recruitmentTag) && (
                                     <span style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', fontSize: '10px', padding: '2px 8px', borderRadius: '4px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                                       🏢 {a.companyName ? `${a.companyName} • Recruitment` : (a.recruitmentTag || 'Recruitment')}
@@ -3229,26 +3283,53 @@ const StudentDashboard = () => {
                               )}
                             </div>
 
-                            <p className="ps-card-desc" style={{ fontSize: '12.5px', marginTop: '4px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
-                              {a.description}
-                            </p>
+                            {a.description ? (
+                              <p className="ps-card-desc" style={{ fontSize: '12.5px', marginTop: '4px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                                {a.description}
+                              </p>
+                            ) : null}
 
                             <div className="ps-meta-tags" style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                               <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '3px 8px', color: 'var(--text-main)' }}>
-                                <FaClock style={{ fontSize: '10px', color: '#38bdf8' }} /> {a.duration || a.timeLimit || 45} mins
+                                <FaClock style={{ fontSize: '10px', color: '#38bdf8' }} /> {a.duration} mins
                               </span>
-                              <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '3px 8px', color: 'var(--text-main)' }}>
-                                <FaAward style={{ fontSize: '10px', color: '#10b981' }} /> {a.totalMarks || 100} Marks
-                              </span>
-                              <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '3px 8px', color: 'var(--text-main)' }}>
-                                <FaListOl style={{ fontSize: '10px', color: '#a855f7' }} /> {a.questionCount || 15} Questions
-                              </span>
-                              <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '3px 8px', color: 'var(--text-main)' }}>
-                                <FaShieldAlt style={{ fontSize: '10px', color: '#f59e0b' }} /> {a.proctored ? 'Proctored' : 'Open'}
-                              </span>
+                              {Boolean(a.totalMarks && a.totalMarks > 0) && (
+                                <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '3px 8px', color: 'var(--text-main)' }}>
+                                  <FaAward style={{ fontSize: '10px', color: '#10b981' }} /> {a.totalMarks} Marks
+                                </span>
+                              )}
+
+                              {a.questionCount ? (
+                                <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '3px 8px', color: 'var(--text-main)' }}>
+                                  <FaListOl style={{ fontSize: '10px', color: '#a855f7' }} /> {a.questionCount} Questions
+                                </span>
+                              ) : a.sections && a.sections.length > 0 ? (
+                                <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '3px 8px', color: 'var(--text-main)' }}>
+                                  <FaLayerGroup style={{ fontSize: '10px', color: '#a855f7' }} /> {a.sections.length} Section{a.sections.length > 1 ? 's' : ''}
+                                </span>
+                              ) : null}
+
+                              {a.premisesProctoring || a.premisesCameraRequired ? (
+                                <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '6px', padding: '3px 8px', color: '#ef4444' }}>
+                                  <FaShieldAlt style={{ fontSize: '10px', color: '#ef4444' }} /> 360° Premises
+                                </span>
+                              ) : a.audioProctored ? (
+                                <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.25)', borderRadius: '6px', padding: '3px 8px', color: '#f59e0b' }}>
+                                  <FaShieldAlt style={{ fontSize: '10px', color: '#f59e0b' }} /> Audio + Cam
+                                </span>
+                              ) : a.proctored ? (
+                                <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: '6px', padding: '3px 8px', color: '#3b82f6' }}>
+                                  <FaShieldAlt style={{ fontSize: '10px', color: '#3b82f6' }} /> Proctored
+                                </span>
+                              ) : (
+                                <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '3px 8px', color: 'var(--text-main)' }}>
+                                  <FaShieldAlt style={{ fontSize: '10px', color: '#10b981' }} /> Open
+                                </span>
+                              )}
+
                               {a.sections && a.sections.length > 0 && (
                                 <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '3px 8px', color: 'var(--text-main)' }}>
-                                  <FaLayerGroup style={{ fontSize: '10px', color: '#6366f1' }} /> {a.sections.map(s => (s.type || 'mcq').toUpperCase()).filter((v, i, arr) => arr.indexOf(v) === i).join(' + ')}
+                                  <FaCode style={{ fontSize: '10px', color: '#6366f1' }} /> {a.sections.map(s => (s.name && s.type && s.name.toUpperCase() !== s.type.toUpperCase()) ? `${s.name} (${s.type.toUpperCase()})` : (s.name || s.type || 'MCQ').toUpperCase()).filter((v, i, arr) => arr.indexOf(v) === i).join(' + ')}
                                 </span>
                               )}
                             </div>
@@ -5378,7 +5459,7 @@ const StudentDashboard = () => {
         id: 'seed-seb',
         name: 'SEED-SEB Academic (Default)',
         desc: 'Clean, distraction-free examination theme with institutional SEED green accents.',
-        colors: ['#f8fafc', '#ffffff', '#15803d']
+        colors: ['#f8fafc', '#ffffff', '#10b981']
       },
       {
         id: 'dark',
@@ -5544,7 +5625,7 @@ const StudentDashboard = () => {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{ display: 'flex', gap: '4px' }}>
-                      {(allThemes.find(t => t.id === currentTheme)?.colors || ['#f8fafc', '#ffffff', '#15803d']).map((c, idx) => (
+                      {(allThemes.find(t => t.id === currentTheme)?.colors || ['#f8fafc', '#ffffff', '#10b981']).map((c, idx) => (
                         <div key={idx} style={{ width: '12px', height: '12px', borderRadius: '50%', background: c, border: '1px solid rgba(0,0,0,0.15)' }} />
                       ))}
                     </div>
@@ -5604,7 +5685,7 @@ const StudentDashboard = () => {
                                   <div key={cIdx} style={{ width: '10px', height: '10px', borderRadius: '50%', background: c, border: '1px solid rgba(0,0,0,0.15)' }} />
                                 ))}
                               </div>
-                              <span style={{ fontSize: '13px', fontWeight: active ? 700 : 600, color: active ? 'var(--accent-primary, #15803d)' : 'var(--text-main)' }}>
+                              <span style={{ fontSize: '13px', fontWeight: active ? 700 : 600, color: active ? 'var(--accent-primary, #10b981)' : 'var(--text-main)' }}>
                                 {t.name}
                               </span>
                             </div>
@@ -5612,7 +5693,7 @@ const StudentDashboard = () => {
                               {t.desc}
                             </span>
                           </div>
-                          {active && <FaCheckCircle style={{ color: 'var(--accent-primary, #15803d)', fontSize: '15px', flexShrink: 0 }} />}
+                          {active && <FaCheckCircle style={{ color: 'var(--accent-primary, #10b981)', fontSize: '15px', flexShrink: 0 }} />}
                         </div>
                       );
                     })}

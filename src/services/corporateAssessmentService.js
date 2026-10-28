@@ -279,7 +279,7 @@ export function prepareCorporateAssessmentForLaunch(assessment, user) {
     ...assessment,
     isMultiSection: true,
     strictLockdown: true,
-    totalMarks: assessment.maxScore || 100,
+    totalMarks: assessment.totalMarks || assessment.maxScore || 100,
     settings: {
       proctoring: assessment.proctoring || {
         enabled: true,
@@ -303,7 +303,7 @@ export function prepareCorporateAssessmentForLaunch(assessment, user) {
       assessmentId: assessment.id,
       applicationId: assessment.applicationId || '',
       jobId: assessment.jobId || '',
-      totalMarks: assessment.maxScore || 100,
+      totalMarks: assessment.totalMarks || assessment.maxScore || 100,
       isCorporate: true,
       settings: canonicalAss.settings,
     })

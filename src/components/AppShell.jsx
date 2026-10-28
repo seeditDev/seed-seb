@@ -696,7 +696,7 @@ export default function AppShell({ children }) {
                 padding: "10px 20px",
                 borderRadius: "8px",
                 border: "none",
-                background: "var(--accent-coding, #15803d)",
+                background: "var(--accent-coding, #10b981)",
                 color: "#ffffff",
                 fontSize: "13px",
                 fontWeight: 700,

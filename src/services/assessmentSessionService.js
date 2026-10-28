@@ -94,6 +94,66 @@ function getAttemptRef(uid, assessmentId) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Cloudflare Durable Objects Edge Integration
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function notifyEdgeSessionStart(uid, assessment, authProfile, slug) {
+  try {
+    const idToken = await auth?.currentUser?.getIdToken?.().catch(() => null);
+    fetch('/api/assessment/session/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uid,
+        tenantId: authProfile.tenantId,
+        cohortId: authProfile.cohortId,
+        email: authProfile.email,
+        name: authProfile.displayName,
+        assessmentId: assessment.id,
+        assessmentTitle: assessment.name || assessment.title,
+        type: assessment.type || 'MSA',
+        slug,
+        durationSeconds: (assessment.duration_minutes || assessment.durationMinutes || 120) * 60,
+        sections: assessment.sections || [],
+        idToken,
+      }),
+    }).catch((e) => console.warn('[SessionService] Edge DO session start notice:', e?.message));
+  } catch (_) {}
+}
+
+async function notifyEdgeSessionSync(uid, assessmentId, sectionId, answers) {
+  try {
+    fetch('/api/assessment/session/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uid,
+        assessmentId,
+        sectionId,
+        answers: answers || {},
+      }),
+    }).catch(() => {});
+  } catch (_) {}
+}
+
+async function notifyEdgeSessionSubmit(uid, assessmentId, opts) {
+  try {
+    const idToken = await auth?.currentUser?.getIdToken?.().catch(() => null);
+    fetch('/api/assessment/session/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uid,
+        assessmentId,
+        finalPayload: opts?.finalPayload,
+        reason: opts?.reason || (opts?.autoSubmitted ? 'auto_submitted' : 'user_submitted'),
+        idToken,
+      }),
+    }).catch(() => {});
+  } catch (_) {}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -245,9 +305,11 @@ export async function startAssessmentSession(assessment, slug = '') {
       if (isTerminal(concurrentStatus)) {
         return { outcome: 'blocked', attempt: concurrentData, reason: 'Assessment is in a final state.' };
       }
+      notifyEdgeSessionStart(uid, assessment, authProfile, slug);
       return { outcome: 'resumed', attempt: concurrentData };
     }
 
+    notifyEdgeSessionStart(uid, assessment, authProfile, slug);
     console.log('[SessionService] New attempt created (atomic) for assessment', assessment.id, '| uid:', uid);
     return { outcome: 'created', attempt: txResult.data };
 
@@ -395,6 +457,7 @@ export async function saveSessionProgress(assessmentId, sectionId, answers) {
       }, { merge: true });
     });
     console.log('[SessionService] Progress saved for section', sectionId);
+    notifyEdgeSessionSync(uid, assessmentId, sectionId, answers);
   } catch (err) {
     console.warn('[SessionService] saveSessionProgress failed (non-fatal):', err?.message);
   }
@@ -495,6 +558,7 @@ export async function completeAssessmentSession(assessmentId, opts = {}) {
   });
 
   try {
+    notifyEdgeSessionSubmit(uid, assessmentId, opts);
     await withRetry(() => updateDoc(attemptRef, updateData));
     clearLocalSubmissionEnvelope(uid, assessmentId);
     console.log('[SessionService] Session completed for assessment', assessmentId, '| state:', targetState);

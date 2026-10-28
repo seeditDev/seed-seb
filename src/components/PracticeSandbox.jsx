@@ -1,5 +1,5 @@
 import { complexityAnalysisService } from '../services/complexityAnalysisService';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from './router-compat';
 import Editor from '@monaco-editor/react';
 import { FaPlay, FaCheck, FaTimes, FaUndo, FaArrowLeft, FaHourglassHalf, FaCode, FaListUl, FaSearch, FaLock, FaStar, FaCheckCircle, FaLightbulb, FaGithub } from 'react-icons/fa';
@@ -34,6 +34,45 @@ const MONACO_LANG_MAP = {
   python: 'python',
   python3: 'python',
   javascript: 'javascript'
+};
+
+// Level & Difficulty helpers for problem list sorting & filtering
+const getQuestionLevelNumber = (q) => {
+  if (q?.level !== undefined && q?.level !== null && q?.level !== '') {
+    const n = Number(q.level);
+    if (!isNaN(n)) return n;
+  }
+  if (q?.metadata?.level !== undefined && q?.metadata?.level !== null && q?.metadata?.level !== '') {
+    const n = Number(q.metadata.level);
+    if (!isNaN(n)) return n;
+  }
+  const qid = String(q?.questionId || q?.id || '').toLowerCase();
+  if (qid.startsWith('q0.')) return 1;
+  return 999;
+};
+
+const getQuestionLevelString = (q) => {
+  if (q?.level !== undefined && q?.level !== null && q?.level !== '') {
+    return String(q.level);
+  }
+  if (q?.metadata?.level !== undefined && q?.metadata?.level !== null && q?.metadata?.level !== '') {
+    return String(q.metadata.level);
+  }
+  const qid = String(q?.questionId || q?.id || '').toLowerCase();
+  if (qid.startsWith('q0.')) return '1';
+  return 'Pending';
+};
+
+const DIFFICULTY_WEIGHT = {
+  beginner: 1,
+  easy: 2,
+  medium: 3,
+  hard: 4,
+};
+
+const getDifficultyWeight = (diff) => {
+  const k = String(diff || '').trim().toLowerCase();
+  return DIFFICULTY_WEIGHT[k] || 2;
 };
 
 const getBoilerplate = (boilerplatesObj, langKey) => {
@@ -232,6 +271,78 @@ const PracticeSandbox = () => {
   const [sidebarCategory, setSidebarCategory] = useState('All');
   const [showContactInfo, setShowContactInfo] = useState(false);
   const [sidebarStatus, setSidebarStatus] = useState('All');
+  const [sidebarLevel, setSidebarLevel] = useState('All');
+  const [sidebarSort, setSidebarSort] = useState('DEFAULT');
+
+  // Filter and sort sidebar questions (must be called unconditionally before any early returns)
+  const filteredSidebarQuestions = useMemo(() => {
+    const filtered = (sidebarQuestions || []).filter(q => {
+      const isSolved = solvedIds.includes(q.questionId);
+      const isAttempted = attemptedIds.includes(q.questionId) || (Object.keys(problemDetails).includes(q.questionId) && !isSolved);
+      const status = isSolved ? 'SOLVED' : isAttempted ? 'ATTEMPTED' : 'UNSOLVED';
+
+      const matchesSearch = !sidebarSearch ||
+        q.title?.toLowerCase().includes(sidebarSearch.toLowerCase()) ||
+        q.questionId?.toLowerCase().includes(sidebarSearch.toLowerCase());
+      if (!matchesSearch) return false;
+
+      const matchesDiff = sidebarDifficulty === 'All' || q.difficulty === sidebarDifficulty;
+      if (!matchesDiff) return false;
+
+      const matchesCat = sidebarCategory === 'All' || q.category === sidebarCategory;
+      if (!matchesCat) return false;
+
+      const matchesStatus = sidebarStatus === 'All' || status === sidebarStatus;
+      if (!matchesStatus) return false;
+
+      if (sidebarLevel !== 'All') {
+        const qLvl = getQuestionLevelString(q);
+        if (sidebarLevel === 'Pending') {
+          if (qLvl !== 'Pending') return false;
+        } else if (qLvl !== sidebarLevel) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    return [...filtered].sort((a, b) => {
+      if (sidebarSort === 'LEVEL_ASC') {
+        const lvlA = getQuestionLevelNumber(a);
+        const lvlB = getQuestionLevelNumber(b);
+        if (lvlA !== lvlB) return lvlA - lvlB;
+        return String(a?.questionId || '').localeCompare(String(b?.questionId || ''), undefined, { numeric: true, sensitivity: 'base' });
+      }
+      if (sidebarSort === 'LEVEL_DESC') {
+        const lvlA = getQuestionLevelNumber(a);
+        const lvlB = getQuestionLevelNumber(b);
+        if (lvlA === 999 && lvlB !== 999) return 1;
+        if (lvlB === 999 && lvlA !== 999) return -1;
+        if (lvlA !== lvlB) return lvlB - lvlA;
+        return String(a?.questionId || '').localeCompare(String(b?.questionId || ''), undefined, { numeric: true, sensitivity: 'base' });
+      }
+      if (sidebarSort === 'DIFF_ASC') {
+        const diffA = getDifficultyWeight(a.difficulty);
+        const diffB = getDifficultyWeight(b.difficulty);
+        if (diffA !== diffB) return diffA - diffB;
+        return String(a?.questionId || '').localeCompare(String(b?.questionId || ''), undefined, { numeric: true, sensitivity: 'base' });
+      }
+      if (sidebarSort === 'DIFF_DESC') {
+        const diffA = getDifficultyWeight(a.difficulty);
+        const diffB = getDifficultyWeight(b.difficulty);
+        if (diffA !== diffB) return diffB - diffA;
+        return String(a?.questionId || '').localeCompare(String(b?.questionId || ''), undefined, { numeric: true, sensitivity: 'base' });
+      }
+      if (sidebarSort === 'TITLE_ASC') {
+        return String(a?.title || '').localeCompare(String(b?.title || ''));
+      }
+      // DEFAULT: natural question ID sorting (Q0.1, Q0.2, ..., Q1, Q2, etc.)
+      return String(a?.questionId || '').localeCompare(String(b?.questionId || ''), undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }, [sidebarQuestions, sidebarSearch, sidebarDifficulty, sidebarStatus, sidebarCategory, sidebarLevel, sidebarSort, solvedIds, attemptedIds, problemDetails]);
+
+  const sidebarCategories = useMemo(() => [...new Set((sidebarQuestions || []).map(q => q.category).filter(Boolean))], [sidebarQuestions]);
 
   // GitHub Sync states
   const [showGitHubModal, setShowGitHubModal] = useState(false);
@@ -396,7 +507,8 @@ const PracticeSandbox = () => {
                 questionId: currentQ.questionId,
                 title: currentQ.title,
                 category: currentQ.metadata?.category || 'Practice',
-                difficulty: currentQ.metadata?.difficulty || 'Beginner'
+                difficulty: currentQ.metadata?.difficulty || 'Beginner',
+                level: currentQ.metadata?.level ?? currentQ.level ?? (String(currentQ.questionId || '').toLowerCase().startsWith('q0.') ? 1 : null)
               }, ...indexQs];
             }
           } catch (e) {}
@@ -967,24 +1079,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
     );
   }
 
-  const supportedLanguages = question.judging?.supportedLanguages || ['C', 'C++', 'Java', 'Python3', 'JavaScript'];
-
-  // Filter sidebar questions
-  const filteredSidebarQuestions = sidebarQuestions.filter(q => {
-    const isSolved = solvedIds.includes(q.questionId);
-    const isAttempted = attemptedIds.includes(q.questionId) || (Object.keys(problemDetails).includes(q.questionId) && !isSolved);
-    const status = isSolved ? 'SOLVED' : isAttempted ? 'ATTEMPTED' : 'UNSOLVED';
-
-    const matchesSearch = !sidebarSearch ||
-      q.title?.toLowerCase().includes(sidebarSearch.toLowerCase()) ||
-      q.questionId?.toLowerCase().includes(sidebarSearch.toLowerCase());
-    const matchesDiff = sidebarDifficulty === 'All' || q.difficulty === sidebarDifficulty;
-    const matchesCat = sidebarCategory === 'All' || q.category === sidebarCategory;
-    const matchesStatus = sidebarStatus === 'All' || status === sidebarStatus;
-    return matchesSearch && matchesDiff && matchesCat && matchesStatus;
-  });
-
-  const sidebarCategories = [...new Set(sidebarQuestions.map(q => q.category).filter(Boolean))];
+  const supportedLanguages = question?.judging?.supportedLanguages || ['C', 'C++', 'Java', 'Python3', 'JavaScript'];
 
   return (
     <div className="psb-root">
@@ -1042,43 +1137,101 @@ const isCodeBlankOrEmpty = (codeStr) => {
                 className="psb-sidebar-search"
               />
             </div>
-            {/* Filter Row */}
+            {/* Filter & Sort Controls */}
             <div className="psb-sidebar-filters">
-              <select
-                value={sidebarDifficulty}
-                onChange={e => setSidebarDifficulty(e.target.value)}
-                className="psb-sidebar-filter-select"
-              >
-                <option value="All">All Difficulty</option>
-                <option value="Beginner">Beginner</option>
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
-              </select>
-              <select
-                value={sidebarStatus}
-                onChange={e => setSidebarStatus(e.target.value)}
-                className="psb-sidebar-filter-select"
-              >
-                <option value="All">All Status</option>
-                <option value="SOLVED">Solved</option>
-                <option value="ATTEMPTED">Attempted</option>
-                <option value="UNSOLVED">Todo</option>
-              </select>
-              <select
-                value={sidebarCategory}
-                onChange={e => setSidebarCategory(e.target.value)}
-                className="psb-sidebar-filter-select"
-              >
-                <option value="All">All Topics</option>
-                {sidebarCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-              </select>
+              <div className="psb-sidebar-filters-row">
+                <select
+                  value={sidebarSort}
+                  onChange={e => setSidebarSort(e.target.value)}
+                  className="psb-sidebar-filter-select psb-sidebar-sort-select"
+                  aria-label="Sort problem list"
+                  title="Sort Problem List"
+                >
+                  <option value="DEFAULT">Sort: Default (#)</option>
+                  <option value="LEVEL_ASC">Sort: Level (Low → High)</option>
+                  <option value="LEVEL_DESC">Sort: Level (High → Low)</option>
+                  <option value="DIFF_ASC">Sort: Diff (Easy → Hard)</option>
+                  <option value="DIFF_DESC">Sort: Diff (Hard → Easy)</option>
+                  <option value="TITLE_ASC">Sort: Title (A → Z)</option>
+                </select>
+                <select
+                  value={sidebarLevel}
+                  onChange={e => setSidebarLevel(e.target.value)}
+                  className="psb-sidebar-filter-select"
+                  aria-label="Filter by placement level"
+                  title="Filter by Placement Level"
+                >
+                  <option value="All">All Levels</option>
+                  <option value="1">Level 1 (Foundations)</option>
+                  <option value="2">Level 2</option>
+                  <option value="3">Level 3</option>
+                  <option value="4">Level 4</option>
+                  <option value="5">Level 5</option>
+                  <option value="6">Level 6</option>
+                  <option value="7">Level 7</option>
+                  <option value="Pending">Level: Pending</option>
+                </select>
+              </div>
+              <div className="psb-sidebar-filters-row">
+                <select
+                  value={sidebarDifficulty}
+                  onChange={e => setSidebarDifficulty(e.target.value)}
+                  className="psb-sidebar-filter-select"
+                  aria-label="Filter by difficulty"
+                >
+                  <option value="All">All Difficulty</option>
+                  <option value="Beginner">Beginner</option>
+                  <option value="Easy">Easy</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Hard">Hard</option>
+                </select>
+                <select
+                  value={sidebarStatus}
+                  onChange={e => setSidebarStatus(e.target.value)}
+                  className="psb-sidebar-filter-select"
+                  aria-label="Filter by status"
+                >
+                  <option value="All">All Status</option>
+                  <option value="SOLVED">Solved</option>
+                  <option value="ATTEMPTED">Attempted</option>
+                  <option value="UNSOLVED">Todo</option>
+                </select>
+              </div>
+              <div className="psb-sidebar-filters-row">
+                <select
+                  value={sidebarCategory}
+                  onChange={e => setSidebarCategory(e.target.value)}
+                  className="psb-sidebar-filter-select"
+                  aria-label="Filter by category"
+                  style={{ flex: 1 }}
+                >
+                  <option value="All">All Topics</option>
+                  {sidebarCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+                {(sidebarSearch || sidebarDifficulty !== 'All' || sidebarStatus !== 'All' || sidebarCategory !== 'All' || sidebarLevel !== 'All' || sidebarSort !== 'DEFAULT') && (
+                  <button
+                    className="psb-sidebar-reset-btn"
+                    onClick={() => {
+                      setSidebarSearch('');
+                      setSidebarDifficulty('All');
+                      setSidebarStatus('All');
+                      setSidebarCategory('All');
+                      setSidebarLevel('All');
+                      setSidebarSort('DEFAULT');
+                    }}
+                    title="Reset all filters and sort"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
             </div>
           </div>
           <div className="psb-sidebar-list">
             {filteredSidebarQuestions.map((q, idx) => {
               const isActive = q.questionId === questionId;
               const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.isPremium || q.metadata?.isPremium, isPremiumUser, attemptedIds);
+              const qLvl = getQuestionLevelString(q);
 
               return (
                 <div
@@ -1092,6 +1245,11 @@ const isCodeBlankOrEmpty = (codeStr) => {
                   <span className="psb-sidebar-item-title">
                     {idx + 1}. {q.title} {(q.isPremium || q.metadata?.isPremium) && <FaStar style={{ color: '#fbbf24', marginLeft: '4px', fontSize: '11px' }} />}
                   </span>
+                  {qLvl !== 'Pending' && (
+                    <span className={`psb-sidebar-item-level level-${qLvl}`} title={`Level ${qLvl}`}>
+                      L{qLvl}
+                    </span>
+                  )}
                   <span className={`psb-sidebar-item-diff ${q.difficulty?.toLowerCase() || 'easy'}`}>
                     {q.difficulty ?? ''}
                   </span>
