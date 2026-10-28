@@ -8,7 +8,10 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import fs from "node:fs";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 
 function ssrOptimizerPlugin() {
   const ssrStubs: Record<string, string> = {
@@ -66,6 +69,24 @@ export default defineConfig({
       'mermaid': path.resolve(__dirname, 'src/stubs/mermaid-stub.js'),
       'alasql': path.resolve(__dirname, 'src/stubs/alasql-stub.js'),
       [path.resolve(__dirname, 'src/courses/services/moduleLoaders.js')]: path.resolve(__dirname, 'src/courses/services/moduleLoaders.ssr.js'),
+    },
+    hooks: {
+      compiled(nitro: any) {
+        try {
+          const serverDir = nitro?.options?.output?.serverDir || path.resolve(__dirname, '.output/server');
+          const serverEntry = path.resolve(serverDir, 'index.mjs');
+          if (fs.existsSync(serverEntry)) {
+            let content = fs.readFileSync(serverEntry, 'utf8');
+            if (!content.includes('export { AssessmentSessionDO }')) {
+              content += '\nexport { AssessmentSessionDO } from "./_ssr/ssr.mjs";\n';
+              fs.writeFileSync(serverEntry, content, 'utf8');
+              console.log('[nitro:hook] Successfully patched AssessmentSessionDO export into .output/server/index.mjs');
+            }
+          }
+        } catch (e) {
+          console.warn('[nitro:hook] Patch error:', e);
+        }
+      },
     },
   },
   tanstackStart: {
