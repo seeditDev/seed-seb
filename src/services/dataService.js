@@ -399,19 +399,16 @@ class DataService {
                 }
             }
 
-            if (!isActive || isExpired) {
-                await DataService.signOut();
-                return {
-                    valid: false,
-                    reason: "Your college subscription has expired or is inactive. Please reach out to your placement department."
-                };
-            }
+            const isTenantDisabled = !isActive || isExpired;
             const result = {
                 valid: true,
+                isTenantDisabled: isTenantDisabled,
+                reason: isTenantDisabled ? "Your college subscription is under renewal. Switched to Global Student mode." : null,
                 tenant: {
                     id: tenantId,
                     name: tData.name || authData.college || tenantId,
-                    active: isActive,
+                    active: !isTenantDisabled,
+                    isTenantDisabled: isTenantDisabled,
                     validUntil: validUntil
                 }
             };

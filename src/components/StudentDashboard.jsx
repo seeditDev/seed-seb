@@ -1031,14 +1031,16 @@ const StudentDashboard = () => {
   // Verify tenant validity on mount and update user.tenant details
   useEffect(() => {
     DataService.verifyCurrentTenantStatus().then((res) => {
-      if (res && res.valid === false) {
-        alert(res.reason || "Your college subscription has expired or is inactive. Please reach out to your placement department.");
-        navigate('/login?reason=subscription_expired');
-      } else if (res?.tenant) {
-        setUser(prev => prev ? { ...prev, tenant: res.tenant } : prev);
+      if (res?.tenant) {
+        setUser(prev => prev ? {
+          ...prev,
+          tenant: res.tenant,
+          isTenantDisabled: Boolean(res.isTenantDisabled),
+          tenantActive: !res.isTenantDisabled
+        } : prev);
       }
     }).catch(() => {});
-  }, [navigate]);
+  }, []);
 
   // Log activity on Tab Change (Decoupled from user state changes to eliminate render-loop writes)
   useEffect(() => {
