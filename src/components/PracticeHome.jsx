@@ -4662,26 +4662,20 @@ const PracticeHome = ({
                               {q.questionId ? `${q.questionId} – ` : ''}{q.title}
                             </span>
                             {q.isPremium && <FaStar style={{ color: '#fbbf24', marginLeft: '6px', fontSize: '11px' }} />}
-                            {Array.isArray(q.companyTags) && q.companyTags.length > 0 && (
+                            {isPremiumUser && Array.isArray(q.companyTags) && q.companyTags.length > 0 && (
                               <div className="ph-row-company-tags" onClick={e => e.stopPropagation()}>
                                 {q.companyTags.slice(0, 3).map(comp => (
                                   <span
                                     key={comp}
-                                    className={`ph-mini-company-tag ${selectedCompany.toLowerCase() === comp.toLowerCase() ? 'active' : ''} ${!isPremiumUser ? 'locked' : ''}`}
-                                    title={isPremiumUser ? `Filter by ${comp}` : `Company questions require SEED Pro (Click to unlock)`}
+                                    className={`ph-mini-company-tag ${selectedCompany.toLowerCase() === comp.toLowerCase() ? 'active' : ''}`}
+                                    title={`Filter by ${comp}`}
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      if (!isPremiumUser) {
-                                        setShowPremiumModal(true);
-                                        toast.warning("Company-wise practice problems are exclusive to SEED Pro members. Upgrade to unlock.");
-                                        return;
-                                      }
                                       setSelectedCompany(comp);
                                       setCurrentPage(1);
                                     }}
                                   >
                                     {comp}
-                                    {!isPremiumUser && <FaLock style={{ fontSize: '8.5px', marginLeft: '3px', opacity: 0.8 }} />}
                                   </span>
                                 ))}
                                 {q.companyTags.length > 3 && (
