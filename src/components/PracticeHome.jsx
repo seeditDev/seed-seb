@@ -37,6 +37,15 @@ const CATEGORIES = [
 
 const DIFFICULTIES = ['Beginner', 'Easy', 'Medium', 'Hard'];
 
+const POPULAR_COMPANIES = [
+  'Google', 'Amazon', 'Microsoft', 'Meta', 'Apple',
+  'Bloomberg', 'Uber', 'Goldman Sachs', 'Adobe', 'Oracle',
+  'TCS', 'Infosys', 'Wipro', 'Cognizant', 'Zoho',
+  'Flipkart', 'Walmart Labs', 'Salesforce', 'Accenture', 'Capgemini',
+  'Deloitte', 'IBM', 'Nvidia', 'Visa', 'PayPal',
+  'PhonePe', 'Cisco', 'JPMorgan Chase', 'Morgan Stanley', 'Tech Mahindra'
+];
+
 const STATUS_ICONS = {
   SOLVED: 'SOLVED',
   ATTEMPTED: 'ATTEMPTED',
@@ -254,6 +263,7 @@ const PracticeHome = ({
   const [selectedDifficulty, setSelectedDifficulty] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedLevel, setSelectedLevel] = useState('All');
+  const [selectedCompany, setSelectedCompany] = useState('All');
   const [tabLoading, setTabLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -2947,13 +2957,34 @@ const PracticeHome = ({
     });
   };
 
+  // Extract unique companies from questions for the filter dropdown
+  const availableCompanies = useMemo(() => {
+    if (!questions || questions.length === 0) return [];
+    const compSet = new Set();
+    questions.forEach(q => {
+      const tags = q.companyTags || q.companies || (q.company ? [q.company] : []);
+      if (Array.isArray(tags)) {
+        tags.forEach(c => {
+          if (c && typeof c === 'string' && c.trim()) compSet.add(c.trim());
+        });
+      }
+    });
+    return Array.from(compSet).sort((a, b) => a.localeCompare(b));
+  }, [questions]);
+
+  const otherCompanies = useMemo(() => {
+    const popLower = new Set(POPULAR_COMPANIES.map(c => c.toLowerCase()));
+    return availableCompanies.filter(c => !popLower.has(c.toLowerCase()));
+  }, [availableCompanies]);
+
   // Filter flat list of questions (memoized for instant responsiveness)
   const filteredQuestions = useMemo(() => {
     if (!questions || questions.length === 0) return [];
     return questions.filter(q => {
       const matchesSearch = !searchQuery ||
         (q.title && q.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (q.questionId && q.questionId.toLowerCase().includes(searchQuery.toLowerCase()));
+        (q.questionId && q.questionId.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (Array.isArray(q.companyTags) && q.companyTags.some(c => c.toLowerCase().includes(searchQuery.toLowerCase())));
       if (!matchesSearch) return false;
 
       const matchesCategory = selectedCategory === 'All' || q.category === selectedCategory;
@@ -2961,6 +2992,13 @@ const PracticeHome = ({
 
       const matchesDifficulty = selectedDifficulty === 'All' || q.difficulty === selectedDifficulty;
       if (!matchesDifficulty) return false;
+
+      if (selectedCompany !== 'All') {
+        const cTags = q.companyTags || q.companies || (q.company ? [q.company] : []);
+        if (!Array.isArray(cTags) || !cTags.some(c => String(c).toLowerCase() === selectedCompany.toLowerCase())) {
+          return false;
+        }
+      }
 
       if (selectedLevel !== 'All') {
         const qLvl = q.level ? String(q.level) : (String(q.questionId || '').toLowerCase().startsWith('q0.') ? '1' : 'Pending');
@@ -2982,7 +3020,7 @@ const PracticeHome = ({
 
       return true;
     });
-  }, [questions, searchQuery, selectedCategory, selectedDifficulty, selectedStatus, selectedLevel, solvedIds, attemptedIds, problemDetails, isPremiumUser]);
+  }, [questions, searchQuery, selectedCategory, selectedDifficulty, selectedStatus, selectedLevel, selectedCompany, solvedIds, attemptedIds, problemDetails, isPremiumUser]);
 
   const totalPages = Math.ceil(filteredQuestions.length / pageSize) || 1;
 
@@ -4463,6 +4501,28 @@ const PracticeHome = ({
                 />
               </div>
 
+              {/* Company Filter */}
+              <select
+                value={selectedCompany}
+                onChange={e => { setSelectedCompany(e.target.value); setCurrentPage(1); }}
+                className="ph-problems-select ph-company-select"
+                aria-label="Filter questions by company"
+              >
+                <option value="All">Company: All</option>
+                <optgroup label="Popular Companies">
+                  {POPULAR_COMPANIES.map(comp => (
+                    <option key={`pop-${comp}`} value={comp}>{comp}</option>
+                  ))}
+                </optgroup>
+                {otherCompanies.length > 0 && (
+                  <optgroup label="All Companies (A–Z)">
+                    {otherCompanies.map(comp => (
+                      <option key={`all-${comp}`} value={comp}>{comp}</option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+
               {/* Difficulty Filter */}
               <select
                 value={selectedDifficulty}
@@ -4508,7 +4568,7 @@ const PracticeHome = ({
                 {filteredQuestions.length} questions
               </span>
 
-              {(searchQuery || selectedCategory !== 'All' || selectedDifficulty !== 'All' || selectedStatus !== 'All' || selectedLevel !== 'All') && (
+              {(searchQuery || selectedCategory !== 'All' || selectedDifficulty !== 'All' || selectedStatus !== 'All' || selectedLevel !== 'All' || selectedCompany !== 'All') && (
                 <button
                   className="ph-reset-filter-btn"
                   onClick={() => {
@@ -4517,6 +4577,7 @@ const PracticeHome = ({
                     setSelectedDifficulty('All');
                     setSelectedStatus('All');
                     setSelectedLevel('All');
+                    setSelectedCompany('All');
                     setCurrentPage(1);
                   }}
                 >
@@ -4575,6 +4636,32 @@ const PracticeHome = ({
                               {q.questionId ? `${q.questionId} – ` : ''}{q.title}
                             </span>
                             {q.isPremium && <FaStar style={{ color: '#fbbf24', marginLeft: '6px', fontSize: '11px' }} />}
+                            {Array.isArray(q.companyTags) && q.companyTags.length > 0 && (
+                              <div className="ph-row-company-tags" onClick={e => e.stopPropagation()}>
+                                {q.companyTags.slice(0, 3).map(comp => (
+                                  <span
+                                    key={comp}
+                                    className={`ph-mini-company-tag ${selectedCompany.toLowerCase() === comp.toLowerCase() ? 'active' : ''}`}
+                                    title={`Filter by ${comp}`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedCompany(comp);
+                                      setCurrentPage(1);
+                                    }}
+                                  >
+                                    {comp}
+                                  </span>
+                                ))}
+                                {q.companyTags.length > 3 && (
+                                  <span
+                                    className="ph-mini-company-tag more"
+                                    title={q.companyTags.slice(3).join(', ')}
+                                  >
+                                    +{q.companyTags.length - 3}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </td>
                           <td className="ph-col-category">
                             <span className="ph-cat-tag">{q.category ?? ''}</span>
