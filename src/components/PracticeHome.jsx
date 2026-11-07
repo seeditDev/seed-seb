@@ -2861,7 +2861,7 @@ const PracticeHome = ({
     );
   };
 
-  const isPremiumUser = Boolean(user?.isPremium);
+  const isPremiumUser = Boolean(user?.isPremium || user?.premium || user?.subscriptionStatus === 'active' || getAuthData()?.isPremium || getAuthData()?.premium);
   const isQuestionPremium = (qid) => {
     if (qid && String(qid).startsWith('Q0.')) return false;
     const q = questions.find(item => item.questionId === qid);
@@ -4501,27 +4501,53 @@ const PracticeHome = ({
                 />
               </div>
 
-              {/* Company Filter */}
-              <select
-                value={selectedCompany}
-                onChange={e => { setSelectedCompany(e.target.value); setCurrentPage(1); }}
-                className="ph-problems-select ph-company-select"
-                aria-label="Filter questions by company"
-              >
-                <option value="All">Company: All</option>
-                <optgroup label="Popular Companies">
-                  {POPULAR_COMPANIES.map(comp => (
-                    <option key={`pop-${comp}`} value={comp}>{comp}</option>
-                  ))}
-                </optgroup>
-                {otherCompanies.length > 0 && (
-                  <optgroup label="All Companies (A–Z)">
-                    {otherCompanies.map(comp => (
-                      <option key={`all-${comp}`} value={comp}>{comp}</option>
+              {/* Company Filter (Pro Feature) */}
+              <div className="ph-company-filter-wrap">
+                <select
+                  value={selectedCompany}
+                  onChange={e => {
+                    const targetComp = e.target.value;
+                    if (targetComp !== 'All' && !isPremiumUser) {
+                      e.target.value = 'All';
+                      setShowPremiumModal(true);
+                      toast.warning("Company-wise practice problems are exclusive to SEED Pro members. Upgrade to unlock.");
+                      return;
+                    }
+                    setSelectedCompany(targetComp);
+                    setCurrentPage(1);
+                  }}
+                  className={`ph-problems-select ph-company-select ${!isPremiumUser ? 'ph-pro-locked-select' : ''}`}
+                  aria-label="Filter questions by company"
+                >
+                  <option value="All">Company: All {!isPremiumUser ? '(Pro 🔒)' : ''}</option>
+                  <optgroup label={isPremiumUser ? "Popular Companies" : "Popular Companies (🔒 Pro)"}>
+                    {POPULAR_COMPANIES.map(comp => (
+                      <option key={`pop-${comp}`} value={comp}>{comp} {!isPremiumUser ? '🔒' : ''}</option>
                     ))}
                   </optgroup>
+                  {otherCompanies.length > 0 && (
+                    <optgroup label={isPremiumUser ? "All Companies (A–Z)" : "All Companies (🔒 Pro)"}>
+                      {otherCompanies.map(comp => (
+                        <option key={`all-${comp}`} value={comp}>{comp} {!isPremiumUser ? '🔒' : ''}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
+                {!isPremiumUser && (
+                  <button
+                    type="button"
+                    className="ph-filter-pro-badge"
+                    title="Company filter is a Pro feature. Click to upgrade."
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowPremiumModal(true);
+                      toast.warning("Company-wise practice problems are exclusive to SEED Pro members. Upgrade to unlock.");
+                    }}
+                  >
+                    <FaLock size={9} /> PRO
+                  </button>
                 )}
-              </select>
+              </div>
 
               {/* Difficulty Filter */}
               <select
@@ -4641,15 +4667,21 @@ const PracticeHome = ({
                                 {q.companyTags.slice(0, 3).map(comp => (
                                   <span
                                     key={comp}
-                                    className={`ph-mini-company-tag ${selectedCompany.toLowerCase() === comp.toLowerCase() ? 'active' : ''}`}
-                                    title={`Filter by ${comp}`}
+                                    className={`ph-mini-company-tag ${selectedCompany.toLowerCase() === comp.toLowerCase() ? 'active' : ''} ${!isPremiumUser ? 'locked' : ''}`}
+                                    title={isPremiumUser ? `Filter by ${comp}` : `Company questions require SEED Pro (Click to unlock)`}
                                     onClick={(e) => {
                                       e.stopPropagation();
+                                      if (!isPremiumUser) {
+                                        setShowPremiumModal(true);
+                                        toast.warning("Company-wise practice problems are exclusive to SEED Pro members. Upgrade to unlock.");
+                                        return;
+                                      }
                                       setSelectedCompany(comp);
                                       setCurrentPage(1);
                                     }}
                                   >
                                     {comp}
+                                    {!isPremiumUser && <FaLock style={{ fontSize: '8.5px', marginLeft: '3px', opacity: 0.8 }} />}
                                   </span>
                                 ))}
                                 {q.companyTags.length > 3 && (
