@@ -1857,12 +1857,12 @@ const StudentDashboard = () => {
       const combined = (testDocs || []).map(t => {
           // Normalise schedule from { startDate, startTime, endDate, endTime } or { start, end }
           let schedule = null;
-          if (t.schedule) {
+          if (t.schedule && typeof t.schedule === 'object') {
             if (t.schedule.startDate) {
               schedule = {
                 startDate: t.schedule.startDate,
                 startTime: t.schedule.startTime || '00:00:00',
-                endDate: t.schedule.endDate,
+                endDate: t.schedule.endDate || '',
                 endTime: t.schedule.endTime || '23:59:59',
                 timezone: t.schedule.timezone || 'Asia/Kolkata',
               };
@@ -1879,6 +1879,16 @@ const StudentDashboard = () => {
                 };
               }
             }
+          } else if (t.startDate || t.startTime || t.start || t.endDate || t.endTime || t.end || t.scheduledStart || t.scheduledEnd) {
+            const s = t.startDate ? null : (t.start ? new Date(t.start) : (t.scheduledStart ? new Date(t.scheduledStart) : null));
+            const e = t.endDate ? null : (t.end ? new Date(t.end) : (t.scheduledEnd ? new Date(t.scheduledEnd) : null));
+            schedule = {
+              startDate: t.startDate || (s ? s.toISOString().slice(0, 10) : ''),
+              startTime: t.startTime || (s ? s.toTimeString().slice(0, 8) : '00:00:00'),
+              endDate: t.endDate || (e ? e.toISOString().slice(0, 10) : ''),
+              endTime: t.endTime || (e ? e.toTimeString().slice(0, 8) : '23:59:59'),
+              timezone: t.timezone || 'Asia/Kolkata',
+            };
           }
 
           const durMin = Number(t.duration_minutes || t.duration || t.timeLimit) ||
@@ -2072,6 +2082,87 @@ const StudentDashboard = () => {
     } catch (e) {
       return { status: "Active", reason: "Active" };
     }
+  };
+
+  // Helper: extract formatted date and start/end time for cards
+  const formatScheduleDetails = (schedule) => {
+    if (!schedule || typeof schedule !== 'object') return null;
+    const startDate = schedule.startDate || (schedule.start ? new Date(schedule.start).toISOString().slice(0, 10) : '');
+    const endDate = schedule.endDate || (schedule.end ? new Date(schedule.end).toISOString().slice(0, 10) : '');
+    const startTime = (schedule.startTime && typeof schedule.startTime === 'string') ? schedule.startTime.trim() : '';
+    const endTime = (schedule.endTime && typeof schedule.endTime === 'string') ? schedule.endTime.trim() : '';
+
+    if (!startDate && !endDate && !startTime && !endTime) return null;
+
+    const format12h = (t) => {
+      if (!t) return '';
+      const timeStr = t.includes('T') ? t.split('T')[1].slice(0, 8) : (t.includes(' ') && t.includes(':') ? t.split(' ')[1] : t);
+      const parts = timeStr.trim().split(':');
+      if (parts.length < 2) return timeStr;
+      const h = parseInt(parts[0], 10);
+      const m = parts[1];
+      if (isNaN(h)) return timeStr;
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const h12 = h % 12 || 12;
+      return `${h12}:${m.slice(0, 2)} ${ampm}`;
+    };
+
+    const formatDateStr = (d) => {
+      if (!d) return '';
+      try {
+        const clean = d.includes('T') ? d.slice(0, 10) : d.trim();
+        const parts = clean.split('-');
+        if (parts.length === 3) {
+          const y = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10) - 1;
+          const day = parseInt(parts[2], 10);
+          if (!isNaN(y) && !isNaN(m) && !isNaN(day)) {
+            const dt = new Date(y, m, day);
+            return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+          }
+        }
+        const dateObj = new Date(d);
+        if (isNaN(dateObj.getTime())) return d;
+        return dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      } catch (_) {
+        return d;
+      }
+    };
+
+    const formattedStart = formatDateStr(startDate);
+    const formattedEnd = formatDateStr(endDate);
+    const start12 = format12h(startTime);
+    const end12 = format12h(endTime);
+
+    const isSameDate = !endDate || startDate === endDate;
+    const dateDisplay = isSameDate
+      ? formattedStart
+      : (formattedStart && formattedEnd ? `${formattedStart} – ${formattedEnd}` : (formattedStart || formattedEnd));
+
+    const isAllDay = startTime.startsWith('00:00') && endTime.startsWith('23:59');
+    let timeDisplay = '';
+    if (isAllDay) {
+      timeDisplay = 'All Day';
+    } else if (start12 && end12) {
+      timeDisplay = `${start12} – ${end12}`;
+    } else if (start12) {
+      timeDisplay = `Starts ${start12}`;
+    } else if (end12) {
+      timeDisplay = `Ends ${end12}`;
+    }
+
+    return {
+      startDate,
+      endDate,
+      startTime,
+      endTime,
+      dateDisplay,
+      timeDisplay,
+      formattedStart,
+      formattedEnd,
+      start12,
+      end12
+    };
   };
 
   // Client-side filtering
@@ -3217,9 +3308,16 @@ const StudentDashboard = () => {
                   <div className="ps-cards-grid">
                     {assessmentsToShow.map(a => {
                       const sched = getScheduleStatus(a.schedule);
+                      const schedDetails = formatScheduleDetails(a.schedule);
                       const isExpired = sched.status === "Expired";
                       const isUpcoming = sched.status === "Upcoming";
                       const isActive = sched.status === "Active";
+                      const diffKey = (a.difficulty || 'Medium').toLowerCase();
+                      const diffConfig = {
+                        easy: { bg: 'rgba(16, 185, 129, 0.12)', color: '#059669', border: '1px solid rgba(16, 185, 129, 0.3)' },
+                        medium: { bg: 'rgba(245, 158, 11, 0.12)', color: '#d97706', border: '1px solid rgba(245, 158, 11, 0.3)' },
+                        hard: { bg: 'rgba(239, 68, 68, 0.12)', color: '#dc2626', border: '1px solid rgba(239, 68, 68, 0.3)' },
+                      }[diffKey] || { bg: 'rgba(245, 158, 11, 0.12)', color: '#d97706', border: '1px solid rgba(245, 158, 11, 0.3)' };
 
                       return (
                         <div
@@ -3279,7 +3377,24 @@ const StudentDashboard = () => {
                                   <FaCheck size={10} /> Completed (1/1 Used)
                                 </span>
                               ) : (
-                                <span className={`difficulty-badge diff-${(a.difficulty || 'Medium').toLowerCase()}`} style={{ whiteSpace: 'nowrap' }}>
+                                <span
+                                  className={`difficulty-badge diff-${diffKey}`}
+                                  style={{
+                                    whiteSpace: 'nowrap',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.04em',
+                                    padding: '3px 9px',
+                                    borderRadius: '6px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    lineHeight: 1.2,
+                                    background: diffConfig.bg,
+                                    color: diffConfig.color,
+                                    border: diffConfig.border,
+                                  }}
+                                >
                                   {a.difficulty || 'Medium'}
                                 </span>
                               )}
@@ -3295,6 +3410,16 @@ const StudentDashboard = () => {
                               <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '3px 8px', color: 'var(--text-main)' }}>
                                 <FaClock style={{ fontSize: '10px', color: '#38bdf8' }} /> {a.duration} mins
                               </span>
+                              {schedDetails?.dateDisplay && (
+                                <span className="ps-tag ps-tag-schedule-date" title={`Assessment Window: ${schedDetails.dateDisplay}`} style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.25)', borderRadius: '6px', padding: '3px 8px', color: '#6366f1', fontWeight: 600 }}>
+                                  <FaCalendarAlt style={{ fontSize: '10px', color: '#6366f1' }} /> {schedDetails.dateDisplay}
+                                </span>
+                              )}
+                              {schedDetails?.timeDisplay && (
+                                <span className="ps-tag ps-tag-schedule-time" title={`Assessment Timing: ${schedDetails.timeDisplay}`} style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(14, 165, 233, 0.08)', border: '1px solid rgba(14, 165, 233, 0.25)', borderRadius: '6px', padding: '3px 8px', color: '#0284c7', fontWeight: 600 }}>
+                                  <FaClock style={{ fontSize: '10px', color: '#0284c7' }} /> {schedDetails.timeDisplay}
+                                </span>
+                              )}
                               {Boolean(a.totalMarks && a.totalMarks > 0) && (
                                 <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '3px 8px', color: 'var(--text-main)' }}>
                                   <FaAward style={{ fontSize: '10px', color: '#10b981' }} /> {a.totalMarks} Marks
@@ -3337,11 +3462,24 @@ const StudentDashboard = () => {
                             </div>
                           </div>
 
-                          <div className="ps-card-footer" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div className="ps-schedule-status">
-                              <span className={`status-pill ${sched.status.toLowerCase()}`} style={{ fontSize: '11px', padding: '3px 9px', borderRadius: '6px', fontWeight: 600 }}>
-                                {sched.status}
-                              </span>
+                          <div className="ps-card-footer" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
+                            <div className="ps-schedule-status" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                <span className={`status-pill ${sched.status.toLowerCase()}`} style={{ fontSize: '11px', padding: '3px 9px', borderRadius: '6px', fontWeight: 600 }}>
+                                  {sched.status}
+                                </span>
+                                {schedDetails?.dateDisplay && (
+                                  <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748b)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                    <FaCalendarAlt style={{ fontSize: '10px', color: 'var(--text-muted, #94a3b8)' }} /> {schedDetails.dateDisplay}
+                                  </span>
+                                )}
+                              </div>
+                              {schedDetails?.timeDisplay && (
+                                <div style={{ fontSize: '11px', color: 'var(--text-muted, #94a3b8)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <FaClock style={{ fontSize: '10px' }} />
+                                  <span>Time: <strong style={{ color: 'var(--text-secondary, #475569)' }}>{schedDetails.timeDisplay}</strong></span>
+                                </div>
+                              )}
                             </div>
 
                             <div className="ps-card-actions">
