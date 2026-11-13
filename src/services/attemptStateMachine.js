@@ -192,7 +192,9 @@ export function buildAttemptEnvelope(uid, assessmentId, authProfile, assessment,
     tenantId:      authProfile?.tenantId ?? '',
     cohortId:      authProfile?.cohortId ?? '',
     email:         authProfile?.email ?? '',
-    displayName:   authProfile?.name ?? '',
+    name:          authProfile?.name ?? authProfile?.displayName ?? '',
+    displayName:   authProfile?.name ?? authProfile?.displayName ?? '',
+    rollNumber:    authProfile?.rollNumber ?? '',
 
     // ── Assessment Meta ────────────────────────────────────────────────────
     assessmentTitle:   assessment?.name ?? '',

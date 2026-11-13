@@ -487,40 +487,46 @@ export class AssessmentSessionDO {
 
   /**
    * Server-side push to Firebase Firestore REST API.
-   * Directly writes:
-   *  1. users/{uid}/contestAttempts/{assessmentId}_{uid}
-   *  2. assessmentResults/{tenantId}/{assessmentId}/{uid}
+   * Updates users/{uid}/contestAttempts/{assessmentId}_{uid} with updateMask to prevent
+   * overwriting student progress or scores.
+   *
+   * NOTE: DO NEVER writes to assessmentResults/{tenantId}/{assessmentId}/{uid}.
+   * assessmentResults is strictly an evaluated gradebook document written by the
+   * client assessment engine (MultiSectionAssessment / CodingAssessmentPage).
+   * A DO push would overwrite the graded score and wipe out test cases/results.
    */
   private async pushToFirestore(session: ExamSessionState, isAuto: boolean): Promise<void> {
     try {
       const nowIso = new Date().toISOString();
       const attemptDocId = `${session.assessmentId}_${session.uid}`;
 
-      const attemptDocData = {
-        uid: session.uid,
-        assessmentId: session.assessmentId,
-        assessmentTitle: session.assessmentTitle,
-        type: session.type,
-        slug: session.slug,
-        tenantId: session.tenantId,
-        cohortId: session.cohortId,
-        email: session.email,
-        name: session.name,
-        rollNumber: session.rollNumber,
+      const attemptDocData: Record<string, any> = {
         status: isAuto ? 'AUTO_SUBMITTED' : 'SUBMITTED',
         completed: true,
         autoSubmitted: isAuto,
         autoSubmitReason: isAuto ? (session.autoSubmitReason || 'EXAM_TIME_EXPIRED') : null,
-        durationSeconds: session.durationSeconds,
-        sectionAnswers: session.sectionAnswers || {},
         completedAt: nowIso,
         submittedAt: nowIso,
-        scoring_authority: 'server_edge_do',
         lastSavedAt: nowIso,
       };
 
+      if (session.name) attemptDocData.name = session.name;
+      if (session.rollNumber) attemptDocData.rollNumber = session.rollNumber;
+      if (session.email) attemptDocData.email = session.email;
+      if (session.durationSeconds) attemptDocData.durationSeconds = session.durationSeconds;
+      if (session.sectionAnswers && Object.keys(session.sectionAnswers).length > 0) {
+        attemptDocData.sectionAnswers = session.sectionAnswers;
+      }
+      if (session.codingSubmissions && Object.keys(session.codingSubmissions).length > 0) {
+        attemptDocData.codingSubmissions = session.codingSubmissions;
+      }
+
       const fields = toFirestoreFields(attemptDocData);
-      const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${session.uid}/contestAttempts/${attemptDocId}?key=${FIREBASE_API_KEY}`;
+      const updateMaskParams = Object.keys(attemptDocData)
+        .map((k) => `updateMask.fieldPaths=${encodeURIComponent(k)}`)
+        .join('&');
+
+      const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${session.uid}/contestAttempts/${attemptDocId}?key=${FIREBASE_API_KEY}&${updateMaskParams}`;
 
       const reqHeaders: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -539,33 +545,7 @@ export class AssessmentSessionDO {
         const errText = await res.text().catch(() => '');
         console.warn(`[AssessmentSessionDO] Firestore REST push returned status ${res.status}:`, errText);
       } else {
-        console.log(`[AssessmentSessionDO] Successfully wrote attempt document to Firestore for ${session.uid}`);
-      }
-
-      // Also update assessmentResults collection if tenantId is available
-      if (session.tenantId) {
-        const resultUrl = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/assessmentResults/${session.tenantId}/${session.assessmentId}/${session.uid}?key=${FIREBASE_API_KEY}`;
-        const resultDocData = {
-          userId: session.uid,
-          email: session.email,
-          name: session.name,
-          rollNumber: session.rollNumber,
-          tenantId: session.tenantId,
-          cohortId: session.cohortId,
-          assessmentId: session.assessmentId,
-          assessmentTitle: session.assessmentTitle,
-          status: isAuto ? 'auto_submitted' : 'completed',
-          completed: true,
-          submittedAt: nowIso,
-          lastUpdatedAt: nowIso,
-          scoring_authority: 'server_edge_do',
-        };
-
-        await fetch(resultUrl, {
-          method: 'PATCH',
-          headers: reqHeaders,
-          body: JSON.stringify({ fields: toFirestoreFields(resultDocData) }),
-        }).catch((e) => console.warn('[AssessmentSessionDO] Result collection push notice:', e?.message));
+        console.log(`[AssessmentSessionDO] Successfully updated attempt document in Firestore for ${session.uid}`);
       }
     } catch (err: any) {
       console.error('[AssessmentSessionDO] pushToFirestore failed:', err?.message);

@@ -108,7 +108,8 @@ async function notifyEdgeSessionStart(uid, assessment, authProfile, slug) {
         tenantId: authProfile.tenantId,
         cohortId: authProfile.cohortId,
         email: authProfile.email,
-        name: authProfile.displayName,
+        name: authProfile.name || authProfile.displayName || '',
+        rollNumber: authProfile.rollNumber || '',
         assessmentId: assessment.id,
         assessmentTitle: assessment.name || assessment.title,
         type: assessment.type || 'MSA',
@@ -258,20 +259,29 @@ export async function startAssessmentSession(assessment, slug = '') {
     // tab commits between our initial getDoc (above) and this transaction, the
     // second attempt is guaranteed to abort and return the first.
     const profile = auth.currentUser;
+    const localAuth = (() => {
+      try { return JSON.parse(localStorage.getItem('auth_data') || '{}'); } catch (_) { return {}; }
+    })();
+
     const authProfile = {
-      tenantId:    null,
-      cohortId:    null,
-      email:       profile?.email ?? '',
-      displayName: profile?.name ?? '',
+      tenantId:    localAuth.tenantId || null,
+      cohortId:    localAuth.cohortId || null,
+      email:       profile?.email || localAuth.email || localAuth.Email || '',
+      displayName: profile?.displayName || localAuth.name || localAuth.displayName || '',
+      name:        localAuth.name || localAuth.displayName || profile?.displayName || '',
+      rollNumber:  localAuth.rollNumber || localAuth.roll_number || localAuth.RollNumber || '',
     };
 
-    // Read profile fields from Firestore (single read, not from localStorage)
+    // Read profile fields from Firestore (single read)
     try {
       const userSnap = await getDoc(doc(db, 'users', uid));
       if (userSnap.exists()) {
         const user = userSnap.data();
-        authProfile.tenantId = user.tenantId ?? '';
-        authProfile.cohortId = user.cohortId ?? '';
+        authProfile.tenantId = user.tenantId ?? authProfile.tenantId ?? '';
+        authProfile.cohortId = user.cohortId ?? authProfile.cohortId ?? '';
+        authProfile.name = user.name || user.displayName || authProfile.name;
+        authProfile.displayName = authProfile.name;
+        authProfile.rollNumber = user.rollNumber || user.roll_number || authProfile.rollNumber || '';
       }
     } catch (profileErr) {
       console.warn('[SessionService] Could not read user profile for attempt envelope:', profileErr?.message);
