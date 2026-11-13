@@ -581,11 +581,11 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
         onSectionSubmitRef.current = onSectionSubmit;
     }, [onSectionSubmit]);
 
-    // Embedded Mode helper to submit scores and code map
-    const handleEmbeddedSectionSubmit = async (reason = '') => {
+    // Build complete evaluated section snapshot (usable for continuous auto-save and emergency violation harvesting)
+    const buildActiveSectionSnapshot = useCallback((overrideScores = null) => {
         try {
             saveCurrentEditorToMap();
-            const finalScores = { ...questionScores };
+            const finalScores = { ...(overrideScores || questionScores) };
             const allAnswers = {};
             let totalEarnedWeight = 0;
             let totalMaxWeight = 0;
@@ -619,7 +619,6 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                 if (hasEvaluatedScore) {
                     totalEarnedWeight += finalScores[qId].score;
                 } else {
-                    // Unsubmitted question: no final evaluation needed. Recorded with 0 score instantly.
                     const hidden = getQuestionHiddenTestCases(q);
                     const qRunCount = compilationCounts[qId] || 0;
                     const qSubmitCount = questionSubmitCounts[qId] || 0;
@@ -639,105 +638,155 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                 }
             }
 
+            const questionTiming = timingTrackerRef.current
+                ? timingTrackerRef.current.getQuestionTiming(questions)
+                : {};
+            const activeTimeSpentMap = timingTrackerRef.current
+                ? timingTrackerRef.current.getRawTimeMap(questions)
+                : timeSpentPerQ;
+
+            totalEarnedWeight = 0;
+            totalMaxWeight = 0;
+
+            const codingDetails = questions.map((q, idx) => {
+                const qId = q.id || q.questionId || `q_${idx}`;
+                const qKey = `Q${idx + 1}`;
+                const scoreObj = finalScores[qId] || questionScores[qId] || { score: 0, percentage: 0, passed: 0, total: 0 };
+                const passed = scoreObj.passed || scoreObj.testPassedCount || 0;
+                const total = scoreObj.total || scoreObj.totalTestCases || (q.testCases ? q.testCases.length : 0);
+                const status = scoreObj.status || (total > 0 ? (passed === total ? "Accepted" : (passed > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer");
+                
+                const userCode = scoreObj.code || scoreObj.solution || allAnswers[qId] || (typeof getCurrentCode === 'function' ? getCurrentCode(qId, language) : "") || codeMapRef.current[`${qId}_${language}`] || codeMap[`${qId}_${language}`] || "";
+                const qLang = scoreObj.language || language || 'c';
+                const testResults = scoreObj.testResults || questionRunHistoryRef.current[qId]?.results || [];
+
+                totalEarnedWeight += scoreObj.score || 0;
+                totalMaxWeight += q.weight || DEFAULT_QUESTION_WEIGHT;
+
+                const qTimeSpent = questionTiming[qKey]?.timeSpentSeconds ?? (activeTimeSpentMap[qId] || 0);
+                const qTimeFormatted = questionTiming[qKey]?.timeSpentFormatted;
+
+                const qRunCount = compilationCounts[qId] || 0;
+                const qSubmitCount = questionSubmitCounts[qId] || 0;
+                const isAttempted = qRunCount > 0 || qSubmitCount > 0;
+                const finalCode = isAttempted ? userCode : "";
+                const finalStatus = isAttempted ? status : "Did Not Attempt";
+
+                return buildCodingSubmission({
+                    questionId: qId,
+                    questionNumber: idx + 1,
+                    questionKey: qKey,
+                    problemTitle: q.name || q.title || `Question ${idx + 1}`,
+                    title: q.name || q.title || `Question ${idx + 1}`,
+                    difficulty: q.difficulty || 'Easy',
+                    language: qLang,
+                    code: finalCode,
+                    solution: finalCode,
+                    status: finalStatus,
+                    testsPassed: isAttempted ? passed : 0,
+                    totalTests: total,
+                    score: isAttempted ? (scoreObj.score || 0) : 0,
+                    maxScore: q.weight || DEFAULT_QUESTION_WEIGHT,
+                    percentage: isAttempted ? (scoreObj.percentage || 0) : 0,
+                    runCount: qRunCount,
+                    submitCount: qSubmitCount,
+                    compilationCount: qRunCount,
+                    submissionCount: qSubmitCount,
+                    attempted: isAttempted,
+                    attempts: qRunCount,
+                    timeComplexity: q.timeComplexity ?? '',
+                    spaceComplexity: q.spaceComplexity ?? '',
+                    testResults: isAttempted ? testResults : [],
+                    timeSpentSeconds: qTimeSpent,
+                    timeSpentFormatted: qTimeFormatted,
+                    submittedAt: questionSubmitTimes[qId] || scoreObj.submittedAt || new Date().toISOString()
+                });
+            });
+
+            const elapsedSecs = (typeof getElapsedSeconds === 'function') ? getElapsedSeconds() : 0;
+            const sectionStartISO = (() => {
+                const stored = sessionStorage.getItem('codingSecStartTime');
+                if (stored) return stored;
+                const elapsedMs = elapsedSecs * 1000;
+                return new Date(Date.now() - elapsedMs).toISOString();
+            })();
+
+            return {
+                answers: allAnswers,
+                timeSpentPerQ: activeTimeSpentMap,
+                questionTiming: questionTiming,
+                completed: finalScores,
+                coding: codingDetails,
+                questions: codingDetails,
+                score: totalEarnedWeight,
+                maxScore: totalMaxWeight,
+                totalQuestions: questions.length,
+                timeTaken: elapsedSecs,
+                timeTakenSeconds: elapsedSecs,
+                startedAt: sectionStartISO,
+                timeEndedISO: new Date().toISOString(),
+            };
+        } catch (err) {
+            console.warn('[CodingAssessmentPage] buildActiveSectionSnapshot error:', err);
+            return null;
+        }
+    }, [questionScores, questions, language, currentQuestion, compilationCounts, questionSubmitCounts, timeSpentPerQ, questionSubmitTimes, getCanonicalQKey, getCurrentCode, getElapsedSeconds, saveCurrentEditorToMap]);
+
+    // Synchronize latest evaluated state to localStorage for parent MSA orchestrator
+    const syncActiveCodingState = useCallback((overrideScores = null) => {
+        const snap = buildActiveSectionSnapshot(overrideScores);
+        if (!snap) return;
+        const targetAssessmentId = assessmentId || currentAssessment?.id || testData?.assessmentId || '';
+        const targetSectionId = sectionId || testData?.sectionId || testData?.id || '';
+        try {
+            if (targetAssessmentId) {
+                if (targetSectionId) {
+                    localStorage.setItem(`msa_active_coding_state_${targetAssessmentId}_${targetSectionId}`, JSON.stringify(snap));
+                }
+                localStorage.setItem(`msa_active_coding_state_${targetAssessmentId}`, JSON.stringify(snap));
+            }
+            localStorage.setItem('msa_active_coding_latest', JSON.stringify(snap));
+            localStorage.setItem('codingQuestionScores', JSON.stringify(overrideScores || questionScores));
+            if (codeMapRef.current) {
+                localStorage.setItem('codingAssessmentCode', JSON.stringify(codeMapRef.current));
+            }
+        } catch (_) {}
+    }, [buildActiveSectionSnapshot, assessmentId, currentAssessment?.id, testData, sectionId, questionScores]);
+
+    // Keep active state synchronized on score/run updates
+    useEffect(() => {
+        if (isEmbedded) {
+            syncActiveCodingState();
+        }
+    }, [questionScores, compilationCounts, questionSubmitCounts, isEmbedded, syncActiveCodingState]);
+
+    // Listen for synchronous snapshot request from MSA parent auto-submit
+    useEffect(() => {
+        const handleSnapshotReq = () => {
+            syncActiveCodingState();
+        };
+        window.addEventListener('msa:request-coding-snapshot', handleSnapshotReq);
+        return () => window.removeEventListener('msa:request-coding-snapshot', handleSnapshotReq);
+    }, [syncActiveCodingState]);
+
+    // Embedded Mode helper to submit scores and code map
+    const handleEmbeddedSectionSubmit = async (reason = '') => {
+        try {
+            syncActiveCodingState();
+            const snap = buildActiveSectionSnapshot();
+            if (!snap) return;
+
             const targetSubmit = onSectionSubmitRef.current || onSectionSubmit;
             if (typeof targetSubmit === 'function') {
-                totalEarnedWeight = 0;
-                totalMaxWeight = 0;
-
-                // Stop question timing tracker and capture final per-question elapsed timings
                 if (timingTrackerRef.current) {
                     timingTrackerRef.current.stop();
                 }
-                const questionTiming = timingTrackerRef.current
-                    ? timingTrackerRef.current.getQuestionTiming(questions)
-                    : {};
-                const activeTimeSpentMap = timingTrackerRef.current
-                    ? timingTrackerRef.current.getRawTimeMap(questions)
-                    : timeSpentPerQ;
-
-                const codingDetails = questions.map((q, idx) => {
-                    const qId = q.id || q.questionId || `q_${idx}`;
-                    const qKey = `Q${idx + 1}`;
-                    const scoreObj = finalScores[qId] || questionScores[qId] || { score: 0, percentage: 0, passed: 0, total: 0 };
-                    const passed = scoreObj.passed || scoreObj.testPassedCount || 0;
-                    const total = scoreObj.total || scoreObj.totalTestCases || (q.testCases ? q.testCases.length : 0);
-                    const status = scoreObj.status || (total > 0 ? (passed === total ? "Accepted" : (passed > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer");
-                    
-                    const userCode = scoreObj.code || scoreObj.solution || allAnswers[qId] || getCurrentCode(qId, language) || codeMapRef.current[`${qId}_${language}`] || codeMap[`${qId}_${language}`] || "";
-                    const qLang = scoreObj.language || language || 'c';
-                    const testResults = scoreObj.testResults || questionRunHistoryRef.current[qId]?.results || [];
-
-                    totalEarnedWeight += scoreObj.score || 0;
-                    totalMaxWeight += q.weight || DEFAULT_QUESTION_WEIGHT;
-
-                    const qTimeSpent = questionTiming[qKey]?.timeSpentSeconds ?? (activeTimeSpentMap[qId] || 0);
-                    const qTimeFormatted = questionTiming[qKey]?.timeSpentFormatted;
-
-                    const qRunCount = compilationCounts[qId] || 0;
-                    const qSubmitCount = questionSubmitCounts[qId] || 0;
-                    const isAttempted = qRunCount > 0 || qSubmitCount > 0;
-                    const finalCode = isAttempted ? userCode : "";
-                    const finalStatus = isAttempted ? status : "Did Not Attempt";
-
-                    return buildCodingSubmission({
-                        questionId: qId,
-                        questionNumber: idx + 1,
-                        questionKey: qKey,
-                        problemTitle: q.name || q.title || `Question ${idx + 1}`,
-                        title: q.name || q.title || `Question ${idx + 1}`,
-                        difficulty: q.difficulty || 'Easy',
-                        language: qLang,
-                        code: finalCode,
-                        solution: finalCode,
-                        status: finalStatus,
-                        testsPassed: isAttempted ? passed : 0,
-                        totalTests: total,
-                        score: isAttempted ? (scoreObj.score || 0) : 0,
-                        maxScore: q.weight || DEFAULT_QUESTION_WEIGHT,
-                        percentage: isAttempted ? (scoreObj.percentage || 0) : 0,
-                        runCount: qRunCount,
-                        submitCount: qSubmitCount,
-                        compilationCount: qRunCount,
-                        submissionCount: qSubmitCount,
-                        attempted: isAttempted,
-                        attempts: qRunCount,
-                        timeComplexity: q.timeComplexity ?? '',
-                        spaceComplexity: q.spaceComplexity ?? '',
-                        testResults: isAttempted ? testResults : [],
-                        timeSpentSeconds: qTimeSpent,
-                        timeSpentFormatted: qTimeFormatted,
-                        submittedAt: questionSubmitTimes[qId] || scoreObj.submittedAt || new Date().toISOString()
-                    });
-                });
-
-                // ── Timing data ──
-                const sectionEndISO = new Date().toISOString();
-                const elapsedSecs = getElapsedSeconds();
-                const sectionStartISO = (() => {
-                    const stored = sessionStorage.getItem('codingSecStartTime');
-                    if (stored) return stored;
-                    const elapsedMs = elapsedSecs * 1000;
-                    return new Date(Date.now() - elapsedMs).toISOString();
-                })();
                 sessionStorage.removeItem('codingSecStartTime');
 
                 await targetSubmit({
-                    answers: allAnswers,
-                    timeSpentPerQ: activeTimeSpentMap,
-                    questionTiming: questionTiming,
-                    completed: finalScores,
-                    coding: codingDetails,
-                    questions: codingDetails,
-                    score: totalEarnedWeight,
-                    maxScore: totalMaxWeight,
-                    totalQuestions: questions.length,
+                    ...snap,
                     autoSubmitted: reason ? true : false,
                     tabViolation: reason === 'navigation' ? true : false,
-                    // Timing fields for reports and MSA section aggregation
-                    timeTaken: elapsedSecs,
-                    timeTakenSeconds: elapsedSecs,
-                    startedAt: sectionStartISO,
-                    timeEndedISO: sectionEndISO,
                 });
             }
         } catch (err) {
@@ -2399,6 +2448,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                 }
             };
             setQuestionScores(newScores);
+            syncActiveCodingState(newScores);
 
             if (activeCanonicalQKeyRef.current === targetQKey) {
                 setEvalResults(results);

@@ -1231,32 +1231,128 @@ const MultiSectionAssessment = () => {
     const tenantId = tenant.tenantId;
 
     // Harvest active section if in progress so its score and responses are included
+    try {
+      window.dispatchEvent(new CustomEvent('msa:request-coding-snapshot'));
+    } catch (_) {}
+
     const combinedResults = { ...(examResults || {}) };
     if (effectiveAssessment?.sections && currentSecIdx >= 0 && effectiveAssessment.sections[currentSecIdx]) {
       const activeSec = effectiveAssessment.sections[currentSecIdx];
       const activeSecId = activeSec.sectionId || activeSec.id || `sec_${currentSecIdx}`;
       if (!combinedResults[activeSecId]) {
-        let activeAnswers = {};
-        try {
-          const savedState = localStorage.getItem(`msa_active_mcq_state_${effectiveAssessment.id}_${activeSec.id ?? ''}`);
-          if (savedState) activeAnswers = JSON.parse(savedState).answers || {};
-        } catch (_) { }
+        if (activeSec.type === 'coding') {
+          let activeCodingData = null;
+          try {
+            const raw = localStorage.getItem(`msa_active_coding_state_${effectiveAssessment.id}_${activeSecId}`)
+              || localStorage.getItem(`msa_active_coding_state_${effectiveAssessment.id}`)
+              || localStorage.getItem('msa_active_coding_latest');
+            if (raw) activeCodingData = JSON.parse(raw);
+          } catch (_) {}
 
-        combinedResults[activeSecId] = {
-          sectionId: activeSecId,
-          sectionName: activeSec.name || `Section ${currentSecIdx + 1}`,
-          type: activeSec.type || 'mcq',
-          startedAt: new Date().toISOString(),
-          submittedAt: new Date().toISOString(),
-          timeSpentSeconds: Math.max(0, (activeSec.duration_minutes || 30) * 60 - (secTimer || 0)),
-          data: {
-            score: 0,
-            maxScore: activeSec.duration_minutes || 10,
-            totalQuestions: (activeSec.questions || []).length || 0,
-            answers: activeAnswers,
-            questions: activeSec.questions || [],
+          if (!activeCodingData || !activeCodingData.coding || activeCodingData.coding.length === 0) {
+            let storedScores = {};
+            let storedCodes = {};
+            try {
+              storedScores = JSON.parse(localStorage.getItem('codingQuestionScores') || '{}');
+              storedCodes = JSON.parse(localStorage.getItem('codingAssessmentCode') || '{}');
+            } catch (_) {}
+
+            const secQuestions = activeSec.questions || activeSec.challenges || activeSec.codingQuestions || [];
+            let earnedScore = 0;
+            let maxScore = 0;
+            const evaluatedQuestions = secQuestions.map((rawQ, idx) => {
+              const q = normalizeQuestion(rawQ, idx);
+              const qId = q.id || q.questionId || `q_${idx}`;
+              const scoreObj = storedScores[qId] || {};
+              const qWeight = q.weight || 10;
+              maxScore += qWeight;
+              const passed = scoreObj.passed || scoreObj.testPassedCount || 0;
+              const total = scoreObj.total || scoreObj.totalTestCases || (q.testCases ? q.testCases.length : 0);
+              const isAttempted = scoreObj.submitted || (scoreObj.testResults && scoreObj.testResults.length > 0) || (scoreObj.score > 0);
+              const earned = isAttempted ? (scoreObj.score || 0) : 0;
+              earnedScore += earned;
+
+              const finalCode = scoreObj.code || scoreObj.solution || storedCodes[`${qId}_${scoreObj.language || 'cpp'}`] || storedCodes[`${qId}_c`] || storedCodes[`${qId}_python`] || storedCodes[`${qId}_java`] || '';
+              const status = isAttempted
+                ? (scoreObj.status || (total > 0 ? (passed === total ? 'Accepted' : (passed > 0 ? 'Partial' : 'Wrong Answer')) : 'Wrong Answer'))
+                : 'Did Not Attempt';
+
+              return buildCodingSubmission({
+                questionId: qId,
+                questionNumber: idx + 1,
+                questionKey: `Q${idx + 1}`,
+                problemTitle: q.name || q.title || `Question ${idx + 1}`,
+                title: q.name || q.title || `Question ${idx + 1}`,
+                difficulty: q.difficulty || 'Easy',
+                language: scoreObj.language || 'cpp',
+                code: isAttempted ? finalCode : '',
+                solution: isAttempted ? finalCode : '',
+                status: status,
+                testsPassed: isAttempted ? passed : 0,
+                totalTests: total,
+                score: earned,
+                maxScore: qWeight,
+                percentage: isAttempted ? (scoreObj.percentage || (total > 0 ? Math.round((passed / total) * 100) : 0)) : 0,
+                attempted: isAttempted,
+                testResults: isAttempted ? (scoreObj.testResults || []) : [],
+                submittedAt: scoreObj.submittedAt || new Date().toISOString()
+              });
+            });
+
+            activeCodingData = {
+              score: earnedScore,
+              maxScore: maxScore || activeSec.duration_minutes || 10,
+              totalQuestions: secQuestions.length,
+              answers: storedCodes,
+              coding: evaluatedQuestions,
+              questions: evaluatedQuestions,
+            };
           }
-        };
+
+          const secTimeSpent = activeCodingData?.timeTaken || activeCodingData?.timeSpentSeconds || Math.max(0, (activeSec.duration_minutes || 30) * 60 - (secTimer || 0));
+
+          combinedResults[activeSecId] = {
+            sectionId: activeSecId,
+            sectionName: activeSec.name || `Section ${currentSecIdx + 1}`,
+            type: 'coding',
+            startedAt: activeCodingData?.startedAt || sectionStartTimesRef.current[currentSecIdx] || new Date().toISOString(),
+            submittedAt: new Date().toISOString(),
+            timeSpentSeconds: secTimeSpent,
+            questionTiming: activeCodingData?.questionTiming || {},
+            data: {
+              score: activeCodingData.score || 0,
+              maxScore: activeCodingData.maxScore || activeSec.duration_minutes || 10,
+              totalQuestions: activeCodingData.totalQuestions || (activeSec.questions || []).length || 0,
+              answers: activeCodingData.answers || {},
+              coding: activeCodingData.coding || [],
+              questions: activeCodingData.questions || activeCodingData.coding || [],
+              questionTiming: activeCodingData.questionTiming || {},
+              timeSpentPerQ: activeCodingData.timeSpentPerQ || {},
+            }
+          };
+        } else {
+          let activeAnswers = {};
+          try {
+            const savedState = localStorage.getItem(`msa_active_mcq_state_${effectiveAssessment.id}_${activeSec.id ?? ''}`);
+            if (savedState) activeAnswers = JSON.parse(savedState).answers || {};
+          } catch (_) { }
+
+          combinedResults[activeSecId] = {
+            sectionId: activeSecId,
+            sectionName: activeSec.name || `Section ${currentSecIdx + 1}`,
+            type: activeSec.type || 'mcq',
+            startedAt: sectionStartTimesRef.current[currentSecIdx] || new Date().toISOString(),
+            submittedAt: new Date().toISOString(),
+            timeSpentSeconds: Math.max(0, (activeSec.duration_minutes || 30) * 60 - (secTimer || 0)),
+            data: {
+              score: 0,
+              maxScore: activeSec.duration_minutes || 10,
+              totalQuestions: (activeSec.questions || []).length || 0,
+              answers: activeAnswers,
+              questions: activeSec.questions || [],
+            }
+          };
+        }
       }
     }
 
@@ -1578,7 +1674,10 @@ const MultiSectionAssessment = () => {
       const key = localStorage.key(i);
       if (key && (
         (effectiveAssessment?.id && key.startsWith(`msa_active_mcq_state_${effectiveAssessment.id}`)) ||
+        (effectiveAssessment?.id && key.startsWith(`msa_active_coding_state_${effectiveAssessment.id}`)) ||
+        key === 'msa_active_coding_latest' ||
         key.startsWith(`codingAssessmentCode`) ||
+        key.startsWith(`codingQuestionScores`) ||
         key.startsWith(`codingTimeSpentPerQ`) ||
         key.startsWith(`codingQuestionTiming`) ||
         key.startsWith(`proctor_violations_`) ||
@@ -2641,6 +2740,16 @@ const MultiSectionAssessment = () => {
     const secTimeSpentSeconds = Math.round((new Date(secsubmittedAt).getTime() - new Date(secstartedAt).getTime()) / 1000);
 
     let finalSectionResults = sectionResults;
+    if (!finalSectionResults && activeSection.type === 'coding') {
+      try {
+        const raw = localStorage.getItem(`msa_active_coding_state_${assessment.id}_${activeSection.sectionId || activeSection.id || ''}`)
+          || localStorage.getItem(`msa_active_coding_state_${assessment.id}`)
+          || localStorage.getItem('msa_active_coding_latest');
+        if (raw) {
+          finalSectionResults = JSON.parse(raw);
+        }
+      } catch (_) {}
+    }
     if (!finalSectionResults && (activeSection.type === 'essay' || activeSection.type === 'essay_writing')) {
       // Auto timer expired without sectionResults: retrieve local draft and take only first 500 words
       try {
@@ -3309,23 +3418,16 @@ const MultiSectionAssessment = () => {
   // Intercept navigation when exam is finished
   useEffect(() => {
     if (examFinished) {
-      const isViolation = submissionReason === 'proctoring_violations';
-      if (!isViolation) {
-        try {
-          window.history.replaceState(null, '', '/student/assessment/feedback');
-        } catch (_) { }
-      } else {
-        try {
-          window.history.replaceState(null, '', '/student/dashboard');
-        } catch (_) { }
-      }
+      try {
+        window.history.replaceState(null, '', '/student/assessment/feedback');
+      } catch (_) { }
       const handleForward = () => {
         navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
       };
       window.addEventListener('popstate', handleForward);
       return () => window.removeEventListener('popstate', handleForward);
     }
-  }, [examFinished, submissionReason, navigate]);
+  }, [examFinished, navigate]);
 
   // ────────────────────────── RENDER ─────────────────────────────────────────
 
@@ -3354,54 +3456,43 @@ const MultiSectionAssessment = () => {
   // Exam finished screen / Feedback flow
   if (examFinished) {
     const isViolationAutoSubmit = submissionReason === 'proctoring_violations';
-    if (isViolationAutoSubmit) {
-      return (
-        <div className="msa-finished-container" style={{ maxWidth: '620px', margin: '80px auto', padding: '40px 36px', background: '#1e293b', borderRadius: '16px', color: '#f8fafc', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.3)', fontFamily: "'Inter',sans-serif", textAlign: 'center' }}>
-          <SecurityWatermark email={user?.email} />
-          <FaExclamationTriangle style={{ color: '#ef4444', fontSize: '4.5rem', marginBottom: '18px' }} />
-          <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#f87171', marginBottom: '12px' }}>Assessment Auto-Submitted</h1>
-          <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '10px', padding: '14px 18px', marginBottom: '24px', textAlign: 'left', fontSize: '0.92rem', color: '#fca5a5', lineHeight: '1.5' }}>
-            <strong>Notice:</strong> This assessment was automatically finalized and submitted because the proctoring violation limit was exceeded (e.g. window exits, tab switching, or camera/mic anomalies).
-          </div>
-          <p style={{ color: '#94a3b8', fontSize: '1.05rem', lineHeight: '1.6', marginBottom: '32px' }}>
-            Your responses and metrics up to this point have been securely recorded and synced to the portal.
-          </p>
-          <button
-            onClick={() => {
-              try { stopAllMediaAndAI(); } catch (_) {}
-              const cId = assessment?.contestId;
-              window.history.replaceState(null, '', '/student/dashboard');
-              if (cId) {
-                navigate('/student/dashboard', { replace: true, state: { tab: 'contests', contestId: cId, justCompleted: true } });
-              } else {
-                navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
-              }
-            }}
-            style={{ background: '#ef4444', color: 'white', border: 'none', padding: '14px 35px', fontSize: '1.05rem', fontWeight: '700', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}
-          >
-            {assessment?.contestId ? 'View Attempt Summary & Contest Standings →' : 'Return to Dashboard'}
-          </button>
-        </div>
-      );
-    }
-
     return (
-      <AssessmentFeedback
-        assessment={assessment}
-        user={user}
-        tenant={completedTenant || { tenantId: user?.tenantId || 'default' }}
-        attemptId={completedAttemptId || attemptDocId(user?.uid || user?.email, assessment?.id)}
-        onComplete={() => {
-          try { stopAllMediaAndAI(); } catch (_) {}
-          const cId = assessment?.contestId;
-          window.history.replaceState(null, '', '/student/dashboard');
-          if (cId) {
-            navigate('/student/dashboard', { replace: true, state: { tab: 'contests', contestId: cId, justCompleted: true } });
-          } else {
-            navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
-          }
-        }}
-      />
+      <>
+        {isViolationAutoSubmit && (
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.15)',
+            borderBottom: '1px solid rgba(239, 68, 68, 0.35)',
+            color: '#fca5a5',
+            padding: '14px 24px',
+            textAlign: 'center',
+            fontSize: '0.92rem',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px'
+          }}>
+            <FaExclamationTriangle style={{ color: '#ef4444', fontSize: '1.2rem', flexShrink: 0 }} />
+            <span>Notice: Assessment auto-submitted due to proctoring violation limit (e.g. window/tab switching). All evaluated answers, test cases, and scores have been securely recorded.</span>
+          </div>
+        )}
+        <AssessmentFeedback
+          assessment={assessment}
+          user={user}
+          tenant={completedTenant || { tenantId: user?.tenantId || 'default' }}
+          attemptId={completedAttemptId || attemptDocId(user?.uid || user?.email, assessment?.id)}
+          onComplete={() => {
+            try { stopAllMediaAndAI(); } catch (_) {}
+            const cId = assessment?.contestId;
+            window.history.replaceState(null, '', '/student/dashboard');
+            if (cId) {
+              navigate('/student/dashboard', { replace: true, state: { tab: 'contests', contestId: cId, justCompleted: true } });
+            } else {
+              navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
+            }
+          }}
+        />
+      </>
     );
   }
 
