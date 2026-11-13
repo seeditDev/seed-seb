@@ -2705,12 +2705,19 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
      * Three strikes auto-submits, matching the copy already shown in the
      * lockout UI and the 'Tab switch limit lockout' reason string below.
      */
-    const TAB_SWITCH_LIMIT = 3;
+    const tabSwitchLimit = useMemo(() => {
+        const raw = settings?.tabSwitchLimit ?? parentSettings?.tabSwitchLimit ?? currentAssessment?.tabSwitchLimit ?? currentAssessment?.proctorConfig?.tabSwitchLimit;
+        if (raw !== undefined && raw !== null && raw !== '') {
+            const num = Number(raw);
+            return isNaN(num) ? 5 : num;
+        }
+        return 5;
+    }, [settings, parentSettings, currentAssessment]);
+
     useTabSwitchGuard({
-        enabled: Boolean(startTime && currentAssessment && !isLockedOut && !submitGuard.isDone),
+        enabled: Boolean(!isEmbedded && startTime && currentAssessment && !isLockedOut && !submitGuard.isDone),
         onViolation: ({ type }) => {
-            // Only count leaving the workspace; the matching return event and
-            // the de-duped blur are informational.
+            // Only count leaving the workspace; the matching return event is informational.
             if (type !== 'tab_switch' && type !== 'fullscreen_exit') return;
 
             setViolationCount((prev) => {
@@ -2722,13 +2729,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                     { message: `Tab switch violation ${next}` },
                     auth?.currentUser?.uid ?? null  // activates Firestore audit trail
                 );
-                if (next >= TAB_SWITCH_LIMIT) {
+                if (tabSwitchLimit > 0 && next >= tabSwitchLimit) {
                     setIsLockedOut(true);
                     autoSubmitAttemptRef.current?.('tab_switch_lockout');
                 } else {
                     setProctorWarning(
-                        `Warning ${next}/${TAB_SWITCH_LIMIT}: leaving the assessment window is not permitted. ` +
-                        `The assessment will be submitted automatically on the next violation.`
+                        `Warning ${next}${tabSwitchLimit > 0 ? `/${tabSwitchLimit}` : ''}: leaving the assessment window is not permitted. ` +
+                        (tabSwitchLimit > 0 ? `The assessment will be submitted automatically on reaching ${tabSwitchLimit} violations.` : `All tab switches are recorded in the proctoring report.`)
                     );
                 }
                 return next;
@@ -3651,7 +3658,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                     </div>
 
                     {/* Proctoring Badges */}
-                    {(shouldUseProctoring || shouldUseAudioProctoring) && (
+                    {(shouldUseProctoring || shouldUseAudioProctoring || tabSwitchLimit !== undefined) && (
                         <div className="coding-proctor-pills-wrap">
                             {shouldUseAudioProctoring && (
                                 <div className="coding-proctor-pill" title="Audio Violations">
@@ -3665,6 +3672,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                                     Camera: {isEmbedded ? parentProctoringData?.violationCount || 0 : proctoringData.violationCount}/{Number(settings.maxViolations || parentSettings?.maxViolations || currentAssessment?.maxViolations || currentAssessment?.proctorConfig?.maxCameraViolations || currentAssessment?.proctorConfig?.maxViolations) || 200}
                                 </div>
                             )}
+                            <div className="coding-proctor-pill" title="Tab Switches">
+                                <span className={`status-dot ${(isEmbedded ? (parentProctoringData?.tabSwitchCount || 0) : violationCount) > 0 ? 'bad' : 'good'}`} />
+                                Tabs: {isEmbedded ? (parentProctoringData?.tabSwitchCount || 0) : violationCount}{tabSwitchLimit > 0 ? `/${tabSwitchLimit}` : ''}
+                            </div>
                         </div>
                     )}
 

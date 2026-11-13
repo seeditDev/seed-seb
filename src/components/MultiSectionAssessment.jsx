@@ -586,7 +586,7 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
         </div>
 
         <div className="mcq-ref-header-right">
-          {(settings.audioProctored || settings.proctored) && (
+          {(settings.audioProctored || settings.proctored || settings.tabSwitchLimit !== undefined) && (
             <div className="mcq-proctor-pills-wrap">
               {settings.audioProctored && (
                 <div className="mcq-proctor-badge" title="Audio Proctoring">
@@ -600,6 +600,10 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
                   Camera: {proctoringData?.violationCount || 0}/{settings.maxViolations || 200}
                 </div>
               )}
+              <div className="mcq-proctor-badge" title="Tab Switches">
+                <span className={`status-dot ${(proctoringData?.tabSwitchCount || 0) > 0 ? 'bad' : 'good'}`} />
+                Tabs: {proctoringData?.tabSwitchCount || 0}{settings.tabSwitchLimit > 0 ? `/${settings.tabSwitchLimit}` : ''}
+              </div>
             </div>
           )}
 
@@ -1048,6 +1052,7 @@ const MultiSectionAssessment = () => {
   const [proctoringData, setProctoringData] = useState({
     violationCount: 0,
     audioViolationCount: 0,
+    tabSwitchCount: 0,
     violations: []
   });
   const [submissionReason, setSubmissionReason] = useState(null);
@@ -1094,9 +1099,19 @@ const MultiSectionAssessment = () => {
   }, [assessment]);
 
   const tabSwitchLimit = useMemo(() => {
-    if (!assessment) return 3;
-    return Number(assessment.proctorConfig?.tabSwitchLimit ?? assessment.tabSwitchLimit) || 3;
+    if (!assessment) return 5;
+    const raw = assessment.proctorConfig?.tabSwitchLimit ?? assessment.tabSwitchLimit;
+    if (raw !== undefined && raw !== null && raw !== '') {
+      const num = Number(raw);
+      return isNaN(num) ? 5 : num;
+    }
+    return 5;
   }, [assessment]);
+
+  const shouldWatchTabSwitches = useMemo(() => {
+    if (!assessment) return false;
+    return shouldUseProctoring || tabSwitchLimit > 0 || assessment.tabSwitchLimit !== undefined || assessment.proctorConfig?.tabSwitchLimit !== undefined;
+  }, [assessment, shouldUseProctoring, tabSwitchLimit]);
 
   const maxAudioViolations = useMemo(() => {
     if (!assessment) return 200;
@@ -1601,13 +1616,15 @@ const MultiSectionAssessment = () => {
       });
     }
 
-    const realViolationTypes = ['no_face', 'multiple_faces', 'tab_switch', 'cell_phone', 'prohibited_object', 'looking_away', 'face_mismatch'];
+    const realViolationTypes = ['no_face', 'multiple_faces', 'tab_switch', 'fullscreen_exit', 'cell_phone', 'prohibited_object', 'looking_away', 'face_mismatch'];
     const isReal = realViolationTypes.includes(info.violationType);
-    const isTabSwitch = info.violationType === 'tab_switch';
+    const isTabSwitch = info.violationType === 'tab_switch' || info.violationType === 'fullscreen_exit';
 
     setProctoringData(prev => {
       const nextCount = typeof info.violationCount === 'number' ? info.violationCount : (prev.violationCount + 1);
-      const prevTabSwitches = (prev.violations || []).filter(v => v.type === 'tab_switch').length;
+      const prevTabSwitches = typeof prev.tabSwitchCount === 'number'
+        ? prev.tabSwitchCount
+        : (prev.violations || []).filter(v => v.type === 'tab_switch' || v.type === 'fullscreen_exit').length;
       const nextTabSwitches = isTabSwitch ? prevTabSwitches + 1 : prevTabSwitches;
 
       if ((maxViolations > 0 && nextCount >= maxViolations) || (tabSwitchLimit > 0 && nextTabSwitches >= tabSwitchLimit)) {
@@ -1619,9 +1636,21 @@ const MultiSectionAssessment = () => {
         }, 0);
       }
 
+      if (isTabSwitch) {
+        if (tabSwitchLimit > 0 && nextTabSwitches >= tabSwitchLimit) {
+          toast.error(`Exam auto-submitted: Tab switch limit (${tabSwitchLimit}) exceeded!`, { id: 'tab-switch-toast', duration: 4000 });
+        } else {
+          toast.warning(`⚠️ Warning: Tab switch / window focus loss detected! (${nextTabSwitches}${tabSwitchLimit > 0 ? `/${tabSwitchLimit}` : ''})`, {
+            id: 'tab-switch-toast',
+            duration: 3500
+          });
+        }
+      }
+
       return {
         ...prev,
         violationCount: nextCount,
+        tabSwitchCount: nextTabSwitches,
         violations: isReal ? [...prev.violations, { type: info.violationType, timestamp: info.timestamp }] : prev.violations
       };
     });
@@ -1690,43 +1719,60 @@ const MultiSectionAssessment = () => {
     });
   }, [maxAudioViolations, autoSubmitEntireExam, assessment?.id]);
 
-  // ── Tab switch & visibility change proctoring listeners (P0-06 / P1) ─────────
+  // ── Tab switch & visibility change proctoring listeners with 1.5s debounce (P0-06 / P1) ──
+  const lastTabSwitchRef = useRef(0);
+  const hiddenStartTimeRef = useRef(0);
+
   useEffect(() => {
-    if (!shouldUseProctoring || currentSecIdx < 0 || !secStarted || examFinished) return;
+    if (!shouldWatchTabSwitches || currentSecIdx < 0 || !secStarted || examFinished) return;
 
-    let hiddenStartTime = 0;
+    const reportTabViolation = (reason = '') => {
+      const now = Date.now();
+      // Debounce rapid blur + visibilitychange within 1.5s so switching away is counted as 1 single event
+      if (now - lastTabSwitchRef.current < 1500) return;
+      lastTabSwitchRef.current = now;
 
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        hiddenStartTime = Date.now();
-      } else {
-        const awayDuration = hiddenStartTime ? Math.round((Date.now() - hiddenStartTime) / 1000) : 0;
-        hiddenStartTime = 0;
-        const eventData = {
-          violationType: 'tab_switch',
-          timestamp: new Date().toISOString(),
-          awayDuration
-        };
-        handleProctorViolationUpdate(eventData);
-      }
-    };
-
-    const handleWindowBlur = () => {
       const eventData = {
         violationType: 'tab_switch',
         timestamp: new Date().toISOString(),
-        reason: 'window_blur'
+        reason
       };
       handleProctorViolationUpdate(eventData);
     };
 
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        hiddenStartTimeRef.current = Date.now();
+        reportTabViolation('visibility_hidden');
+      } else {
+        const awayDuration = hiddenStartTimeRef.current ? Math.round((Date.now() - hiddenStartTimeRef.current) / 1000) : 0;
+        hiddenStartTimeRef.current = 0;
+        // Tab return is informational — log to Firestore if available, but do not increment strike count
+        const uid = auth?.currentUser?.uid || user?.uid || user?.id;
+        if (uid && assessment?.id) {
+          writeViolationToFirestore(uid, assessment.id, {
+            type: 'tab_return',
+            awayDuration,
+            timestamp: new Date().toISOString(),
+            source: 'system'
+          });
+        }
+      }
+    };
+
+    const handleWindowBlur = () => {
+      reportTabViolation('window_blur');
+    };
+
     const handleFullscreenChange = () => {
       if (!document.fullscreenElement) {
-        const eventData = {
+        const now = Date.now();
+        if (now - lastTabSwitchRef.current < 1500) return;
+        lastTabSwitchRef.current = now;
+        handleProctorViolationUpdate({
           violationType: 'fullscreen_exit',
           timestamp: new Date().toISOString()
-        };
-        handleProctorViolationUpdate(eventData);
+        });
       }
     };
 
@@ -1739,7 +1785,7 @@ const MultiSectionAssessment = () => {
       window.removeEventListener('blur', handleWindowBlur);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
-  }, [shouldUseProctoring, currentSecIdx, secStarted, examFinished, handleProctorViolationUpdate]);
+  }, [shouldWatchTabSwitches, currentSecIdx, secStarted, examFinished, handleProctorViolationUpdate, assessment?.id, user]);
 
   // ── Block back/forward navigation during exam & hide PyQt SEB nav buttons
   useEffect(() => {
@@ -3438,7 +3484,8 @@ const MultiSectionAssessment = () => {
         maxViolations,
         maxCameraViolations: maxViolations,
         audioProctored: isTruthy(assessment.audioProctored) || isTruthy(activeSection.audioProctored),
-        maxAudioViolations
+        maxAudioViolations,
+        tabSwitchLimit
       }
       : activeSection.type === 'mcq'
       ? {
@@ -3450,7 +3497,8 @@ const MultiSectionAssessment = () => {
         audioProctored: isTruthy(assessment.audioProctored) || isTruthy(activeSection.audioProctored),
         maxViolations,
         maxCameraViolations: maxViolations,
-        maxAudioViolations
+        maxAudioViolations,
+        tabSwitchLimit
       }
       : {
         timerRestrictedSubmit: isTruthy(activeSection.timerRestrictedSubmit),
@@ -3461,7 +3509,8 @@ const MultiSectionAssessment = () => {
         maxCameraViolations: maxViolations,
         // audioProctored is independent of camera proctoring — only use its own flag
         audioProctored: isTruthy(assessment.audioProctored) || isTruthy(activeSection.audioProctored),
-        maxAudioViolations
+        maxAudioViolations,
+        tabSwitchLimit
       };
     const sectionView = (activeSection.type === 'spoken_english' || activeSection.type === 'speech' || activeSection.type === 'sea')
       ? (
@@ -3543,6 +3592,8 @@ const MultiSectionAssessment = () => {
             isTestActive={currentSecIdx >= 0 && !examFinished}
             isProctorActive={currentSecIdx >= 0 && !examFinished && secStarted && sectionCountdown === null}
             maxViolations={maxViolations}
+            tabSwitchCount={proctoringData?.tabSwitchCount || 0}
+            tabSwitchLimit={tabSwitchLimit}
             premisesProctorRequired={isPremisesRequired}
             onReady={handleProctorReady}
             onViolationUpdate={handleProctorViolationUpdate}

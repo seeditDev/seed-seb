@@ -256,6 +256,8 @@ const ProctoringEngine = ({
   onAutoSubmit,
   isTestActive = true,
   maxViolations = 200,
+  tabSwitchCount,
+  tabSwitchLimit = 5,
   onViolationUpdate,
   isProctorActive = true,
   onReady,
@@ -1552,9 +1554,16 @@ const ProctoringEngine = ({
                 {premisesProctorRequired && premisesBattery !== null ? ` | 📱${premisesBattery}%` : ''}
               </span>
             </div>
-            {/* Violation count badge overlaid on camera */}
-            <div className={`camera-violation-badge ${violationCount === 0 ? 'badge-safe' : violationCount >= Math.round(maxViolations * 0.8) ? 'badge-critical' : 'badge-warn'}`}>
-               {violationCount}/{maxViolations}
+            {/* Violation count badges overlaid on camera */}
+            <div className="camera-badge-container">
+              <div className={`camera-violation-badge ${violationCount === 0 ? 'badge-safe' : violationCount >= Math.round(maxViolations * 0.8) ? 'badge-critical' : 'badge-warn'}`}>
+                Cam: {violationCount}/{maxViolations}
+              </div>
+              {tabSwitchCount !== undefined && (
+                <div className={`camera-violation-badge ${tabSwitchCount === 0 ? 'badge-safe' : (tabSwitchLimit > 0 && tabSwitchCount >= Math.round(tabSwitchLimit * 0.8)) ? 'badge-critical' : 'badge-warn'}`}>
+                  Tabs: {tabSwitchCount}{tabSwitchLimit > 0 ? `/${tabSwitchLimit}` : ''}
+                </div>
+              )}
             </div>
           </div>
         </div>

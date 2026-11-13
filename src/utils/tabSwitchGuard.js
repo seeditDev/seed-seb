@@ -59,7 +59,7 @@ export function useTabSwitchGuard({
         report('tab_return', { hiddenMs });
       }
     };
-    const onBlur = () => report('window_blur');
+    const onBlur = () => report('tab_switch', { reason: 'window_blur' });
     const onFullscreenChange = () => {
       if (!document.fullscreenElement) report('fullscreen_exit');
     };
