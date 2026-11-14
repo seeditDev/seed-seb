@@ -126,7 +126,8 @@ import { ensureUserHasUsername } from '../services/usernameService';
 import { publishPublicProfile } from '../services/publicProfileService';
 import GitHubSyncModal from './common/GitHubSyncModal';
 import PurchaseHistoryTab from './profile/PurchaseHistoryTab';
-import { checkSubscriptionStatus, syncAndValidateSubscription } from '../services/subscriptionValidator';
+import PremiumUpgradeModal from './PremiumUpgradeModal';
+import { checkSubscriptionStatus, syncAndValidateSubscription, isProOrAbove } from '../services/subscriptionValidator';
 import { purchaseContestPass } from '../services/razorpayService';
 import {
   getGitHubConfig,
@@ -207,6 +208,8 @@ const StudentDashboard = () => {
   };
   const [userPremiumState, setUserPremiumState] = useState(null);
   const [subscriptionInfo, setSubscriptionInfo] = useState(() => checkSubscriptionStatus(user));
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const isProUser = Boolean(isProOrAbove(user) || subscriptionInfo?.isPro || subscriptionInfo?.isPremium);
   const [profileSubTab, setProfileSubTab] = useState('info'); // 'info', 'utilisation', 'widget', 'password'
   const [studentUsername, setStudentUsername] = useState(() => user?.username || '');
   const [practiceInitialTab, setPracticeInitialTab] = useState(() => location.state?.practiceTab || 'bank');
@@ -2985,7 +2988,154 @@ const StudentDashboard = () => {
   };
 
   
+  const renderLockedContests = () => {
+    return (
+      <div style={{ padding: '40px 24px', maxWidth: '850px', margin: '0 auto', textAlign: 'center' }}>
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
+          borderRadius: '20px',
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4), 0 0 40px rgba(245, 158, 11, 0.1)',
+          padding: '48px 36px',
+          position: 'relative'
+        }}>
+          <div style={{
+            width: '64px',
+            height: '64px',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.3) 100%)',
+            border: '1px solid rgba(245, 158, 11, 0.4)',
+            color: '#fbbf24',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '28px',
+            marginBottom: '20px'
+          }}>
+            <FaTrophy />
+          </div>
+          <div style={{
+            display: 'inline-block',
+            padding: '4px 12px',
+            borderRadius: '20px',
+            background: 'rgba(245, 158, 11, 0.15)',
+            border: '1px solid rgba(245, 158, 11, 0.35)',
+            color: '#fbbf24',
+            fontSize: '12px',
+            fontWeight: 700,
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            marginBottom: '14px'
+          }}>
+            Pro &amp; Premium Member Arena
+          </div>
+          <h2 style={{ fontSize: '26px', fontWeight: 800, color: '#f8fafc', margin: '0 0 12px 0' }}>
+            Contests &amp; Live Coding Competitions
+          </h2>
+          <p style={{ fontSize: '15px', color: '#94a3b8', maxWidth: '600px', margin: '0 auto 28px auto', lineHeight: 1.6 }}>
+            Participate in scheduled algorithmic contests, benchmark yourself against nationwide peers on the live leaderboard, and get directly shortlisted by campus recruiters.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowUpgradeModal(true)}
+            style={{
+              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '12px 28px',
+              fontSize: '14.5px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(245, 158, 11, 0.4)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <FaStar /> Upgrade to Pro to Enter Contests
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderLockedAiInterview = () => {
+    return (
+      <div style={{ padding: '40px 24px', maxWidth: '850px', margin: '0 auto', textAlign: 'center' }}>
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
+          borderRadius: '20px',
+          border: '1px solid rgba(99, 102, 241, 0.3)',
+          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4), 0 0 40px rgba(99, 102, 241, 0.1)',
+          padding: '48px 36px',
+          position: 'relative'
+        }}>
+          <div style={{
+            width: '64px',
+            height: '64px',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.3) 100%)',
+            border: '1px solid rgba(99, 102, 241, 0.4)',
+            color: '#a5b4fc',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '28px',
+            marginBottom: '20px'
+          }}>
+            <FaUserTie />
+          </div>
+          <div style={{
+            display: 'inline-block',
+            padding: '4px 12px',
+            borderRadius: '20px',
+            background: 'rgba(99, 102, 241, 0.15)',
+            border: '1px solid rgba(99, 102, 241, 0.35)',
+            color: '#a5b4fc',
+            fontSize: '12px',
+            fontWeight: 700,
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            marginBottom: '14px'
+          }}>
+            Pro &amp; Premium Feature
+          </div>
+          <h2 style={{ fontSize: '26px', fontWeight: 800, color: '#f8fafc', margin: '0 0 12px 0' }}>
+            AI Placement Interview Studio
+          </h2>
+          <p style={{ fontSize: '15px', color: '#94a3b8', maxWidth: '600px', margin: '0 auto 28px auto', lineHeight: 1.6 }}>
+            Practice realistic technical and HR mock interviews with intelligent speech analysis, domain-specific scenario trees, live rubrics, and automated scorecards.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowUpgradeModal(true)}
+            style={{
+              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '12px 28px',
+              fontSize: '14.5px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(99, 102, 241, 0.4)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <FaStar /> Upgrade to Pro to Unlock AI Interviews
+          </button>
+        </div>
+      </div>
+    );
+  };
+  
   const renderContests = () => {
+    if (!isProUser) {
+      return renderLockedContests();
+    }
     return (
       <ContestsView
         user={user}
@@ -2997,7 +3147,7 @@ const StudentDashboard = () => {
         onOpenSEBModal={(contest) => {
           navigate(`/student/contest/${contest.id}`);
         }}
-        onUpgradePro={() => handleUpgradeProToast()}
+        onUpgradePro={() => setShowUpgradeModal(true)}
       />
     );
   };
@@ -7051,17 +7201,40 @@ const StudentDashboard = () => {
               </button>
               <button
                 className={`sidebar-nav-pill ${activeTab === "contests" ? "active" : ""}`}
-                onClick={() => setActiveTab("contests")}
+                onClick={() => {
+                  if (!isProUser) {
+                    setShowUpgradeModal(true);
+                  }
+                  setActiveTab("contests");
+                }}
               >
                 <FaTrophy />
-                {!collapsed && <span>Contests</span>}
+                {!collapsed && (
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                    <span>Contests</span>
+                    {!isProUser && (
+                      <span style={{
+                        fontSize: '10px',
+                        padding: '1px 6px',
+                        borderRadius: '6px',
+                        background: 'rgba(245, 158, 11, 0.2)',
+                        color: '#f59e0b',
+                        fontWeight: 700,
+                        border: '1px solid rgba(245, 158, 11, 0.35)',
+                        marginLeft: 'auto'
+                      }}>
+                        🔒 Pro
+                      </span>
+                    )}
+                  </span>
+                )}
               </button>
               <button
                 className={`sidebar-nav-pill ${activeTab === "placements" ? "active" : ""}`}
                 onClick={() => setActiveTab("placements")}
               >
                 <FaBriefcase />
-                {!collapsed && <span>Placements & Tests</span>}
+                {!collapsed && <span>Placements &amp; Tests</span>}
               </button>
               <button
                 className={`sidebar-nav-pill ${activeTab === "practice" ? "active" : ""}`}
@@ -7090,11 +7263,34 @@ const StudentDashboard = () => {
               </button>
               <button
                 className={`sidebar-nav-pill ${activeTab === "ai-interview" ? "active" : ""}`}
-                onClick={() => setActiveTab("ai-interview")}
+                onClick={() => {
+                  if (!isProUser) {
+                    setShowUpgradeModal(true);
+                  }
+                  setActiveTab("ai-interview");
+                }}
                 title={collapsed ? "AI Interview" : undefined}
               >
                 <FaUserTie />
-                {!collapsed && <span>AI Interview</span>}
+                {!collapsed && (
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                    <span>AI Interview</span>
+                    {!isProUser && (
+                      <span style={{
+                        fontSize: '10px',
+                        padding: '1px 6px',
+                        borderRadius: '6px',
+                        background: 'rgba(245, 158, 11, 0.2)',
+                        color: '#f59e0b',
+                        fontWeight: 700,
+                        border: '1px solid rgba(245, 158, 11, 0.35)',
+                        marginLeft: 'auto'
+                      }}>
+                        🔒 Pro
+                      </span>
+                    )}
+                  </span>
+                )}
               </button>
               <button
                 className={`sidebar-nav-pill ${activeTab === "settings" ? "active" : ""}`}
@@ -7404,6 +7600,9 @@ const StudentDashboard = () => {
             activeTab === "assessments" ? renderAssessments() :
              activeTab === "contests" ? renderContests() :
               activeTab === "ai-interview" ? (
+                !isProUser ? (
+                  renderLockedAiInterview()
+                ) : (
                 <div className="dashboard-ai-interview-view" style={{ padding: '0 24px 32px 24px', width: '100%', boxSizing: 'border-box' }}>
                   <div style={{
                     display: 'flex',
@@ -7476,6 +7675,7 @@ const StudentDashboard = () => {
                   </div>
                   <AIInterviewSimulator user={user} />
                 </div>
+                )
               ) :
               activeTab === "placements" ? (
                 <Placements user={user} />
@@ -7533,6 +7733,18 @@ const StudentDashboard = () => {
           }}
         />
       )}
+
+      {/* SEED Pro / Premium Upgrade Modal */}
+      <PremiumUpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        user={user}
+        onUpgradeSuccess={() => {
+          setUser(prev => ({ ...prev, isPremium: true, premium: true, subscriptionStatus: 'active' }));
+          setSubscriptionInfo(checkSubscriptionStatus({ ...user, isPremium: true, premium: true, subscriptionStatus: 'active' }));
+          toast.success("Welcome to SEED Pro! All features, contests, and AI interviews are unlocked.");
+        }}
+      />
 
       {/* Logout animation screen */}
       {showLogoutAnimation && (

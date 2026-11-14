@@ -11,6 +11,23 @@
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 /**
+ * Determines whether a user has active Pro or Premium access.
+ * Admins, superadmins, instructors, and staff have unrestricted bypass.
+ *
+ * @param {object} user - User document or authData
+ * @returns {boolean}
+ */
+export function isProOrAbove(user) {
+  if (!user) return false;
+  const role = String(user.role || '').toLowerCase();
+  if (role === 'admin' || role === 'superadmin' || role === 'instructor' || role === 'staff') {
+    return true;
+  }
+  const status = checkSubscriptionStatus(user);
+  return Boolean(status.isPro || status.isPremium);
+}
+
+/**
  * Validates a user object's subscription and returns a comprehensive status descriptor.
  *
  * @param {object} user - User document or authData

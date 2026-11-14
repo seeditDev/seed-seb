@@ -28,6 +28,7 @@ import DOMPurify from 'dompurify';
 import { toast } from 'sonner';
 import { PLACEMENT_TRACK_CONFIG } from '../config/placementTrackConfig';
 import { getPlacementTrackOverview, canAttemptAssessment, startAssessmentAttempt } from '../services/placementTrackService';
+import { isProOrAbove, checkSubscriptionStatus } from '../services/subscriptionValidator';
 
 const CATEGORIES = [
   'Arrays', 'Strings', 'Sorting', 'Searching', 'Recursion',
@@ -212,6 +213,33 @@ const PracticeHome = ({
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [showGitHubModal, setShowGitHubModal] = useState(false);
   const [gitHubConfig, setGitHubConfig] = useState(getGitHubConfig());
+
+  // Subscription & Pro Tier Authorization
+  const isProUser = Boolean(isProOrAbove(user) || isProOrAbove(propUser) || isProOrAbove(getAuthData()));
+  const isPremiumUser = isProUser;
+
+  // Level 1 detection: Level 1 and Q0.xxx problems are open to all users
+  const isQuestionLevel1 = (q) => {
+    if (!q) return false;
+    const qid = String(q.questionId || q.id || '').trim();
+    if (qid.toLowerCase().startsWith('q0.')) return true;
+    return q.level === 1 || q.level === '1';
+  };
+
+  // Lock rule: All levels except Level 1 are locked for Pro and Premium members
+  const isQuestionLockedForUser = (q) => {
+    if (isProUser) return false;
+    if (isQuestionLevel1(q)) {
+      return Boolean(q.isPremium || q.metadata?.isPremium);
+    }
+    return true; // Levels 2 to 7 are strictly locked for basic users
+  };
+
+  const isQuestionPremium = (qid) => {
+    if (qid && String(qid).startsWith('Q0.')) return false;
+    const q = questions.find(item => item.questionId === qid);
+    return isQuestionLockedForUser(q || { questionId: qid });
+  };
 
   useEffect(() => {
     if (propUser) {
@@ -1001,6 +1029,242 @@ const PracticeHome = ({
     setAssessmentModalLevel(mod);
   };
 
+  const renderLockedSheetsView = () => {
+    return (
+      <div className="ph-section" style={{ margin: '30px auto', maxWidth: '960px' }}>
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
+          borderRadius: '20px',
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4), 0 0 40px rgba(245, 158, 11, 0.1)',
+          padding: '48px 36px',
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            width: '64px',
+            height: '64px',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.3) 100%)',
+            border: '1px solid rgba(245, 158, 11, 0.4)',
+            color: '#fbbf24',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '28px',
+            marginBottom: '20px',
+            boxShadow: '0 8px 24px rgba(245, 158, 11, 0.25)'
+          }}>
+            <FaLock />
+          </div>
+
+          <div style={{
+            display: 'inline-block',
+            padding: '4px 12px',
+            borderRadius: '20px',
+            background: 'rgba(245, 158, 11, 0.15)',
+            border: '1px solid rgba(245, 158, 11, 0.35)',
+            color: '#fbbf24',
+            fontSize: '12px',
+            fontWeight: 700,
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            marginBottom: '14px'
+          }}>
+            SEED Pro &amp; Premium Exclusive
+          </div>
+
+          <h2 style={{ fontSize: '28px', fontWeight: 800, color: '#f8fafc', margin: '0 0 12px 0' }}>
+            Structured Sheets Curriculum
+          </h2>
+
+          <p style={{ fontSize: '15px', color: '#94a3b8', maxWidth: '640px', margin: '0 auto 32px auto', lineHeight: 1.6 }}>
+            Access world-renowned DSA preparation sheets crafted by top engineers. Master every data structure and pattern required for FAANG, tier-1 product firms, and high-impact tech interviews.
+          </p>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '16px',
+            maxWidth: '780px',
+            margin: '0 auto 36px auto',
+            textAlign: 'left'
+          }}>
+            <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px', padding: '16px' }}>
+              <div style={{ fontWeight: 700, color: '#f8fafc', fontSize: '14px', marginBottom: '6px' }}>⭐ Striver SDE &amp; A2Z DSA</div>
+              <div style={{ fontSize: '12.5px', color: '#94a3b8', lineHeight: 1.4 }}>Complete 455+ problem step-by-step roadmap from basics to advanced graphs &amp; DP.</div>
+            </div>
+            <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px', padding: '16px' }}>
+              <div style={{ fontWeight: 700, color: '#f8fafc', fontSize: '14px', marginBottom: '6px' }}>🎯 NeetCode 150 &amp; Blind 75</div>
+              <div style={{ fontSize: '12.5px', color: '#94a3b8', lineHeight: 1.4 }}>The legendary high-yield question sets for maximum interview coverage in minimal time.</div>
+            </div>
+            <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px', padding: '16px' }}>
+              <div style={{ fontWeight: 700, color: '#f8fafc', fontSize: '14px', marginBottom: '6px' }}>🏗️ System Design &amp; Core CS</div>
+              <div style={{ fontSize: '12.5px', color: '#94a3b8', lineHeight: 1.4 }}>Curated sheets for Operating Systems, DBMS, Computer Networks, and Low-Level Design.</div>
+            </div>
+            <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px', padding: '16px' }}>
+              <div style={{ fontWeight: 700, color: '#f8fafc', fontSize: '14px', marginBottom: '6px' }}>🐙 Auto GitHub Sync</div>
+              <div style={{ fontSize: '12.5px', color: '#94a3b8', lineHeight: 1.4 }}>Automatically commit verified accepted solutions directly into your GitHub repository.</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowPremiumModal(true)}
+              style={{
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '12px 28px',
+                fontSize: '14.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(245, 158, 11, 0.4)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <FaStar /> Upgrade to Pro to Unlock
+            </button>
+            <button
+              onClick={() => handleTabChange('bank')}
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                color: '#cbd5e1',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: '10px',
+                padding: '12px 24px',
+                fontSize: '14.5px',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              Explore Free Question Bank (Level 1)
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderLockedPlacementTrackView = () => {
+    return (
+      <div className="ph-section" style={{ margin: '30px auto', maxWidth: '960px' }}>
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
+          borderRadius: '20px',
+          border: '1px solid rgba(99, 102, 241, 0.3)',
+          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4), 0 0 40px rgba(99, 102, 241, 0.1)',
+          padding: '48px 36px',
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            width: '64px',
+            height: '64px',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.3) 100%)',
+            border: '1px solid rgba(99, 102, 241, 0.4)',
+            color: '#a5b4fc',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '28px',
+            marginBottom: '20px',
+            boxShadow: '0 8px 24px rgba(99, 102, 241, 0.25)'
+          }}>
+            <FaLock />
+          </div>
+
+          <div style={{
+            display: 'inline-block',
+            padding: '4px 12px',
+            borderRadius: '20px',
+            background: 'rgba(99, 102, 241, 0.15)',
+            border: '1px solid rgba(99, 102, 241, 0.35)',
+            color: '#a5b4fc',
+            fontSize: '12px',
+            fontWeight: 700,
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            marginBottom: '14px'
+          }}>
+            SEED Pro &amp; Premium Track
+          </div>
+
+          <h2 style={{ fontSize: '28px', fontWeight: 800, color: '#f8fafc', margin: '0 0 12px 0' }}>
+            Seven-Level Placement Coding Track
+          </h2>
+
+          <p style={{ fontSize: '15px', color: '#94a3b8', maxWidth: '640px', margin: '0 auto 32px auto', lineHeight: 1.6 }}>
+            The 7-Level Placement Track is a comprehensive progression pipeline from foundational coding to FAANG mastery. Non-pro users can practice Level 1 problems for free in the Question Bank. Upgrade to Pro to unlock Levels 2–7, level assessment gates, and placement clearance certificates.
+          </p>
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '8px',
+            flexWrap: 'wrap',
+            marginBottom: '36px'
+          }}>
+            <div style={{ padding: '8px 14px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', fontSize: '13px', fontWeight: 700 }}>
+              ✓ Level 1 (Free Foundations)
+            </div>
+            {[2, 3, 4, 5, 6, 7].map(lvl => (
+              <div key={lvl} style={{ padding: '8px 14px', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#94a3b8', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <FaLock size={10} color="#f59e0b" /> Level {lvl}
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowPremiumModal(true)}
+              style={{
+                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '12px 28px',
+                fontSize: '14.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(99, 102, 241, 0.4)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <FaStar /> Upgrade to Pro to Unlock All Levels
+            </button>
+            <button
+              onClick={() => {
+                setSelectedLevel('1');
+                handleTabChange('bank');
+              }}
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                color: '#cbd5e1',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: '10px',
+                padding: '12px 24px',
+                fontSize: '14.5px',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              Practice Free Level 1 Problems
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderPlacementTrackTab = () => {
     const studentPlacementLevel = placementOverview?.placementEligibilityLevel ?? 0;
     const effectiveUid = user?.uid ?? propUser?.uid ?? getAuthData()?.uid;
@@ -1336,8 +1600,9 @@ const PracticeHome = ({
                 const levelNum = mod.level;
                 const levelDoc = placementOverview?.levels?.find(l => l.level === levelNum);
                 const isCleared = levelNum <= studentPlacementLevel || levelDoc?.cleared;
-                const isUnlocked = levelNum === 1 || levelNum <= studentPlacementLevel + 1 || levelDoc?.status === 'UNLOCKED';
-                const statusClass = isCleared ? 'cleared' : (isUnlocked ? 'in_progress' : 'locked');
+                const isProLevelLocked = !isProUser && levelNum > 1;
+                const isUnlocked = !isProLevelLocked && (levelNum === 1 || levelNum <= studentPlacementLevel + 1 || levelDoc?.status === 'UNLOCKED');
+                const statusClass = isProLevelLocked ? 'locked' : (isCleared ? 'cleared' : (isUnlocked ? 'in_progress' : 'locked'));
 
                 const mappedQuestions = questions.filter(q => q.level === levelNum || (levelNum === 1 && String(q.questionId || '').toLowerCase().startsWith('q0.')));
                 const levelTotalQ = mappedQuestions.length || (levelNum === 1 ? 321 : (levelDoc?.totalQuestions || 0));
@@ -1370,8 +1635,8 @@ const PracticeHome = ({
                     >
                       <div className="ph-pt-pipeline-card-top">
                         {renderLevelIcon(levelNum)}
-                        <span className={`ph-status-chip ${statusClass}`}>
-                          {isCleared ? 'CLEARED' : isUnlocked ? 'IN PROGRESS' : 'LOCKED'}
+                        <span className={`ph-status-chip ${statusClass}`} style={isProLevelLocked ? { background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' } : {}}>
+                          {isProLevelLocked ? '🔒 PRO' : isCleared ? 'CLEARED' : isUnlocked ? 'IN PROGRESS' : 'LOCKED'}
                         </span>
                       </div>
 
@@ -1389,7 +1654,19 @@ const PracticeHome = ({
                       </div>
 
                       <div className="ph-pt-pipeline-card-action">
-                        {isUnlocked && !isCleared ? (
+                        {isProLevelLocked ? (
+                          <button
+                            type="button"
+                            className="ph-pt-btn-pipeline-primary"
+                            style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: '#fff', border: 'none' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowPremiumModal(true);
+                            }}
+                          >
+                            🔒 Unlock with Pro
+                          </button>
+                        ) : isUnlocked && !isCleared ? (
                           levelTotalQ > 0 && levelSolvedQ >= levelTotalQ ? (
                             <button
                               type="button"
@@ -1450,8 +1727,9 @@ const PracticeHome = ({
                 const levelNum = mod.level;
                 const levelDoc = placementOverview?.levels?.find(l => l.level === levelNum);
                 const isCleared = levelNum <= studentPlacementLevel || levelDoc?.cleared;
-                const isUnlocked = levelNum === 1 || levelNum <= studentPlacementLevel + 1 || levelDoc?.status === 'UNLOCKED';
-                const statusClass = isCleared ? 'cleared' : (isUnlocked ? 'in_progress' : 'locked');
+                const isProLevelLocked = !isProUser && levelNum > 1;
+                const isUnlocked = !isProLevelLocked && (levelNum === 1 || levelNum <= studentPlacementLevel + 1 || levelDoc?.status === 'UNLOCKED');
+                const statusClass = isProLevelLocked ? 'locked' : (isCleared ? 'cleared' : (isUnlocked ? 'in_progress' : 'locked'));
 
                 const mappedQuestions = questions.filter(q => q.level === levelNum || (levelNum === 1 && String(q.questionId || '').toLowerCase().startsWith('q0.')));
                 const levelTotalQ = mappedQuestions.length || (levelNum === 1 ? 321 : (levelDoc?.totalQuestions || 0));
@@ -1499,8 +1777,8 @@ const PracticeHome = ({
                           <span className="ph-pt-assessment-badge">
                             🛡️ 4h Proctored Assessment (16 Qs • 70% Pass)
                           </span>
-                          <span className={`ph-status-chip ${statusClass}`}>
-                            {isCleared ? 'CLEARED' : isUnlocked ? 'IN PROGRESS' : 'LOCKED'}
+                          <span className={`ph-status-chip ${statusClass}`} style={isProLevelLocked ? { background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' } : {}}>
+                            {isProLevelLocked ? '🔒 PRO' : isCleared ? 'CLEARED' : isUnlocked ? 'IN PROGRESS' : 'LOCKED'}
                           </span>
                         </div>
                       </div>
@@ -1515,7 +1793,7 @@ const PracticeHome = ({
 
                       <div className="ph-pt-timeline-progress-wrap">
                         <div className="ph-pt-timeline-progress-meta">
-                          <span>{isUnlocked ? `${levelSolvedQ} / ${levelTotalQ} solved questions` : 'Prerequisite locked'}</span>
+                          <span>{isUnlocked ? `${levelSolvedQ} / ${levelTotalQ} solved questions` : isProLevelLocked ? '🔒 SEED Pro required' : 'Prerequisite locked'}</span>
                           <span>{levelPct}% Complete</span>
                         </div>
                         <div className="ph-pt-timeline-progress-track">
@@ -1524,7 +1802,16 @@ const PracticeHome = ({
                       </div>
 
                       <div className="ph-pt-timeline-actions">
-                        {isUnlocked && (
+                        {isProLevelLocked ? (
+                          <button
+                            type="button"
+                            className="ph-pt-timeline-btn-primary"
+                            style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: '#fff', border: 'none' }}
+                            onClick={() => setShowPremiumModal(true)}
+                          >
+                            🔒 Unlock Level {levelNum} with Pro
+                          </button>
+                        ) : isUnlocked && (
                           <button
                             type="button"
                             className="ph-pt-timeline-btn-primary"
@@ -1588,8 +1875,9 @@ const PracticeHome = ({
           const detailLevelNum = activeDetailMod.level;
           const detailLevelDoc = placementOverview?.levels?.find(l => l.level === detailLevelNum);
           const detailIsCleared = detailLevelNum <= studentPlacementLevel || detailLevelDoc?.cleared;
-          const detailIsUnlocked = detailLevelNum === 1 || detailLevelNum <= studentPlacementLevel + 1 || detailLevelDoc?.status === 'UNLOCKED';
-          const detailStatusClass = detailIsCleared ? 'cleared' : (detailIsUnlocked ? 'in_progress' : 'locked');
+          const detailIsProLocked = !isProUser && detailLevelNum > 1;
+          const detailIsUnlocked = !detailIsProLocked && (detailLevelNum === 1 || detailLevelNum <= studentPlacementLevel + 1 || detailLevelDoc?.status === 'UNLOCKED');
+          const detailStatusClass = detailIsProLocked ? 'locked' : (detailIsCleared ? 'cleared' : (detailIsUnlocked ? 'in_progress' : 'locked'));
 
           const detailMappedQuestions = questions.filter(q => q.level === detailLevelNum || (detailLevelNum === 1 && String(q.questionId || '').toLowerCase().startsWith('q0.')));
           const detailTotalQ = detailMappedQuestions.length || activeDetailMod.totalQuestions;
@@ -1695,20 +1983,31 @@ const PracticeHome = ({
                   </div>
 
                   {/* Solve Questions Button */}
-                  <button
-                    type="button"
-                    className="ph-pt-detail-btn-solve"
-                    onClick={() => {
-                      if (detailIsUnlocked) {
-                        setSelectedLevel(String(detailLevelNum));
-                        handleTabChange('bank');
-                      } else {
-                        toast.info(`Level ${detailLevelNum} is locked. Complete Level ${detailLevelNum - 1} and pass its clearance assessment first!`);
-                      }
-                    }}
-                  >
-                    <span>▶ View &amp; Solve Level {detailLevelNum} Questions ({detailTotalQ}) &rarr;</span>
-                  </button>
+                  {detailIsProLocked ? (
+                    <button
+                      type="button"
+                      className="ph-pt-detail-btn-solve"
+                      style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: '#ffffff' }}
+                      onClick={() => setShowPremiumModal(true)}
+                    >
+                      <span>🔒 Unlock Level {detailLevelNum} with SEED Pro &rarr;</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="ph-pt-detail-btn-solve"
+                      onClick={() => {
+                        if (detailIsUnlocked) {
+                          setSelectedLevel(String(detailLevelNum));
+                          handleTabChange('bank');
+                        } else {
+                          toast.info(`Level ${detailLevelNum} is locked. Complete Level ${detailLevelNum - 1} and pass its clearance assessment first!`);
+                        }
+                      }}
+                    >
+                      <span>▶ View &amp; Solve Level {detailLevelNum} Questions ({detailTotalQ}) &rarr;</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Right Card: Tabs (Topics, Learning Resources, Assessment, Rewards) */}
@@ -1882,7 +2181,16 @@ const PracticeHome = ({
                           </div>
                         )}
 
-                        {detailSolvedQ >= detailTotalQ ? (
+                        {detailIsProLocked ? (
+                          <button
+                            type="button"
+                            className="ph-pt-btn-launch-assessment"
+                            style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: '#ffffff' }}
+                            onClick={() => setShowPremiumModal(true)}
+                          >
+                            🔒 Unlock Level {detailLevelNum} Assessment with Pro
+                          </button>
+                        ) : detailSolvedQ >= detailTotalQ ? (
                           <button
                             type="button"
                             className="ph-pt-btn-launch-assessment"
@@ -2861,15 +3169,13 @@ const PracticeHome = ({
     );
   };
 
-  const isPremiumUser = Boolean(user?.isPremium || user?.premium || user?.subscriptionStatus === 'active' || getAuthData()?.isPremium || getAuthData()?.premium);
-  const isQuestionPremium = (qid) => {
-    if (qid && String(qid).startsWith('Q0.')) return false;
-    const q = questions.find(item => item.questionId === qid);
-    return q?.isPremium || q?.metadata?.isPremium || false;
-  };
-
   const handleQuestionClick = (q, status) => {
-    navigate(`/student/practice/solve/${q.questionId}`, {
+    const qid = q.questionId || q.id;
+    if (!isProUser && (status === 'LOCKED' || isQuestionLockedForUser(q))) {
+      setShowPremiumModal(true);
+      return;
+    }
+    navigate(`/student/practice/solve/${qid}`, {
       state: { scoringType: q.scoringType || 'PARTIAL_SCORE' }
     });
   };
@@ -3037,11 +3343,30 @@ const PracticeHome = ({
           <div className="ph-topbar-nav" style={{ gap: '8px' }}>
             <button
               className={`ph-topbar-btn ${activeTab === 'sheets' && !selectedModule ? 'active' : ''}`}
-              onClick={() => handleTabChange('sheets')}
+              onClick={() => {
+                if (!isProUser) {
+                  setShowPremiumModal(true);
+                }
+                handleTabChange('sheets');
+              }}
               style={{ borderRadius: '8px' }}
             >
               <FaFileAlt size={13} style={{ marginRight: '6px' }} />
               Structured Sheets
+              {!isProUser && (
+                <span style={{
+                  marginLeft: '6px',
+                  fontSize: '10px',
+                  padding: '2px 6px',
+                  borderRadius: '6px',
+                  background: 'rgba(245, 158, 11, 0.2)',
+                  color: '#f59e0b',
+                  fontWeight: 700,
+                  border: '1px solid rgba(245, 158, 11, 0.4)'
+                }}>
+                  🔒 Pro
+                </span>
+              )}
             </button>
             <button
               className={`ph-topbar-btn ${activeTab === 'bank' && !selectedModule ? 'active' : ''}`}
@@ -3053,7 +3378,12 @@ const PracticeHome = ({
             </button>
             <button
               className={`ph-topbar-btn ${activeTab === 'placementTrack' && !selectedModule ? 'active' : ''}`}
-              onClick={() => handleTabChange('placementTrack')}
+              onClick={() => {
+                if (!isProUser) {
+                  setShowPremiumModal(true);
+                }
+                handleTabChange('placementTrack');
+              }}
               style={{ borderRadius: '8px' }}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '6px' }}>
@@ -3062,6 +3392,20 @@ const PracticeHome = ({
                 <rect x="16" y="7" width="4" height="14" rx="2" />
               </svg>
               Placement Track
+              {!isProUser && (
+                <span style={{
+                  marginLeft: '6px',
+                  fontSize: '10px',
+                  padding: '2px 6px',
+                  borderRadius: '6px',
+                  background: 'rgba(245, 158, 11, 0.2)',
+                  color: '#f59e0b',
+                  fontWeight: 700,
+                  border: '1px solid rgba(245, 158, 11, 0.4)'
+                }}>
+                  🔒 Pro
+                </span>
+              )}
             </button>
           </div>
 
@@ -3192,9 +3536,9 @@ const PracticeHome = ({
           )}
         </div>
       ) : activeTab === 'placementTrack' ? (
-        renderPlacementTrackTab()
+        !isProUser ? renderLockedPlacementTrackView() : renderPlacementTrackTab()
       ) : activeTab === 'sheets' ? (
-        renderSheetsTab()
+        !isProUser ? renderLockedSheetsView() : renderSheetsTab()
       ) : activeTab === 'paths' ? (
         // ─── STRUCTURED LEARNING PATHS VIEW ───
         <div className="ph-section" style={{ margin: '30px auto' }}>
@@ -4574,19 +4918,27 @@ const PracticeHome = ({
               {/* Level Filter */}
               <select
                 value={selectedLevel}
-                onChange={e => { setSelectedLevel(e.target.value); setCurrentPage(1); }}
-                className="ph-problems-select"
+                onChange={e => {
+                  const targetLvl = e.target.value;
+                  if (targetLvl !== 'All' && targetLvl !== '1' && !isProUser) {
+                    setShowPremiumModal(true);
+                    return;
+                  }
+                  setSelectedLevel(targetLvl);
+                  setCurrentPage(1);
+                }}
+                className={`ph-problems-select ${!isProUser && selectedLevel !== '1' && selectedLevel !== 'All' ? 'ph-pro-locked-select' : ''}`}
                 aria-label="Filter questions by placement level"
               >
-                <option value="All">Level: All</option>
-                <option value="1">Level 1 (Foundations)</option>
-                <option value="2">Level 2</option>
-                <option value="3">Level 3</option>
-                <option value="4">Level 4</option>
-                <option value="5">Level 5</option>
-                <option value="6">Level 6</option>
-                <option value="7">Level 7</option>
-                <option value="Pending">Level: Pending</option>
+                <option value="All">Level: All {!isProUser ? '(L1 Free)' : ''}</option>
+                <option value="1">Level 1 (Foundations - Free)</option>
+                <option value="2">Level 2 {!isProUser ? '🔒 Pro' : ''}</option>
+                <option value="3">Level 3 {!isProUser ? '🔒 Pro' : ''}</option>
+                <option value="4">Level 4 {!isProUser ? '🔒 Pro' : ''}</option>
+                <option value="5">Level 5 {!isProUser ? '🔒 Pro' : ''}</option>
+                <option value="6">Level 6 {!isProUser ? '🔒 Pro' : ''}</option>
+                <option value="7">Level 7 {!isProUser ? '🔒 Pro' : ''}</option>
+                <option value="Pending">Level: Pending {!isProUser ? '🔒 Pro' : ''}</option>
               </select>
 
               {/* Count */}
@@ -4640,7 +4992,8 @@ const PracticeHome = ({
                   </thead>
                   <tbody>
                     {paginatedQuestions.map((q, idx) => {
-                      const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.isPremium, isPremiumUser, attemptedIds);
+                      const isLocked = isQuestionLockedForUser(q);
+                      const status = isLocked ? 'LOCKED' : getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.isPremium, isPremiumUser, attemptedIds);
                       const bestScore = problemDetails[q.questionId]?.bestScore;
 
                       const diffClass = q.difficulty === 'Hard' ? 'hard'
@@ -4662,6 +5015,23 @@ const PracticeHome = ({
                               {q.questionId ? `${q.questionId} – ` : ''}{q.title}
                             </span>
                             {q.isPremium && <FaStar style={{ color: '#fbbf24', marginLeft: '6px', fontSize: '11px' }} />}
+                            {isLocked && (
+                              <span style={{
+                                marginLeft: '8px',
+                                fontSize: '11px',
+                                padding: '2px 7px',
+                                borderRadius: '6px',
+                                background: 'rgba(245, 158, 11, 0.15)',
+                                color: '#f59e0b',
+                                fontWeight: 600,
+                                border: '1px solid rgba(245, 158, 11, 0.3)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}>
+                                <FaLock style={{ fontSize: '9px' }} /> Pro
+                              </span>
+                            )}
                             {isPremiumUser && Array.isArray(q.companyTags) && q.companyTags.length > 0 && (
                               <div className="ph-row-company-tags" onClick={e => e.stopPropagation()}>
                                 {q.companyTags.slice(0, 3).map(comp => (
@@ -4708,7 +5078,11 @@ const PracticeHome = ({
                             <span style={{ color: 'var(--ph-text-dim)' }}>—</span>
                           </td>
                           <td className="ph-col-score">
-                            {bestScore !== undefined ? (
+                            {isLocked ? (
+                              <span style={{ color: '#f59e0b', fontSize: '12px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <FaLock style={{ fontSize: '10px' }} /> Pro
+                              </span>
+                            ) : bestScore !== undefined ? (
                               <span className={`ph-score-tag ${bestScore === 100 ? 'perfect' : 'partial'}`}>
                                 {bestScore}%
                               </span>
@@ -4719,10 +5093,11 @@ const PracticeHome = ({
                           <td className="ph-col-actions" onClick={e => e.stopPropagation()}>
                             <button
                               className="ph-action-eye-btn"
-                              title="Solve Problem"
+                              title={isLocked ? "Unlock with Pro" : "Solve Problem"}
                               onClick={() => handleQuestionClick(q, status)}
+                              style={isLocked ? { color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.4)' } : {}}
                             >
-                              <FaEye />
+                              {isLocked ? <FaLock /> : <FaEye />}
                             </button>
                           </td>
                         </tr>
