@@ -94,7 +94,8 @@ service cloud.firestore {
     match /users/{userId} {
       allow get:    if isUser(userId) || isPortal() || isRecruiter() || isSignedIn();
       allow list:   if isPortal() || isRecruiter();
-      allow create, update: if isUser(userId) || isPortal() || isSignedIn();
+      allow create: if isUser(userId) || isPortal() || isAdmin();
+      allow update: if isPortal() || (isUser(userId) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'staffPermissions', 'assessmentCreator', 'isPremium', 'seedCredits'])));
       allow delete: if isAdmin();
 
       // Activity Logging (Login tracking in dataService.js)
@@ -104,7 +105,7 @@ service cloud.firestore {
 
       // Course Progress (Practice, checkpoints, submodule completion, MSA)
       match /courseProgress/{courseId} {
-        allow read, write: if true;
+        allow read, write: if isUser(userId) || isPortal();
       }
 
       // Contest & Assessment Attempts (SessionService in seed-seb)
@@ -123,7 +124,7 @@ service cloud.firestore {
       }
 
       match /{allSub=**} {
-        allow read, write: if isUser(userId) || isPortal() || isSignedIn();
+        allow read, write: if isUser(userId) || isPortal();
       }
     }
 
@@ -162,32 +163,32 @@ service cloud.firestore {
 
     match /courses/{courseId} {
       allow read: if true;
-      allow create, update: if true;
-      allow delete: if isAdmin() || isPortal();
+      allow create, update, delete: if isPortal() || isAdmin();
 
       match /reviews/{reviewId} {
         allow read: if true;
-        allow create, update: if true;
-        allow delete: if isAdmin() || isPortal();
+        allow create: if isSignedIn();
+        allow update, delete: if isPortal() || isAdmin();
       }
 
       match /series/{seriesId} {
         allow read:                    if true;
-        allow create, update, delete:  if true;
+        allow create, update, delete:  if isPortal() || isAdmin();
 
         match /tests/{testId} {
           allow read:                    if true;
-          allow create, update, delete:  if true;
+          allow create, update, delete:  if isPortal() || isAdmin();
         }
 
         match /_meta/{trackerId} {
-          allow read, write: if true;
+          allow read: if true;
+          allow write: if isPortal() || isAdmin();
         }
       }
 
       match /{allSub=**} {
         allow read: if true;
-        allow write: if true;
+        allow write: if isPortal() || isAdmin();
       }
     }
 
@@ -263,27 +264,26 @@ service cloud.firestore {
 
     match /assessments/{assessmentId} {
       allow get, list: if true;
-      allow create, update: if true;
-      allow delete: if isPortal() || isRecruiter() || isAdmin();
+      allow create, update, delete: if isPortal() || isRecruiter() || isAdmin();
 
       match /questions/{questionId} {
-        allow get, list: if true;
-        allow create, update, delete: if true;
+        allow get, list: if isSignedIn() || isPortal();
+        allow create, update, delete: if isPortal() || isRecruiter() || isAdmin();
       }
 
       match /sections/{sectionId} {
         allow get, list: if true;
-        allow create, update, delete: if true;
+        allow create, update, delete: if isPortal() || isRecruiter() || isAdmin();
       }
 
       match /metadata/{docId} {
         allow get, list: if true;
-        allow create, update, delete: if true;
+        allow create, update, delete: if isPortal() || isRecruiter() || isAdmin();
       }
 
       match /config/{docId} {
         allow get, list: if true;
-        allow create, update, delete: if true;
+        allow create, update, delete: if isPortal() || isRecruiter() || isAdmin();
       }
 
       // Feedback subcollections (Student submission after exam completion)
@@ -301,7 +301,7 @@ service cloud.firestore {
 
       match /{allSub=**} {
         allow read: if true;
-        allow write: if true;
+        allow write: if isPortal() || isRecruiter() || isAdmin();
       }
     }
 
@@ -311,12 +311,12 @@ service cloud.firestore {
     // ══════════════════════════════════════════════════════════════════════
 
     match /codingChallenges/{challengeId} {
-      allow read, get, list: if true;
-      allow create, update: if true;
-      allow delete: if isPortal() || isAdmin();
+      allow read, get, list: if isSignedIn() || isPortal();
+      allow create, update, delete: if isPortal() || isRecruiter() || isAdmin();
 
       match /{allSub=**} {
-        allow read, write: if true;
+        allow read: if isSignedIn() || isPortal();
+        allow write: if isPortal() || isRecruiter() || isAdmin();
       }
     }
 
@@ -373,16 +373,17 @@ service cloud.firestore {
 
     match /assessmentResults/{tenantId} {
       allow read: if isPortal() || isSignedIn();
-      allow write: if isPortal() || isSignedIn();
+      allow write: if isPortal();
 
       match /{assessmentId}/{userId} {
-        allow read: if isPortal() || isSignedIn();
-        allow create, update: if isUser(userId) || isPortal() || isSignedIn();
+        allow read: if isPortal() || isUser(userId);
+        allow create, update: if isUser(userId) || isPortal();
         allow delete: if isPortal() || isAdmin();
       }
 
       match /{document=**} {
-        allow read, write: if isPortal() || isSignedIn();
+        allow read: if isPortal() || isSignedIn();
+        allow write: if isPortal();
       }
     }
 
@@ -448,10 +449,11 @@ service cloud.firestore {
     // ══════════════════════════════════════════════════════════════════════
 
     match /codingProgress/{uid} {
-      allow read, write: if isUser(uid) || isPortal() || isSignedIn();
+      allow read: if isUser(uid) || isPortal();
+      allow write: if isUser(uid) || isPortal();
 
       match /{document=**} {
-        allow read, write: if isUser(uid) || isPortal() || isSignedIn();
+        allow read, write: if isUser(uid) || isPortal();
       }
     }
 
@@ -464,27 +466,23 @@ service cloud.firestore {
     }
 
     match /codingBank/{bankId} {
-      allow get, list: if true;
-      allow create, update: if true;
-      allow delete: if isPortal() || isAdmin();
+      allow get, list: if isSignedIn() || isPortal();
+      allow create, update, delete: if isPortal() || isAdmin();
     }
 
     match /codingChallenges/{challengeId} {
-      allow get, list: if true;
-      allow create, update: if true;
-      allow delete: if isPortal() || isAdmin();
+      allow get, list: if isSignedIn() || isPortal();
+      allow create, update, delete: if isPortal() || isAdmin();
     }
 
     match /questionBank/{questionId} {
-      allow get, list: if true;
-      allow create, update: if true;
-      allow delete: if isPortal() || isAdmin();
+      allow get, list: if isSignedIn() || isPortal();
+      allow create, update, delete: if isPortal() || isAdmin();
     }
 
     match /questions/{questionId} {
-      allow get, list: if true;
-      allow create, update: if true;
-      allow delete: if isPortal() || isAdmin();
+      allow get, list: if isSignedIn() || isPortal();
+      allow create, update, delete: if isPortal() || isAdmin();
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -523,12 +521,12 @@ service cloud.firestore {
 
     match /contentUrls/{urlId} {
       allow read:  if true;
-      allow write: if true;
+      allow write: if isPortal() || isAdmin();
     }
 
     match /contestUrls/{urlId} {
       allow read:  if true;
-      allow write: if true;
+      allow write: if isPortal() || isAdmin();
     }
 
     match /appConfig/{docId} {
@@ -809,6 +807,20 @@ service cloud.firestore {
     match /demoRequests/{requestId} {
       allow create: if request.resource.data.name is string
                     && request.resource.data.email is string;
+      allow read, update: if isPortal();
+      allow delete: if isAdmin();
+    }
+
+
+    // ======================================================================
+    // 15. Student Intake & Campus Registrations (/register)
+    //     Public submission by students; managed & exported in portal
+    // ======================================================================
+
+    match /studentRegistrations/{regId} {
+      allow create: if request.resource.data.name is string
+                    && request.resource.data.collegeEmail is string
+                    && request.resource.data.rollNumber is string;
       allow read, update: if isPortal();
       allow delete: if isAdmin();
     }
