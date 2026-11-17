@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import {
   Database,
@@ -389,12 +389,15 @@ export default function SQLSectionView({
     return init;
   });
 
-  // Sync to sessionStorage on state changes
+  // Sync to sessionStorage and localStorage on state changes
   useEffect(() => {
     try {
       sessionStorage.setItem(storageKey, JSON.stringify(qStates));
+      const aId = assessmentId || sectionData?.assessmentId || 'assessment';
+      const sId = sectionData?.sectionId || sectionData?.id || 'sql_section';
+      localStorage.setItem(`msa_sql_active_${aId}_${sId}`, JSON.stringify(qStates));
     } catch (_) {}
-  }, [qStates, storageKey]);
+  }, [qStates, storageKey, assessmentId, sectionData]);
 
   const activeQ = questions[currentQIdx] || questions[0] || {};
   const activeState = qStates[activeQ.id] || {
@@ -548,6 +551,19 @@ export default function SQLSectionView({
       onSectionSubmit(sectionResult);
     }
   };
+
+  const autoSubmittedRef = useRef(false);
+  const hasTimerStartedRef = useRef(false);
+  useEffect(() => {
+    if (secTimer > 0) {
+      hasTimerStartedRef.current = true;
+    }
+    if (secStarted && secTimer <= 0 && hasTimerStartedRef.current && !autoSubmittedRef.current) {
+      autoSubmittedRef.current = true;
+      toast('Time up! Submitting SQL section…', { duration: 3000 });
+      handleFinalSectionSubmit();
+    }
+  }, [secTimer, secStarted]);
 
   // Persistent pane sizes and collapse state
   const [isQuestionsCollapsed, setIsQuestionsCollapsed] = useState(() => {

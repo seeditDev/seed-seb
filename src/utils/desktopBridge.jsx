@@ -183,6 +183,42 @@ const desktopBridge = {
         return false;
     },
 
+    getLifecycleState: async () => {
+        const backend = await initBridge();
+        if (backend && typeof backend.getLifecycleState === 'function') {
+            try {
+                const raw = await backend.getLifecycleState();
+                return safeJsonParse(raw, { mode: "unknown", locked: false, contest: null });
+            } catch (err) {
+                console.warn('[DesktopBridge] getLifecycleState error:', err);
+            }
+        }
+        return { mode: "unknown", locked: false, contest: null };
+    },
+
+    checkEngineHealth: async () => {
+        const startTime = Date.now();
+        const backend = await initBridge();
+        if (!backend) {
+            return { connected: false, latencyMs: -1, error: "BACKEND_NOT_FOUND" };
+        }
+        if (typeof backend.getLifecycleState === 'function') {
+            try {
+                const raw = await backend.getLifecycleState();
+                const latencyMs = Date.now() - startTime;
+                const state = safeJsonParse(raw, null);
+                return {
+                    connected: true,
+                    latencyMs,
+                    lifecycle: state
+                };
+            } catch (err) {
+                return { connected: false, latencyMs: Date.now() - startTime, error: err?.message };
+            }
+        }
+        return { connected: true, latencyMs: Date.now() - startTime, legacy: true };
+    },
+
     setContestKey: async (contestId, keyHex) => {
         const backend = await initBridge();
         if (backend && typeof backend.setContestKey === 'function') {

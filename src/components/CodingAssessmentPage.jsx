@@ -33,6 +33,8 @@ import { throttledLocalStorageSet, flushThrottledWrites } from '../utils/throttl
 import { markAssessmentCompleted } from '../services/attemptStatusService';
 import SecurityWatermark from './SecurityWatermark';
 import { stopAllMediaAndAI } from '../utils/hardwareTeardown';
+import { useAssessmentTimer } from '../utils/assessmentTimerWorker';
+import { saveAssessmentSnapshot } from '../utils/assessmentStorageVault';
 import { toast } from 'sonner';
 
 import { isCompleteQuestion } from '../services/codingQuestionBankService';
@@ -547,6 +549,17 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
     }, [isEmbedded]);
 
     useEffect(() => {
+        if (!isEmbedded && currentAssessment?.id && questions.length > 0) {
+            const qIds = questions.map((q, idx) => q.id || q.questionId || `q_${idx}`);
+            desktopBridge.setContestContextWithQuestions(
+                currentAssessment.id,
+                currentAssessment.passkey || '',
+                qIds
+            ).catch(err => console.warn('[CodingAssessmentPage] desktopBridge.setContestContextWithQuestions error:', err));
+        }
+    }, [isEmbedded, currentAssessment?.id, currentAssessment?.passkey, questions]);
+
+    useEffect(() => {
         // Delta-based question timing tracker:
         // When active question changes or test runs, tracker resumes for activeQuestionIndex.
         // Flushes elapsed delta on switch or unmount without causing 1000ms re-render churn.
@@ -707,6 +720,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
 
     const hasTimerStartedRef = useRef(false);
     const autoSubmitAttemptRef = useRef(null);
+    const backupProgressRef = useRef(null);
 
     // Synchronize section timer in embedded mode
     useEffect(() => {
@@ -1540,28 +1554,27 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
         }
     };
 
-    // Timer Tick
-    useEffect(() => {
-        if (!startTime || !currentAssessment || isLockedOut) return;
+    // Dedicated Web Worker Timer (standalone mode)
+    const standaloneEndTimeMs = useMemo(() => {
+        if (!startTime || !testDuration) return 0;
+        return startTime + testDuration * 1000;
+    }, [startTime, testDuration]);
 
-        const interval = setInterval(() => {
-            const elapsed = getElapsedSeconds();
-            const remaining = Math.max(0, testDuration - elapsed);
+    useAssessmentTimer({
+        endTimeMs: standaloneEndTimeMs,
+        isStarted: !isEmbedded && Boolean(startTime && currentAssessment && !isLockedOut && !submissionSuccess),
+        onTick: useCallback((remaining) => {
             setRemainingTime(remaining);
-
-            // Periodically sync progress (every 60 seconds)
+            const elapsed = testDuration - remaining;
             if (elapsed > 0 && elapsed % 60 === 0) {
-                backupProgress();
+                backupProgressRef.current?.();
             }
-
-            if (remaining <= 0) {
-                clearInterval(interval);
-                autoSubmitAttemptRef.current?.("timer");
-            }
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [startTime, currentAssessment, testDuration, isLockedOut, getElapsedSeconds]);
+        }, [testDuration]),
+        onExpire: useCallback(() => {
+            setRemainingTime(0);
+            autoSubmitAttemptRef.current?.("timer");
+        }, [])
+    });
 
     // Proctoring tab switch hooks (Tab switch not needed - bypassed)
     useEffect(() => {
@@ -1725,6 +1738,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
         if (currentQuestion) {
             const simpleKey = `${currentQuestion.id || currentQuestion.questionId}_${targetLang}`;
             codeMapRef.current[simpleKey] = newVal;
+            desktopBridge.saveAnswer(currentQuestion.id || currentQuestion.questionId, newVal).catch(() => {});
         }
 
         setCodingStateByQuestion(prev => ({
@@ -1928,6 +1942,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                     localStorage.setItem(`msa_active_coding_state_${targetAssessmentId}_${targetSectionId}`, JSON.stringify(snap));
                 }
                 localStorage.setItem(`msa_active_coding_state_${targetAssessmentId}`, JSON.stringify(snap));
+                saveAssessmentSnapshot(targetAssessmentId, snap);
             }
             localStorage.setItem('msa_active_coding_latest', JSON.stringify(snap));
             localStorage.setItem('codingQuestionScores', JSON.stringify(overrideScores || questionScores));
@@ -2036,6 +2051,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
             // Local state is already securely persisted in localStorage; remote backup is non-blocking
         }
     };
+    backupProgressRef.current = backupProgress;
 
     // Run Code Engine (Sample Tests)
     // Flow: show loader FIRST → send to backend → close loader
@@ -2356,6 +2372,9 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
             localStorage.setItem("codingQuestionSubmitTimes", JSON.stringify(updated));
             return updated;
         });
+
+        const subCode = getCurrentCode(targetQ, currentLang);
+        desktopBridge.saveAnswer(targetQ.id || targetQ.questionId, subCode).catch(() => {});
 
         setIsEvaluating(true);
         setEvalProgressText(`Preparing Hidden Test Cases...`);
@@ -2719,6 +2738,14 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
 
             await CodingAssessmentService.submitCodingResult(resultData);
             await markAssessmentCompleted(authData, activeAssessment.id);
+            if (!isEmbedded) {
+                try {
+                    await desktopBridge.markAssessmentSubmitted();
+                    await desktopBridge.forceEndAssessment();
+                } catch (bridgeErr) {
+                    console.warn('[CodingAssessmentPage] desktopBridge forceEndAssessment error:', bridgeErr);
+                }
+            }
             clearLocalSession();
 
             const noticeMsg = reason === 'timer' 
@@ -3009,6 +3036,14 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
 
             await CodingAssessmentService.submitCodingResult(resultData);
             await markAssessmentCompleted(user, targetAssessmentId);
+            if (!isEmbedded) {
+                try {
+                    await desktopBridge.markAssessmentSubmitted();
+                    await desktopBridge.endAssessment();
+                } catch (bridgeErr) {
+                    console.warn('[CodingAssessmentPage] desktopBridge endAssessment error:', bridgeErr);
+                }
+            }
             clearLocalSession();
             toast.success('Coding assessment submitted successfully!', { id: 'coding-submit' });
 

@@ -13,7 +13,7 @@ export const Route = createFileRoute("/")({
             throw redirect({ to: target, replace: true });
           }
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (e && typeof e === "object" && ("to" in e || "statusCode" in e)) {
           throw e;
         }

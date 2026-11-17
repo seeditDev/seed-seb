@@ -777,7 +777,7 @@ export default function ContestLandingView({
             <div className="overview-tab-content space-y-6">
               {/* ATTEMPT SUMMARY / SCORE PREVIEW CARD (Immediate Post-Round Feedback - Admin Enabled Only) */}
               {(userRegistration?.lastCompletedRound || userRegistration?.lastScore !== undefined || isRoundCompleted(activeRound?.roundNumber)) && (
-                Boolean(contest?.showAttemptSummary) ? (
+                contest?.showAttemptSummary ? (
                   <div className="p-6 rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-950/40 via-slate-900/80 to-emerald-900/30 shadow-2xl backdrop-blur-md relative overflow-hidden">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-emerald-500/20">
                       <div className="flex items-center gap-3">
