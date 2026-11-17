@@ -9,19 +9,19 @@
 import { AssessmentSessionDO, DurableObjectState, DurableObjectStorage } from "./assessmentSessionDO";
 
 class InMemoryDOStorage implements DurableObjectStorage {
-  private data = new Map<string, any>();
+  private data = new Map<string, unknown>();
   private alarmTime: number | null = null;
-  private alarmTimer: any = null;
+  private alarmTimer: ReturnType<typeof setTimeout> | null = null;
   private onAlarm?: () => Promise<void>;
 
   setAlarmHandler(handler: () => Promise<void>) {
     this.onAlarm = handler;
   }
 
-  async get<T = any>(key: string): Promise<T | undefined> {
-    return this.data.get(key);
+  async get<T = unknown>(key: string): Promise<T | undefined> {
+    return this.data.get(key) as T | undefined;
   }
-  async put<T = any>(key: string, value: T): Promise<void> {
+  async put<T = unknown>(key: string, value: T): Promise<void> {
     this.data.set(key, value);
   }
   async delete(key: string): Promise<boolean> {
@@ -53,7 +53,7 @@ class InMemoryDOStorage implements DurableObjectStorage {
 
 const localInstances = new Map<string, AssessmentSessionDO>();
 
-function getOrCreateLocalInstance(key: string, env: any): AssessmentSessionDO {
+function getOrCreateLocalInstance(key: string, env: Record<string, unknown>): AssessmentSessionDO {
   let instance = localInstances.get(key);
   if (!instance) {
     const storage = new InMemoryDOStorage();
@@ -68,20 +68,20 @@ function getOrCreateLocalInstance(key: string, env: any): AssessmentSessionDO {
   return instance;
 }
 
-export async function handleAssessmentSessionRequest(request: Request, env: any): Promise<Response> {
+export async function handleAssessmentSessionRequest(request: Request, env: Record<string, unknown>): Promise<Response> {
   const url = new URL(request.url);
 
   // Extract session key (uid:assessmentId)
   let uid = url.searchParams.get('uid') || request.headers.get('x-user-id');
   let assessmentId = url.searchParams.get('assessmentId') || request.headers.get('x-assessment-id');
 
-  let bodyClone: any = null;
+  let bodyClone: Record<string, unknown> | null = null;
   if (!uid || !assessmentId) {
     if (request.method === 'POST') {
       try {
-        bodyClone = await request.clone().json();
-        uid = uid || bodyClone?.uid;
-        assessmentId = assessmentId || bodyClone?.assessmentId;
+        bodyClone = (await request.clone().json()) as Record<string, unknown>;
+        uid = uid || (typeof bodyClone?.uid === 'string' ? bodyClone.uid : null);
+        assessmentId = assessmentId || (typeof bodyClone?.assessmentId === 'string' ? bodyClone.assessmentId : null);
       } catch (_) {
         // ignore JSON parse error on non-json bodies
       }
@@ -91,9 +91,10 @@ export async function handleAssessmentSessionRequest(request: Request, env: any)
   const sessionKey = `${uid || 'anon'}:${assessmentId || 'default'}`;
 
   // 1. Cloudflare Workers Durable Object binding check
-  if (env && env.ASSESSMENT_SESSION && typeof env.ASSESSMENT_SESSION.idFromName === 'function') {
-    const id = env.ASSESSMENT_SESSION.idFromName(sessionKey);
-    const stub = env.ASSESSMENT_SESSION.get(id);
+  const cfEnv = env as { ASSESSMENT_SESSION?: { idFromName: (name: string) => unknown; get: (id: unknown) => { fetch: (req: Request) => Promise<Response> } } };
+  if (cfEnv?.ASSESSMENT_SESSION && typeof cfEnv.ASSESSMENT_SESSION.idFromName === 'function') {
+    const id = cfEnv.ASSESSMENT_SESSION.idFromName(sessionKey);
+    const stub = cfEnv.ASSESSMENT_SESSION.get(id);
     return stub.fetch(request);
   }
 

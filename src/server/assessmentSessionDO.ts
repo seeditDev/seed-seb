@@ -11,8 +11,8 @@
  */
 
 export interface DurableObjectStorage {
-  get<T = any>(key: string): Promise<T | undefined>;
-  put<T = any>(key: string, value: T): Promise<void>;
+  get<T = unknown>(key: string): Promise<T | undefined>;
+  put<T = unknown>(key: string, value: T): Promise<void>;
   delete(key: string): Promise<boolean>;
   setAlarm(scheduledTime: number | Date): Promise<void>;
   deleteAlarm(): Promise<void>;
@@ -40,9 +40,9 @@ export interface ExamSessionState {
   durationSeconds: number;
   expiresAtMs: number;
   currentSecIdx: number;
-  sections: Record<string, any>;
-  sectionAnswers: Record<string, any>;
-  codingSubmissions?: Record<string, any>;
+  sections: Record<string, unknown>;
+  sectionAnswers: Record<string, unknown>;
+  codingSubmissions?: Record<string, unknown>;
   lastActiveAtMs: number;
   lastSyncedAtMs: number;
   isDisconnected?: boolean;
@@ -50,12 +50,14 @@ export interface ExamSessionState {
   autoSubmitted?: boolean;
   autoSubmitReason?: string | null;
   completedAtMs?: number;
-  finalPayload?: Record<string, any>;
+  finalPayload?: Record<string, unknown>;
   idToken?: string;
+  firestorePushPending?: boolean;
+  firestorePushError?: string | null;
 }
 
 // Convert native JS values to Firestore REST API typed format
-export function toFirestoreValue(val: any): any {
+export function toFirestoreValue(val: unknown): Record<string, unknown> {
   if (val === null || val === undefined) {
     return { nullValue: null };
   }
@@ -82,8 +84,8 @@ export function toFirestoreValue(val: any): any {
     };
   }
   if (typeof val === 'object') {
-    const fields: Record<string, any> = {};
-    for (const [k, v] of Object.entries(val)) {
+    const fields: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
       if (v !== undefined) {
         fields[k] = toFirestoreValue(v);
       }
@@ -93,8 +95,8 @@ export function toFirestoreValue(val: any): any {
   return { stringValue: String(val) };
 }
 
-export function toFirestoreFields(obj: Record<string, any>): Record<string, any> {
-  const fields: Record<string, any> = {};
+export function toFirestoreFields(obj: Record<string, unknown>): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(obj)) {
     if (v !== undefined) {
       fields[k] = toFirestoreValue(v);
@@ -108,10 +110,10 @@ const FIREBASE_API_KEY = 'AIzaSyANO2d-RUXV0x5fvTjRT1UkpssP-T_Qz1Q';
 
 export class AssessmentSessionDO {
   private state: DurableObjectState;
-  private env: any;
+  private env: Record<string, unknown>;
   private session: ExamSessionState | null = null;
 
-  constructor(state: DurableObjectState, env: any) {
+  constructor(state: DurableObjectState, env: Record<string, unknown>) {
     this.state = state;
     this.env = env;
   }
@@ -160,9 +162,10 @@ export class AssessmentSessionDO {
         status: 404,
         headers: corsHeaders,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error('[AssessmentSessionDO] Request error:', err);
-      return new Response(JSON.stringify({ error: err?.message || 'Internal Server Error' }), {
+      return new Response(JSON.stringify({ error: msg || 'Internal Server Error' }), {
         status: 500,
         headers: corsHeaders,
       });
@@ -174,22 +177,20 @@ export class AssessmentSessionDO {
    * Guarantees single-creation and schedules hardware alarm for exact end time.
    */
   private async handleStart(request: Request, headers: Record<string, string>): Promise<Response> {
-    const body = await request.json().catch(() => ({}));
-    const {
-      uid,
-      tenantId,
-      cohortId,
-      email,
-      name,
-      rollNumber,
-      assessmentId,
-      assessmentTitle,
-      type = 'MSA',
-      slug = '',
-      durationSeconds = 7200,
-      sections = {},
-      idToken,
-    } = body as any;
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const uid = typeof body.uid === 'string' ? body.uid : '';
+    const tenantId = typeof body.tenantId === 'string' ? body.tenantId : '';
+    const cohortId = typeof body.cohortId === 'string' ? body.cohortId : '';
+    const email = typeof body.email === 'string' ? body.email : '';
+    const name = typeof body.name === 'string' ? body.name : '';
+    const rollNumber = typeof body.rollNumber === 'string' ? body.rollNumber : '';
+    const assessmentId = typeof body.assessmentId === 'string' ? body.assessmentId : '';
+    const assessmentTitle = typeof body.assessmentTitle === 'string' ? body.assessmentTitle : '';
+    const type = typeof body.type === 'string' ? body.type : 'MSA';
+    const slug = typeof body.slug === 'string' ? body.slug : '';
+    const durationSeconds = typeof body.durationSeconds === 'number' ? body.durationSeconds : 7200;
+    const sections = (typeof body.sections === 'object' && body.sections !== null ? body.sections : {}) as Record<string, unknown>;
+    const idToken = typeof body.idToken === 'string' ? body.idToken : undefined;
 
     if (!uid || !assessmentId) {
       return new Response(JSON.stringify({ error: 'Missing uid or assessmentId' }), { status: 400, headers });
@@ -291,16 +292,14 @@ export class AssessmentSessionDO {
    * Updates answer selections, active section, and resets active timestamp.
    */
   private async handleSync(request: Request, headers: Record<string, string>): Promise<Response> {
-    const body = await request.json().catch(() => ({}));
-    const {
-      currentSecIdx,
-      sectionId,
-      answers,
-      code,
-      idToken,
-    } = body as any;
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const currentSecIdx = typeof body.currentSecIdx === 'number' ? body.currentSecIdx : undefined;
+    const sectionId = typeof body.sectionId === 'string' ? body.sectionId : undefined;
+    const answers = body.answers;
+    const code = typeof body.code === 'object' && body.code !== null ? (body.code as Record<string, unknown>) : undefined;
+    const idToken = typeof body.idToken === 'string' ? body.idToken : undefined;
 
-    let session = await this.loadSession();
+    const session = await this.loadSession();
     if (!session) {
       return new Response(JSON.stringify({ error: 'No active session found' }), { status: 404, headers });
     }
@@ -405,10 +404,11 @@ export class AssessmentSessionDO {
    * Normal manual submit triggered by candidate.
    */
   private async handleSubmit(request: Request, headers: Record<string, string>): Promise<Response> {
-    const body = await request.json().catch(() => ({}));
-    const { finalPayload, idToken } = body as any;
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const finalPayload = typeof body.finalPayload === 'object' && body.finalPayload !== null ? (body.finalPayload as Record<string, unknown>) : undefined;
+    const idToken = typeof body.idToken === 'string' ? body.idToken : undefined;
 
-    let session = await this.loadSession();
+    const session = await this.loadSession();
     if (!session) {
       return new Response(JSON.stringify({ error: 'Session not found' }), { status: 404, headers });
     }
@@ -500,7 +500,7 @@ export class AssessmentSessionDO {
       const nowIso = new Date().toISOString();
       const attemptDocId = `${session.assessmentId}_${session.uid}`;
 
-      const attemptDocData: Record<string, any> = {
+      const attemptDocData: Record<string, unknown> = {
         status: isAuto ? 'AUTO_SUBMITTED' : 'SUBMITTED',
         completed: true,
         autoSubmitted: isAuto,
@@ -544,11 +544,23 @@ export class AssessmentSessionDO {
       if (!res.ok) {
         const errText = await res.text().catch(() => '');
         console.warn(`[AssessmentSessionDO] Firestore REST push returned status ${res.status}:`, errText);
+        session.firestorePushPending = true;
+        session.firestorePushError = `HTTP ${res.status}: ${errText}`;
+        await this.saveSession(session);
       } else {
+        session.firestorePushPending = false;
+        session.firestorePushError = null;
+        await this.saveSession(session);
         console.log(`[AssessmentSessionDO] Successfully updated attempt document in Firestore for ${session.uid}`);
       }
-    } catch (err: any) {
-      console.error('[AssessmentSessionDO] pushToFirestore failed:', err?.message);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[AssessmentSessionDO] pushToFirestore failed:', msg);
+      if (this.session) {
+        this.session.firestorePushPending = true;
+        this.session.firestorePushError = msg;
+        await this.saveSession(this.session);
+      }
     }
   }
 }

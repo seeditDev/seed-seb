@@ -124,6 +124,7 @@ async function notifyEdgeSessionStart(uid, assessment, authProfile, slug) {
 
 async function notifyEdgeSessionSync(uid, assessmentId, sectionId, answers) {
   try {
+    const idToken = await auth?.currentUser?.getIdToken?.(false).catch(() => null);
     fetch('/api/assessment/session/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -132,6 +133,7 @@ async function notifyEdgeSessionSync(uid, assessmentId, sectionId, answers) {
         assessmentId,
         sectionId,
         answers: answers || {},
+        idToken,
       }),
     }).catch(() => {});
   } catch (_) {}

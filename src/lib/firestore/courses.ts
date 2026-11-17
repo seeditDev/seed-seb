@@ -19,6 +19,8 @@ import {
   query,
   where,
   Timestamp,
+  QueryDocumentSnapshot,
+  DocumentData,
 } from "firebase/firestore";
 
 function getDb() {
@@ -115,6 +117,13 @@ export interface TestDoc {
   /** Populated at runtime with course/series metadata for UI display */
   courseTitle?: string;
   seriesTitle?: string;
+  companyId?: string;
+  recruiterId?: string;
+  recruiterUid?: string;
+  courseIsRestricted?: boolean;
+  courseTargetScope?: string;
+  courseTargetTenants?: string[];
+  courseTargetUsers?: string[];
 }
 
 export interface CourseDoc {
@@ -164,14 +173,24 @@ function mapTest(
   d: Record<string, unknown>,
 ): TestDoc {
   const s = (d["settings"] ?? {}) as Record<string, unknown>;
-  const rawSections = Array.isArray(d["sections"]) ? (d["sections"] as any[]) : [];
+  const proctorConfig = (d["proctorConfig"] ?? {}) as Record<string, unknown>;
+  const rawSections = Array.isArray(d["sections"]) ? (d["sections"] as Array<Record<string, unknown>>) : [];
   const sections: MSASection[] = rawSections.map((sec) => {
-    const sMarks = Number(sec.maxScore ?? sec.totalMarks ?? sec.marks ?? 0);
+    const sMarks = Number(sec["maxScore"] ?? sec["totalMarks"] ?? sec["marks"] ?? 0);
     return {
-      ...sec,
+      id: String(sec["id"] ?? ""),
+      name: String(sec["name"] ?? ""),
+      type: (sec["type"] as MSASection["type"]) ?? "mcq",
+      cdnUrl: String(sec["cdnUrl"] ?? ""),
+      assessmentId: String(sec["assessmentId"] ?? ""),
+      duration_minutes: Number(sec["duration_minutes"] ?? sec["duration"] ?? 0),
       totalMarks: sMarks,
       maxScore: sMarks,
-      duration_minutes: Number(sec.duration_minutes ?? sec.duration ?? 0),
+      questionTimer: Number(sec["questionTimer"] ?? 0),
+      allowLanguageSwitch: Boolean(sec["allowLanguageSwitch"]),
+      questionTimerList: String(sec["questionTimerList"] ?? ""),
+      timerRestrictedSubmit: Boolean(sec["timerRestrictedSubmit"]),
+      forwardOnly: Boolean(sec["forwardOnly"]),
     };
   });
 
@@ -184,6 +203,15 @@ function mapTest(
   const sectionsDuration = sections.reduce((sum, sec) => sum + (Number(sec.duration_minutes) || 0), 0);
   const explicitDuration = Number(d["duration_minutes"] ?? d["duration"] ?? d["timeLimit"] ?? 0);
   const resolvedDuration = explicitDuration > 0 ? explicitDuration : (sectionsDuration > 0 ? sectionsDuration : 60);
+
+  const hasPremises = Boolean(
+    d["premisesProctoring"] ||
+    d["premisesCameraRequired"] ||
+    proctorConfig["premisesProctoring"] ||
+    proctorConfig["premisesCameraRequired"] ||
+    s["premisesProctoring"] ||
+    s["premisesCameraRequired"]
+  );
 
   return {
     id,
@@ -201,25 +229,11 @@ function mapTest(
     difficulty: (d["difficulty"] as TestDoc["difficulty"]) ?? "Medium",
     proctored: Boolean(d["proctored"]),
     audioProctored: Boolean(d["audioProctored"]),
-    premisesProctoring: Boolean(
-      d["premisesProctoring"] ||
-      d["premisesCameraRequired"] ||
-      (d["proctorConfig"] as any)?.premisesProctoring ||
-      (d["proctorConfig"] as any)?.premisesCameraRequired ||
-      (s["premisesProctoring"]) ||
-      (s["premisesCameraRequired"])
-    ),
-    premisesCameraRequired: Boolean(
-      d["premisesCameraRequired"] ||
-      d["premisesProctoring"] ||
-      (d["proctorConfig"] as any)?.premisesCameraRequired ||
-      (d["proctorConfig"] as any)?.premisesProctoring ||
-      (s["premisesCameraRequired"]) ||
-      (s["premisesProctoring"])
-    ),
-    proctorConfig: (d["proctorConfig"] as Record<string, unknown>) || {
-      premisesCameraRequired: Boolean(d["premisesCameraRequired"] || d["premisesProctoring"] || s["premisesCameraRequired"] || s["premisesProctoring"]),
-      premisesProctoring: Boolean(d["premisesProctoring"] || d["premisesCameraRequired"] || s["premisesProctoring"] || s["premisesCameraRequired"]),
+    premisesProctoring: hasPremises,
+    premisesCameraRequired: hasPremises,
+    proctorConfig: Object.keys(proctorConfig).length > 0 ? proctorConfig : {
+      premisesCameraRequired: hasPremises,
+      premisesProctoring: hasPremises,
     },
     maxViolations: Number(d["maxViolations"] ?? 200),
     maxAudioViolations: Number(d["maxAudioViolations"] ?? 200),
@@ -422,7 +436,7 @@ export async function getCandidateDirectTests(email: string, rollNumber?: string
     const cleanRoll = rollNumber ? String(rollNumber).trim().toUpperCase() : "";
     if (!cleanEmail && !cleanRoll) return [];
 
-    const docSnaps = new Map<string, any>();
+    const docSnaps = new Map<string, QueryDocumentSnapshot<DocumentData>>();
 
     if (cleanEmail) {
       try {
@@ -498,7 +512,7 @@ export async function getCandidateDirectTests(email: string, rollNumber?: string
 export async function getRecruitmentTests(): Promise<TestDoc[]> {
   try {
     const db = getDb();
-    const docSnaps = new Map<string, any>();
+    const docSnaps = new Map<string, QueryDocumentSnapshot<DocumentData>>();
 
     // Query 1: isRecruitment == true
     try {
@@ -585,22 +599,22 @@ export async function getRecruitmentTests(): Promise<TestDoc[]> {
                 t.companyName = String(cData["companyName"]);
               }
               if (cData["companyId"]) {
-                (t as any).companyId = String(cData["companyId"]);
-                (t as any).recruiterId = String(cData["companyId"]);
+                t.companyId = String(cData["companyId"]);
+                t.recruiterId = String(cData["companyId"]);
               }
               if (cData["createdByUid"] || cData["recruiterUid"]) {
-                (t as any).recruiterUid = String(cData["createdByUid"] || cData["recruiterUid"]);
-                if (!(t as any).recruiterId) {
-                  (t as any).recruiterId = String(cData["createdByUid"] || cData["recruiterUid"]);
+                t.recruiterUid = String(cData["createdByUid"] || cData["recruiterUid"]);
+                if (!t.recruiterId) {
+                  t.recruiterId = String(cData["createdByUid"] || cData["recruiterUid"]);
                 }
               }
-              if (!(t as any).recruiterId && t.courseId?.startsWith("recruiter_")) {
-                (t as any).recruiterId = t.courseId.replace("recruiter_", "");
+              if (!t.recruiterId && t.courseId?.startsWith("recruiter_")) {
+                t.recruiterId = t.courseId.replace("recruiter_", "");
               }
-              (t as any).courseIsRestricted = Boolean(cData["isRestricted"] || cData["isRecruitment"] || cData["recruiterControlled"] || t.courseId.startsWith("recruiter_"));
-              (t as any).courseTargetScope = cData["targetScope"] || ((t as any).courseIsRestricted ? "specific_tenant" : "global");
-              (t as any).courseTargetTenants = Array.isArray(cData["targetTenants"]) ? cData["targetTenants"] : (Array.isArray(cData["assignedTenants"]) ? cData["assignedTenants"] : []);
-              (t as any).courseTargetUsers = Array.isArray(cData["targetUsers"]) ? cData["targetUsers"] : [];
+              t.courseIsRestricted = Boolean(cData["isRestricted"] || cData["isRecruitment"] || cData["recruiterControlled"] || t.courseId.startsWith("recruiter_"));
+              t.courseTargetScope = String(cData["targetScope"] || (t.courseIsRestricted ? "specific_tenant" : "global"));
+              t.courseTargetTenants = Array.isArray(cData["targetTenants"]) ? (cData["targetTenants"] as string[]) : (Array.isArray(cData["assignedTenants"]) ? (cData["assignedTenants"] as string[]) : []);
+              t.courseTargetUsers = Array.isArray(cData["targetUsers"]) ? (cData["targetUsers"] as string[]) : [];
             }
           }
           if (t.courseId && t.seriesId && !seriesTitles.has(`${t.courseId}::${t.seriesId}`)) {

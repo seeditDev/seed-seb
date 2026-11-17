@@ -158,13 +158,20 @@ const runYolov8Inference = async (videoElement, model) => {
     return { boxes, maxScores, classIds, mask };
   });
 
+  let filteredBoxes = null;
+  let filteredScores = null;
+  let filteredClasses = null;
+
   try {
     // 2. Perform async GPU-to-CPU masking
-    const [filteredBoxes, filteredScores, filteredClasses] = await Promise.all([
+    const filteredTensors = await Promise.all([
       tf.booleanMaskAsync(tensors.boxes, tensors.mask),
       tf.booleanMaskAsync(tensors.maxScores, tensors.mask),
       tf.booleanMaskAsync(tensors.classIds, tensors.mask)
     ]);
+    filteredBoxes = filteredTensors[0];
+    filteredScores = filteredTensors[1];
+    filteredClasses = filteredTensors[2];
     
     const boxesArray = await filteredBoxes.array();
     const scoresArray = await filteredScores.array();
@@ -229,17 +236,16 @@ const runYolov8Inference = async (videoElement, model) => {
         ...(bagDetected ? ['bag/backpack'] : [])
       ]
     };
-    
-    filteredBoxes.dispose();
-    filteredScores.dispose();
-    filteredClasses.dispose();
   } catch (err) {
     console.error('[ProctoringEngine] YOLOv8 post-processing error:', err);
   } finally {
-    tensors.boxes.dispose();
-    tensors.maxScores.dispose();
-    tensors.classIds.dispose();
-    tensors.mask.dispose();
+    try { filteredBoxes?.dispose(); } catch (_) {}
+    try { filteredScores?.dispose(); } catch (_) {}
+    try { filteredClasses?.dispose(); } catch (_) {}
+    try { tensors.boxes?.dispose(); } catch (_) {}
+    try { tensors.maxScores?.dispose(); } catch (_) {}
+    try { tensors.classIds?.dispose(); } catch (_) {}
+    try { tensors.mask?.dispose(); } catch (_) {}
   }
   
   return result;

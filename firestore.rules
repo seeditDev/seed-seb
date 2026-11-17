@@ -82,7 +82,7 @@ service cloud.firestore {
     }
 
     match /assessment_keys/{contestId} {
-      allow read: if isPortal();
+      allow read: if isAdmin() || isStaff();
       allow write: if isAdmin();
     }
 
@@ -377,7 +377,11 @@ service cloud.firestore {
 
       match /{assessmentId}/{userId} {
         allow read: if isPortal() || isUser(userId);
-        allow create, update: if isUser(userId) || isPortal();
+        allow create: if isUser(userId) || isPortal();
+        allow update: if isPortal()
+          || (isUser(userId)
+              && resource.data.get('completed', false) == false
+              && resource.data.get('status', '') != 'submitted');
         allow delete: if isPortal() || isAdmin();
       }
 
@@ -398,7 +402,11 @@ service cloud.firestore {
 
       match /{assessmentId}/{userId} {
         allow read: if isPortal() || isRecruiter() || (isSignedIn() && request.auth.uid == userId);
-        allow create, update: if isUser(userId) || isPortal() || isRecruiter() || isSignedIn();
+        allow create: if isUser(userId) || isPortal() || isRecruiter() || isSignedIn();
+        allow update: if isPortal() || isRecruiter()
+          || (isUser(userId)
+              && resource.data.get('completed', false) == false
+              && resource.data.get('status', '') != 'submitted');
         allow delete: if isPortal() || isAdmin();
       }
 
@@ -413,7 +421,11 @@ service cloud.firestore {
 
       match /{assessmentId}/{userId} {
         allow read: if isPortal() || isRecruiter() || (isSignedIn() && request.auth.uid == userId);
-        allow create, update: if isUser(userId) || isPortal() || isRecruiter() || isSignedIn();
+        allow create: if isUser(userId) || isPortal() || isRecruiter() || isSignedIn();
+        allow update: if isPortal() || isRecruiter()
+          || (isUser(userId)
+              && resource.data.get('completed', false) == false
+              && resource.data.get('status', '') != 'submitted');
         allow delete: if isPortal() || isAdmin();
       }
 
@@ -483,6 +495,10 @@ service cloud.firestore {
     match /questions/{questionId} {
       allow get, list: if isSignedIn() || isPortal();
       allow create, update, delete: if isPortal() || isAdmin();
+    }
+
+    match /userSolutions/{uid}/{sub=**} {
+      allow read, write: if isUser(uid) || isPortal();
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -643,7 +659,8 @@ service cloud.firestore {
 
       match /events/{eventId} {
         allow read: if isPortal() || isSignedIn();
-        allow create, update: if isSignedIn() || isPortal();
+        allow create: if isSignedIn() || isPortal();
+        allow update: if false;
         allow delete: if isAdmin();
       }
 

@@ -1594,54 +1594,8 @@ const StudentDashboard = () => {
   };
 
   useEffect(() => {
-    const checkAiInterviewAccess = async () => {
-      // AI Placement Interview is unlocked for all candidates
-      setIsAiInterviewAllowed(true);
-      return;
-      if (!user) return;
-      const userEmail = (user.email ?? "").trim().toLowerCase();
-      if (!userEmail) return;
-
-      // QA Developer bypass list to help check the tab instantly
-      const QA_DEVELOPERS = ["ashok@gmail.com", "student@seedit.tech", "student@gmail.com", "test@gmail.com"];
-      if (QA_DEVELOPERS.includes(userEmail)) {
-        setIsAiInterviewAllowed(true);
-        return;
-      }
-
-      try {
-        let list = null;
-        try {
-          const githubRes = await fetch("https://raw.githubusercontent.com/seeditDev/SEEDDB/main/Premium/ai-interview.json");
-          if (githubRes.ok) {
-            list = await githubRes.json();
-          }
-        } catch (githubErr) {
-          console.warn("GitHub fetch for AI interview list failed, trying local fallback:", githubErr);
-        }
-
-        if (!list) {
-          try {
-            const localRes = await fetch("/SEEDDB/Premium/ai-interview.json");
-            const contentType = localRes.headers.get("content-type") || "";
-            if (localRes.ok && contentType.includes("application/json")) {
-              list = await localRes.json();
-            }
-          } catch (_) {
-            // Local fallback unavailable — silent fallback
-          }
-        }
-
-        if (Array.isArray(list)) {
-          const allowed = list.some(email => String(email).trim().toLowerCase() === userEmail);
-          setIsAiInterviewAllowed(allowed);
-        }
-      } catch (err) {
-        console.warn("Failed to check AI Interview access:", err);
-      }
-    };
-
-    checkAiInterviewAccess();
+    // AI Placement Interview is unlocked for all candidates
+    setIsAiInterviewAllowed(true);
   }, [user]);
 
 

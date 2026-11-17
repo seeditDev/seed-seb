@@ -217,7 +217,7 @@ export const renderInlineTokens = (text, parentKeyPrefix = 'tok') => {
     }
 
     // 8. Plain text segment up to the next markdown trigger character (!, [, `, *, $, h for http)
-    const nextTrigger = remaining.search(/[!\[`*$]|https?:\/\//);
+    const nextTrigger = remaining.search(/[!`*$[\]]|https?:\/\//);
     if (nextTrigger === -1) {
       tokens.push(remaining);
       break;
@@ -373,7 +373,7 @@ const ProblemMarkdownRenderer = ({ content, className = '' }) => {
           const lineKey = `seg-${segIdx}-l-${lineIdx}`;
 
           // Horizontal divider: --- or *** or ___
-          if (/^(\-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+          if (/^(-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
             flushBullets(lineKey);
             flushNumbered(lineKey);
             flushParagraph(lineKey);
@@ -382,7 +382,7 @@ const ProblemMarkdownRenderer = ({ content, className = '' }) => {
           }
 
           // Bullet item: starts with `* ` or `- ` (with optional indentation)
-          const bulletMatch = line.match(/^\s*[*\-]\s+(.*)$/);
+          const bulletMatch = line.match(/^\s*[-*]\s+(.*)$/);
           if (bulletMatch) {
             flushNumbered(lineKey);
             flushParagraph(lineKey);

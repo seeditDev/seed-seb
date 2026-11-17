@@ -163,7 +163,7 @@ const LessonMarkdownRenderer = ({ content }) => {
       }
 
       // 5. Plain text segment up to next markdown symbol
-      const nextSpecial = remaining.search(/[`*\[\\]/);
+      const nextSpecial = remaining.search(/[`*\\[\]]/);
       if (nextSpecial === -1) {
         elements.push(remaining);
         break;
@@ -301,7 +301,7 @@ const LessonMarkdownRenderer = ({ content }) => {
           }
 
           // Horizontal divider: --- or ***
-          if (/^(\-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+          if (/^(-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
             flushList();
             flushParagraph();
             renderedBlocks.push(
@@ -331,7 +331,7 @@ const LessonMarkdownRenderer = ({ content }) => {
           }
 
           // Bullet list items: * item, - item (check indentation for nested)
-          const bulletMatch = line.match(/^(\s*)([*•\-])\s+(.+)$/);
+          const bulletMatch = line.match(/^(\s*)([-*•])\s+(.+)$/);
           if (bulletMatch) {
             flushParagraph();
             if (listType !== 'ul') {
