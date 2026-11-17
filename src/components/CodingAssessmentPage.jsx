@@ -33,6 +33,8 @@ import { throttledLocalStorageSet, flushThrottledWrites } from '../utils/throttl
 import { markAssessmentCompleted } from '../services/attemptStatusService';
 import SecurityWatermark from './SecurityWatermark';
 import { stopAllMediaAndAI } from '../utils/hardwareTeardown';
+import { useAssessmentTimer } from '../utils/assessmentTimerWorker';
+import { saveAssessmentSnapshot } from '../utils/assessmentStorageVault';
 import { toast } from 'sonner';
 
 import { isCompleteQuestion } from '../services/codingQuestionBankService';
@@ -1551,28 +1553,27 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
         }
     };
 
-    // Timer Tick
-    useEffect(() => {
-        if (!startTime || !currentAssessment || isLockedOut) return;
+    // Dedicated Web Worker Timer (standalone mode)
+    const standaloneEndTimeMs = useMemo(() => {
+        if (!startTime || !testDuration) return 0;
+        return startTime + testDuration * 1000;
+    }, [startTime, testDuration]);
 
-        const interval = setInterval(() => {
-            const elapsed = getElapsedSeconds();
-            const remaining = Math.max(0, testDuration - elapsed);
+    useAssessmentTimer({
+        endTimeMs: standaloneEndTimeMs,
+        isStarted: !isEmbedded && Boolean(startTime && currentAssessment && !isLockedOut && !submissionSuccess),
+        onTick: useCallback((remaining) => {
             setRemainingTime(remaining);
-
-            // Periodically sync progress (every 60 seconds)
+            const elapsed = testDuration - remaining;
             if (elapsed > 0 && elapsed % 60 === 0) {
                 backupProgress();
             }
-
-            if (remaining <= 0) {
-                clearInterval(interval);
-                autoSubmitAttemptRef.current?.("timer");
-            }
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [startTime, currentAssessment, testDuration, isLockedOut, getElapsedSeconds]);
+        }, [testDuration, backupProgress]),
+        onExpire: useCallback(() => {
+            setRemainingTime(0);
+            autoSubmitAttemptRef.current?.("timer");
+        }, [])
+    });
 
     // Proctoring tab switch hooks (Tab switch not needed - bypassed)
     useEffect(() => {
@@ -1940,6 +1941,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                     localStorage.setItem(`msa_active_coding_state_${targetAssessmentId}_${targetSectionId}`, JSON.stringify(snap));
                 }
                 localStorage.setItem(`msa_active_coding_state_${targetAssessmentId}`, JSON.stringify(snap));
+                saveAssessmentSnapshot(targetAssessmentId, snap);
             }
             localStorage.setItem('msa_active_coding_latest', JSON.stringify(snap));
             localStorage.setItem('codingQuestionScores', JSON.stringify(overrideScores || questionScores));

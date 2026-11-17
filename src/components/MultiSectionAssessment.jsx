@@ -30,6 +30,14 @@ import EssaySectionView from './EssaySectionView';
 import SQLSectionView from './SQLSectionView';
 import AssessmentFeedback from './AssessmentFeedback';
 import desktopBridge from '../utils/desktopBridge';
+import { useAssessmentTimer } from '../utils/assessmentTimerWorker';
+import {
+  saveAssessmentSnapshot,
+  loadAssessmentSnapshot,
+  clearAssessmentSnapshot,
+  queueWALMutation,
+  drainWALQueue
+} from '../utils/assessmentStorageVault';
 import timeService from '../services/timeService';
 import { getViolations, writeViolationToFirestore } from '../utils/proctorCache';
 import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
@@ -1062,6 +1070,19 @@ const MultiSectionAssessment = () => {
 
   const [showInstructions, setShowInstructions] = useState(false);
 
+  // Background Transactional Write-Ahead Log (WAL) drainer
+  useEffect(() => {
+    const handleDrain = () => {
+      drainWALQueue(setDoc, doc, db);
+    };
+    window.addEventListener('seed:vault_drain_request', handleDrain);
+    const drainInterval = setInterval(handleDrain, 30000);
+    return () => {
+      window.removeEventListener('seed:vault_drain_request', handleDrain);
+      clearInterval(drainInterval);
+    };
+  }, []);
+
   const isPremisesRequired = useMemo(() => {
     if (!assessment) return false;
     return Boolean(
@@ -1835,6 +1856,7 @@ const MultiSectionAssessment = () => {
 
     sessionStorage.removeItem('multisectionAssessmentData');
     localStorage.removeItem(`msaProgress_${effectiveAssessment?.id}`);
+    clearAssessmentSnapshot(effectiveAssessment?.id);
     try {
       await desktopBridge.markAssessmentSubmitted();
       await desktopBridge.forceEndAssessment();
@@ -2296,6 +2318,11 @@ const MultiSectionAssessment = () => {
     const progressKey = `msaProgress_${assessmentData.id}`;
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(progressKey) || 'null'); } catch (_) { }
+    if (!saved) {
+      try {
+        saved = await loadAssessmentSnapshot(assessmentData.id);
+      } catch (_) {}
+    }
     const currentEmail = authData.email || authData.Email;
     if (saved && saved.email && currentEmail && saved.email.toLowerCase() !== currentEmail.toLowerCase()) {
       localStorage.removeItem(progressKey);
@@ -2415,6 +2442,7 @@ const MultiSectionAssessment = () => {
       savedAt: new Date().toISOString(),
       lastActiveTimestamp: nowMs
     };
+    saveAssessmentSnapshot(assessment.id, snapshot);
     localStorage.setItem(progressKey, JSON.stringify(snapshot));
     localStorage.setItem(`msaActiveAssessment_${assessment.id}`, JSON.stringify(assessment));
 
@@ -2427,7 +2455,7 @@ const MultiSectionAssessment = () => {
         if (userId && tenant?.tenantId && assessment?.id) {
           const totalSecs = (assessment.sections || []).length;
           // 1. Sync in-progress snapshot to assessmentResults
-          setDoc(doc(db, `assessmentResults/${tenant.tenantId}/${assessment.id}/${userId}`), {
+          const progressPayload = {
             userId,
             email: tenant.email || user.email || '',
             rollNumber: user.rollNumber ?? '',
@@ -2450,11 +2478,17 @@ const MultiSectionAssessment = () => {
             },
             lastUpdatedAt: serverTimestamp(),
             lastUpdatedAtISO: new Date().toISOString()
-          }, { merge: true }).catch(() => {});
+          };
+          const targetDoc = `assessmentResults/${tenant.tenantId}/${assessment.id}/${userId}`;
+          setDoc(doc(db, targetDoc), progressPayload, { merge: true })
+            .catch(() => {
+              // Network dropped — queue to transactional Write-Ahead Log
+              queueWALMutation({ targetDoc, payload: progressPayload, type: 'in_progress_sync' });
+            });
 
           // 2. Sync to contestAttempts
           const attDocId = `${assessment.id}_${userId}`;
-          setDoc(doc(db, 'users', userId, 'contestAttempts', attDocId), {
+          const attemptPayload = {
             uid: userId,
             assessmentId: assessment.id,
             tenantId: tenant.tenantId,
@@ -2468,7 +2502,12 @@ const MultiSectionAssessment = () => {
               durationSeconds: (assessment.sections?.[currentSecIdx]?.duration_minutes || 30) * 60
             },
             lastSavedAt: serverTimestamp()
-          }, { merge: true }).catch(() => {});
+          };
+          const attDocPath = `users/${userId}/contestAttempts/${attDocId}`;
+          setDoc(doc(db, 'users', userId, 'contestAttempts', attDocId), attemptPayload, { merge: true })
+            .catch(() => {
+              queueWALMutation({ targetDoc: attDocPath, payload: attemptPayload, type: 'attempt_sync' });
+            });
         }
       } catch (_) {}
     }
@@ -2659,29 +2698,19 @@ const MultiSectionAssessment = () => {
     }
   };
 
-  // ── Section timer countdown loop (drift-resistant: uses wall-clock anchor, not decrement)
-  useEffect(() => {
-    if (!secStarted || sectionEndTimeMsRef.current <= 0) return;
-    clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      const remaining = Math.max(0, Math.round((sectionEndTimeMsRef.current - Date.now()) / 1000));
+  // ── Section timer countdown (Worker-isolated & wall-clock anchored)
+  useAssessmentTimer({
+    endTimeMs: sectionEndTimeMsRef.current,
+    isStarted: secStarted && sectionEndTimeMsRef.current > 0,
+    onTick: useCallback((remaining) => {
       setSecTimer(remaining);
-      if (remaining <= 0) {
-        clearInterval(timerRef.current);
-      }
-    }, 500); // poll at 500ms for smooth display without significant CPU cost
-    return () => clearInterval(timerRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [secStarted, currentSecIdx]);
-
-  // ── Handle timer expiry (outside the state updater)
-  useEffect(() => {
-    if (secStarted && secTimer === 0) {
-      toast(' Time up! Submitting section…', { icon: '', duration: 3000 });
+    }, []),
+    onExpire: useCallback(() => {
+      setSecTimer(0);
+      toast('Time up! Submitting section…', { icon: '⏰', duration: 3000 });
       autoSubmitSection();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [secTimer, secStarted]);
+    }, [autoSubmitSection])
+  });
 
   // ── 1/3-time Firestore progress save (fires once per section, non-fatal)
   const oneThirdSavedRef = useRef(false);
@@ -3641,6 +3670,7 @@ const MultiSectionAssessment = () => {
         sessionStorage.removeItem('multisectionAssessmentData');
         localStorage.removeItem(`msaProgress_${assessment?.id}`);
         localStorage.removeItem(`msaActiveAssessment_${assessment?.id}`);
+        clearAssessmentSnapshot(assessment?.id);
 
         // ── Mark attempt fully completed (Firestore session + completion index) ──
         // Only called AFTER confirmed result write success.
