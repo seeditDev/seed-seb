@@ -1044,7 +1044,30 @@ const MultiSectionAssessment = () => {
 
   // Data stores
   const [sectionData, setSectionData] = useState({});
-  const [examResults, setExamResults] = useState({});
+  const [examResults, setExamResults] = useState(() => {
+    try {
+      if (typeof window === 'undefined') return {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('msaProgress_')) {
+          const parsed = JSON.parse(localStorage.getItem(key) || '{}');
+          if (parsed.examResults && Object.keys(parsed.examResults).length > 0) {
+            return parsed.examResults;
+          }
+        }
+      }
+    } catch (_) {}
+    return {};
+  });
+  const examResultsRef = useRef(examResults);
+  useEffect(() => {
+    if (examResults && Object.keys(examResults).length > 0) {
+      examResultsRef.current = {
+        ...(examResultsRef.current || {}),
+        ...examResults
+      };
+    }
+  }, [examResults]);
   const [examFinished, setExamFinished] = useState(false);
   const [isSubmittingEntireExam, setIsSubmittingEntireExam] = useState(false);
   // 4-sec relaxation between sections: null = not showing, number = countdown value
@@ -1258,11 +1281,20 @@ const MultiSectionAssessment = () => {
       window.dispatchEvent(new CustomEvent('msa:request-coding-snapshot'));
     } catch (_) {}
 
-    const combinedResults = { ...(examResults || {}) };
+    // Read latest results from ref, state, and localStorage fallback
+    let baseResults = { ...(examResultsRef.current || {}), ...(examResults || {}) };
+    try {
+      const saved = JSON.parse(localStorage.getItem(`msaProgress_${effectiveAssessment.id}`) || '{}');
+      if (saved.examResults && Object.keys(saved.examResults).length > 0) {
+        baseResults = { ...saved.examResults, ...baseResults };
+      }
+    } catch (_) {}
+
+    const combinedResults = { ...baseResults };
     if (effectiveAssessment?.sections && currentSecIdx >= 0 && effectiveAssessment.sections[currentSecIdx]) {
       const activeSec = effectiveAssessment.sections[currentSecIdx];
-      const activeSecId = activeSec.sectionId || activeSec.id || `sec_${currentSecIdx}`;
-      if (!combinedResults[activeSecId]) {
+      const activeSecId = activeSec.sectionId || activeSec.id || activeSec.name || `sec_${currentSecIdx}`;
+      if (!combinedResults[activeSecId] && !combinedResults[activeSec.sectionId] && !combinedResults[activeSec.name]) {
         if (activeSec.type === 'coding') {
           let activeCodingData = null;
           try {
@@ -1523,26 +1555,57 @@ const MultiSectionAssessment = () => {
       }
     }
 
-    const sectionsList = Object.values(combinedResults).map(sec => {
-      const secTime = sec.timeSpentSeconds || sec.data?.timeSpentSeconds || 0;
+    const sectionsList = (effectiveAssessment?.sections || []).map((sec, sIdx) => {
+      const sKey = sec.sectionId || sec.id || sec.name || `sec_${sIdx}`;
+      const resSec = combinedResults[sKey] || combinedResults[sec.sectionId] || combinedResults[sec.id] || combinedResults[sec.name] || combinedResults[String(sIdx)];
+      const secData = resSec?.data || {};
+      const secTime = resSec?.timeSpentSeconds || secData?.timeSpentSeconds || 0;
       const secM = Math.floor(secTime / 60);
       const secS = secTime % 60;
       return {
-        sectionName: sec.sectionName ?? '',
-        name: sec.sectionName ?? '',
-        score: sec.data?.score || 0,
-        maxScore: sec.data?.maxScore || sec.data?.totalQuestions || 0,
-        startedAt: sec.startedAt ?? '',
-        submittedAt: sec.submittedAt ?? '',
+        sectionId: sKey,
+        sectionName: sec.name || resSec?.sectionName || `Section ${sIdx + 1}`,
+        name: sec.name || resSec?.sectionName || `Section ${sIdx + 1}`,
+        type: sec.type || resSec?.type || 'unknown',
+        score: secData.score || 0,
+        maxScore: secData.maxScore || Number(sec.maxScore) || secData.totalQuestions || 0,
+        startedAt: resSec?.startedAt || '',
+        submittedAt: resSec?.submittedAt || '',
         timeSpentSeconds: secTime,
         timeTaken: secTime,
         timeTakenFormatted: `${secM}:${secS < 10 ? '0' : ''}${secS}`,
-        questionTiming: sec.questionTiming || sec.data?.questionTiming || {},
+        questionTiming: resSec?.questionTiming || secData.questionTiming || {},
       };
     });
 
+    // Add any extra sections from combinedResults that weren't in effectiveAssessment.sections
+    Object.keys(combinedResults).forEach(key => {
+      const match = sectionsList.some(s => s.sectionId === key || s.name === key);
+      if (!match) {
+        const extraSec = combinedResults[key];
+        const secData = extraSec?.data || {};
+        const secTime = extraSec?.timeSpentSeconds || secData?.timeSpentSeconds || 0;
+        const secM = Math.floor(secTime / 60);
+        const secS = secTime % 60;
+        sectionsList.push({
+          sectionId: key,
+          sectionName: extraSec.sectionName || key,
+          name: extraSec.sectionName || key,
+          type: extraSec.type || 'unknown',
+          score: secData.score || 0,
+          maxScore: secData.maxScore || secData.totalQuestions || 0,
+          startedAt: extraSec.startedAt || '',
+          submittedAt: extraSec.submittedAt || '',
+          timeSpentSeconds: secTime,
+          timeTaken: secTime,
+          timeTakenFormatted: `${secM}:${secS < 10 ? '0' : ''}${secS}`,
+          questionTiming: extraSec.questionTiming || secData.questionTiming || {},
+        });
+      }
+    });
+
     const aggregatedQuestions = Object.values(combinedResults)
-      .filter(sec => sec.type === 'mcq' && sec.data?.questions)
+      .filter(sec => (sec.type === 'mcq' || sec.data?.questions) && Array.isArray(sec.data?.questions))
       .reduce((acc, sec) => acc.concat(sec.data.questions), []);
 
     const aggregatedCoding = Object.values(combinedResults)
@@ -1595,8 +1658,8 @@ const MultiSectionAssessment = () => {
         return acc;
       }, {});
 
-    const totalMarksSum = Object.values(combinedResults).reduce((a, s) => a + (s.data?.maxScore || s.data?.totalQuestions || 0), 0);
-    const totalScore = Object.values(combinedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
+    const totalMarksSum = sectionsList.reduce((acc, s) => acc + (Number(s.maxScore) || 0), 0) || Number(effectiveAssessment.maxScore) || 100;
+    const totalScore = sectionsList.reduce((acc, s) => acc + (Number(s.score) || 0), 0);
     const pct = totalMarksSum > 0 ? (totalScore / totalMarksSum) : 0;
     const totalViolations = proctoringData.violationCount || 0;
 
@@ -2340,6 +2403,7 @@ const MultiSectionAssessment = () => {
         gracePeriodFiredRef.current = true;
         console.warn(`[MSA] Offline exit duration (${elapsedOfflineSec}s) exceeded ${GRACE_PERIOD_SEC / 60}-minute grace period. Auto-submitting.`);
         toast.warning(`Your assessment was auto-submitted because your offline exit window exceeded ${GRACE_PERIOD_SEC / 60} minutes.`);
+        examResultsRef.current = saved.examResults || {};
         setExamResults(saved.examResults || {});
         setSecCompleted(saved.completedSections || {});
         // Use a short delay to let React batch the state above, then submit
@@ -2350,6 +2414,7 @@ const MultiSectionAssessment = () => {
       }
 
       console.log(`[MSA] Restoring progress within 5-min grace period (${elapsedOfflineSec}s offline)`);
+      examResultsRef.current = saved.examResults || {};
       setExamResults(saved.examResults || {});
       setSecCompleted(saved.completedSections || {});
       setRestoredProgress({
@@ -2431,11 +2496,25 @@ const MultiSectionAssessment = () => {
     if (!assessment || currentSecIdx < 0 || !secStarted) return;
     const progressKey = `msaProgress_${assessment.id}`;
     const nowMs = new Date().getTime();
+
+    // Preserve existing completed sections in localStorage - NEVER overwrite with empty!
+    let mergedExamResults = {
+      ...(examResultsRef.current || {}),
+      ...(examResults || {})
+    };
+    try {
+      const prevSaved = JSON.parse(localStorage.getItem(progressKey) || '{}');
+      if (prevSaved.examResults && Object.keys(prevSaved.examResults).length > 0) {
+        mergedExamResults = { ...prevSaved.examResults, ...mergedExamResults };
+      }
+    } catch (_) {}
+    examResultsRef.current = mergedExamResults;
+
     const snapshot = {
       assessmentId: assessment.id,
       email: user?.email ?? '',
       completedSections: secCompleted,
-      examResults,
+      examResults: mergedExamResults,
       currentSecIdx,
       secStarted,
       secTimer,
@@ -3069,10 +3148,23 @@ const MultiSectionAssessment = () => {
       }
     }
 
+    // Read previous results from ref, state, and localStorage fallback
+    const progressKey = `msaProgress_${assessment.id}`;
+    let baseResults = { ...(examResultsRef.current || {}), ...(examResults || {}) };
+    try {
+      const savedProgress = JSON.parse(localStorage.getItem(progressKey) || '{}');
+      if (savedProgress.examResults && Object.keys(savedProgress.examResults).length > 0) {
+        baseResults = { ...savedProgress.examResults, ...baseResults };
+      }
+    } catch (_) {}
+
+    const secKey = activeSection.sectionId || activeSection.id || activeSection.name || `sec_${currentSecIdx}`;
+
     const updatedResults = {
-      ...examResults,
-      [activeSection.sectionId]: {
-        sectionName: activeSection.name,
+      ...baseResults,
+      [secKey]: {
+        sectionId: secKey,
+        sectionName: activeSection.name || `Section ${currentSecIdx + 1}`,
         type: activeSection.type,
         startedAt: secstartedAt,
         submittedAt: secsubmittedAt,
@@ -3081,9 +3173,17 @@ const MultiSectionAssessment = () => {
         data: finalSectionResults || {}
       }
     };
+    if (activeSection.sectionId && activeSection.sectionId !== secKey) updatedResults[activeSection.sectionId] = updatedResults[secKey];
+    if (activeSection.name && activeSection.name !== secKey) updatedResults[activeSection.name] = updatedResults[secKey];
 
+    examResultsRef.current = updatedResults;
     setExamResults(updatedResults);
-    setSecCompleted(prev => ({ ...prev, [activeSection.sectionId]: true }));
+    setSecCompleted(prev => ({
+      ...prev,
+      [secKey]: true,
+      ...(activeSection.sectionId ? { [activeSection.sectionId]: true } : {}),
+      ...(activeSection.name ? { [activeSection.name]: true } : {})
+    }));
     setSecStarted(false);
     clearInterval(timerRef.current);
 
@@ -3097,16 +3197,17 @@ const MultiSectionAssessment = () => {
 
     if (nextIdx < totalSections) {
       // Save partial progress
-      const progressKey = `msaProgress_${assessment.id}`;
       const snapshot = {
         assessmentId: assessment.id,
         email: user.email,
         completedSections: Object.fromEntries(Object.keys(updatedResults).map(id => [id, true])),
         examResults: updatedResults,
+        currentSecIdx: nextIdx,
         lastSectionIdx: currentSecIdx,
         savedAt: new Date().toISOString()
       };
       localStorage.setItem(progressKey, JSON.stringify(snapshot));
+      saveAssessmentSnapshot(assessment.id, snapshot);
 
       const tenant = requireTenant(user);
       const userId = auth?.currentUser?.uid || user.uid;
@@ -3117,6 +3218,29 @@ const MultiSectionAssessment = () => {
       const partialQuestionTiming = Object.values(updatedResults)
         .filter(sec => sec.type === 'coding' && (sec.questionTiming || sec.data?.questionTiming))
         .reduce((acc, sec) => ({ ...acc, ...(sec.questionTiming || sec.data?.questionTiming) }), {});
+
+      const partialSectionsList = (assessment.sections || []).map((sec, sIdx) => {
+        const sKey = sec.sectionId || sec.id || sec.name || `sec_${sIdx}`;
+        const resSec = updatedResults[sKey] || updatedResults[sec.sectionId] || updatedResults[sec.id] || updatedResults[sec.name] || updatedResults[String(sIdx)];
+        const secData = resSec?.data || {};
+        const secTime = resSec?.timeSpentSeconds || secData?.timeSpentSeconds || 0;
+        const secM = Math.floor(secTime / 60);
+        const secS = secTime % 60;
+        return {
+          sectionId: sKey,
+          sectionName: sec.name || resSec?.sectionName || `Section ${sIdx + 1}`,
+          name: sec.name || resSec?.sectionName || `Section ${sIdx + 1}`,
+          type: sec.type || resSec?.type || 'unknown',
+          score: secData.score || 0,
+          maxScore: secData.maxScore || Number(sec.maxScore) || secData.totalQuestions || 0,
+          startedAt: resSec?.startedAt || '',
+          submittedAt: resSec?.submittedAt || '',
+          timeSpentSeconds: secTime,
+          timeTaken: secTime,
+          timeTakenFormatted: `${secM}:${secS < 10 ? '0' : ''}${secS}`,
+          questionTiming: resSec?.questionTiming || secData.questionTiming || {},
+        };
+      });
 
       setDoc(doc(db, `assessmentResults/${tenant.tenantId}/${assessment.id}/${userId}`), {
         userId,
@@ -3131,7 +3255,7 @@ const MultiSectionAssessment = () => {
         status: 'partial',
         sectionsCompleted: currentSecIdx + 1,
         totalSections,
-        sections: updatedResults,
+        sections: partialSectionsList,
         questionTiming: partialQuestionTiming,
         lastUpdatedAt: serverTimestamp(),
         lastUpdatedAtISO: new Date().toISOString()
@@ -3153,26 +3277,57 @@ const MultiSectionAssessment = () => {
       }
 
       try {
-        const sectionsList = Object.values(updatedResults).map(sec => {
-          const secTime = sec.timeSpentSeconds || sec.data?.timeSpentSeconds || 0;
+        const sectionsList = (assessment.sections || []).map((sec, sIdx) => {
+          const sKey = sec.sectionId || sec.id || sec.name || `sec_${sIdx}`;
+          const resSec = updatedResults[sKey] || updatedResults[sec.sectionId] || updatedResults[sec.id] || updatedResults[sec.name] || updatedResults[String(sIdx)];
+          const secData = resSec?.data || {};
+          const secTime = resSec?.timeSpentSeconds || secData?.timeSpentSeconds || 0;
           const secM = Math.floor(secTime / 60);
           const secS = secTime % 60;
           return {
-            sectionName: sec.sectionName ?? '',
-            name: sec.sectionName ?? '',
-            score: sec.data?.score || 0,
-            maxScore: sec.data?.maxScore || sec.data?.totalQuestions || 0,
-            startedAt: sec.startedAt ?? '',
-            submittedAt: sec.submittedAt ?? '',
+            sectionId: sKey,
+            sectionName: sec.name || resSec?.sectionName || `Section ${sIdx + 1}`,
+            name: sec.name || resSec?.sectionName || `Section ${sIdx + 1}`,
+            type: sec.type || resSec?.type || 'unknown',
+            score: secData.score || 0,
+            maxScore: secData.maxScore || Number(sec.maxScore) || secData.totalQuestions || 0,
+            startedAt: resSec?.startedAt || '',
+            submittedAt: resSec?.submittedAt || '',
             timeSpentSeconds: secTime,
             timeTaken: secTime,
             timeTakenFormatted: `${secM}:${secS < 10 ? '0' : ''}${secS}`,
-            questionTiming: sec.questionTiming || sec.data?.questionTiming || {},
+            questionTiming: resSec?.questionTiming || secData.questionTiming || {},
           };
         });
 
+        // Add any extra sections from updatedResults that weren't in assessment.sections
+        Object.keys(updatedResults).forEach(key => {
+          const match = sectionsList.some(s => s.sectionId === key || s.name === key);
+          if (!match) {
+            const extraSec = updatedResults[key];
+            const secData = extraSec?.data || {};
+            const secTime = extraSec?.timeSpentSeconds || secData?.timeSpentSeconds || 0;
+            const secM = Math.floor(secTime / 60);
+            const secS = secTime % 60;
+            sectionsList.push({
+              sectionId: key,
+              sectionName: extraSec.sectionName || key,
+              name: extraSec.sectionName || key,
+              type: extraSec.type || 'unknown',
+              score: secData.score || 0,
+              maxScore: secData.maxScore || secData.totalQuestions || 0,
+              startedAt: extraSec.startedAt || '',
+              submittedAt: extraSec.submittedAt || '',
+              timeSpentSeconds: secTime,
+              timeTaken: secTime,
+              timeTakenFormatted: `${secM}:${secS < 10 ? '0' : ''}${secS}`,
+              questionTiming: extraSec.questionTiming || secData.questionTiming || {},
+            });
+          }
+        });
+
         const aggregatedQuestions = Object.values(updatedResults)
-          .filter(sec => sec.type === 'mcq' && sec.data?.questions)
+          .filter(sec => (sec.type === 'mcq' || sec.data?.questions) && Array.isArray(sec.data?.questions))
           .reduce((acc, sec) => acc.concat(sec.data.questions), []);
 
         const aggregatedCoding = Object.values(updatedResults)
@@ -3224,8 +3379,8 @@ const MultiSectionAssessment = () => {
             return acc;
           }, {});
 
-        const totalMarksSum = Object.values(updatedResults).reduce((a, s) => a + (s.data?.maxScore || s.data?.totalQuestions || 0), 0);
-        const totalScorePartial = Object.values(updatedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
+        const totalMarksSum = sectionsList.reduce((acc, s) => acc + (Number(s.maxScore) || 0), 0) || Number(assessment.maxScore) || 100;
+        const totalScorePartial = sectionsList.reduce((acc, s) => acc + (Number(s.score) || 0), 0);
 
         // Calculate All-Testcases-Pass Score (strictly 100% testcases passed for each question)
         let allPassTotalScore = 0;
