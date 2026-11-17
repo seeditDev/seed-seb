@@ -1155,6 +1155,7 @@ const MultiSectionAssessment = () => {
   useEffect(() => { assessmentRef.current = assessment; }, [assessment]);
   // Prevents React StrictMode double-invoke from firing the grace-period auto-submit twice
   const gracePeriodFiredRef = useRef(false);
+  const autoSubmitSectionRef = useRef(null);
 
   // Helper to completely release camera, microphone, and AI proctoring
   const teardownHardwareAndProctoring = useCallback(() => {
@@ -2392,7 +2393,7 @@ const MultiSectionAssessment = () => {
         setSecStarted(true);
         setSecTimer(0);
         setSectionCountdown(null);
-        setTimeout(() => autoSubmitSection(), 1000);
+        setTimeout(() => autoSubmitSectionRef.current?.(), 1000);
       } else if (restoredProgress.secStarted) {
         // Was actively in the section — restore directly without prelaunch
         setCurrentSecIdx(restoredProgress.currentSecIdx);
@@ -2708,8 +2709,8 @@ const MultiSectionAssessment = () => {
     onExpire: useCallback(() => {
       setSecTimer(0);
       toast('Time up! Submitting section…', { icon: '⏰', duration: 3000 });
-      autoSubmitSection();
-    }, [autoSubmitSection])
+      autoSubmitSectionRef.current?.();
+    }, [])
   });
 
   // ── 1/3-time Firestore progress save (fires once per section, non-fatal)
@@ -3710,6 +3711,7 @@ const MultiSectionAssessment = () => {
       keysToRemove.forEach(k => localStorage.removeItem(k));
     }
   }, [assessment, currentSecIdx, examResults, handleStartSection, user]);
+  autoSubmitSectionRef.current = autoSubmitSection;
 
   // Intercept navigation when exam is finished
   useEffect(() => {

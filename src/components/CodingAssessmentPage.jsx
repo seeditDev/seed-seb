@@ -720,6 +720,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
 
     const hasTimerStartedRef = useRef(false);
     const autoSubmitAttemptRef = useRef(null);
+    const backupProgressRef = useRef(null);
 
     // Synchronize section timer in embedded mode
     useEffect(() => {
@@ -1566,9 +1567,9 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
             setRemainingTime(remaining);
             const elapsed = testDuration - remaining;
             if (elapsed > 0 && elapsed % 60 === 0) {
-                backupProgress();
+                backupProgressRef.current?.();
             }
-        }, [testDuration, backupProgress]),
+        }, [testDuration]),
         onExpire: useCallback(() => {
             setRemainingTime(0);
             autoSubmitAttemptRef.current?.("timer");
@@ -2050,6 +2051,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
             // Local state is already securely persisted in localStorage; remote backup is non-blocking
         }
     };
+    backupProgressRef.current = backupProgress;
 
     // Run Code Engine (Sample Tests)
     // Flow: show loader FIRST → send to backend → close loader
