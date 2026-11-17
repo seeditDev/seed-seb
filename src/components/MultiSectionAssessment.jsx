@@ -1605,8 +1605,16 @@ const MultiSectionAssessment = () => {
     });
 
     const aggregatedQuestions = Object.values(combinedResults)
-      .filter(sec => (sec.type === 'mcq' || sec.data?.questions) && Array.isArray(sec.data?.questions))
-      .reduce((acc, sec) => acc.concat(sec.data.questions), []);
+      .filter(sec => {
+        const sType = String(sec.type || sec.data?.type || '').toLowerCase();
+        if (sType === 'coding' || sType === 'code' || sType === 'sql' || sType === 'sql_assessment' || sType === 'essay' || sType === 'essay_writing' || sType === 'spoken_english' || sType === 'speech' || sType === 'sea') {
+          return false;
+        }
+        return (sType === 'mcq' || sType === 'questions' || sType === 'quiz' || !sType) && Array.isArray(sec.data?.questions);
+      })
+      .reduce((acc, sec) => acc.concat(sec.data.questions), [])
+      .filter(q => q && (Array.isArray(q.options) || Boolean(q.questionText || q.question || q.text || q.prompt)) && q.testsPassed === undefined && q.totalTests === undefined && !q.problemTitle)
+      .map((q, idx) => ({ ...q, questionNumber: idx + 1 }));
 
     const aggregatedCoding = Object.values(combinedResults)
       .filter(sec => sec.type === 'coding')
@@ -3327,8 +3335,16 @@ const MultiSectionAssessment = () => {
         });
 
         const aggregatedQuestions = Object.values(updatedResults)
-          .filter(sec => (sec.type === 'mcq' || sec.data?.questions) && Array.isArray(sec.data?.questions))
-          .reduce((acc, sec) => acc.concat(sec.data.questions), []);
+          .filter(sec => {
+            const sType = String(sec.type || sec.data?.type || '').toLowerCase();
+            if (sType === 'coding' || sType === 'code' || sType === 'sql' || sType === 'sql_assessment' || sType === 'essay' || sType === 'essay_writing' || sType === 'spoken_english' || sType === 'speech' || sType === 'sea') {
+              return false;
+            }
+            return (sType === 'mcq' || sType === 'questions' || sType === 'quiz' || !sType) && Array.isArray(sec.data?.questions);
+          })
+          .reduce((acc, sec) => acc.concat(sec.data.questions), [])
+          .filter(q => q && (Array.isArray(q.options) || Boolean(q.questionText || q.question || q.text || q.prompt)) && q.testsPassed === undefined && q.totalTests === undefined && !q.problemTitle)
+          .map((q, idx) => ({ ...q, questionNumber: idx + 1 }));
 
         const aggregatedCoding = Object.values(updatedResults)
           .filter(sec => sec.type === 'coding' && (sec.data?.questions || sec.data?.coding))
