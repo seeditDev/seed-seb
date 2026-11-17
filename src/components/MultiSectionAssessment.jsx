@@ -29,6 +29,7 @@ import SpokenEnglishAssessment from './SpokenEnglishAssessment';
 import EssaySectionView from './EssaySectionView';
 import SQLSectionView from './SQLSectionView';
 import AssessmentFeedback from './AssessmentFeedback';
+import desktopBridge from '../utils/desktopBridge';
 import timeService from '../services/timeService';
 import { getViolations, writeViolationToFirestore } from '../utils/proctorCache';
 import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
@@ -259,7 +260,7 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
   const [bookmarked, setBookmarked] = useState(() => {
     try {
       if (typeof window === 'undefined') return [];
-      const saved = localStorage.getItem(`msa_active_mcq_state_${assessmentId}_${sectionData?.id ?? ''}`);
+      const saved = localStorage.getItem(stateKey);
       if (saved) return JSON.parse(saved).bookmarked || [];
     } catch (_) { }
     return [];
@@ -268,7 +269,7 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
   const [lockedQuestions, setLockedQuestions] = useState(() => {
     try {
       if (typeof window === 'undefined') return [];
-      const saved = localStorage.getItem(`msa_active_mcq_state_${assessmentId}_${sectionData?.id ?? ''}`);
+      const saved = localStorage.getItem(stateKey);
       if (saved) return JSON.parse(saved).lockedQuestions || [];
     } catch (_) { }
     return [];
@@ -277,7 +278,7 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
   const [qTimerRemaining, setQTimerRemaining] = useState(() => {
     try {
       if (typeof window === 'undefined') return settings.questionTimer || 0;
-      const saved = localStorage.getItem(`msa_active_mcq_state_${assessmentId}_${sectionData?.id ?? ''}`);
+      const saved = localStorage.getItem(stateKey);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.qTimerRemaining !== undefined) return parsed.qTimerRemaining;
@@ -289,7 +290,7 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
   const [timeSpentPerQ, setTimeSpentPerQ] = useState(() => {
     try {
       if (typeof window === 'undefined') return {};
-      const saved = localStorage.getItem(`msa_active_mcq_state_${assessmentId}_${sectionData?.id ?? ''}`);
+      const saved = localStorage.getItem(stateKey);
       if (saved) return JSON.parse(saved).timeSpentPerQ || {};
     } catch (_) { }
     return {};
@@ -347,7 +348,7 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
       if (isFirstMount.current) {
         isFirstMount.current = false;
         // Don't reset if we restored a saved timer for this question index!
-        const key = `msa_active_mcq_state_${assessmentId}_${sectionData?.id ?? ''}`;
+        const key = stateKey;
         try {
           const saved = localStorage.getItem(key);
           if (saved) {
@@ -1330,12 +1331,152 @@ const MultiSectionAssessment = () => {
               timeSpentPerQ: activeCodingData.timeSpentPerQ || {},
             }
           };
-        } else {
-          let activeAnswers = {};
+        } else if (activeSec.type === 'essay' || activeSec.type === 'essay_writing') {
+          let essayData = null;
           try {
-            const savedState = localStorage.getItem(`msa_active_mcq_state_${effectiveAssessment.id}_${activeSec.id ?? ''}`);
-            if (savedState) activeAnswers = JSON.parse(savedState).answers || {};
+            const draftKey = `essay_draft_${effectiveAssessment.id}_${activeSecId}`;
+            const altDraftKey = `essay_draft_${effectiveAssessment.id}_${activeSec.name || 'default'}`;
+            const savedDraft = localStorage.getItem(draftKey) || localStorage.getItem(altDraftKey);
+            if (savedDraft) {
+              const parsedDraft = JSON.parse(savedDraft);
+              const rawText = parsedDraft.answerText || '';
+              const maxLimit = Number(activeSec.maxWords || activeSec.essayPrompt?.maxWords) || 500;
+              const words = rawText.trim().split(/\s+/).filter(Boolean);
+              const trimmedText = words.slice(0, maxLimit).join(' ');
+              const title = parsedDraft.studentTitle || activeSec.name || 'Essay';
+              const minWords = Number(activeSec.minWords) || 100;
+              const maxScore = Number(activeSec.maxScore) || 20;
+              const earnedScore = words.length >= minWords ? maxScore * 0.75 : 0;
+              essayData = {
+                studentTitle: title,
+                answerText: trimmedText,
+                wordCount: Math.min(words.length, maxLimit),
+                originalWordCount: words.length,
+                score: earnedScore,
+                maxScore,
+                autoSubmitted: true,
+                autoTrimmedTo500: words.length > maxLimit
+              };
+            }
+          } catch (eErr) {
+            console.warn('[MSA] autoSubmitEntireExam essay recovery error:', eErr);
+          }
+
+          combinedResults[activeSecId] = {
+            sectionId: activeSecId,
+            sectionName: activeSec.name || `Section ${currentSecIdx + 1}`,
+            type: activeSec.type,
+            startedAt: sectionStartTimesRef.current[currentSecIdx] || new Date().toISOString(),
+            submittedAt: new Date().toISOString(),
+            timeSpentSeconds: Math.max(0, (activeSec.duration_minutes || 30) * 60 - (secTimer || 0)),
+            data: essayData || {
+              score: 0,
+              maxScore: Number(activeSec.maxScore) || 20,
+              wordCount: 0,
+              answerText: '',
+              autoSubmitted: true
+            }
+          };
+        } else if (activeSec.type === 'sql' || activeSec.type === 'sql_assessment') {
+          let sqlData = null;
+          try {
+            const raw = localStorage.getItem(`msa_sql_active_${effectiveAssessment.id}_${activeSecId}`)
+              || sessionStorage.getItem(`msa_sql_v2_${userId}_${effectiveAssessment.id}_${activeSecId}`);
+            if (raw) {
+              const qStates = JSON.parse(raw);
+              const secQuestions = activeSec.questions || activeSec.sqlQuestions || [];
+              let totalAwarded = 0;
+              let maxSectionMarks = 0;
+              const submissions = [];
+              secQuestions.forEach((q) => {
+                const state = qStates[q.id] || {};
+                const marks = Number(state.marksAwarded || 0);
+                totalAwarded += marks;
+                const qMarks = Number(q.marks || 10);
+                maxSectionMarks += qMarks;
+                submissions.push({
+                  questionId: q.id,
+                  title: q.title || `Question`,
+                  marksAwarded: marks,
+                  maxMarks: qMarks,
+                  status: state.status || 'UNATTEMPTED',
+                  submittedQuery: state.query || '',
+                  submitted: Boolean(state.submitted)
+                });
+              });
+              sqlData = {
+                sectionId: activeSecId,
+                sectionType: 'sql',
+                name: activeSec.name || 'SQL Assessment Section',
+                totalMarks: maxSectionMarks || Number(activeSec.maxScore) || 20,
+                score: totalAwarded,
+                marksAwarded: totalAwarded,
+                maxMarks: maxSectionMarks || Number(activeSec.maxScore) || 20,
+                percentage: maxSectionMarks > 0 ? Math.round((totalAwarded / maxSectionMarks) * 100) : 0,
+                questionsAttempted: submissions.filter(s => s.submitted).length,
+                totalQuestions: secQuestions.length,
+                submissions,
+                sqlSubmissions: submissions,
+                autoSubmitted: true
+              };
+            }
+          } catch (sqlErr) {
+            console.warn('[MSA] autoSubmitEntireExam sql recovery error:', sqlErr);
+          }
+
+          combinedResults[activeSecId] = {
+            sectionId: activeSecId,
+            sectionName: activeSec.name || `Section ${currentSecIdx + 1}`,
+            type: activeSec.type,
+            startedAt: sectionStartTimesRef.current[currentSecIdx] || new Date().toISOString(),
+            submittedAt: new Date().toISOString(),
+            timeSpentSeconds: Math.max(0, (activeSec.duration_minutes || 30) * 60 - (secTimer || 0)),
+            data: sqlData || {
+              score: 0,
+              maxScore: Number(activeSec.maxScore) || 20,
+              totalQuestions: (activeSec.questions || []).length || 0,
+              submissions: [],
+              autoSubmitted: true
+            }
+          };
+        } else {
+          // MCQ and default sections
+          let activeAnswers = {};
+          let savedTiming = {};
+          try {
+            const raw = localStorage.getItem(`msa_active_mcq_state_${effectiveAssessment.id}_${activeSecId}`)
+              || localStorage.getItem(`msa_active_mcq_state_${effectiveAssessment.id}_${activeSec.id ?? ''}`)
+              || localStorage.getItem(`msa_active_mcq_state_${effectiveAssessment.id}`);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              activeAnswers = parsed.answers || {};
+              savedTiming = parsed.timeSpentPerQ || {};
+            }
           } catch (_) { }
+
+          const secQuestions = activeSec.questions || [];
+          let earnedScore = 0;
+          let answeredCount = 0;
+          const evaluatedQuestions = secQuestions.map((q, i) => {
+            const userAnsIdx = activeAnswers[i];
+            const isAnswered = userAnsIdx !== undefined;
+            if (isAnswered) answeredCount++;
+            const userChoice = q.options?.[userAnsIdx];
+            const isMatch = (q.correctAnswer !== undefined && (userChoice === q.correctAnswer || String(userChoice).trim().toLowerCase() === String(q.correctAnswer).trim().toLowerCase())) ||
+              (q.correctIndex !== undefined && userAnsIdx === q.correctIndex) ||
+              (q.answer !== undefined && userAnsIdx === q.answer);
+            const qMarks = Number(q.marks) || Number(q.weight) || 1;
+            if (isMatch) earnedScore += qMarks;
+            return {
+              ...q,
+              userAnswer: userChoice ?? null,
+              userAnswerIndex: userAnsIdx ?? null,
+              isCorrect: Boolean(isMatch),
+              marksEarned: isMatch ? qMarks : 0
+            };
+          });
+
+          const maxSectionScore = Number(activeSec.maxScore) || secQuestions.reduce((sum, q) => sum + (Number(q.marks) || Number(q.weight) || 1), 0) || 10;
 
           combinedResults[activeSecId] = {
             sectionId: activeSecId,
@@ -1344,12 +1485,16 @@ const MultiSectionAssessment = () => {
             startedAt: sectionStartTimesRef.current[currentSecIdx] || new Date().toISOString(),
             submittedAt: new Date().toISOString(),
             timeSpentSeconds: Math.max(0, (activeSec.duration_minutes || 30) * 60 - (secTimer || 0)),
+            questionTiming: savedTiming,
             data: {
-              score: 0,
-              maxScore: activeSec.duration_minutes || 10,
-              totalQuestions: (activeSec.questions || []).length || 0,
+              score: earnedScore,
+              maxScore: maxSectionScore,
+              totalQuestions: secQuestions.length,
+              answeredQuestions: answeredCount,
               answers: activeAnswers,
-              questions: activeSec.questions || [],
+              questions: evaluatedQuestions,
+              timeSpentPerQ: savedTiming,
+              autoSubmitted: true
             }
           };
         }
@@ -1690,6 +1835,12 @@ const MultiSectionAssessment = () => {
 
     sessionStorage.removeItem('multisectionAssessmentData');
     localStorage.removeItem(`msaProgress_${effectiveAssessment?.id}`);
+    try {
+      await desktopBridge.markAssessmentSubmitted();
+      await desktopBridge.forceEndAssessment();
+    } catch (dbErr) {
+      console.warn('[MSA] desktopBridge cleanup error in autoSubmitEntireExam:', dbErr);
+    }
     setIsSubmittingEntireExam(false);
     setExamFinished(true);
     stopAllMediaAndAI();
@@ -2288,7 +2439,7 @@ const MultiSectionAssessment = () => {
             type: 'multisection',
             status: 'in_progress',
             completed: false,
-            sectionsCompleted: secCompleted.length,
+            sectionsCompleted: Object.keys(secCompleted || {}).length,
             totalSections: totalSecs,
             sections: examResults,
             activeSection: {
@@ -2674,6 +2825,21 @@ const MultiSectionAssessment = () => {
     }
 
     if (idx === 0) {
+      // Register assessment context in native desktop bridge
+      try {
+        const allQIds = (assessment?.sections || []).flatMap(sec => {
+          const qs = sec.questions || sec.challenges || sec.codingQuestions || [];
+          return qs.map((q, qIdx) => q.id || q.questionId || `q_${qIdx}`);
+        });
+        desktopBridge.setContestContextWithQuestions(
+          assessment.id,
+          assessment.passkey || '',
+          allQIds
+        ).catch(() => {});
+      } catch (err) {
+        console.warn('[MSA] desktopBridge.setContestContextWithQuestions error:', err);
+      }
+
       // Section 0: initial prelaunch check for camera/mic resources
       // Note: Timer will be anchored and started when prelaunch completes!
       setCountdownSecIdx(0);
@@ -2716,7 +2882,7 @@ const MultiSectionAssessment = () => {
       }
     }
     setPasskeyError('');
-    const targetIdx = (assessment?.sections || []).findIndex(sec => !secCompleted[sec.sectionId]);
+    const targetIdx = (assessment?.sections || []).findIndex(sec => !secCompleted[sec.sectionId] && !secCompleted[sec.id]);
     const finalTargetIdx = targetIdx >= 0 ? targetIdx : 0;
 
     handleStartSection(finalTargetIdx);
@@ -2776,6 +2942,100 @@ const MultiSectionAssessment = () => {
         }
       } catch (err) {
         console.warn('[MSA] Error auto-recovering essay draft on timer expiry:', err);
+      }
+    }
+    if (!finalSectionResults && (activeSection.type === 'sql' || activeSection.type === 'sql_assessment')) {
+      try {
+        const secKey = activeSection.sectionId || activeSection.id || `sec_${currentSecIdx}`;
+        const uId = user?.uid || user?.id || 'guest';
+        const raw = localStorage.getItem(`msa_sql_active_${assessment.id}_${secKey}`)
+          || sessionStorage.getItem(`msa_sql_v2_${uId}_${assessment.id}_${secKey}`);
+        if (raw) {
+          const qStates = JSON.parse(raw);
+          const secQuestions = activeSection.questions || activeSection.sqlQuestions || [];
+          let totalAwarded = 0;
+          let maxSectionMarks = 0;
+          const submissions = [];
+          secQuestions.forEach((q) => {
+            const state = qStates[q.id] || {};
+            const marks = Number(state.marksAwarded || 0);
+            totalAwarded += marks;
+            const qMarks = Number(q.marks || 10);
+            maxSectionMarks += qMarks;
+            submissions.push({
+              questionId: q.id,
+              title: q.title || `Question`,
+              marksAwarded: marks,
+              maxMarks: qMarks,
+              status: state.status || 'UNATTEMPTED',
+              submittedQuery: state.query || '',
+              submitted: Boolean(state.submitted)
+            });
+          });
+          finalSectionResults = {
+            sectionId: secKey,
+            sectionType: 'sql',
+            name: activeSection.name || 'SQL Assessment Section',
+            totalMarks: maxSectionMarks || Number(activeSection.maxScore) || 20,
+            score: totalAwarded,
+            marksAwarded: totalAwarded,
+            maxMarks: maxSectionMarks || Number(activeSection.maxScore) || 20,
+            percentage: maxSectionMarks > 0 ? Math.round((totalAwarded / maxSectionMarks) * 100) : 0,
+            questionsAttempted: submissions.filter(s => s.submitted).length,
+            totalQuestions: secQuestions.length,
+            submissions,
+            sqlSubmissions: submissions,
+            autoSubmitted: true
+          };
+        }
+      } catch (sqlRecErr) {
+        console.warn('[MSA] Error auto-recovering SQL answers on timer expiry:', sqlRecErr);
+      }
+    }
+    if (!finalSectionResults && (activeSection.type === 'mcq' || !activeSection.type || activeSection.type === 'questions')) {
+      try {
+        const secKey = activeSection.sectionId || activeSection.id || `sec_${currentSecIdx}`;
+        const raw = localStorage.getItem(`msa_active_mcq_state_${assessment.id}_${secKey}`)
+          || localStorage.getItem(`msa_active_mcq_state_${assessment.id}_${activeSection.id || ''}`)
+          || localStorage.getItem(`msa_active_mcq_state_${assessment.id}`);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const activeAnswers = parsed.answers || {};
+          const secQuestions = activeSection.questions || [];
+          let score = 0;
+          let answeredCount = 0;
+          const questionsWithAnswers = secQuestions.map((q, i) => {
+            const userAnsIdx = activeAnswers[i];
+            const isAnswered = userAnsIdx !== undefined;
+            if (isAnswered) answeredCount++;
+            const userChoice = q.options?.[userAnsIdx];
+            const isMatch = (q.correctAnswer !== undefined && (userChoice === q.correctAnswer || String(userChoice).trim().toLowerCase() === String(q.correctAnswer).trim().toLowerCase())) ||
+              (q.correctIndex !== undefined && userAnsIdx === q.correctIndex) ||
+              (q.answer !== undefined && userAnsIdx === q.answer);
+            const qMarks = Number(q.marks) || Number(q.weight) || 1;
+            if (isMatch) score += qMarks;
+            return {
+              ...q,
+              userAnswer: userChoice ?? null,
+              userAnswerIndex: userAnsIdx ?? null,
+              isCorrect: Boolean(isMatch),
+              marksEarned: isMatch ? qMarks : 0
+            };
+          });
+          const maxMarks = Number(activeSection.maxScore) || secQuestions.reduce((sum, q) => sum + (Number(q.marks) || Number(q.weight) || 1), 0) || 1;
+          finalSectionResults = {
+            score,
+            maxScore: maxMarks,
+            totalQuestions: secQuestions.length,
+            answeredQuestions: answeredCount,
+            answers: activeAnswers,
+            questions: questionsWithAnswers,
+            timeSpentPerQ: parsed.timeSpentPerQ || {},
+            autoSubmitted: true
+          };
+        }
+      } catch (mcqRecErr) {
+        console.warn('[MSA] Error auto-recovering MCQ answers on timer expiry:', mcqRecErr);
       }
     }
 
@@ -3392,6 +3652,12 @@ const MultiSectionAssessment = () => {
           });
         markAssessmentCompleted(user, assessment?.id).catch(() => { });
         if (user?.email) invalidateCompletionCache(user.email);
+        try {
+          await desktopBridge.markAssessmentSubmitted();
+          await desktopBridge.endAssessment();
+        } catch (dbErr) {
+          console.warn('[MSA] desktopBridge cleanup error in handleFinalSubmit:', dbErr);
+        }
       } finally {
         setIsSubmittingEntireExam(false);
       }
@@ -4003,7 +4269,7 @@ const MultiSectionAssessment = () => {
                         if (passkeyInputRef.current) passkeyInputRef.current.focus();
                         return;
                       }
-                      const targetIdx = (assessment?.sections || []).findIndex(sec => !secCompleted[sec.sectionId]);
+                      const targetIdx = (assessment?.sections || []).findIndex(sec => !secCompleted[sec.sectionId] && !secCompleted[sec.id]);
                       handleStartSection(targetIdx >= 0 ? targetIdx : 0);
                     }}
                     onCancel={() => {
@@ -4115,7 +4381,7 @@ const MultiSectionAssessment = () => {
           assessment={assessment}
           onContinue={() => {
             setShowInstructions(false);
-            const targetIdx = (assessment?.sections || []).findIndex(sec => !secCompleted[sec.sectionId]);
+            const targetIdx = (assessment?.sections || []).findIndex(sec => !secCompleted[sec.sectionId] && !secCompleted[sec.id]);
             handleStartSection(targetIdx >= 0 ? targetIdx : 0);
           }}
           onCancel={() => {
